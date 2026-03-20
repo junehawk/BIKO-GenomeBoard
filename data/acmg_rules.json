@@ -1,0 +1,30 @@
+{
+  "version": "ACMG/AMP 2015 + ClinGen SVI updates",
+  "pathogenic": [
+    {"pvs": 1, "ps": 1},
+    {"pvs": 1, "pm": 2},
+    {"pvs": 1, "pm": 1, "pp": 1},
+    {"pvs": 1, "pp": 2},
+    {"ps": 2},
+    {"ps": 1, "pm": 3},
+    {"ps": 1, "pm": 2, "pp": 2},
+    {"ps": 1, "pm": 1, "pp": 4}
+  ],
+  "likely_pathogenic": [
+    {"pvs": 1, "pm": 1},
+    {"ps": 1, "pm": 1},
+    {"ps": 1, "pm": 2},
+    {"ps": 1, "pp": 2},
+    {"pm": 3},
+    {"pm": 2, "pp": 2},
+    {"pm": 1, "pp": 4}
+  ],
+  "benign": [
+    {"ba": 1},
+    {"bs": 2}
+  ],
+  "likely_benign": [
+    {"bs": 1, "bp": 1},
+    {"bp": 2}
+  ]
+}
