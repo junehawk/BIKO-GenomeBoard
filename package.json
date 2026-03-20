@@ -1,0 +1,14 @@
+{
+  "name": "genomeboard",
+  "version": "0.1.0",
+  "description": "Korean population-aware variant interpretation consilium on Paperclip",
+  "private": true,
+  "scripts": {
+    "dev": "npx paperclipai dev",
+    "test": "pytest tests/ -v",
+    "test:cov": "pytest tests/ --cov=scripts --cov-report=html"
+  },
+  "dependencies": {
+    "paperclipai": "latest"
+  }
+}
