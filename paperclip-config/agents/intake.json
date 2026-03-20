@@ -1,0 +1,7 @@
+{
+  "id": "intake",
+  "adapter": "bash",
+  "trigger": "event",
+  "command": "python -m scripts.intake.parse_vcf",
+  "description": "Parses VCF or text input into normalized Variant objects"
+}
