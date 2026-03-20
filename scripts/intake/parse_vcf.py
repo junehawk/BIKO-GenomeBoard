@@ -1,0 +1,34 @@
+# scripts/intake/parse_vcf.py
+import logging
+from typing import List
+from scripts.common.models import Variant
+
+logger = logging.getLogger(__name__)
+
+def parse_vcf(vcf_path: str) -> List[Variant]:
+    """Parse a VCF file into a list of Variant objects.
+    Uses simple text parsing to avoid cyvcf2 dependency issues in tests.
+    """
+    variants = []
+    with open(vcf_path) as f:
+        for line in f:
+            if line.startswith("#"):
+                continue
+            fields = line.strip().split("\t")
+            if len(fields) < 5:
+                continue
+            chrom = fields[0] if fields[0].startswith("chr") else f"chr{fields[0]}"
+            pos = int(fields[1])
+            ref = fields[3]
+            alt = fields[4]
+            gene = None
+            if len(fields) > 7:
+                info = fields[7]
+                for item in info.split(";"):
+                    if item.startswith("Gene="):
+                        gene = item.split("=")[1]
+            variants.append(Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene))
+
+    if len(variants) > 1000:
+        logger.warning(f"VCF contains {len(variants)} variants (>1000). Consider filtering first.")
+    return variants
