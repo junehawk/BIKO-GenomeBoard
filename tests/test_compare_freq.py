@@ -1,0 +1,28 @@
+from scripts.korean_pop.compare_freq import compare_frequencies
+from scripts.common.models import FrequencyData
+
+def test_korean_rare_pm2():
+    freq = FrequencyData(krgdb=0.0001, gnomad_eas=0.0003, gnomad_all=0.0002)
+    result = compare_frequencies(freq)
+    assert "PM2_Supporting" in result["acmg_codes"]
+
+def test_korean_common_bs1():
+    freq = FrequencyData(krgdb=0.05, gnomad_eas=0.04, gnomad_all=0.03)
+    result = compare_frequencies(freq)
+    assert "BS1" in result["acmg_codes"]
+
+def test_very_common_ba1():
+    freq = FrequencyData(krgdb=0.06, gnomad_eas=0.05, gnomad_all=0.05)
+    result = compare_frequencies(freq)
+    assert "BA1" in result["acmg_codes"]
+
+def test_no_data():
+    freq = FrequencyData(krgdb=None, gnomad_eas=None, gnomad_all=None)
+    result = compare_frequencies(freq)
+    assert result["acmg_codes"] == []
+    assert "데이터 없음" in result["korean_flag"]
+
+def test_korean_specific_variant():
+    freq = FrequencyData(krgdb=0.001, gnomad_eas=None, gnomad_all=None)
+    result = compare_frequencies(freq)
+    assert "한국인 특이 변이" in result["korean_flag"]
