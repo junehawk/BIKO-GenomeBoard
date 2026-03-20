@@ -57,6 +57,7 @@ def query_clinvar(variant: Variant) -> Dict:
             "clinvar_id": None,
             "acmg_codes": [],
             "review_status": None,
+            "api_available": False,
         }
 
     sig = clinvar_data.get("clinical_significance", {}).get("description", "Unknown")
@@ -70,6 +71,7 @@ def query_clinvar(variant: Variant) -> Dict:
         "clinvar_id": clinvar_data.get("variation_id"),
         "review_status": clinvar_data.get("review_status"),
         "acmg_codes": acmg_codes,
+        "api_available": True,
     }
 
 

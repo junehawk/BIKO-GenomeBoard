@@ -31,6 +31,10 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     elif max_freq <= PM2_THRESHOLD:
         acmg_codes.append("PM2_Supporting")
         flags.append("희귀 변이")
+    # PM2: moderately rare (between PM2_Supporting and BS1 thresholds)
+    elif max_freq < BS1_THRESHOLD:
+        acmg_codes.append("PM2")
+        flags.append("저빈도 변이")
 
     # Korean-specific flags
     if freq.krgdb is not None and freq.gnomad_all is not None and freq.gnomad_all > 0:

@@ -36,3 +36,22 @@ def test_query_clinvar_not_found(mocker):
     assert result is not None
     assert result["clinvar_significance"] == "Not Found"
     assert result["acmg_codes"] == []
+
+# I-5c: api_available tracking
+def test_query_clinvar_api_available_true(mocker):
+    mocker.patch(
+        "scripts.clinical.query_clinvar._search_clinvar_variant",
+        return_value=SAMPLE_CLINVAR_RESPONSE["result"]["12375"]
+    )
+    variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
+    result = query_clinvar(variant)
+    assert result["api_available"] is True
+
+def test_query_clinvar_api_available_false(mocker):
+    mocker.patch(
+        "scripts.clinical.query_clinvar._search_clinvar_variant",
+        return_value=None
+    )
+    variant = Variant(chrom="chr1", pos=12345, ref="A", alt="T")
+    result = query_clinvar(variant)
+    assert result["api_available"] is False

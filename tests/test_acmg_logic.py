@@ -1,5 +1,5 @@
 # tests/test_acmg_logic.py
-from scripts.classification.acmg_engine import classify_variant
+from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict
 from scripts.common.models import AcmgEvidence
 
 def _ev(code, src="test"):
@@ -105,3 +105,42 @@ def test_pm2_supporting_not_pm():
     result = classify_variant(codes)
     # Three PP is not enough for LP under standard ACMG rules
     assert result.classification != "Likely Pathogenic"
+
+# I-5: Risk Factor bypass
+def test_apoe_risk_factor_bypass():
+    """APOE should return 'Risk Factor' regardless of evidence."""
+    codes = [_ev("PM1"), _ev("PP3")]
+    result = classify_variant(codes, gene="APOE")
+    assert result.classification == "Risk Factor"
+    assert result.matched_rule == "risk_factor_bypass"
+
+def test_apoe_risk_factor_no_evidence():
+    codes = []
+    result = classify_variant(codes, gene="APOE")
+    assert result.classification == "Risk Factor"
+
+def test_non_risk_factor_gene_not_bypassed():
+    codes = [_ev("PM1")]
+    result = classify_variant(codes, gene="BRCA1")
+    assert result.classification != "Risk Factor"
+
+# I-4: ClinVar conflict detection
+def test_check_clinvar_conflict_lp_vs_pathogenic():
+    """LP (rank 3) vs Pathogenic (rank 4) — diff=1 → conflict."""
+    assert check_clinvar_conflict("Likely Pathogenic", "Pathogenic") is True
+
+def test_check_clinvar_conflict_benign_vs_pathogenic():
+    """Benign (rank 0) vs Pathogenic (rank 4) — diff=4 → conflict."""
+    assert check_clinvar_conflict("Benign", "Pathogenic") is True
+
+def test_check_clinvar_no_conflict_same():
+    assert check_clinvar_conflict("Pathogenic", "Pathogenic") is False
+
+def test_check_clinvar_no_conflict_not_found():
+    assert check_clinvar_conflict("Likely Pathogenic", "Not Found") is False
+
+def test_check_clinvar_no_conflict_drug_response():
+    assert check_clinvar_conflict("Drug Response", "Drug Response") is False
+
+def test_check_clinvar_no_conflict_empty():
+    assert check_clinvar_conflict("Pathogenic", "") is False

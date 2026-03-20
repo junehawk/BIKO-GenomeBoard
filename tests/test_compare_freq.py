@@ -26,3 +26,24 @@ def test_korean_specific_variant():
     freq = FrequencyData(krgdb=0.001, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
     assert "한국인 특이 변이" in result["korean_flag"]
+
+# I-5b: PM2 moderate for freq between PM2_THRESHOLD and BS1_THRESHOLD
+def test_pm2_moderate_freq_mid_range():
+    """Freq 0.005 is between 0.001 and 0.01 → PM2 (moderate)."""
+    freq = FrequencyData(krgdb=0.005, gnomad_eas=None, gnomad_all=None)
+    result = compare_frequencies(freq)
+    assert "PM2" in result["acmg_codes"]
+    assert "PM2_Supporting" not in result["acmg_codes"]
+
+def test_pm2_moderate_at_low_end():
+    """Freq 0.0011 just above PM2_Supporting threshold → PM2."""
+    freq = FrequencyData(krgdb=0.0011, gnomad_eas=None, gnomad_all=None)
+    result = compare_frequencies(freq)
+    assert "PM2" in result["acmg_codes"]
+
+def test_pm2_supporting_at_threshold():
+    """Freq exactly 0.001 → PM2_Supporting, not PM2."""
+    freq = FrequencyData(krgdb=0.001, gnomad_eas=None, gnomad_all=None)
+    result = compare_frequencies(freq)
+    assert "PM2_Supporting" in result["acmg_codes"]
+    assert "PM2" not in result["acmg_codes"]
