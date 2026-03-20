@@ -1,0 +1,52 @@
+{
+  "version": "2026-03-20",
+  "genes": [
+    {
+      "gene": "CYP2D6",
+      "korean_freq": 0.01,
+      "western_freq": 0.055,
+      "metric": "carrier_freq",
+      "clinical_impact": "코데인, 타목시펜 용량 조절",
+      "cpic_level": "A",
+      "source": "CPIC 2019"
+    },
+    {
+      "gene": "CYP2C19",
+      "korean_freq": 0.14,
+      "western_freq": 0.025,
+      "metric": "carrier_freq",
+      "clinical_impact": "클로피도그렐 저반응 위험",
+      "cpic_level": "A",
+      "source": "CPIC 2022"
+    },
+    {
+      "gene": "CYP2C9",
+      "korean_freq": 0.03,
+      "western_freq": 0.08,
+      "metric": "allele_freq",
+      "clinical_impact": "와파린 감량 필요",
+      "cpic_level": "A",
+      "source": "PharmGKB"
+    },
+    {
+      "gene": "HLA-B",
+      "variant": "HLA-B*5801",
+      "korean_freq": 0.12,
+      "western_freq": 0.02,
+      "metric": "allele_freq",
+      "clinical_impact": "알로퓨리놀 중증 약물반응 위험",
+      "cpic_level": "A",
+      "source": "CPIC 2015"
+    },
+    {
+      "gene": "NUDT15",
+      "variant": "p.R139C",
+      "korean_freq": 0.115,
+      "western_freq": 0.01,
+      "metric": "carrier_freq",
+      "clinical_impact": "티오퓨린 골수억제 위험",
+      "cpic_level": "A",
+      "source": "Yang et al. 2014"
+    }
+  ]
+}
