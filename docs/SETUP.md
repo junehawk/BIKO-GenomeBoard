@@ -133,6 +133,21 @@ data/sample.vcf 파일의 변이를 분석해주세요.
 
 ---
 
+## Paperclip 에이전트 CWD 설정
+
+paperclip-config/paperclip.manifest.json의 각 에이전트 adapterConfig.cwd를
+실제 프로젝트 경로로 설정해야 합니다:
+
+```bash
+# 현재 설정 (개발 환경)
+"cwd": "/Users/JL/Research/gb"
+
+# 다른 환경에서는 해당 경로로 변경
+"cwd": "/home/user/genomeboard"
+```
+
+---
+
 ## 문제 해결
 
 **WeasyPrint 설치 실패 (macOS)**

@@ -10,24 +10,32 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
     Uses simple text parsing to avoid cyvcf2 dependency issues in tests.
     """
     variants = []
-    with open(vcf_path) as f:
+    try:
+        f_handle = open(vcf_path)
+    except FileNotFoundError:
+        logger.error(f"VCF file not found: {vcf_path}")
+        return variants
+    with f_handle as f:
         for line in f:
             if line.startswith("#"):
                 continue
-            fields = line.strip().split("\t")
-            if len(fields) < 5:
-                continue
-            chrom = fields[0] if fields[0].startswith("chr") else f"chr{fields[0]}"
-            pos = int(fields[1])
-            ref = fields[3]
-            alt = fields[4]
-            gene = None
-            if len(fields) > 7:
-                info = fields[7]
-                for item in info.split(";"):
-                    if item.startswith("Gene="):
-                        gene = item.split("=")[1]
-            variants.append(Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene))
+            try:
+                fields = line.strip().split("\t")
+                if len(fields) < 5:
+                    continue
+                chrom = fields[0] if fields[0].startswith("chr") else f"chr{fields[0]}"
+                pos = int(fields[1])
+                ref = fields[3]
+                alt = fields[4]
+                gene = None
+                if len(fields) > 7:
+                    info = fields[7]
+                    for item in info.split(";"):
+                        if item.startswith("Gene="):
+                            gene = item.split("=")[1]
+                variants.append(Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene))
+            except (ValueError, IndexError) as e:
+                logger.warning(f"Skipping malformed VCF line: {line.strip()!r} — {e}")
 
     if len(variants) > 1000:
         logger.warning(f"VCF contains {len(variants)} variants (>1000). Consider filtering first.")

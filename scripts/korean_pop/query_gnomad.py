@@ -29,8 +29,12 @@ def query_gnomad(variant: Variant) -> Dict:
 
     data = _graphql_query(VARIANT_QUERY, {"variantId": variant_id, "dataset": "gnomad_r4"})
 
+    if data and "errors" in data:
+        logging.warning(f"gnomAD GraphQL errors: {data['errors']}")
+        return {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
+
     if not data or not data.get("data", {}).get("variant"):
-        return {"gnomad_all": None, "gnomad_eas": None}
+        return {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
 
     genome = data["data"]["variant"].get("genome") or {}
     gnomad_all = genome.get("af")
@@ -40,7 +44,7 @@ def query_gnomad(variant: Variant) -> Dict:
             gnomad_eas = pop["af"]
             break
 
-    return {"gnomad_all": gnomad_all, "gnomad_eas": gnomad_eas}
+    return {"gnomad_all": gnomad_all, "gnomad_eas": gnomad_eas, "api_available": True}
 
 
 if __name__ == "__main__":
