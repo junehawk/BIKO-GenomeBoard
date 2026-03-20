@@ -1,18 +1,21 @@
 # scripts/pharma/query_pharmgkb.py
 import time
+import threading
 from typing import Optional, Dict
 from scripts.common.models import Variant
 from scripts.common.api_utils import fetch_with_retry
 
 PHARMGKB_API = "https://api.pharmgkb.org/v1/data"
 _last_request_time = 0
+_RATE_LOCK = threading.Lock()
 
 def _rate_limit():
     global _last_request_time
-    elapsed = time.time() - _last_request_time
-    if elapsed < 0.5:
-        time.sleep(0.5 - elapsed)
-    _last_request_time = time.time()
+    with _RATE_LOCK:
+        elapsed = time.time() - _last_request_time
+        if elapsed < 0.5:
+            time.sleep(0.5 - elapsed)
+        _last_request_time = time.time()
 
 def _fetch_pharmgkb(gene: str) -> Optional[dict]:
     _rate_limit()

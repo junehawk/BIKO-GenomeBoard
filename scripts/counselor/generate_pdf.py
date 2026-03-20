@@ -7,7 +7,7 @@ TEMPLATE_DIR = Path(__file__).parent.parent.parent / "templates"
 
 
 def generate_report_html(report_data: Dict) -> str:
-    env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
+    env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=True)
     template = env.get_template("report.html")
     return template.render(**report_data)
 

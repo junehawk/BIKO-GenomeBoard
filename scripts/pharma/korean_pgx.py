@@ -1,22 +1,25 @@
 # scripts/pharma/korean_pgx.py
 import json
+import threading
 from pathlib import Path
 from typing import Optional
 from scripts.common.models import Variant, PgxResult
 
 _PGX_DATA = None
+_PGX_LOCK = threading.Lock()
 
 def _load_pgx_data() -> list:
     global _PGX_DATA
-    if _PGX_DATA is None:
-        path = Path(__file__).parent.parent.parent / "data" / "korean_pgx_table.json"
-        try:
-            with open(path) as f:
-                _PGX_DATA = json.load(f)["genes"]
-        except (FileNotFoundError, json.JSONDecodeError, KeyError):
-            import logging
-            logging.getLogger(__name__).warning(f"PGx data file not found or invalid: {path}")
-            _PGX_DATA = []
+    with _PGX_LOCK:
+        if _PGX_DATA is None:
+            path = Path(__file__).parent.parent.parent / "data" / "korean_pgx_table.json"
+            try:
+                with open(path) as f:
+                    _PGX_DATA = json.load(f)["genes"]
+            except (FileNotFoundError, json.JSONDecodeError, KeyError):
+                import logging
+                logging.getLogger(__name__).warning(f"PGx data file not found or invalid: {path}")
+                _PGX_DATA = []
     return _PGX_DATA
 
 PGX_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"}

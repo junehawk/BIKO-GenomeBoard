@@ -1,11 +1,14 @@
+import threading
 from typing import Optional
 from scripts.common.models import Variant
 
 _KRGDB_CACHE: dict = {}
+_KRGDB_LOCK = threading.Lock()
 
 def _load_krgdb(path: str) -> dict:
-    if path in _KRGDB_CACHE:
-        return _KRGDB_CACHE[path]
+    with _KRGDB_LOCK:
+        if path in _KRGDB_CACHE:
+            return _KRGDB_CACHE[path]
     data = {}
     try:
         with open(path) as f:
@@ -17,7 +20,8 @@ def _load_krgdb(path: str) -> dict:
     except FileNotFoundError:
         import logging
         logging.getLogger(__name__).warning(f"KRGDB file not found: {path}")
-    _KRGDB_CACHE[path] = data
+    with _KRGDB_LOCK:
+        _KRGDB_CACHE[path] = data
     return data
 
 def query_krgdb(variant: Variant, krgdb_path: str = "data/krgdb_freq.tsv") -> Optional[float]:
