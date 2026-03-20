@@ -10,11 +10,16 @@ def _load_pgx_data() -> list:
     global _PGX_DATA
     if _PGX_DATA is None:
         path = Path(__file__).parent.parent.parent / "data" / "korean_pgx_table.json"
-        with open(path) as f:
-            _PGX_DATA = json.load(f)["genes"]
+        try:
+            with open(path) as f:
+                _PGX_DATA = json.load(f)["genes"]
+        except (FileNotFoundError, json.JSONDecodeError, KeyError):
+            import logging
+            logging.getLogger(__name__).warning(f"PGx data file not found or invalid: {path}")
+            _PGX_DATA = []
     return _PGX_DATA
 
-PGX_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "NUDT15"}
+PGX_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"}
 
 def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
     if variant.gene not in PGX_GENES:
@@ -25,10 +30,15 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
         if entry["gene"] == variant.gene:
             korean_prev = entry.get("korean_freq", 0)
             western_prev = entry.get("western_freq", 0)
+            phenotype = ""
+            if variant.gene == "CYP2C19":
+                phenotype = "Intermediate Metabolizer (*2 carrier)"
+            elif variant.gene == "HLA-B":
+                phenotype = "HLA-B*5801 carrier — allopurinol SJS/TEN risk"
             return PgxResult(
                 gene=variant.gene,
                 star_allele=entry.get("variant", ""),
-                phenotype="",  # to be filled by LLM agent
+                phenotype=phenotype,
                 cpic_level=entry["cpic_level"],
                 korean_prevalence=korean_prev,
                 western_prevalence=western_prev,

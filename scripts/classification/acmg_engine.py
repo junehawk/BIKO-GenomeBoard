@@ -23,6 +23,14 @@ def _count_by_strength(evidences: List[AcmgEvidence]) -> dict:
     counts = {"pvs": 0, "ps": 0, "pm": 0, "pp": 0, "ba": 0, "bs": 0, "bp": 0}
     for e in evidences:
         code_upper = e.code.upper()
+        # Handle _Supporting suffix FIRST — downgrade to supporting level
+        if "_SUPPORTING" in code_upper:
+            if code_upper.startswith(("PVS", "PS", "PM")):
+                counts["pp"] += 1
+            elif code_upper.startswith(("BA", "BS")):
+                counts["bp"] += 1
+            continue
+        # Then normal counting
         if code_upper.startswith("PVS"):
             counts["pvs"] += 1
         elif code_upper.startswith("PS"):
@@ -46,7 +54,17 @@ def _matches_rule(counts: dict, rule: dict) -> bool:
             return False
     return True
 
-def classify_variant(evidences: List[AcmgEvidence]) -> ClassificationResult:
+PGX_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"}
+
+def classify_variant(evidences: List[AcmgEvidence], gene: str = None) -> ClassificationResult:
+    """Classify variant by ACMG rules. If gene is a PGx gene, return 'Drug Response' instead."""
+    if gene and gene in PGX_GENES:
+        return ClassificationResult(
+            classification="Drug Response",
+            evidence_codes=[e.code for e in evidences],
+            conflict=False,
+            matched_rule="pgx_bypass",
+        )
     if not evidences:
         return ClassificationResult(classification="VUS")
 

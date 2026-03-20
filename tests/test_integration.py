@@ -68,7 +68,7 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
             all_codes.append(AcmgEvidence(code=c, source="clinical", description=""))
         for c in freq_result["acmg_codes"]:
             all_codes.append(AcmgEvidence(code=c, source="korean_pop", description=""))
-        classification = classify_variant(all_codes)
+        classification = classify_variant(all_codes, gene=v.gene)
 
         variant_results.append({
             "variant": v.variant_id,

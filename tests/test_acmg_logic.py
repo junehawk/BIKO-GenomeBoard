@@ -66,3 +66,42 @@ def test_result_has_evidence_summary():
     result = classify_variant(codes)
     assert "PVS1" in result.evidence_codes
     assert "PS1" in result.evidence_codes
+
+def test_pgx_bypass():
+    """PGx genes should return 'Drug Response', not an ACMG classification."""
+    codes = [_ev("PVS1"), _ev("PS1")]
+    result = classify_variant(codes, gene="CYP2D6")
+    assert result.classification == "Drug Response"
+    assert result.matched_rule == "pgx_bypass"
+    assert result.conflict is False
+
+def test_pgx_bypass_cyp2c19():
+    codes = [_ev("PM2")]
+    result = classify_variant(codes, gene="CYP2C19")
+    assert result.classification == "Drug Response"
+
+def test_pgx_bypass_hla_b():
+    codes = []
+    result = classify_variant(codes, gene="HLA-B")
+    assert result.classification == "Drug Response"
+
+def test_non_pgx_gene_not_bypassed():
+    """Non-PGx gene should still go through normal ACMG classification."""
+    codes = [_ev("PVS1"), _ev("PS1")]
+    result = classify_variant(codes, gene="TP53")
+    assert result.classification == "Pathogenic"
+
+def test_pm2_supporting_counts_as_pp():
+    """PM2_Supporting should be counted as PP (supporting), not PM (moderate)."""
+    codes = [_ev("PM2_Supporting")]
+    result = classify_variant(codes)
+    # One PP alone is VUS, not Likely Pathogenic (which would require PM)
+    assert result.classification == "VUS"
+
+def test_pm2_supporting_not_pm():
+    """PM2_Supporting must not inflate PM count — three PM2_Supporting alone
+    should NOT reach Likely Pathogenic (which requires >=3 PM)."""
+    codes = [_ev("PM2_Supporting"), _ev("PM2_Supporting"), _ev("PM2_Supporting")]
+    result = classify_variant(codes)
+    # Three PP is not enough for LP under standard ACMG rules
+    assert result.classification != "Likely Pathogenic"

@@ -7,12 +7,16 @@ def _load_krgdb(path: str) -> dict:
     if path in _KRGDB_CACHE:
         return _KRGDB_CACHE[path]
     data = {}
-    with open(path) as f:
-        for line in f:
-            parts = line.strip().split("\t")
-            if len(parts) >= 5:
-                key = f"{parts[0]}:{parts[1]}:{parts[2]}>{parts[3]}"
-                data[key] = float(parts[4])
+    try:
+        with open(path) as f:
+            for line in f:
+                parts = line.strip().split("\t")
+                if len(parts) >= 5:
+                    key = f"{parts[0]}:{parts[1]}:{parts[2]}>{parts[3]}"
+                    data[key] = float(parts[4])
+    except FileNotFoundError:
+        import logging
+        logging.getLogger(__name__).warning(f"KRGDB file not found: {path}")
     _KRGDB_CACHE[path] = data
     return data
 
