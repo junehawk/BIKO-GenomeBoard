@@ -32,3 +32,10 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
     if len(variants) > 1000:
         logger.warning(f"VCF contains {len(variants)} variants (>1000). Consider filtering first.")
     return variants
+
+
+if __name__ == "__main__":
+    import sys, json
+    vcf_path = sys.argv[1] if len(sys.argv) > 1 else "data/sample_vcf/demo_variants.vcf"
+    variants = parse_vcf(vcf_path)
+    print(json.dumps([{"variant_id": v.variant_id, "gene": v.gene} for v in variants], indent=2))

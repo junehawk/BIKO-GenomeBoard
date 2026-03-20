@@ -71,3 +71,12 @@ def query_clinvar(variant: Variant) -> Dict:
         "review_status": clinvar_data.get("review_status"),
         "acmg_codes": acmg_codes,
     }
+
+
+if __name__ == "__main__":
+    import sys, json
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "Usage: python -m scripts.clinical.query_clinvar 'chr17:7577120 G>A'"}))
+        sys.exit(1)
+    v = Variant.from_string(sys.argv[1])
+    print(json.dumps(query_clinvar(v), indent=2))

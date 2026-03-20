@@ -20,3 +20,14 @@ def query_krgdb(variant: Variant, krgdb_path: str = "data/krgdb_freq.tsv") -> Op
     data = _load_krgdb(krgdb_path)
     key = f"{variant.chrom}:{variant.pos}:{variant.ref}>{variant.alt}"
     return data.get(key)
+
+
+if __name__ == "__main__":
+    import sys, json
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_krgdb 'chr17:7577120 G>A' [krgdb_path]"}))
+        sys.exit(1)
+    v = Variant.from_string(sys.argv[1])
+    path = sys.argv[2] if len(sys.argv) > 2 else "data/krgdb_freq.tsv"
+    result = query_krgdb(v, path)
+    print(json.dumps({"variant": v.variant_id, "krgdb_freq": result}, indent=2))

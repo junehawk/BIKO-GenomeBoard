@@ -41,3 +41,12 @@ def query_gnomad(variant: Variant) -> Dict:
             break
 
     return {"gnomad_all": gnomad_all, "gnomad_eas": gnomad_eas}
+
+
+if __name__ == "__main__":
+    import sys, json
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_gnomad 'chr17:7577120 G>A'"}))
+        sys.exit(1)
+    v = Variant.from_string(sys.argv[1])
+    print(json.dumps(query_gnomad(v), indent=2))

@@ -47,3 +47,14 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
         "korean_flag": " | ".join(flags) if flags else "특이사항 없음",
         "frequencies": freq,
     }
+
+
+if __name__ == "__main__":
+    import sys, json
+    krgdb = float(sys.argv[1]) if len(sys.argv) > 1 else None
+    eas = float(sys.argv[2]) if len(sys.argv) > 2 else None
+    gnomad_all = float(sys.argv[3]) if len(sys.argv) > 3 else None
+    freq = FrequencyData(krgdb=krgdb, gnomad_eas=eas, gnomad_all=gnomad_all)
+    result = compare_frequencies(freq)
+    result["frequencies"] = {"krgdb": freq.krgdb, "gnomad_eas": freq.gnomad_eas, "gnomad_all": freq.gnomad_all}
+    print(json.dumps(result, indent=2, ensure_ascii=False))

@@ -33,3 +33,15 @@ def query_pharmgkb(variant: Variant) -> Optional[Dict]:
         "drug_name": data.get("name", ""),
         "recommendation": data.get("recommendation", ""),
     }
+
+
+if __name__ == "__main__":
+    import sys, json
+    if len(sys.argv) < 2:
+        print(json.dumps({"error": "Usage: python -m scripts.pharma.query_pharmgkb 'chr10:96541616 G>A' [gene]"}))
+        sys.exit(1)
+    v = Variant.from_string(sys.argv[1])
+    if len(sys.argv) > 2:
+        v.gene = sys.argv[2]
+    result = query_pharmgkb(v)
+    print(json.dumps(result, indent=2))
