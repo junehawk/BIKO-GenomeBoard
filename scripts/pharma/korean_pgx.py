@@ -9,6 +9,7 @@ from scripts.common.config import get
 _PGX_DATA = None
 _PGX_LOCK = threading.Lock()
 
+
 def _load_pgx_data() -> list:
     global _PGX_DATA
     with _PGX_LOCK:
@@ -19,11 +20,14 @@ def _load_pgx_data() -> list:
                     _PGX_DATA = json.load(f)["genes"]
             except (FileNotFoundError, json.JSONDecodeError, KeyError):
                 import logging
+
                 logging.getLogger(__name__).warning(f"PGx data file not found or invalid: {path}")
                 _PGX_DATA = []
     return _PGX_DATA
 
+
 PGX_GENES = set(get("pgx.genes", ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"]))
+
 
 def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
     if variant.gene not in PGX_GENES:
@@ -56,6 +60,7 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
 
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.pharma.korean_pgx 'chr10:96541616 G>A' [gene]"}))
         sys.exit(1)
@@ -64,6 +69,17 @@ if __name__ == "__main__":
         v.gene = sys.argv[2]
     result = check_korean_pgx(v)
     if result:
-        print(json.dumps({"gene": result.gene, "korean_flag": result.korean_flag, "cpic_level": result.cpic_level, "clinical_impact": result.clinical_impact}, indent=2, ensure_ascii=False))
+        print(
+            json.dumps(
+                {
+                    "gene": result.gene,
+                    "korean_flag": result.korean_flag,
+                    "cpic_level": result.cpic_level,
+                    "clinical_impact": result.clinical_impact,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
     else:
         print(json.dumps({"result": None}))

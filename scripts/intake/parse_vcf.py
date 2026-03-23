@@ -3,12 +3,15 @@ import logging
 from typing import List
 from scripts.common.models import Variant
 from scripts.intake.parse_annotation import (
-    parse_csq_header, parse_ann_header,
-    parse_csq_value, parse_ann_value,
+    parse_csq_header,
+    parse_ann_header,
+    parse_csq_value,
+    parse_ann_value,
     format_consequence,
 )
 
 logger = logging.getLogger(__name__)
+
 
 def parse_vcf(vcf_path: str) -> List[Variant]:
     """Parse a VCF file into a list of Variant objects.
@@ -90,7 +93,9 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import sys
+    import json
+
     vcf_path = sys.argv[1] if len(sys.argv) > 1 else "data/sample_vcf/demo_variants.vcf"
     variants = parse_vcf(vcf_path)
     print(json.dumps([{"variant_id": v.variant_id, "gene": v.gene} for v in variants], indent=2))

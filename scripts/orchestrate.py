@@ -153,7 +153,7 @@ def run_pipeline(
         logger.warning(f"KRGDB file not found: {krgdb_path} — continuing without Korean frequency data")
 
     # ── Step 2: Query databases per variant ──────────────────────────────────
-    _progress(f"[2/6] Querying databases (ClinVar, gnomAD, KRGDB)...")
+    _progress("[2/6] Querying databases (ClinVar, gnomAD, KRGDB)...")
     if skip_api:
         _progress("  [skip-api mode: ClinVar and gnomAD queries disabled]")
 
@@ -230,42 +230,44 @@ def run_pipeline(
             gnomad_all=db["gnomad"].get("gnomad_all"),
         )
 
-        variant_records.append({
-            "variant": variant.variant_id,
-            "gene": variant.gene,
-            "chrom": variant.chrom,
-            "pos": variant.pos,
-            "ref": variant.ref,
-            "alt": variant.alt,
-            "classification": classification.classification,
-            "acmg_codes": classification.evidence_codes,
-            "conflict": classification.conflict,
-            "clinvar_significance": clinvar.get("clinvar_significance", "Not Found"),
-            "clinvar_id": clinvar.get("clinvar_id"),
-            "review_status": clinvar.get("review_status"),
-            "gnomad_all": db["gnomad"].get("gnomad_all"),
-            "gnomad_eas": db["gnomad"].get("gnomad_eas"),
-            "krgdb_freq": db["krgdb_freq"],
-            "korean_flag": freq.get("korean_flag", ""),
-            # Annotation fields (from pre-annotated VCF via VEP/SnpEff)
-            "hgvsc": variant.hgvsc or "",
-            "hgvsp": variant.hgvsp or "",
-            "consequence": variant.consequence or "",
-            "transcript": variant.transcript or "",
-            "impact": variant.impact or "",
-            "sift": variant.sift or "",
-            "polyphen": variant.polyphen or "",
-            "agents": {
-                "clinical": clinvar,
-                "korean_pop": {
-                    "gnomad_all": db["gnomad"].get("gnomad_all"),
-                    "gnomad_eas": db["gnomad"].get("gnomad_eas"),
-                    "krgdb_freq": db["krgdb_freq"],
-                    "korean_flag": freq.get("korean_flag", ""),
-                    "api_available": db["gnomad"].get("api_available", False),
+        variant_records.append(
+            {
+                "variant": variant.variant_id,
+                "gene": variant.gene,
+                "chrom": variant.chrom,
+                "pos": variant.pos,
+                "ref": variant.ref,
+                "alt": variant.alt,
+                "classification": classification.classification,
+                "acmg_codes": classification.evidence_codes,
+                "conflict": classification.conflict,
+                "clinvar_significance": clinvar.get("clinvar_significance", "Not Found"),
+                "clinvar_id": clinvar.get("clinvar_id"),
+                "review_status": clinvar.get("review_status"),
+                "gnomad_all": db["gnomad"].get("gnomad_all"),
+                "gnomad_eas": db["gnomad"].get("gnomad_eas"),
+                "krgdb_freq": db["krgdb_freq"],
+                "korean_flag": freq.get("korean_flag", ""),
+                # Annotation fields (from pre-annotated VCF via VEP/SnpEff)
+                "hgvsc": variant.hgvsc or "",
+                "hgvsp": variant.hgvsp or "",
+                "consequence": variant.consequence or "",
+                "transcript": variant.transcript or "",
+                "impact": variant.impact or "",
+                "sift": variant.sift or "",
+                "polyphen": variant.polyphen or "",
+                "agents": {
+                    "clinical": clinvar,
+                    "korean_pop": {
+                        "gnomad_all": db["gnomad"].get("gnomad_all"),
+                        "gnomad_eas": db["gnomad"].get("gnomad_eas"),
+                        "krgdb_freq": db["krgdb_freq"],
+                        "korean_flag": freq.get("korean_flag", ""),
+                        "api_available": db["gnomad"].get("api_available", False),
+                    },
                 },
-            },
-        })
+            }
+        )
 
     # Build summary counts
     total = len(variant_records)
@@ -369,7 +371,8 @@ Examples:
     )
     parser.add_argument("vcf_path", help="Path to input VCF file")
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default="output/report.html",
         help="Output file path (default: output/report.html). Use .pdf extension for PDF output.",
     )
@@ -406,7 +409,8 @@ Examples:
         help="Report mode: cancer (somatic) or rare-disease (germline)",
     )
     parser.add_argument(
-        "--verbose", "-v",
+        "--verbose",
+        "-v",
         action="store_true",
         help="Enable verbose (DEBUG) logging",
     )

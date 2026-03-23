@@ -8,3 +8,4 @@ node_modules/
 data/pglite/
 .pytest_cache/
 htmlcov/
+.ruff_cache/

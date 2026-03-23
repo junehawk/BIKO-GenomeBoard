@@ -1,6 +1,6 @@
 # tests/test_report_modes.py
 """Tests for report mode abstraction (Task 1.3)."""
-import pytest
+
 from pathlib import Path
 
 from scripts.counselor.generate_pdf import generate_report_html
@@ -32,6 +32,7 @@ MINIMAL_REPORT = {
 
 
 # ── Mode selection tests ─────────────────────────────────────────────────────
+
 
 def test_cancer_mode_default():
     """generate_report_html(data) works with no mode arg — backward compatible."""
@@ -73,6 +74,7 @@ def test_unknown_mode_falls_back_to_cancer():
 
 
 # ── Orchestrate mode flag tests ──────────────────────────────────────────────
+
 
 def test_orchestrate_mode_flag(tmp_path):
     """run_pipeline(..., mode='rare-disease') sets mode in report_data."""

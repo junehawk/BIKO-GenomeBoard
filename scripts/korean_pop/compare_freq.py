@@ -6,12 +6,16 @@ BA1_THRESHOLD = get("thresholds.ba1", 0.05)
 BS1_THRESHOLD = get("thresholds.bs1", 0.01)
 PM2_THRESHOLD = get("thresholds.pm2", 0.001)  # for PM2_Supporting
 
+
 def compare_frequencies(freq: FrequencyData) -> Dict:
     acmg_codes: List[str] = []
     flags: List[str] = []
 
-    max_freq = max(f for f in [freq.krgdb, freq.gnomad_eas, freq.gnomad_all] if f is not None) \
-        if any(f is not None for f in [freq.krgdb, freq.gnomad_eas, freq.gnomad_all]) else None
+    max_freq = (
+        max(f for f in [freq.krgdb, freq.gnomad_eas, freq.gnomad_all] if f is not None)
+        if any(f is not None for f in [freq.krgdb, freq.gnomad_eas, freq.gnomad_all])
+        else None
+    )
 
     if max_freq is None:
         return {
@@ -55,7 +59,9 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import sys
+    import json
+
     krgdb = float(sys.argv[1]) if len(sys.argv) > 1 else None
     eas = float(sys.argv[2]) if len(sys.argv) > 2 else None
     gnomad_all = float(sys.argv[3]) if len(sys.argv) > 3 else None

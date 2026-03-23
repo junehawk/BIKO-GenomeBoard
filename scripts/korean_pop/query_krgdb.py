@@ -6,6 +6,7 @@ from scripts.common.config import get
 _KRGDB_CACHE: dict = {}
 _KRGDB_LOCK = threading.Lock()
 
+
 def _load_krgdb(path: str) -> dict:
     with _KRGDB_LOCK:
         if path in _KRGDB_CACHE:
@@ -20,10 +21,12 @@ def _load_krgdb(path: str) -> dict:
                     data[key] = float(parts[4])
     except FileNotFoundError:
         import logging
+
         logging.getLogger(__name__).warning(f"KRGDB file not found: {path}")
     with _KRGDB_LOCK:
         _KRGDB_CACHE[path] = data
     return data
+
 
 def query_krgdb(variant: Variant, krgdb_path: str = None) -> Optional[float]:
     if krgdb_path is None:
@@ -34,7 +37,9 @@ def query_krgdb(variant: Variant, krgdb_path: str = None) -> Optional[float]:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import sys
+    import json
+
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_krgdb 'chr17:7577120 G>A' [krgdb_path]"}))
         sys.exit(1)

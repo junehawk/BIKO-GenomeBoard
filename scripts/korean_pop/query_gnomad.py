@@ -27,6 +27,7 @@ query($variantId: String!, $dataset: DatasetId!) {
 
 logger = logging.getLogger(__name__)
 
+
 def _graphql_query(query: str, variables: dict) -> Optional[dict]:
     try:
         resp = requests.post(GNOMAD_API, json={"query": query, "variables": variables}, timeout=30)
@@ -35,11 +36,13 @@ def _graphql_query(query: str, variables: dict) -> Optional[dict]:
     except Exception:
         return None
 
+
 def _calc_af(ac, an):
     """Calculate allele frequency from allele count and number."""
     if an and an > 0 and ac is not None:
         return ac / an
     return None
+
 
 def _extract_frequencies(variant_data: dict) -> Dict:
     """Extract AF from genome or exome data, preferring genome."""
@@ -59,6 +62,7 @@ def _extract_frequencies(variant_data: dict) -> Dict:
         return {"gnomad_all": gnomad_all, "gnomad_eas": gnomad_eas, "api_available": True}
 
     return {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
+
 
 def query_gnomad(variant: Variant) -> Dict:
     chrom_num = variant.chrom.replace("chr", "")
@@ -85,7 +89,9 @@ def query_gnomad(variant: Variant) -> Dict:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import sys
+    import json
+
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_gnomad 'chr17:7577120 G>A'"}))
         sys.exit(1)

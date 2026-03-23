@@ -1,7 +1,7 @@
 # tests/test_api_utils.py
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from scripts.common.api_utils import fetch_with_retry
+
 
 def test_fetch_success(mocker):
     mock_resp = MagicMock()
@@ -11,6 +11,7 @@ def test_fetch_success(mocker):
 
     result = fetch_with_retry("https://example.com/api")
     assert result == {"result": "ok"}
+
 
 def test_fetch_retry_on_failure(mocker):
     fail_resp = MagicMock()
@@ -26,6 +27,7 @@ def test_fetch_retry_on_failure(mocker):
 
     result = fetch_with_retry("https://example.com/api", max_retries=2)
     assert result == {"result": "ok"}
+
 
 def test_fetch_all_retries_fail(mocker):
     fail_resp = MagicMock()

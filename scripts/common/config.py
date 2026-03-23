@@ -1,4 +1,5 @@
 """Centralized configuration loader for GenomeBoard."""
+
 import os
 import threading
 from pathlib import Path
@@ -6,6 +7,7 @@ from typing import Any, Optional
 
 _config = None
 _config_lock = threading.Lock()
+
 
 def _find_project_root() -> Path:
     """Find project root by looking for config.yaml or known markers."""
@@ -18,6 +20,7 @@ def _find_project_root() -> Path:
             return current
         current = current.parent
     return Path.cwd()
+
 
 def load_config(config_path: Optional[str] = None) -> dict:
     """Load config from YAML file with env var overrides."""
@@ -37,6 +40,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
 
         if path.exists():
             import yaml
+
             with open(path) as f:
                 config = yaml.safe_load(f) or {}
         else:
@@ -92,6 +96,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
             _config = config
         return config
 
+
 def get(key: str, default: Any = None) -> Any:
     """Get a config value using dot notation: get('thresholds.ba1')"""
     config = load_config()
@@ -103,6 +108,7 @@ def get(key: str, default: Any = None) -> Any:
         else:
             return default
     return current
+
 
 def reset():
     """Reset cached config (useful for testing)."""

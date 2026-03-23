@@ -62,12 +62,15 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                 v.setdefault("finding_summary", info.get("finding_summary", ""))
                 # VCF annotation takes priority over static gene_knowledge for hgvs/variant_effect
                 if v.get("hgvsc") or v.get("hgvsp"):
-                    v.setdefault("hgvs", {
-                        "transcript": v.get("transcript", ""),
-                        "cdna": v.get("hgvsc", ""),
-                        "protein": v.get("hgvsp", ""),
-                        "variant_effect": v.get("consequence", ""),
-                    })
+                    v.setdefault(
+                        "hgvs",
+                        {
+                            "transcript": v.get("transcript", ""),
+                            "cdna": v.get("hgvsc", ""),
+                            "protein": v.get("hgvsp", ""),
+                            "variant_effect": v.get("consequence", ""),
+                        },
+                    )
                     v.setdefault("variant_effect", v.get("consequence", ""))
                 else:
                     v.setdefault("hgvs", info.get("hgvs", {}))
@@ -97,11 +100,13 @@ def generate_pdf(report_data: Dict, output_path: str, mode: str = "cancer") -> s
     html = generate_report_html(report_data, mode=mode)
     try:
         from weasyprint import HTML
+
         HTML(string=html).write_pdf(output_path)
     except ImportError:
         import logging
+
         logging.getLogger(__name__).warning("WeasyPrint not available. Saving HTML report instead.")
-        html_path = output_path.replace('.pdf', '.html')
+        html_path = output_path.replace(".pdf", ".html")
         Path(html_path).write_text(html)
         return html_path
     return output_path

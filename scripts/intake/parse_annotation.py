@@ -1,4 +1,5 @@
 """Parse VEP CSQ or SnpEff ANN fields from pre-annotated VCFs."""
+
 import logging
 from typing import Dict, List, Optional
 
@@ -19,10 +20,22 @@ def parse_ann_header(header_line: str) -> List[str]:
     """Extract ANN field names from VCF ##INFO=<ID=ANN...> header."""
     # SnpEff ANN has a standard field order
     return [
-        "Allele", "Annotation", "Annotation_Impact", "Gene_Name", "Gene_ID",
-        "Feature_Type", "Feature_ID", "Transcript_BioType", "Rank",
-        "HGVS.c", "HGVS.p", "cDNA.pos/cDNA.length", "CDS.pos/CDS.length",
-        "AA.pos/AA.length", "Distance", "ERRORS/WARNINGS/INFO"
+        "Allele",
+        "Annotation",
+        "Annotation_Impact",
+        "Gene_Name",
+        "Gene_ID",
+        "Feature_Type",
+        "Feature_ID",
+        "Transcript_BioType",
+        "Rank",
+        "HGVS.c",
+        "HGVS.p",
+        "cDNA.pos/cDNA.length",
+        "CDS.pos/CDS.length",
+        "AA.pos/AA.length",
+        "Distance",
+        "ERRORS/WARNINGS/INFO",
     ]
 
 

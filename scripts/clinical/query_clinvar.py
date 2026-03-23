@@ -11,6 +11,7 @@ CLINVAR_ESUMMARY = get("api.clinvar_esummary", "https://eutils.ncbi.nlm.nih.gov/
 
 logger = logging.getLogger(__name__)
 
+
 def _fetch_summary(uid: str, api_key: str = "") -> Optional[dict]:
     """Fetch ClinVar summary for a given UID."""
     summary_params = {"db": "clinvar", "id": uid, "retmode": "json"}
@@ -20,6 +21,7 @@ def _fetch_summary(uid: str, api_key: str = "") -> Optional[dict]:
     if summary and "result" in summary and uid in summary["result"]:
         return summary["result"][uid]
     return None
+
 
 def _search_clinvar_variant(variant: Variant) -> Optional[dict]:
     """Search ClinVar for a variant and return summary."""
@@ -49,6 +51,7 @@ def _search_clinvar_variant(variant: Variant) -> Optional[dict]:
 
     return None
 
+
 def _extract_significance(clinvar_data: dict) -> tuple:
     """Extract clinical significance and review status from ClinVar data.
     Handles both old format (clinical_significance) and new format (germline_classification).
@@ -64,6 +67,7 @@ def _extract_significance(clinvar_data: dict) -> tuple:
         return cs["description"], clinvar_data.get("review_status", "")
 
     return "Unknown", ""
+
 
 def _derive_acmg_codes(clinvar_data: dict) -> List[str]:
     """Derive ACMG evidence codes from ClinVar data."""
@@ -81,6 +85,7 @@ def _derive_acmg_codes(clinvar_data: dict) -> List[str]:
             codes.append("PP5")
 
     return codes
+
 
 def query_clinvar(variant: Variant) -> Dict:
     """Query ClinVar for variant and return structured result."""
@@ -115,7 +120,9 @@ def query_clinvar(variant: Variant) -> Dict:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import sys
+    import json
+
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.clinical.query_clinvar 'chr17:7577120 G>A'"}))
         sys.exit(1)

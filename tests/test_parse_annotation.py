@@ -1,6 +1,6 @@
 # tests/test_parse_annotation.py
 """Tests for VEP CSQ / SnpEff ANN annotation parsing."""
-import pytest
+
 from pathlib import Path
 from scripts.intake.parse_annotation import (
     parse_csq_header,
@@ -16,18 +16,19 @@ PLAIN_VCF = Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variant
 
 CSQ_HEADER = (
     '##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. '
-    'Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|'
+    "Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|"
     'cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|CANONICAL|MANE_SELECT|SIFT|PolyPhen">'
 )
 
 ANN_HEADER = (
     '##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: '
-    "\'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | "
-    "Transcript_BioType | Rank | HGVS.c | HGVS.p | ...\'\">"
+    "'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | Feature_ID | "
+    "Transcript_BioType | Rank | HGVS.c | HGVS.p | ...'\">"
 )
 
 
 # ── Header parsing ────────────────────────────────────────────────────────────
+
 
 def test_parse_csq_header():
     fields = parse_csq_header(CSQ_HEADER)
@@ -47,7 +48,7 @@ def test_parse_csq_header():
 
 def test_parse_csq_header_no_format():
     """Header without 'Format:' returns empty list."""
-    fields = parse_csq_header("##INFO=<ID=CSQ,Number=.,Type=String,Description=\"no format here\">")
+    fields = parse_csq_header('##INFO=<ID=CSQ,Number=.,Type=String,Description="no format here">')
     assert fields == []
 
 
@@ -64,6 +65,7 @@ def test_parse_ann_header():
 
 
 # ── CSQ value parsing ─────────────────────────────────────────────────────────
+
 
 def test_parse_csq_value_single_transcript():
     fields = parse_csq_header(CSQ_HEADER)
@@ -140,6 +142,7 @@ def test_parse_csq_value_empty_string():
 
 # ── ANN value parsing ─────────────────────────────────────────────────────────
 
+
 def test_parse_ann_value():
     fields = parse_ann_header(ANN_HEADER)
     ann = "T|missense_variant|MODERATE|TP53|ENSG00000141510|transcript|ENST00000269305|protein_coding|4/11|c.524G>T|p.Arg175Leu|605/2579|524/1182|175/393||"
@@ -169,6 +172,7 @@ def test_parse_ann_value_multiple_entries_picks_highest_impact():
 
 
 # ── format_consequence ────────────────────────────────────────────────────────
+
 
 def test_format_consequence():
     assert format_consequence("missense_variant") == "Missense"
@@ -205,6 +209,7 @@ def test_format_consequence_empty():
 
 
 # ── Integration: parse_vcf with CSQ annotations ───────────────────────────────
+
 
 def test_parse_vcf_with_csq():
     """Annotated VCF produces variants with annotation fields populated."""
@@ -247,6 +252,7 @@ def test_parse_vcf_with_csq_canonical_preferred():
 
 # ── Integration: parse_vcf without annotation (existing behavior) ─────────────
 
+
 def test_parse_vcf_without_annotation():
     """Plain VCF (no CSQ/ANN) still parses correctly with no annotation fields."""
     variants = parse_vcf(str(PLAIN_VCF))
@@ -270,9 +276,11 @@ def test_parse_vcf_without_annotation():
 
 # ── Integration: annotation fallback to gene_knowledge in generate_report_html ─
 
+
 def test_annotation_fallback_to_gene_knowledge():
     """When no VCF annotation, generate_report_html uses gene_knowledge.json data."""
     from scripts.counselor.generate_pdf import generate_report_html
+
     data = {
         "sample_id": "TEST_FALLBACK",
         "date": "2026-03-23",
@@ -310,6 +318,7 @@ def test_annotation_fallback_to_gene_knowledge():
 def test_annotation_vcf_fields_override_gene_knowledge():
     """When VCF annotation present, hgvs dict uses VCF data, not gene_knowledge."""
     from scripts.counselor.generate_pdf import generate_report_html
+
     data = {
         "sample_id": "TEST_ANNOT",
         "date": "2026-03-23",
@@ -346,11 +355,12 @@ def test_annotation_vcf_fields_override_gene_knowledge():
 
 # ── SnpEff ANN via tmp VCF ────────────────────────────────────────────────────
 
+
 def test_parse_vcf_with_ann(tmp_path):
     """VCF with SnpEff ANN field parses correctly."""
     vcf_content = (
         "##fileformat=VCFv4.2\n"
-        "##INFO=<ID=ANN,Number=.,Type=String,Description=\"Functional annotations: "
+        '##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: '
         "'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | "
         "Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | ...'\">\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
@@ -376,7 +386,7 @@ def test_parse_vcf_ann_gene_from_annotation(tmp_path):
     """When Gene= is absent from INFO but ANN has gene name, variant.gene is set from ANN."""
     vcf_content = (
         "##fileformat=VCFv4.2\n"
-        "##INFO=<ID=ANN,Number=.,Type=String,Description=\"Functional annotations: "
+        '##INFO=<ID=ANN,Number=.,Type=String,Description="Functional annotations: '
         "'Allele | Annotation | Annotation_Impact | Gene_Name | Gene_ID | Feature_Type | "
         "Feature_ID | Transcript_BioType | Rank | HGVS.c | HGVS.p | ...'\">\n"
         "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"

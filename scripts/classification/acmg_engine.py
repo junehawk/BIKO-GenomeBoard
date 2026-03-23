@@ -8,6 +8,7 @@ from typing import List
 from scripts.common.models import AcmgEvidence
 from scripts.common.config import get
 
+
 @dataclass
 class ClassificationResult:
     classification: str  # Pathogenic, Likely Pathogenic, VUS, Likely Benign, Benign
@@ -15,8 +16,10 @@ class ClassificationResult:
     conflict: bool = False
     matched_rule: str = ""
 
+
 _RULES_CACHE: dict = {}
 _RULES_LOCK = threading.Lock()
+
 
 def _load_rules() -> dict:
     with _RULES_LOCK:
@@ -28,6 +31,7 @@ def _load_rules() -> dict:
     with _RULES_LOCK:
         _RULES_CACHE.update(data)
     return _RULES_CACHE
+
 
 def _count_by_strength(evidences: List[AcmgEvidence]) -> dict:
     """Count evidence codes by ACMG strength prefix."""
@@ -58,6 +62,7 @@ def _count_by_strength(evidences: List[AcmgEvidence]) -> dict:
             counts["bp"] += 1
     return counts
 
+
 def _matches_rule(counts: dict, rule: dict) -> bool:
     """Check if evidence counts meet or exceed a rule's requirements."""
     for key, required in rule.items():
@@ -65,8 +70,10 @@ def _matches_rule(counts: dict, rule: dict) -> bool:
             return False
     return True
 
+
 PGX_GENES = set(get("pgx.genes", ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"]))
 RISK_FACTOR_GENES = set(get("pgx.risk_factor_genes", ["APOE"]))
+
 
 def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
     """Check if engine classification conflicts with ClinVar significance."""
@@ -94,8 +101,12 @@ def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
 
     # Standard ACMG tier comparison (case-insensitive)
     rank = {
-        "benign": 0, "likely benign": 1, "vus": 2, "uncertain significance": 2,
-        "likely pathogenic": 3, "pathogenic": 4,
+        "benign": 0,
+        "likely benign": 1,
+        "vus": 2,
+        "uncertain significance": 2,
+        "likely pathogenic": 3,
+        "pathogenic": 4,
     }
     engine_rank = rank.get(engine_lower, -1)
     clinvar_rank = rank.get(clinvar_lower, -1)
@@ -113,6 +124,7 @@ def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
 
     # Conflict if difference >= 2 steps (LP vs P is only 1 step, not flagged)
     return abs(engine_rank - clinvar_rank) >= 2
+
 
 def classify_variant(evidences: List[AcmgEvidence], gene: str = None) -> ClassificationResult:
     """Classify variant by ACMG rules. If gene is a PGx gene, return 'Drug Response' instead."""
@@ -141,48 +153,35 @@ def classify_variant(evidences: List[AcmgEvidence], gene: str = None) -> Classif
 
     # Check conflict: both pathogenic and benign evidence at ANY level
     if has_pathogenic and has_benign:
-        path_match = any(
-            _matches_rule(counts, r)
-            for r in rules["pathogenic"] + rules["likely_pathogenic"]
-        )
-        benign_match = any(
-            _matches_rule(counts, r)
-            for r in rules["benign"] + rules["likely_benign"]
-        )
+        path_match = any(_matches_rule(counts, r) for r in rules["pathogenic"] + rules["likely_pathogenic"])
+        benign_match = any(_matches_rule(counts, r) for r in rules["benign"] + rules["likely_benign"])
         if path_match and benign_match:
             return ClassificationResult(
-                classification="VUS", evidence_codes=code_list, conflict=True,
-                matched_rule="conflicting_evidence"
+                classification="VUS", evidence_codes=code_list, conflict=True, matched_rule="conflicting_evidence"
             )
 
     # Check Benign first (BA1 is stand-alone)
     for i, rule in enumerate(rules["benign"]):
         if _matches_rule(counts, rule):
-            return ClassificationResult(
-                classification="Benign", evidence_codes=code_list,
-                matched_rule=f"benign_{i}"
-            )
+            return ClassificationResult(classification="Benign", evidence_codes=code_list, matched_rule=f"benign_{i}")
 
     for i, rule in enumerate(rules["likely_benign"]):
         if _matches_rule(counts, rule):
             return ClassificationResult(
-                classification="Likely Benign", evidence_codes=code_list,
-                matched_rule=f"likely_benign_{i}"
+                classification="Likely Benign", evidence_codes=code_list, matched_rule=f"likely_benign_{i}"
             )
 
     # Check Pathogenic
     for i, rule in enumerate(rules["pathogenic"]):
         if _matches_rule(counts, rule):
             return ClassificationResult(
-                classification="Pathogenic", evidence_codes=code_list,
-                matched_rule=f"pathogenic_{i}"
+                classification="Pathogenic", evidence_codes=code_list, matched_rule=f"pathogenic_{i}"
             )
 
     for i, rule in enumerate(rules["likely_pathogenic"]):
         if _matches_rule(counts, rule):
             return ClassificationResult(
-                classification="Likely Pathogenic", evidence_codes=code_list,
-                matched_rule=f"likely_pathogenic_{i}"
+                classification="Likely Pathogenic", evidence_codes=code_list, matched_rule=f"likely_pathogenic_{i}"
             )
 
     return ClassificationResult(classification="VUS", evidence_codes=code_list)

@@ -10,6 +10,7 @@ PHARMGKB_API = get("api.pharmgkb", "https://api.pharmgkb.org/v1/data")
 _last_request_time = 0
 _RATE_LOCK = threading.Lock()
 
+
 def _rate_limit():
     global _last_request_time
     with _RATE_LOCK:
@@ -19,11 +20,13 @@ def _rate_limit():
             time.sleep(rate_limit - elapsed)
         _last_request_time = time.time()
 
+
 def _fetch_pharmgkb(gene: str) -> Optional[dict]:
     _rate_limit()
     url = f"{PHARMGKB_API}/clinicalAnnotation"
     params = {"gene": gene, "view": "base"}
     return fetch_with_retry(url, params=params)
+
 
 def query_pharmgkb(variant: Variant) -> Optional[Dict]:
     if not variant.gene:
@@ -41,7 +44,9 @@ def query_pharmgkb(variant: Variant) -> Optional[Dict]:
 
 
 if __name__ == "__main__":
-    import sys, json
+    import sys
+    import json
+
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.pharma.query_pharmgkb 'chr10:96541616 G>A' [gene]"}))
         sys.exit(1)

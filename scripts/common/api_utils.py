@@ -5,6 +5,7 @@ import requests.exceptions
 from typing import Optional
 from scripts.common.config import get
 
+
 def fetch_with_retry(
     url: str,
     params: Optional[dict] = None,
@@ -19,10 +20,10 @@ def fetch_with_retry(
                 return None
             if resp.status_code >= 500:
                 if attempt < max_retries - 1:
-                    time.sleep(backoff_base * (2 ** attempt))
+                    time.sleep(backoff_base * (2**attempt))
                 continue
             return resp.json()
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             if attempt < max_retries - 1:
-                time.sleep(backoff_base * (2 ** attempt))
+                time.sleep(backoff_base * (2**attempt))
     return None

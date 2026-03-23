@@ -12,6 +12,7 @@ from scripts.common.models import AcmgEvidence, FrequencyData
 
 DEMO_VCF_PATH = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants.vcf")
 
+
 def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
     """End-to-end: demo VCF -> parse -> query (mocked) -> classify -> report"""
     # Clear KRGDB cache to avoid stale data between test runs
@@ -25,14 +26,12 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
             "gene": {"symbol": "TP53"},
             "review_status": "criteria provided, multiple submitters, no conflicts",
             "variation_id": "12375",
-        }
+        },
     )
     # Mock gnomAD
     mocker.patch(
         "scripts.korean_pop.query_gnomad._graphql_query",
-        return_value={
-            "data": {"variant": {"genome": {"af": 0.0002, "populations": [{"id": "eas", "af": 0.0003}]}}}
-        }
+        return_value={"data": {"variant": {"genome": {"af": 0.0002, "populations": [{"id": "eas", "af": 0.0003}]}}}},
     )
     # Create temp KRGDB data
     krgdb_file = tmp_path / "krgdb_freq.tsv"
@@ -70,17 +69,19 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
             all_codes.append(AcmgEvidence(code=c, source="korean_pop", description=""))
         classification = classify_variant(all_codes, gene=v.gene)
 
-        variant_results.append({
-            "variant": v.variant_id,
-            "gene": v.gene,
-            "classification": classification.classification,
-            "acmg_codes": classification.evidence_codes,
-            "agents": {
-                "clinical": clinical,
-                "korean_pop": {"korean_flag": freq_result["korean_flag"]},
-            },
-            "conflict": classification.conflict,
-        })
+        variant_results.append(
+            {
+                "variant": v.variant_id,
+                "gene": v.gene,
+                "classification": classification.classification,
+                "acmg_codes": classification.evidence_codes,
+                "agents": {
+                    "clinical": clinical,
+                    "korean_pop": {"korean_flag": freq_result["korean_flag"]},
+                },
+                "conflict": classification.conflict,
+            }
+        )
 
     # 4. Generate report
     report_data = {

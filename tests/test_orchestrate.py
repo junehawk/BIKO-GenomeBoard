@@ -1,6 +1,5 @@
 # tests/test_orchestrate.py
 import json
-import pytest
 from pathlib import Path
 
 DEMO_VCF = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants.vcf")
@@ -109,12 +108,8 @@ def test_orchestrate_summary_counts(mocker, tmp_path):
     variants = result["variants"]
 
     assert summary["total"] == len(variants)
-    assert summary["pathogenic"] == sum(
-        1 for v in variants if v["classification"] == "Pathogenic"
-    )
-    assert summary["drug_response"] == sum(
-        1 for v in variants if v["classification"] == "Drug Response"
-    )
+    assert summary["pathogenic"] == sum(1 for v in variants if v["classification"] == "Pathogenic")
+    assert summary["drug_response"] == sum(1 for v in variants if v["classification"] == "Drug Response")
 
 
 def test_orchestrate_pgx_results(mocker, tmp_path):

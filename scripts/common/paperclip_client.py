@@ -6,8 +6,10 @@ import requests
 
 PAPERCLIP_BASE = os.environ.get("PAPERCLIP_URL", "http://localhost:3100")
 
+
 def _url(path: str) -> str:
     return f"{PAPERCLIP_BASE}/api{path}"
+
 
 def create_issue(company_id: str, title: str, body: str, assignee: Optional[str] = None) -> Optional[Dict]:
     """Create a new issue/ticket in Paperclip."""
@@ -21,6 +23,7 @@ def create_issue(company_id: str, title: str, body: str, assignee: Optional[str]
     except Exception:
         return None
 
+
 def add_comment(issue_id: str, body: str, author: Optional[str] = None) -> Optional[Dict]:
     """Add a comment to an existing issue."""
     payload = {"body": body}
@@ -33,6 +36,7 @@ def add_comment(issue_id: str, body: str, author: Optional[str] = None) -> Optio
     except Exception:
         return None
 
+
 def update_issue_status(issue_id: str, status: str) -> Optional[Dict]:
     """Update issue status (open, in_progress, resolved, closed)."""
     try:
@@ -41,6 +45,7 @@ def update_issue_status(issue_id: str, status: str) -> Optional[Dict]:
         return resp.json()
     except Exception:
         return None
+
 
 def get_assigned_issues(employee_id: str) -> List[Dict]:
     """Get all issues assigned to an employee."""

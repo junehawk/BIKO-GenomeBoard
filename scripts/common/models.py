@@ -1,14 +1,19 @@
 # scripts/common/models.py
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
 import re
 
 STRENGTH_MAP = {
     "PVS": "very_strong",
-    "PS": "strong", "PM": "moderate", "PP": "supporting",
-    "BA": "stand_alone", "BS": "strong", "BP": "supporting",
+    "PS": "strong",
+    "PM": "moderate",
+    "PP": "supporting",
+    "BA": "stand_alone",
+    "BS": "strong",
+    "BP": "supporting",
 }
+
 
 @dataclass
 class Variant:
@@ -19,13 +24,13 @@ class Variant:
     gene: Optional[str] = None
     rsid: Optional[str] = None  # rs number from VCF ID column
     # VEP/SnpEff annotation fields (from pre-annotated VCF)
-    hgvsc: Optional[str] = None       # c. notation (e.g., c.524G>T)
-    hgvsp: Optional[str] = None       # p. notation (e.g., p.Arg175Leu)
+    hgvsc: Optional[str] = None  # c. notation (e.g., c.524G>T)
+    hgvsp: Optional[str] = None  # p. notation (e.g., p.Arg175Leu)
     consequence: Optional[str] = None  # e.g., missense_variant, frameshift_variant
-    transcript: Optional[str] = None   # e.g., NM_000546.6 or ENST00000269305
-    impact: Optional[str] = None       # HIGH, MODERATE, LOW, MODIFIER
-    sift: Optional[str] = None         # e.g., deleterious(0.01)
-    polyphen: Optional[str] = None     # e.g., probably_damaging(0.998)
+    transcript: Optional[str] = None  # e.g., NM_000546.6 or ENST00000269305
+    impact: Optional[str] = None  # HIGH, MODERATE, LOW, MODIFIER
+    sift: Optional[str] = None  # e.g., deleterious(0.01)
+    polyphen: Optional[str] = None  # e.g., probably_damaging(0.998)
 
     @classmethod
     def from_string(cls, s: str) -> Variant:
@@ -39,6 +44,7 @@ class Variant:
     @property
     def variant_id(self) -> str:
         return f"{self.chrom}:{self.pos}:{self.ref}>{self.alt}"
+
 
 @dataclass
 class AcmgEvidence:
@@ -62,6 +68,7 @@ class AcmgEvidence:
             return "pathogenic"
         return "benign"
 
+
 @dataclass
 class FrequencyData:
     krgdb: Optional[float] = None
@@ -72,6 +79,7 @@ class FrequencyData:
         if self.krgdb is not None and self.gnomad_all and self.gnomad_all > 0:
             return self.krgdb / self.gnomad_all
         return None
+
 
 @dataclass
 class PgxResult:

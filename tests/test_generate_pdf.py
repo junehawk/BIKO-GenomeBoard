@@ -1,6 +1,5 @@
 # tests/test_generate_pdf.py
-from scripts.counselor.generate_pdf import generate_report_html, generate_pdf
-from scripts.common.models import Variant
+from scripts.counselor.generate_pdf import generate_report_html
 
 
 # ── Shared fixture data ──────────────────────────────────────────────────────
@@ -88,6 +87,7 @@ FULL_REPORT = {
 
 # ── Core rendering tests ─────────────────────────────────────────────────────
 
+
 def test_generate_html_minimal():
     """Template renders without error for minimal data."""
     html = generate_report_html(MINIMAL_REPORT)
@@ -108,6 +108,7 @@ def test_generate_html_contains_date():
 
 
 # ── FoundationOne CDx structure tests ────────────────────────────────────────
+
 
 def test_accent_bar_present():
     """Header bar with accent color must appear on every page."""
@@ -153,36 +154,38 @@ def test_clinvar_significance_rendered():
 
 # ── Classification badge tests ────────────────────────────────────────────────
 
+
 def test_pathogenic_badge():
     html = generate_report_html(MINIMAL_REPORT)
     assert "badge-pathogenic" in html
 
 
 def test_vus_badge():
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "classification": "VUS", "gene": "BRCA1"}
-    ]}
+    data = {**MINIMAL_REPORT, "variants": [{**MINIMAL_REPORT["variants"][0], "classification": "VUS", "gene": "BRCA1"}]}
     html = generate_report_html(data)
     assert "badge-vus" in html
 
 
 def test_benign_badge():
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "classification": "Benign", "gene": "APOE"}
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [{**MINIMAL_REPORT["variants"][0], "classification": "Benign", "gene": "APOE"}],
+    }
     html = generate_report_html(data)
     assert "badge-benign" in html
 
 
 def test_likely_pathogenic_badge():
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "classification": "Likely Pathogenic", "gene": "ATM"}
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [{**MINIMAL_REPORT["variants"][0], "classification": "Likely Pathogenic", "gene": "ATM"}],
+    }
     html = generate_report_html(data)
     assert "badge-likely-pathogenic" in html
 
 
 # ── Korean population callout tests ──────────────────────────────────────────
+
 
 def test_korean_callout_rendered_when_flag_present():
     """When korean_flag is populated, Korean callout box must appear."""
@@ -193,10 +196,15 @@ def test_korean_callout_rendered_when_flag_present():
 
 def test_korean_callout_absent_when_no_flag():
     """When korean_flag is empty, Korean callout section is suppressed."""
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0],
-         "agents": {"clinical": {"clinvar_significance": "Pathogenic"}, "korean_pop": {"korean_flag": ""}}}
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [
+            {
+                **MINIMAL_REPORT["variants"][0],
+                "agents": {"clinical": {"clinvar_significance": "Pathogenic"}, "korean_pop": {"korean_flag": ""}},
+            }
+        ],
+    }
     html = generate_report_html(data)
     # The per-variant callout box should not appear (no korean population findings section on p1)
     assert "Korean-Specific Annotations" not in html
@@ -210,6 +218,7 @@ def test_korean_population_findings_section_on_summary():
 
 
 # ── Clinically significant vs VUS/Benign split ───────────────────────────────
+
 
 def test_clinically_significant_panel():
     html = generate_report_html(FULL_REPORT)
@@ -227,6 +236,7 @@ def test_no_reportable_list_shows_vus_benign():
 
 
 # ── PGx section tests ────────────────────────────────────────────────────────
+
 
 def test_pgx_section_absent_when_empty():
     html = generate_report_html(MINIMAL_REPORT)
@@ -255,6 +265,7 @@ def test_pgx_enrichment_flag():
 
 # ── DB versions / methodology ─────────────────────────────────────────────────
 
+
 def test_db_versions_rendered():
     html = generate_report_html(MINIMAL_REPORT)
     assert "clinvar" in html.lower() or "ClinVar" in html
@@ -274,6 +285,7 @@ def test_limitations_section_present():
 
 # ── Optional new fields — graceful handling ───────────────────────────────────
 
+
 def test_optional_treatment_strategies_absent_gracefully():
     """Template must not error when treatment_strategies is absent."""
     html = generate_report_html(MINIMAL_REPORT)
@@ -282,62 +294,76 @@ def test_optional_treatment_strategies_absent_gracefully():
 
 
 def test_optional_treatment_strategies_rendered_when_present():
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "treatment_strategies": "PARP inhibitor — olaparib"}
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [{**MINIMAL_REPORT["variants"][0], "treatment_strategies": "PARP inhibitor — olaparib"}],
+    }
     html = generate_report_html(data)
     assert "olaparib" in html
 
 
 def test_optional_frequency_prognosis_rendered_when_present():
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "frequency_prognosis": "Rare variant; poor prognosis associated"}
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [
+            {**MINIMAL_REPORT["variants"][0], "frequency_prognosis": "Rare variant; poor prognosis associated"}
+        ],
+    }
     html = generate_report_html(data)
     assert "poor prognosis" in html
 
 
 def test_optional_finding_summary_rendered_when_present():
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "finding_summary": "TP53 is a well-established tumor suppressor."}
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [
+            {**MINIMAL_REPORT["variants"][0], "finding_summary": "TP53 is a well-established tumor suppressor."}
+        ],
+    }
     html = generate_report_html(data)
     assert "tumor suppressor" in html
 
 
 # ── Missing agents data — graceful handling ──────────────────────────────────
 
+
 def test_missing_agents_field_graceful():
     """Template must not error when agents field is entirely absent."""
-    data = {**MINIMAL_REPORT, "variants": [
-        {
-            "variant": "chr1:100:A>G",
-            "gene": "GENE1",
-            "classification": "VUS",
-            "acmg_codes": [],
-            "conflict": False,
-            # agents intentionally omitted
-        }
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [
+            {
+                "variant": "chr1:100:A>G",
+                "gene": "GENE1",
+                "classification": "VUS",
+                "acmg_codes": [],
+                "conflict": False,
+                # agents intentionally omitted
+            }
+        ],
+    }
     html = generate_report_html(data)
     assert "GENE1" in html
 
 
 def test_missing_korean_pop_agent_graceful():
     """Template must not error when korean_pop sub-key is absent."""
-    data = {**MINIMAL_REPORT, "variants": [
-        {
-            "variant": "chr1:100:A>G",
-            "gene": "GENE2",
-            "classification": "Pathogenic",
-            "acmg_codes": ["PVS1"],
-            "conflict": False,
-            "agents": {
-                "clinical": {"clinvar_significance": "Pathogenic"},
-                # korean_pop intentionally omitted
-            },
-        }
-    ]}
+    data = {
+        **MINIMAL_REPORT,
+        "variants": [
+            {
+                "variant": "chr1:100:A>G",
+                "gene": "GENE2",
+                "classification": "Pathogenic",
+                "acmg_codes": ["PVS1"],
+                "conflict": False,
+                "agents": {
+                    "clinical": {"clinvar_significance": "Pathogenic"},
+                    # korean_pop intentionally omitted
+                },
+            }
+        ],
+    }
     html = generate_report_html(data)
     assert "GENE2" in html
 
@@ -359,14 +385,13 @@ def test_empty_variants_list():
 
 def test_conflict_flag_rendered():
     """Conflict flag badge must appear when conflict=True."""
-    data = {**MINIMAL_REPORT, "variants": [
-        {**MINIMAL_REPORT["variants"][0], "conflict": True}
-    ]}
+    data = {**MINIMAL_REPORT, "variants": [{**MINIMAL_REPORT["variants"][0], "conflict": True}]}
     html = generate_report_html(data)
     assert "Conflict" in html
 
 
 # ── Print / layout structural tests ──────────────────────────────────────────
+
 
 def test_a4_page_size_in_css():
     html = generate_report_html(MINIMAL_REPORT)
