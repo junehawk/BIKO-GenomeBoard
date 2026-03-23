@@ -37,7 +37,7 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
             if variant.gene == "CYP2C19":
                 phenotype = "Intermediate Metabolizer (*2 carrier)"
             elif variant.gene == "HLA-B":
-                phenotype = "HLA-B*5801 carrier — allopurinol SJS/TEN risk"
+                phenotype = "HLA-B*5701 carrier — abacavir hypersensitivity risk"
             return PgxResult(
                 gene=variant.gene,
                 star_allele=entry.get("variant", ""),

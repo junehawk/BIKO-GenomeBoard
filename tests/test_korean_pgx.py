@@ -26,4 +26,4 @@ def test_hla_b_phenotype():
     result = check_korean_pgx(variant)
     # HLA-B may or may not be in the data file; if it is, check phenotype
     if result is not None:
-        assert result.phenotype == "HLA-B*5801 carrier — allopurinol SJS/TEN risk"
+        assert result.phenotype == "HLA-B*5701 carrier — abacavir hypersensitivity risk"

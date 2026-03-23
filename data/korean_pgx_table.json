@@ -30,11 +30,11 @@
     },
     {
       "gene": "HLA-B",
-      "variant": "HLA-B*5801",
+      "variant": "HLA-B*5701",
       "korean_freq": 0.12,
       "western_freq": 0.02,
       "metric": "allele_freq",
-      "clinical_impact": "Allopurinol severe adverse drug reaction (SJS/TEN) risk",
+      "clinical_impact": "Abacavir hypersensitivity risk (FDA Black Box Warning)",
       "cpic_level": "A",
       "source": "CPIC 2015"
     },
