@@ -18,6 +18,14 @@ class Variant:
     alt: str
     gene: Optional[str] = None
     rsid: Optional[str] = None  # rs number from VCF ID column
+    # VEP/SnpEff annotation fields (from pre-annotated VCF)
+    hgvsc: Optional[str] = None       # c. notation (e.g., c.524G>T)
+    hgvsp: Optional[str] = None       # p. notation (e.g., p.Arg175Leu)
+    consequence: Optional[str] = None  # e.g., missense_variant, frameshift_variant
+    transcript: Optional[str] = None   # e.g., NM_000546.6 or ENST00000269305
+    impact: Optional[str] = None       # HIGH, MODERATE, LOW, MODIFIER
+    sift: Optional[str] = None         # e.g., deleterious(0.01)
+    polyphen: Optional[str] = None     # e.g., probably_damaging(0.998)
 
     @classmethod
     def from_string(cls, s: str) -> Variant:

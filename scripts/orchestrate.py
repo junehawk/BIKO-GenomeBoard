@@ -244,6 +244,14 @@ def run_pipeline(
             "gnomad_eas": db["gnomad"].get("gnomad_eas"),
             "krgdb_freq": db["krgdb_freq"],
             "korean_flag": freq.get("korean_flag", ""),
+            # Annotation fields (from pre-annotated VCF via VEP/SnpEff)
+            "hgvsc": variant.hgvsc or "",
+            "hgvsp": variant.hgvsp or "",
+            "consequence": variant.consequence or "",
+            "transcript": variant.transcript or "",
+            "impact": variant.impact or "",
+            "sift": variant.sift or "",
+            "polyphen": variant.polyphen or "",
             "agents": {
                 "clinical": clinvar,
                 "korean_pop": {

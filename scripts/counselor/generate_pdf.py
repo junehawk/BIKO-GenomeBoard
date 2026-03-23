@@ -53,9 +53,19 @@ def generate_report_html(report_data: Dict) -> str:
                 v.setdefault("associated_conditions", info.get("associated_conditions", []))
                 v.setdefault("korean_specific_note", info.get("korean_specific_note"))
                 v.setdefault("finding_summary", info.get("finding_summary", ""))
-                v.setdefault("hgvs", info.get("hgvs", {}))
-                hgvs = info.get("hgvs", {})
-                v.setdefault("variant_effect", hgvs.get("variant_effect", ""))
+                # VCF annotation takes priority over static gene_knowledge for hgvs/variant_effect
+                if v.get("hgvsc") or v.get("hgvsp"):
+                    v.setdefault("hgvs", {
+                        "transcript": v.get("transcript", ""),
+                        "cdna": v.get("hgvsc", ""),
+                        "protein": v.get("hgvsp", ""),
+                        "variant_effect": v.get("consequence", ""),
+                    })
+                    v.setdefault("variant_effect", v.get("consequence", ""))
+                else:
+                    v.setdefault("hgvs", info.get("hgvs", {}))
+                    hgvs = info.get("hgvs", {})
+                    v.setdefault("variant_effect", hgvs.get("variant_effect", ""))
 
         # Always apply classification-aware adjustment to finding_summary
         classification = v.get("classification", "VUS")
