@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
 from scripts.common.models import AcmgEvidence
+from scripts.common.config import get
 
 @dataclass
 class ClassificationResult:
@@ -21,7 +22,7 @@ def _load_rules() -> dict:
     with _RULES_LOCK:
         if _RULES_CACHE:
             return _RULES_CACHE
-    rules_path = Path(__file__).parent.parent.parent / "data" / "acmg_rules.json"
+    rules_path = get("paths.acmg_rules") or str(Path(__file__).parent.parent.parent / "data" / "acmg_rules.json")
     with open(rules_path) as f:
         data = json.load(f)
     with _RULES_LOCK:
@@ -64,8 +65,8 @@ def _matches_rule(counts: dict, rule: dict) -> bool:
             return False
     return True
 
-PGX_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"}
-RISK_FACTOR_GENES = {"APOE"}
+PGX_GENES = set(get("pgx.genes", ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"]))
+RISK_FACTOR_GENES = set(get("pgx.risk_factor_genes", ["APOE"]))
 
 def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
     """Check if engine classification conflicts with ClinVar significance."""

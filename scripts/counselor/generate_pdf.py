@@ -4,8 +4,9 @@ from typing import Dict
 from jinja2 import Environment, FileSystemLoader
 
 from scripts.common.gene_knowledge import get_gene_info
+from scripts.common.config import get
 
-TEMPLATE_DIR = Path(__file__).parent.parent.parent / "templates"
+TEMPLATE_DIR = Path(get("paths.templates") or str(Path(__file__).parent.parent.parent / "templates"))
 
 
 def _adjust_finding_summary(summary: str, classification: str) -> str:

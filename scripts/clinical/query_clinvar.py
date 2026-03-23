@@ -4,9 +4,10 @@ import os
 from typing import Optional, Dict, List
 from scripts.common.models import Variant
 from scripts.common.api_utils import fetch_with_retry
+from scripts.common.config import get
 
-CLINVAR_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
-CLINVAR_ESUMMARY = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+CLINVAR_ESEARCH = get("api.clinvar_esearch", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi")
+CLINVAR_ESUMMARY = get("api.clinvar_esummary", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi")
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def _fetch_summary(uid: str, api_key: str = "") -> Optional[dict]:
 
 def _search_clinvar_variant(variant: Variant) -> Optional[dict]:
     """Search ClinVar for a variant and return summary."""
-    api_key = os.environ.get("NCBI_API_KEY", "")
+    api_key = get("api.ncbi_api_key", "") or os.environ.get("NCBI_API_KEY", "")
 
     # Strategy 1: Search by rsID (most reliable)
     if variant.rsid:

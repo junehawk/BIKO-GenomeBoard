@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 from typing import Optional, Dict
+from scripts.common.config import get
 
 _KNOWLEDGE = None
 
@@ -8,7 +9,7 @@ _KNOWLEDGE = None
 def _load_knowledge() -> dict:
     global _KNOWLEDGE
     if _KNOWLEDGE is None:
-        path = Path(__file__).parent.parent.parent / "data" / "gene_knowledge.json"
+        path = get("paths.gene_knowledge") or str(Path(__file__).parent.parent.parent / "data" / "gene_knowledge.json")
         try:
             with open(path) as f:
                 data = json.load(f)

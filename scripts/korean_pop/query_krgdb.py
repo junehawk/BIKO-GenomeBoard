@@ -1,6 +1,7 @@
 import threading
 from typing import Optional
 from scripts.common.models import Variant
+from scripts.common.config import get
 
 _KRGDB_CACHE: dict = {}
 _KRGDB_LOCK = threading.Lock()
@@ -24,7 +25,9 @@ def _load_krgdb(path: str) -> dict:
         _KRGDB_CACHE[path] = data
     return data
 
-def query_krgdb(variant: Variant, krgdb_path: str = "data/krgdb_freq.tsv") -> Optional[float]:
+def query_krgdb(variant: Variant, krgdb_path: str = None) -> Optional[float]:
+    if krgdb_path is None:
+        krgdb_path = get("paths.krgdb", "data/krgdb_freq.tsv")
     data = _load_krgdb(krgdb_path)
     key = f"{variant.chrom}:{variant.pos}:{variant.ref}>{variant.alt}"
     return data.get(key)

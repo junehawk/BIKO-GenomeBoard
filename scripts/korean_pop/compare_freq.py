@@ -1,9 +1,10 @@
 from typing import Dict, List
 from scripts.common.models import FrequencyData
+from scripts.common.config import get
 
-BA1_THRESHOLD = 0.05
-BS1_THRESHOLD = 0.01
-PM2_THRESHOLD = 0.001  # for PM2_Supporting
+BA1_THRESHOLD = get("thresholds.ba1", 0.05)
+BS1_THRESHOLD = get("thresholds.bs1", 0.01)
+PM2_THRESHOLD = get("thresholds.pm2", 0.001)  # for PM2_Supporting
 
 def compare_frequencies(freq: FrequencyData) -> Dict:
     acmg_codes: List[str] = []

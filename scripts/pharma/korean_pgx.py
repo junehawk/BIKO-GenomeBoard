@@ -4,6 +4,7 @@ import threading
 from pathlib import Path
 from typing import Optional
 from scripts.common.models import Variant, PgxResult
+from scripts.common.config import get
 
 _PGX_DATA = None
 _PGX_LOCK = threading.Lock()
@@ -12,7 +13,7 @@ def _load_pgx_data() -> list:
     global _PGX_DATA
     with _PGX_LOCK:
         if _PGX_DATA is None:
-            path = Path(__file__).parent.parent.parent / "data" / "korean_pgx_table.json"
+            path = get("paths.pgx_table") or str(Path(__file__).parent.parent.parent / "data" / "korean_pgx_table.json")
             try:
                 with open(path) as f:
                     _PGX_DATA = json.load(f)["genes"]
@@ -22,7 +23,7 @@ def _load_pgx_data() -> list:
                 _PGX_DATA = []
     return _PGX_DATA
 
-PGX_GENES = {"CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"}
+PGX_GENES = set(get("pgx.genes", ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"]))
 
 def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
     if variant.gene not in PGX_GENES:

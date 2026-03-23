@@ -1,0 +1,33 @@
+# GenomeBoard Configuration
+paths:
+  krgdb: "data/krgdb_freq.tsv"
+  gene_knowledge: "data/gene_knowledge.json"
+  pgx_table: "data/korean_pgx_table.json"
+  acmg_rules: "data/acmg_rules.json"
+  templates: "templates"
+
+thresholds:
+  ba1: 0.05      # Stand-alone benign (>5%)
+  bs1: 0.01      # Strong benign (>=1%)
+  pm2: 0.001     # PM2_Supporting (<=0.1%)
+
+api:
+  clinvar_esearch: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
+  clinvar_esummary: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
+  gnomad: "https://gnomad.broadinstitute.org/api"
+  gnomad_datasets: ["gnomad_r4", "gnomad_r2_1"]
+  pharmgkb: "https://api.pharmgkb.org/v1/data"
+  ncbi_api_key: ""  # Override with NCBI_API_KEY env var
+  timeout: 30
+  max_retries: 3
+  backoff_base: 1.0
+  pharmgkb_rate_limit: 0.5
+
+report:
+  default_mode: "cancer"
+  default_genome_build: "GRCh38"
+  font_url: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
+
+pgx:
+  genes: ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"]
+  risk_factor_genes: ["APOE"]

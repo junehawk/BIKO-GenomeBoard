@@ -2,8 +2,9 @@ import logging
 import requests
 from typing import Dict, Optional
 from scripts.common.models import Variant
+from scripts.common.config import get
 
-GNOMAD_API = "https://gnomad.broadinstitute.org/api"
+GNOMAD_API = get("api.gnomad", "https://gnomad.broadinstitute.org/api")
 
 # Try multiple datasets - gnomAD v4 (GRCh38) first, then v2.1 (GRCh37)
 VARIANT_QUERY = """
@@ -64,7 +65,7 @@ def query_gnomad(variant: Variant) -> Dict:
     variant_id = f"{chrom_num}-{variant.pos}-{variant.ref}-{variant.alt}"
 
     # Try gnomad_r4 (GRCh38) first, then gnomad_r2_1 (GRCh37)
-    for dataset in ["gnomad_r4", "gnomad_r2_1"]:
+    for dataset in get("api.gnomad_datasets", ["gnomad_r4", "gnomad_r2_1"]):
         data = _graphql_query(VARIANT_QUERY, {"variantId": variant_id, "dataset": dataset})
 
         if data and "errors" in data:
