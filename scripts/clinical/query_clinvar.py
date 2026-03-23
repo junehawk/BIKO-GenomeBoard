@@ -1,4 +1,5 @@
 # scripts/clinical/query_clinvar.py
+import logging
 import os
 from typing import Optional, Dict, List
 from scripts.common.models import Variant
@@ -7,27 +8,44 @@ from scripts.common.api_utils import fetch_with_retry
 CLINVAR_ESEARCH = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
 CLINVAR_ESUMMARY = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi"
 
-def _search_clinvar_variant(variant: Variant) -> Optional[dict]:
-    """Search ClinVar for a variant and return summary."""
-    chrom_num = variant.chrom.replace("chr", "")
-    query = f"{chrom_num}[CHR] AND {variant.pos}[CHRPOS] AND {variant.ref}>{variant.alt}[VARNAME]"
-    api_key = os.environ.get("NCBI_API_KEY", "")
-    params = {"db": "clinvar", "term": query, "retmode": "json"}
-    if api_key:
-        params["api_key"] = api_key
+logger = logging.getLogger(__name__)
 
-    search_result = fetch_with_retry(CLINVAR_ESEARCH, params=params)
-    if not search_result or not search_result.get("esearchresult", {}).get("idlist"):
-        return None
-
-    uid = search_result["esearchresult"]["idlist"][0]
+def _fetch_summary(uid: str, api_key: str = "") -> Optional[dict]:
+    """Fetch ClinVar summary for a given UID."""
     summary_params = {"db": "clinvar", "id": uid, "retmode": "json"}
     if api_key:
         summary_params["api_key"] = api_key
-
     summary = fetch_with_retry(CLINVAR_ESUMMARY, params=summary_params)
     if summary and "result" in summary and uid in summary["result"]:
         return summary["result"][uid]
+    return None
+
+def _search_clinvar_variant(variant: Variant) -> Optional[dict]:
+    """Search ClinVar for a variant and return summary."""
+    api_key = os.environ.get("NCBI_API_KEY", "")
+
+    # Strategy 1: Search by rsID (most reliable)
+    if variant.rsid:
+        params = {"db": "clinvar", "term": variant.rsid, "retmode": "json"}
+        if api_key:
+            params["api_key"] = api_key
+        search_result = fetch_with_retry(CLINVAR_ESEARCH, params=params)
+        if search_result and search_result.get("esearchresult", {}).get("idlist"):
+            uid = search_result["esearchresult"]["idlist"][0]
+            logger.info(f"ClinVar hit via rsID {variant.rsid}: uid={uid}")
+            return _fetch_summary(uid, api_key)
+
+    # Strategy 2: Search by gene + position
+    if variant.gene:
+        params = {"db": "clinvar", "term": f"{variant.gene}[GENE] AND {variant.pos}[CHRPOS]", "retmode": "json"}
+        if api_key:
+            params["api_key"] = api_key
+        search_result = fetch_with_retry(CLINVAR_ESEARCH, params=params)
+        if search_result and search_result.get("esearchresult", {}).get("idlist"):
+            uid = search_result["esearchresult"]["idlist"][0]
+            logger.info(f"ClinVar hit via gene+pos {variant.gene}/{variant.pos}: uid={uid}")
+            return _fetch_summary(uid, api_key)
+
     return None
 
 def _derive_acmg_codes(clinvar_data: dict) -> List[str]:

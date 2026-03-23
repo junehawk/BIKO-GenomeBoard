@@ -25,6 +25,7 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                     continue
                 chrom = fields[0] if fields[0].startswith("chr") else f"chr{fields[0]}"
                 pos = int(fields[1])
+                rsid = fields[2] if len(fields) > 2 and fields[2] != "." else None
                 ref = fields[3]
                 alt = fields[4]
                 gene = None
@@ -33,7 +34,7 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                     for item in info.split(";"):
                         if item.startswith("Gene="):
                             gene = item.split("=")[1]
-                variants.append(Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene))
+                variants.append(Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene, rsid=rsid))
             except (ValueError, IndexError) as e:
                 logger.warning(f"Skipping malformed VCF line: {line.strip()!r} — {e}")
 

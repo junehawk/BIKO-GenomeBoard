@@ -17,6 +17,7 @@ class Variant:
     ref: str
     alt: str
     gene: Optional[str] = None
+    rsid: Optional[str] = None  # rs number from VCF ID column
 
     @classmethod
     def from_string(cls, s: str) -> Variant:
