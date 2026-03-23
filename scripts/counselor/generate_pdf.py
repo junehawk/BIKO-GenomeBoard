@@ -53,12 +53,22 @@ def generate_report_html(report_data: Dict) -> str:
                 v.setdefault("korean_specific_note", info.get("korean_specific_note"))
                 v.setdefault("finding_summary", info.get("finding_summary", ""))
                 v.setdefault("hgvs", info.get("hgvs", {}))
+                hgvs = info.get("hgvs", {})
+                v.setdefault("variant_effect", hgvs.get("variant_effect", ""))
 
         # Always apply classification-aware adjustment to finding_summary
         classification = v.get("classification", "VUS")
         raw_summary = v.get("finding_summary", "")
         if raw_summary:
             v["finding_summary"] = _adjust_finding_summary(raw_summary, classification)
+
+    for pgx in report_data.get("pgx_results", []):
+        gene = pgx.get("gene")
+        if gene:
+            info = get_gene_info(gene)
+            if info:
+                pgx.setdefault("hgvs", info.get("hgvs", {}))
+                pgx.setdefault("variant_effect", info.get("hgvs", {}).get("variant_effect", ""))
 
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=True)
     template = env.get_template("report.html")

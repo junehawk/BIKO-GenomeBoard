@@ -62,8 +62,10 @@
       "hgvs": {
         "transcript": "NM_000546.6",
         "cdna": "c.524G>T",
-        "protein": "p.Arg175Leu"
-      }
+        "protein": "p.Arg175Leu",
+        "variant_effect": "Missense"
+      },
+      "variant_effect": "Missense"
     },
     {
       "variant": "chr13:32356550:C>T",
@@ -118,8 +120,10 @@
       "hgvs": {
         "transcript": "NM_000059.4",
         "cdna": "c.7878C>T",
-        "protein": "p.Ala2626="
-      }
+        "protein": "p.Ala2626=",
+        "variant_effect": "Synonymous"
+      },
+      "variant_effect": "Synonymous"
     },
     {
       "variant": "chr7:117559590:ATCT>A",
@@ -178,8 +182,10 @@
       "hgvs": {
         "transcript": "NM_000492.4",
         "cdna": "c.1521_1523del",
-        "protein": "p.Phe508del"
-      }
+        "protein": "p.Phe508del",
+        "variant_effect": "In-frame deletion"
+      },
+      "variant_effect": "In-frame deletion"
     },
     {
       "variant": "chr10:94781859:G>A",
@@ -234,8 +240,10 @@
         "transcript": "NM_000769.4",
         "cdna": "c.681G>A",
         "protein": "p.Pro227=",
-        "star_allele": "*2"
-      }
+        "star_allele": "*2",
+        "variant_effect": "Synonymous / Splice variant"
+      },
+      "variant_effect": "Synonymous / Splice variant"
     },
     {
       "variant": "chr6:31464003:T>G",
@@ -289,8 +297,10 @@
       "hgvs": {
         "transcript": "N/A (HLA typing required)",
         "cdna": "tag SNP rs2395029",
-        "protein": "N/A"
-      }
+        "protein": "N/A",
+        "variant_effect": "Intergenic tag SNP"
+      },
+      "variant_effect": "Intergenic tag SNP"
     },
     {
       "variant": "chr13:48045719:C>T",
@@ -343,8 +353,10 @@
       "hgvs": {
         "transcript": "NM_018283.4",
         "cdna": "c.415C>T",
-        "protein": "p.Arg139Cys"
-      }
+        "protein": "p.Arg139Cys",
+        "variant_effect": "Missense"
+      },
+      "variant_effect": "Missense"
     },
     {
       "variant": "chr2:165342465:G>A",
@@ -401,8 +413,10 @@
       "hgvs": {
         "transcript": "NM_001128425.2",
         "cdna": "c.1187G>A",
-        "protein": "p.Gly396Asp"
-      }
+        "protein": "p.Gly396Asp",
+        "variant_effect": "Missense"
+      },
+      "variant_effect": "Missense"
     },
     {
       "variant": "chr17:72122759:G>A",
@@ -459,8 +473,10 @@
       "hgvs": {
         "transcript": "NM_024675.4",
         "cdna": "c.3113G>A",
-        "protein": "p.Trp1038Ter"
-      }
+        "protein": "p.Trp1038Ter",
+        "variant_effect": "Nonsense / Stop gain"
+      },
+      "variant_effect": "Nonsense / Stop gain"
     },
     {
       "variant": "chr12:25225628:C>A",
@@ -518,8 +534,10 @@
       "hgvs": {
         "transcript": "NM_002834.5",
         "cdna": "c.182A>G",
-        "protein": "p.Asp61Gly"
-      }
+        "protein": "p.Asp61Gly",
+        "variant_effect": "Missense / Gain-of-function"
+      },
+      "variant_effect": "Missense / Gain-of-function"
     },
     {
       "variant": "chr19:44908684:T>C",
@@ -536,10 +554,10 @@
       "clinvar_significance": "no classification for the single variant",
       "clinvar_id": "VCV000694742",
       "review_status": "no classification for the single variant",
-      "gnomad_all": 0.1573587039423507,
-      "gnomad_eas": 0.09770784770784771,
+      "gnomad_all": null,
+      "gnomad_eas": null,
       "krgdb_freq": 0.089,
-      "korean_flag": "Very common variant",
+      "korean_flag": "Very common variant | Korean-specific variant (KRGDB only)",
       "agents": {
         "clinical": {
           "agent": "clinical_geneticist",
@@ -552,11 +570,11 @@
           "api_available": true
         },
         "korean_pop": {
-          "gnomad_all": 0.1573587039423507,
-          "gnomad_eas": 0.09770784770784771,
+          "gnomad_all": null,
+          "gnomad_eas": null,
           "krgdb_freq": 0.089,
-          "korean_flag": "Very common variant",
-          "api_available": true
+          "korean_flag": "Very common variant | Korean-specific variant (KRGDB only)",
+          "api_available": false
         }
       },
       "treatment_strategies": "Lifestyle interventions for Alzheimer's disease prevention are recommended in APOE e4 carriers (regular exercise, Mediterranean diet, cognitive stimulation activities, cardiovascular risk factor management). For cardiovascular risk management, regular lipid profile monitoring and statin therapy when necessary are considered, with observation of statin effects on cognitive function in APOE e4 carriers recommended. Anti-amyloid antibodies (lecanemab, donanemab) have been approved for early Alzheimer's disease treatment; however, APOE e4/e4 carriers have an elevated risk of ARIA (amyloid-related imaging abnormalities), requiring careful application. Type III hyperlipoproteinemia due to APOE e2/e2 is managed with dietary modification and fibrate-class medications.",
@@ -575,8 +593,10 @@
         "transcript": "NM_000041.4",
         "cdna": "c.388T>C",
         "protein": "p.Cys130Arg",
-        "allele": "ε4"
-      }
+        "allele": "ε4",
+        "variant_effect": "Missense"
+      },
+      "variant_effect": "Missense"
     }
   ],
   "pgx_results": [
@@ -589,7 +609,15 @@
       "western_prevalence": 0.025,
       "clinical_impact": "Clopidogrel poor response risk",
       "cpic_recommendation": "",
-      "korean_flag": true
+      "korean_flag": true,
+      "hgvs": {
+        "transcript": "NM_000769.4",
+        "cdna": "c.681G>A",
+        "protein": "p.Pro227=",
+        "star_allele": "*2",
+        "variant_effect": "Synonymous / Splice variant"
+      },
+      "variant_effect": "Synonymous / Splice variant"
     },
     {
       "gene": "HLA-B",
@@ -600,7 +628,14 @@
       "western_prevalence": 0.02,
       "clinical_impact": "Abacavir hypersensitivity risk (FDA Black Box Warning)",
       "cpic_recommendation": "",
-      "korean_flag": true
+      "korean_flag": true,
+      "hgvs": {
+        "transcript": "N/A (HLA typing required)",
+        "cdna": "tag SNP rs2395029",
+        "protein": "N/A",
+        "variant_effect": "Intergenic tag SNP"
+      },
+      "variant_effect": "Intergenic tag SNP"
     },
     {
       "gene": "NUDT15",
@@ -611,7 +646,14 @@
       "western_prevalence": 0.01,
       "clinical_impact": "Thiopurine myelosuppression risk",
       "cpic_recommendation": "",
-      "korean_flag": true
+      "korean_flag": true,
+      "hgvs": {
+        "transcript": "NM_018283.4",
+        "cdna": "c.415C>T",
+        "protein": "p.Arg139Cys",
+        "variant_effect": "Missense"
+      },
+      "variant_effect": "Missense"
     }
   ],
   "summary": {

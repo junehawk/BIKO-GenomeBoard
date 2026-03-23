@@ -893,6 +893,9 @@
                 {% if v.conflict is defined and v.conflict %}
                   <span class="conflict-flag">&#9888;</span>
                 {% endif %}
+                {% if v.variant_effect is defined and v.variant_effect %}
+                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
               {{ class_badge(v.classification) }}
@@ -915,6 +918,9 @@
                 <span class="finding-gene">{{ v.gene }}</span>
                 {% if v.conflict is defined and v.conflict %}
                   <span class="conflict-flag">&#9888;</span>
+                {% endif %}
+                {% if v.variant_effect is defined and v.variant_effect %}
+                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
                 {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
@@ -1103,6 +1109,9 @@
               {{ v.hgvs.transcript }}:{{ v.hgvs.cdna | default('') }}
               {% if v.hgvs.protein is defined and v.hgvs.protein %} ({{ v.hgvs.protein }}){% endif %}
             </span>
+            {% if v.variant_effect is defined and v.variant_effect %}
+              <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;font-weight:600;margin-left:8px;">{{ v.variant_effect }}</span>
+            {% endif %}
           {% endif %}
         </div>
       {% endif %}
@@ -1344,6 +1353,17 @@
           {% if pgx.star_allele is defined and pgx.star_allele %}
             <div style="margin-top:4px;">
               <span class="acmg-code">{{ pgx.star_allele }}</span>
+            </div>
+          {% endif %}
+          {% if pgx.hgvs is defined and pgx.hgvs and pgx.hgvs.cdna is defined and pgx.hgvs.cdna %}
+            <div style="margin-top:6px;">
+              <div class="pgx-cell-label">Variant (HGVS)</div>
+              <div style="font-family:monospace;font-size:8pt;color:#374151;">
+                {% if pgx.hgvs.transcript is defined and pgx.hgvs.transcript and pgx.hgvs.transcript != 'N/A (HLA typing required)' %}{{ pgx.hgvs.transcript }}:{% endif %}{{ pgx.hgvs.cdna }}{% if pgx.hgvs.protein is defined and pgx.hgvs.protein and pgx.hgvs.protein != 'N/A' %} ({{ pgx.hgvs.protein }}){% endif %}
+              </div>
+              {% if pgx.variant_effect is defined and pgx.variant_effect %}
+                <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8pt;font-weight:600;margin-top:4px;">{{ pgx.variant_effect }}</span>
+              {% endif %}
             </div>
           {% endif %}
         </div>
