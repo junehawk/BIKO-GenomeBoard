@@ -1096,6 +1096,16 @@
         <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">{{ v.gene_full_name }}</div>
       {% endif %}
       <div class="variant-alteration">{{ v.variant }}</div>
+      {% if v.hgvs is defined and v.hgvs %}
+        <div class="variant-hgvs">
+          {% if v.hgvs.transcript is defined and v.hgvs.transcript %}
+            <span style="font-family:monospace;font-size:9pt;color:#374151;">
+              {{ v.hgvs.transcript }}:{{ v.hgvs.cdna | default('') }}
+              {% if v.hgvs.protein is defined and v.hgvs.protein %} ({{ v.hgvs.protein }}){% endif %}
+            </span>
+          {% endif %}
+        </div>
+      {% endif %}
       <div class="variant-badges">
         {{ class_badge(v.classification) }}
         {% if v.conflict is defined and v.conflict %}

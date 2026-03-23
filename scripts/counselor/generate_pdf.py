@@ -34,6 +34,8 @@ def _adjust_finding_summary(summary: str, classification: str) -> str:
     elif "risk factor" in cls_lower:
         summary = summary.replace("A likely pathogenic variant", "A risk factor variant")
         summary = summary.replace("A pathogenic variant", "A risk factor variant")
+    elif "likely pathogenic" in cls_lower:
+        summary = summary.replace("A pathogenic variant", "A likely pathogenic variant")
     return summary
 
 
@@ -50,6 +52,7 @@ def generate_report_html(report_data: Dict) -> str:
                 v.setdefault("associated_conditions", info.get("associated_conditions", []))
                 v.setdefault("korean_specific_note", info.get("korean_specific_note"))
                 v.setdefault("finding_summary", info.get("finding_summary", ""))
+                v.setdefault("hgvs", info.get("hgvs", {}))
 
         # Always apply classification-aware adjustment to finding_summary
         classification = v.get("classification", "VUS")

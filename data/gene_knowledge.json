@@ -119,7 +119,7 @@
       ],
       "treatment_strategies": "CPIC Level A evidence supports preemptive genotyping before thiopurine therapy. Intermediate metabolizers require 30-80% dose reduction. Poor metabolizers should consider alternative immunosuppressants.",
       "frequency_prognosis": "The p.R139C variant has a carrier frequency of 11.5% in Korean populations vs 1% in Western populations (11.5x enrichment). This makes preemptive NUDT15 genotyping particularly cost-effective in Korean clinical settings.",
-      "finding_summary": "",
+      "finding_summary": "A pharmacogenomic variant in the NUDT15 gene was identified. The p.Arg139Cys (c.415C>T) variant results in reduced NUDT15 enzyme activity, leading to impaired metabolism of thiopurine drugs. Carriers are at significantly increased risk of severe myelosuppression when treated with standard-dose azathioprine, 6-mercaptopurine, or thioguanine. CPIC Level A evidence supports preemptive genotyping and dose adjustment.",
       "korean_specific_note": "Korean NHIS covers NUDT15 genotyping for patients initiating thiopurine therapy. The Korean Society of Gastroenterology recommends preemptive testing.",
       "hgvs": {"transcript": "NM_018283.4", "cdna": "c.415C>T", "protein": "p.Arg139Cys"}
     },

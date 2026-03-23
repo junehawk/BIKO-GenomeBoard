@@ -38,6 +38,8 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
                 phenotype = "Intermediate Metabolizer (*2 carrier)"
             elif variant.gene == "HLA-B":
                 phenotype = "HLA-B*5701 carrier — abacavir hypersensitivity risk"
+            elif variant.gene == "NUDT15":
+                phenotype = "NUDT15 intermediate metabolizer (p.R139C carrier)"
             return PgxResult(
                 gene=variant.gene,
                 star_allele=entry.get("variant", ""),
