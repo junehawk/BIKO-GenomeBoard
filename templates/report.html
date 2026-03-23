@@ -5,15 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GenomeBoard Consilium Report — {{ sample_id }}</title>
   <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+    /* ── CSS Variables ── */
+    :root {
+      --orange:  #E8712A;
+      --navy:    #1c2b4a;
+      --blue:    #3b82f6;
+      --blue-dk: #1d4ed8;
+      --text:    #1a1a1a;
+      --muted:   #6b7280;
+      --border:  #d1d5db;
+      --surface: #f8fafc;
+      --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'Courier New', Courier, monospace;
+    }
+
     /* ── Reset ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     /* ── Base ── */
     body {
-      font-family: Georgia, "Times New Roman", Times, serif;
+      font-family: var(--font-sans);
       font-size: 10.5pt;
-      line-height: 1.55;
-      color: #1a1a1a;
+      line-height: 1.65;
+      color: var(--text);
       background: #ffffff;
     }
 
@@ -57,38 +73,39 @@
     }
 
     .masthead-brand {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 17pt;
-      font-weight: 700;
-      color: #1c2b4a;
-      letter-spacing: -0.3px;
+      font-family: var(--font-sans);
+      font-size: 18pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.5px;
       line-height: 1;
     }
 
     .masthead-brand span {
-      color: #E8712A;
+      color: var(--orange);
     }
 
     .masthead-tagline {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 7.5pt;
-      color: #6b7280;
+      font-weight: 500;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin-top: 2px;
+      letter-spacing: 1.4px;
+      margin-top: 3px;
     }
 
     .masthead-meta {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 9pt;
       color: #374151;
       text-align: right;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     .masthead-meta strong {
-      color: #1c2b4a;
-      font-weight: 600;
+      color: var(--navy);
+      font-weight: 700;
     }
 
     /* ── Info block grid (page 1 two-column) ── */
@@ -111,35 +128,36 @@
     }
 
     .info-block-title {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.2px;
       color: #ffffff;
-      background: #1c2b4a;
-      padding: 3px 8px;
-      margin: -10px -12px 8px -12px;
+      background: var(--navy);
+      padding: 4px 10px;
+      margin: -10px -12px 10px -12px;
     }
 
     .info-row {
       display: flex;
       gap: 6px;
-      font-size: 9pt;
-      margin-bottom: 3px;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 9.5pt;
+      margin-bottom: 4px;
+      font-family: var(--font-sans);
     }
 
     .info-label {
-      color: #6b7280;
+      color: var(--muted);
       font-size: 8.5pt;
+      font-weight: 500;
       min-width: 90px;
       flex-shrink: 0;
     }
 
     .info-value {
       color: #111827;
-      font-weight: 500;
+      font-weight: 600;
     }
 
     /* ── Summary counts strip ── */
@@ -151,29 +169,33 @@
     }
 
     .summary-card {
-      border-radius: 3px;
-      padding: 10px 8px;
+      border-radius: 4px;
+      padding: 14px 10px 12px;
       text-align: center;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
+      border-top: 3px solid transparent;
     }
 
     .summary-card .count {
-      font-size: 24pt;
-      font-weight: 700;
+      font-size: 30pt;
+      font-weight: 800;
       line-height: 1;
+      letter-spacing: -1px;
     }
 
     .summary-card .label {
-      font-size: 7.5pt;
+      font-size: 7pt;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.7px;
-      margin-top: 3px;
+      letter-spacing: 0.9px;
+      margin-top: 5px;
+      opacity: 0.8;
     }
 
-    .card-total    { background: #f0f4fa; color: #1c2b4a; }
-    .card-path     { background: #fff0f0; color: #991b1b; }
-    .card-vus      { background: #fdf8ee; color: #92400e; }
-    .card-benign   { background: #f0faf3; color: #166534; }
+    .card-total    { background: #eef2fa; color: var(--navy);  border-top-color: var(--navy); }
+    .card-path     { background: #fff0f0; color: #991b1b;      border-top-color: #991b1b; }
+    .card-vus      { background: #fdf8ee; color: #92400e;      border-top-color: #f59e0b; }
+    .card-benign   { background: #f0faf3; color: #166534;      border-top-color: #22c55e; }
 
     /* ── Section header (orange accent badge style) ── */
     .section-header {
@@ -184,24 +206,24 @@
     }
 
     .section-badge {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.2px;
+      letter-spacing: 1.3px;
       color: #ffffff;
-      background: #E8712A;
-      padding: 3px 10px 3px 10px;
-      border-radius: 2px;
+      background: var(--orange);
+      padding: 4px 12px;
+      border-radius: 3px;
       white-space: nowrap;
     }
 
     .section-badge.badge-navy {
-      background: #1c2b4a;
+      background: var(--navy);
     }
 
     .section-badge.badge-blue {
-      background: #1d4ed8;
+      background: var(--blue-dk);
     }
 
     .section-rule {
@@ -228,12 +250,12 @@
     }
 
     .findings-panel-title {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 8pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 5px 10px;
+      letter-spacing: 1px;
+      padding: 6px 12px;
       color: #ffffff;
     }
 
@@ -248,23 +270,23 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 4px 0;
+      padding: 6px 0;
       border-bottom: 1px solid #f3f4f6;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 9pt;
+      font-family: var(--font-sans);
+      font-size: 9.5pt;
     }
 
     .finding-row:last-child { border-bottom: none; }
 
     .finding-gene {
       font-weight: 700;
-      color: #1c2b4a;
+      color: var(--navy);
     }
 
     .finding-variant {
-      font-family: "Courier New", Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 7.5pt;
-      color: #6b7280;
+      color: var(--muted);
       max-width: 140px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -274,24 +296,24 @@
     /* ── Classification badges ── */
     .badge {
       display: inline-block;
-      padding: 1px 7px;
-      border-radius: 2px;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      padding: 2px 9px;
+      border-radius: 3px;
+      font-family: var(--font-sans);
       font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
       white-space: nowrap;
     }
 
-    .badge-pathogenic        { background: #fecaca; color: #7f1d1d; }
-    .badge-likely-pathogenic { background: #fed7aa; color: #7c2d12; }
-    .badge-vus               { background: #e5e7eb; color: #374151; }
-    .badge-likely-benign     { background: #d1fae5; color: #065f46; }
-    .badge-benign            { background: #bbf7d0; color: #14532d; }
-    .badge-drug-response     { background: #dbeafe; color: #1e40af; }
-    .badge-risk-factor       { background: #ede9fe; color: #5b21b6; }
-    .badge-unknown           { background: #f3f4f6; color: #6b7280; }
+    .badge-pathogenic        { background: #fecaca; color: #7f1d1d; border: 1px solid #fca5a5; }
+    .badge-likely-pathogenic { background: #fed7aa; color: #7c2d12; border: 1px solid #fdba74; }
+    .badge-vus               { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
+    .badge-likely-benign     { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .badge-benign            { background: #bbf7d0; color: #14532d; border: 1px solid #86efac; }
+    .badge-drug-response     { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+    .badge-risk-factor       { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
+    .badge-unknown           { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
 
     /* ── ACMG code pills ── */
     .acmg-code {
@@ -299,32 +321,34 @@
       background: #eff6ff;
       color: #1e40af;
       border: 1px solid #bfdbfe;
-      border-radius: 2px;
-      padding: 0px 4px;
-      font-family: "Courier New", Courier, monospace;
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
       font-size: 7.5pt;
       margin: 1px 2px 1px 0;
     }
 
     /* ── Conflict indicator ── */
     .conflict-flag {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
       background: #fef3c7;
-      color: #92400e;
-      border: 1px solid #f59e0b;
-      border-radius: 2px;
-      padding: 0px 5px;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 7.5pt;
-      font-weight: 600;
+      color: #78350f;
+      border: 1.5px solid #f59e0b;
+      border-radius: 3px;
+      padding: 2px 8px;
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      font-weight: 700;
     }
 
     /* ── Korean flag inline ── */
     .korean-flag {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      color: #1d4ed8;
-      font-style: italic;
+      font-family: var(--font-sans);
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: var(--blue-dk);
     }
 
     /* ── Variant detail page ── */
@@ -344,12 +368,12 @@
     }
 
     .variant-gene-name {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 26pt;
-      font-weight: 700;
-      color: #1c2b4a;
+      font-family: var(--font-sans);
+      font-size: 30pt;
+      font-weight: 800;
+      color: var(--navy);
       line-height: 1;
-      letter-spacing: -0.5px;
+      letter-spacing: -1px;
     }
 
     .variant-alteration {
@@ -379,115 +403,137 @@
 
     .detail-col {
       padding: 12px 14px;
-      border-right: 1px solid #d1d5db;
+      border-right: 1px solid var(--border);
     }
+
+    .detail-col:nth-child(1) { background: #fafbfd; }
+    .detail-col:nth-child(2) { background: #f7fbff; }
+    .detail-col:nth-child(3) { background: #fafaf7; }
 
     .detail-col:last-child {
       border-right: none;
     }
 
     .detail-col-title {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 1.2px;
       color: #ffffff;
-      background: #1c2b4a;
-      padding: 4px 8px;
-      margin: -12px -14px 10px -14px;
+      background: var(--navy);
+      padding: 5px 10px;
+      margin: -12px -14px 12px -14px;
     }
 
     .detail-col p {
-      font-size: 9.5pt;
-      line-height: 1.55;
-      margin-bottom: 6px;
-      color: #1a1a1a;
+      font-size: 10pt;
+      line-height: 1.65;
+      margin-bottom: 8px;
+      color: var(--text);
     }
 
     .detail-col .detail-label {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 8pt;
-      font-weight: 600;
-      color: #6b7280;
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 8px;
-      margin-bottom: 2px;
+      letter-spacing: 0.7px;
+      margin-top: 10px;
+      margin-bottom: 3px;
     }
 
     .detail-col .detail-value {
       font-size: 9.5pt;
       color: #111827;
       margin-bottom: 6px;
+      line-height: 1.6;
     }
 
     .detail-col .detail-value.mono {
-      font-family: "Courier New", Courier, monospace;
+      font-family: var(--font-mono);
       font-size: 8.5pt;
     }
 
     /* ── Frequency stat box ── */
     .freq-stat {
-      background: #f8fafc;
+      background: var(--surface);
       border: 1px solid #e5e9f0;
-      border-radius: 2px;
-      padding: 7px 10px;
+      border-radius: 3px;
+      padding: 8px 12px;
       margin: 6px 0;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
     }
 
     .freq-stat .freq-num {
-      font-size: 14pt;
-      font-weight: 700;
-      color: #1c2b4a;
+      font-size: 15pt;
+      font-weight: 800;
+      color: var(--navy);
       line-height: 1;
+      letter-spacing: -0.5px;
     }
 
     .freq-stat .freq-label {
       font-size: 7.5pt;
+      font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #6b7280;
-      margin-top: 1px;
+      letter-spacing: 0.7px;
+      color: var(--muted);
+      margin-top: 2px;
     }
 
     .freq-enrichment {
       background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 2px;
-      padding: 5px 10px;
+      border: 1.5px solid #bfdbfe;
+      border-radius: 3px;
+      padding: 6px 10px;
       margin: 6px 0;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
       font-size: 8.5pt;
-      color: #1d4ed8;
-      font-weight: 600;
+      color: var(--blue-dk);
+      font-weight: 700;
     }
 
     /* ── Korean callout box ── */
     .korean-callout {
       background: #eff6ff;
-      border-left: 3px solid #3b82f6;
-      padding: 8px 12px;
-      border-radius: 0 2px 2px 0;
-      margin: 10px 0;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      border-left: 4px solid var(--blue);
+      padding: 10px 14px;
+      border-radius: 0 3px 3px 0;
+      margin: 12px 0;
+      font-family: var(--font-sans);
     }
 
     .korean-callout .korean-callout-title {
       font-size: 8pt;
-      font-weight: 700;
+      font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
-      color: #1d4ed8;
-      margin-bottom: 4px;
+      letter-spacing: 1px;
+      color: var(--blue-dk);
+      margin-bottom: 5px;
     }
 
     .korean-callout p {
-      font-size: 9pt;
+      font-size: 9.5pt;
+      font-weight: 500;
       color: #1e3a5f;
-      line-height: 1.5;
+      line-height: 1.65;
       margin: 0;
+    }
+
+    /* ── Associated conditions pill tags ── */
+    .condition-pill {
+      display: inline-block;
+      background: #f0f4fa;
+      color: var(--navy);
+      border: 1px solid #c7d6eb;
+      border-radius: 12px;
+      padding: 2px 10px;
+      font-size: 8.5pt;
+      font-weight: 500;
+      margin: 2px 3px 2px 0;
+      font-family: var(--font-sans);
     }
 
     /* ── Actionability table ── */
@@ -495,37 +541,40 @@
       width: 100%;
       border-collapse: collapse;
       margin: 8px 0 16px 0;
-      font-size: 9pt;
+      font-size: 9.5pt;
+      font-family: var(--font-sans);
     }
 
     thead th {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 8pt;
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       color: #ffffff;
-      background: #1c2b4a;
-      padding: 6px 10px;
+      background: var(--navy);
+      padding: 7px 12px;
       text-align: left;
     }
 
     tbody tr { border-bottom: 1px solid #e5e9f0; }
     tbody tr:last-child { border-bottom: none; }
-    tbody tr:nth-child(even) { background: #f8fafc; }
+    tbody tr:nth-child(odd)  { background: #ffffff; }
+    tbody tr:nth-child(even) { background: #f5f7fb; }
 
     tbody td {
-      padding: 7px 10px;
+      padding: 8px 12px;
       vertical-align: top;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
+      line-height: 1.6;
     }
 
     /* ── "No reportable" list (page 1 bottom) ── */
     .no-report-list {
       background: #f9fafb;
       border: 1px solid #e5e9f0;
-      border-radius: 2px;
-      padding: 10px 14px;
+      border-radius: 3px;
+      padding: 12px 16px;
       margin: 8px 0;
     }
 
@@ -538,13 +587,13 @@
     }
 
     .no-report-list li {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 9pt;
-      padding: 2px 0;
+      font-family: var(--font-sans);
+      font-size: 9.5pt;
+      padding: 3px 0;
       color: #374151;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
     }
 
     .no-report-list li::before {
@@ -560,8 +609,8 @@
     /* ── PGx section ── */
     .pgx-row {
       border: 1px solid #e5e9f0;
-      border-radius: 2px;
-      margin: 8px 0;
+      border-radius: 4px;
+      margin: 10px 0;
       overflow: hidden;
     }
 
@@ -569,16 +618,17 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #f0f4fa;
-      padding: 7px 12px;
-      border-bottom: 1px solid #e5e9f0;
+      background: #eef2fa;
+      padding: 9px 14px;
+      border-bottom: 1px solid #d8e1f0;
     }
 
     .pgx-gene {
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-      font-size: 12pt;
-      font-weight: 700;
-      color: #1c2b4a;
+      font-family: var(--font-sans);
+      font-size: 13pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.3px;
     }
 
     .pgx-row-body {
@@ -588,10 +638,13 @@
     }
 
     .pgx-cell {
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-right: 1px solid #e5e9f0;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
     }
+
+    /* PGx side-by-side Korean vs Western comparison */
+    .pgx-cell:nth-child(2) { background: #f7fbff; }
 
     .pgx-cell:last-child { border-right: none; }
 
@@ -599,25 +652,66 @@
       font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      color: #6b7280;
-      margin-bottom: 3px;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 4px;
     }
 
     .pgx-cell-value {
-      font-size: 9.5pt;
+      font-size: 10pt;
       color: #111827;
+      line-height: 1.6;
     }
 
     .pgx-korean-note {
-      font-size: 8.5pt;
-      color: #1d4ed8;
-      font-style: italic;
+      font-size: 9pt;
+      font-weight: 600;
+      color: var(--blue-dk);
+    }
+
+    /* Korean vs Western comparison boxes */
+    .pgx-comparison-box {
+      display: inline-block;
+      border-radius: 3px;
+      padding: 6px 10px;
+      margin-right: 6px;
+      margin-bottom: 4px;
+      min-width: 72px;
+      text-align: center;
+    }
+
+    .pgx-comparison-box.box-korean {
+      background: #eff6ff;
+      border: 1.5px solid #bfdbfe;
+    }
+
+    .pgx-comparison-box.box-western {
+      background: #f5f3ff;
+      border: 1.5px solid #ddd6fe;
+    }
+
+    .pgx-comparison-box .box-pct {
+      font-size: 13pt;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .pgx-comparison-box.box-korean .box-pct  { color: var(--blue-dk); }
+    .pgx-comparison-box.box-western .box-pct { color: #6d28d9; }
+
+    .pgx-comparison-box .box-lbl {
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-top: 3px;
+      opacity: 0.7;
     }
 
     /* ── DB version table ── */
     .db-table tbody td:first-child {
-      font-family: "Courier New", Courier, monospace;
+      font-family: var(--font-mono);
       font-weight: 600;
       color: #374151;
       width: 160px;
@@ -641,14 +735,14 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-family: var(--font-sans);
     }
 
     .footer-disclaimer {
       font-size: 7.5pt;
-      color: #6b7280;
+      color: var(--muted);
       max-width: 75%;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .footer-disclaimer strong {
@@ -664,10 +758,11 @@
     }
 
     .footer-brand-text {
-      font-weight: 700;
+      font-family: var(--font-sans);
+      font-weight: 800;
       letter-spacing: 1.5px;
       text-transform: uppercase;
-      color: #E8712A;
+      color: var(--orange);
       font-size: 8pt;
     }
 
@@ -677,19 +772,20 @@
     }
 
     .method-block p {
-      font-size: 9.5pt;
-      line-height: 1.6;
-      margin-bottom: 0.5em;
+      font-size: 10pt;
+      line-height: 1.7;
+      margin-bottom: 0.6em;
     }
 
     .method-block ul {
-      padding-left: 1.4em;
-      margin-bottom: 0.5em;
+      padding-left: 1.5em;
+      margin-bottom: 0.6em;
     }
 
     .method-block li {
-      font-size: 9.5pt;
-      margin-bottom: 0.2em;
+      font-size: 10pt;
+      line-height: 1.65;
+      margin-bottom: 0.3em;
     }
 
     /* ── Print layout ── */
@@ -894,7 +990,7 @@
                   <span class="conflict-flag">&#9888;</span>
                 {% endif %}
                 {% if v.variant_effect is defined and v.variant_effect %}
-                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
                 {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
@@ -920,7 +1016,7 @@
                   <span class="conflict-flag">&#9888;</span>
                 {% endif %}
                 {% if v.variant_effect is defined and v.variant_effect %}
-                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
                 {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
@@ -1090,7 +1186,7 @@
         <span class="section-badge badge-navy">Genomic Findings</span>
         <div class="section-rule rule-navy"></div>
       {% endif %}
-      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+      <div class="masthead-meta" style="text-align:right;font-family:var(--font-sans);font-size:8.5pt;color:#6b7280;">
         <strong style="color:#1c2b4a;">{{ sample_id }}</strong> &nbsp;|&nbsp; {{ date }}
       </div>
     </div>
@@ -1099,7 +1195,7 @@
     <div class="variant-detail-header">
       <div class="variant-gene-name">{{ v.gene }}</div>
       {% if v.gene_full_name is defined and v.gene_full_name %}
-        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">{{ v.gene_full_name }}</div>
+        <div style="font-family:var(--font-sans);font-size:10pt;color:#6b7280;margin-top:2px;">{{ v.gene_full_name }}</div>
       {% endif %}
       <div class="variant-alteration">{{ v.variant }}</div>
       {% if v.hgvs is defined and v.hgvs %}
@@ -1110,7 +1206,7 @@
               {% if v.hgvs.protein is defined and v.hgvs.protein %} ({{ v.hgvs.protein }}){% endif %}
             </span>
             {% if v.variant_effect is defined and v.variant_effect %}
-              <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;font-weight:600;margin-left:8px;">{{ v.variant_effect }}</span>
+              <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:var(--font-sans);font-size:8.5pt;font-weight:600;margin-left:8px;">{{ v.variant_effect }}</span>
             {% endif %}
           {% endif %}
         </div>
@@ -1161,12 +1257,10 @@
 
         {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
           <div class="detail-label">Associated Conditions</div>
-          <div class="detail-value">
-            <ul style="margin:0;padding-left:1.2em;">
-              {% for cond in v.associated_conditions %}
-                <li style="font-size:9pt;margin-bottom:2px;">{{ cond }}</li>
-              {% endfor %}
-            </ul>
+          <div class="detail-value" style="margin-top:4px;">
+            {% for cond in v.associated_conditions %}
+              <span class="condition-pill">{{ cond }}</span>
+            {% endfor %}
           </div>
         {% elif clinical.associated_conditions is defined and clinical.associated_conditions %}
           <div class="detail-label">Associated Conditions</div>
@@ -1241,12 +1335,10 @@
 
         {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
           <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
-          <div class="detail-value">
-            <ul style="margin:0;padding-left:1.2em;">
-              {% for cond in v.associated_conditions %}
-                <li style="font-size:9pt;margin-bottom:2px;">{{ cond }}</li>
-              {% endfor %}
-            </ul>
+          <div class="detail-value" style="margin-top:4px;">
+            {% for cond in v.associated_conditions %}
+              <span class="condition-pill">{{ cond }}</span>
+            {% endfor %}
           </div>
         {% endif %}
 
@@ -1362,7 +1454,7 @@
                 {% if pgx.hgvs.transcript is defined and pgx.hgvs.transcript and pgx.hgvs.transcript != 'N/A (HLA typing required)' %}{{ pgx.hgvs.transcript }}:{% endif %}{{ pgx.hgvs.cdna }}{% if pgx.hgvs.protein is defined and pgx.hgvs.protein and pgx.hgvs.protein != 'N/A' %} ({{ pgx.hgvs.protein }}){% endif %}
               </div>
               {% if pgx.variant_effect is defined and pgx.variant_effect %}
-                <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8pt;font-weight:600;margin-top:4px;">{{ pgx.variant_effect }}</span>
+                <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:var(--font-sans);font-size:8pt;font-weight:600;margin-top:4px;">{{ pgx.variant_effect }}</span>
               {% endif %}
             </div>
           {% endif %}
@@ -1371,22 +1463,22 @@
           <div class="pgx-cell-label">Korean vs Western Prevalence</div>
           {% if pgx.korean_prevalence is defined and pgx.western_prevalence is defined %}
             <div class="pgx-cell-value">
-              <div class="freq-stat" style="display:inline-block;margin-right:6px;padding:5px 8px;">
-                <div class="freq-num" style="font-size:11pt;">{{ "%.1f"|format(pgx.korean_prevalence * 100) }}%</div>
-                <div class="freq-label">Korean</div>
+              <div class="pgx-comparison-box box-korean">
+                <div class="box-pct">{{ "%.1f"|format(pgx.korean_prevalence * 100) }}%</div>
+                <div class="box-lbl">Korean</div>
               </div>
-              <div class="freq-stat" style="display:inline-block;padding:5px 8px;">
-                <div class="freq-num" style="font-size:11pt;">{{ "%.1f"|format(pgx.western_prevalence * 100) }}%</div>
-                <div class="freq-label">Western</div>
+              <div class="pgx-comparison-box box-western">
+                <div class="box-pct">{{ "%.1f"|format(pgx.western_prevalence * 100) }}%</div>
+                <div class="box-lbl">Western</div>
               </div>
             </div>
             {% set ratio = pgx.korean_prevalence / pgx.western_prevalence if pgx.western_prevalence > 0 else 0 %}
             {% if ratio >= 2.0 %}
-              <div class="freq-enrichment" style="margin-top:4px;">
+              <div class="freq-enrichment" style="margin-top:6px;">
                 Korean prevalence {{ "%.1f"|format(ratio) }}x higher — population-specific monitoring recommended
               </div>
             {% elif pgx.western_prevalence > 0 and ratio < 0.5 %}
-              <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:2px;padding:4px 8px;margin-top:4px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8pt;color:#166534;">
+              <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:3px;padding:5px 10px;margin-top:6px;font-family:var(--font-sans);font-size:8.5pt;font-weight:700;color:#166534;">
                 Korean prevalence {{ "%.1f"|format(ratio) }}x lower than Western
               </div>
             {% endif %}
