@@ -45,6 +45,20 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
                 phenotype = "HLA-B*5701 carrier — abacavir hypersensitivity risk"
             elif variant.gene == "NUDT15":
                 phenotype = "NUDT15 intermediate metabolizer (p.R139C carrier)"
+            elif variant.gene == "CYP3A5":
+                phenotype = "CYP3A5 expressor (*1 carrier) — higher tacrolimus dose needed"
+            elif variant.gene == "UGT1A1":
+                phenotype = "UGT1A1 poor metabolizer (*6 carrier) — irinotecan toxicity risk"
+            elif variant.gene == "SLCO1B1":
+                phenotype = "SLCO1B1 decreased function (*15 carrier) — statin myopathy risk"
+            elif variant.gene == "VKORC1":
+                phenotype = "VKORC1 low-dose warfarin phenotype (-1639A carrier)"
+            elif variant.gene == "G6PD":
+                phenotype = "G6PD deficient — rasburicase contraindicated"
+            elif variant.gene == "IFNL3":
+                phenotype = "IFNL3 favorable responder (CC genotype)"
+            elif variant.gene == "CYP1A2":
+                phenotype = "CYP1A2 poor metabolizer (*1C carrier)"
             return PgxResult(
                 gene=variant.gene,
                 star_allele=entry.get("variant", ""),

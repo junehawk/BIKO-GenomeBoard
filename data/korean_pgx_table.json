@@ -47,6 +47,76 @@
       "clinical_impact": "Thiopurine myelosuppression risk",
       "cpic_level": "A",
       "source": "Yang et al. 2014"
+    },
+    {
+      "gene": "CYP3A5",
+      "variant": "*3 (rs776746)",
+      "korean_freq": 0.25,
+      "western_freq": 0.85,
+      "metric": "allele_freq",
+      "clinical_impact": "Tacrolimus dose adjustment — CYP3A5 expressors (common in Koreans) require higher doses",
+      "cpic_level": "A",
+      "source": "CPIC 2022"
+    },
+    {
+      "gene": "UGT1A1",
+      "variant": "*6 (rs4148323)",
+      "korean_freq": 0.13,
+      "western_freq": 0.01,
+      "metric": "allele_freq",
+      "clinical_impact": "Irinotecan dose reduction — UGT1A1*6 (East Asian-specific) increases toxicity risk",
+      "cpic_level": "A",
+      "source": "CPIC 2020"
+    },
+    {
+      "gene": "SLCO1B1",
+      "variant": "*15 (rs4149056)",
+      "korean_freq": 0.16,
+      "western_freq": 0.15,
+      "metric": "allele_freq",
+      "clinical_impact": "Statin-induced myopathy risk — dose adjustment for simvastatin recommended",
+      "cpic_level": "A",
+      "source": "CPIC 2014"
+    },
+    {
+      "gene": "VKORC1",
+      "variant": "-1639G>A (rs9923231)",
+      "korean_freq": 0.90,
+      "western_freq": 0.37,
+      "metric": "allele_freq",
+      "clinical_impact": "Warfarin dose reduction — most Koreans require significantly lower warfarin doses",
+      "cpic_level": "A",
+      "source": "CPIC 2017"
+    },
+    {
+      "gene": "CYP1A2",
+      "variant": "*1C (rs2069514)",
+      "korean_freq": 0.23,
+      "western_freq": 0.05,
+      "metric": "allele_freq",
+      "clinical_impact": "Caffeine and clozapine metabolism — decreased CYP1A2 activity in carriers",
+      "cpic_level": "C",
+      "source": "PharmGKB"
+    },
+    {
+      "gene": "G6PD",
+      "variant": "Deficiency (multiple variants)",
+      "korean_freq": 0.035,
+      "western_freq": 0.005,
+      "metric": "carrier_freq",
+      "clinical_impact": "Rasburicase contraindicated — hemolytic anemia risk in G6PD-deficient patients",
+      "cpic_level": "A",
+      "source": "CPIC 2014"
+    },
+    {
+      "gene": "IFNL3",
+      "variant": "rs12979860 CC genotype",
+      "korean_freq": 0.85,
+      "western_freq": 0.37,
+      "metric": "genotype_freq",
+      "clinical_impact": "PEG-IFN/ribavirin response prediction — CC genotype (favorable) much more common in Koreans",
+      "cpic_level": "A",
+      "source": "CPIC 2014"
     }
   ]
 }
