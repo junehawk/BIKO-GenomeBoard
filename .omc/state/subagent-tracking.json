@@ -51,10 +51,64 @@
       "status": "completed",
       "completed_at": "2026-03-23T05:52:01.652Z",
       "duration_ms": 532970
+    },
+    {
+      "agent_id": "a774ee8296ffdebb6",
+      "agent_type": "oh-my-claudecode:planner",
+      "started_at": "2026-03-23T06:47:49.155Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-23T08:04:34.454Z",
+      "duration_ms": 4605299
+    },
+    {
+      "agent_id": "ab596924b81cb0f4e",
+      "agent_type": "general-purpose",
+      "started_at": "2026-03-23T08:45:35.217Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-23T08:50:01.568Z",
+      "duration_ms": 266351
+    },
+    {
+      "agent_id": "a897d6b0bacf313a1",
+      "agent_type": "general-purpose",
+      "started_at": "2026-03-23T08:51:16.840Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-23T08:55:07.517Z",
+      "duration_ms": 230677
+    },
+    {
+      "agent_id": "a2f5486849cc05dc3",
+      "agent_type": "general-purpose",
+      "started_at": "2026-03-23T08:55:56.268Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-23T08:59:01.769Z",
+      "duration_ms": 185501
+    },
+    {
+      "agent_id": "a8c30647ee6439e34",
+      "agent_type": "general-purpose",
+      "started_at": "2026-03-23T08:59:32.462Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-23T09:02:34.104Z",
+      "duration_ms": 181642
+    },
+    {
+      "agent_id": "a106e2d1067a70fe1",
+      "agent_type": "general-purpose",
+      "started_at": "2026-03-23T09:11:01.475Z",
+      "parent_mode": "none",
+      "status": "completed",
+      "completed_at": "2026-03-23T09:18:50.002Z",
+      "duration_ms": 468527
     }
   ],
-  "total_spawned": 6,
-  "total_completed": 5,
+  "total_spawned": 12,
+  "total_completed": 11,
   "total_failed": 0,
-  "last_updated": "2026-03-23T05:52:01.754Z"
+  "last_updated": "2026-03-23T09:18:50.107Z"
 }

@@ -15,6 +15,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.clinical.query_clinvar import query_clinvar
+from scripts.clinical.hpo_matcher import resolve_hpo_terms, calculate_hpo_score, get_matching_hpo_terms
+from scripts.clinical.query_omim import query_omim
+from scripts.clinical.query_clingen import get_gene_validity
 from scripts.korean_pop.query_gnomad import query_gnomad
 from scripts.korean_pop.query_krgdb import query_krgdb
 from scripts.korean_pop.compare_freq import compare_frequencies
@@ -120,6 +123,7 @@ def run_pipeline(
     json_output: str = None,
     skip_api: bool = False,
     mode: str = None,
+    hpo_ids: list = None,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -127,6 +131,15 @@ def run_pipeline(
     """
     mode = mode or get("report.default_mode", "cancer")
     start_time = time.time()
+
+    # HPO processing (rare disease mode) — always resolve, even in skip_api mode
+    # HPO phenotype matching is essential for candidate ranking
+    hpo_results = []
+    if mode == "rare-disease" and hpo_ids:
+        logger.info("[HPO] Resolving phenotype terms...")
+        hpo_results = resolve_hpo_terms(hpo_ids)
+        for h in hpo_results:
+            logger.info(f"  → {h['id']}: {h['name']} ({len(h['genes'])} associated genes)")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -269,6 +282,40 @@ def run_pipeline(
             }
         )
 
+    # For rare disease mode, add HPO score and OMIM/ClinGen data to each variant
+    if mode == "rare-disease":
+        for v_result in variant_records:
+            gene = v_result.get("gene", "")
+            # HPO phenotype matching
+            v_result["hpo_score"] = calculate_hpo_score(gene, hpo_results)
+            v_result["matching_hpo"] = get_matching_hpo_terms(gene, hpo_results)
+            # OMIM
+            omim = query_omim(gene)
+            if omim:
+                v_result["omim_mim"] = omim.get("mim", "")
+                v_result["omim_phenotypes"] = omim.get("phenotypes", [])
+                v_result["inheritance"] = omim.get("inheritance", "")
+            else:
+                v_result["omim_mim"] = ""
+                v_result["omim_phenotypes"] = []
+                v_result["inheritance"] = ""
+            # ClinGen
+            v_result["clingen_validity"] = get_gene_validity(gene) or ""
+
+        # Sort by: classification rank (Pathogenic first) then HPO score (descending)
+        cls_rank = {
+            "Pathogenic": 0,
+            "Likely Pathogenic": 1,
+            "VUS": 2,
+            "Drug Response": 3,
+            "Risk Factor": 4,
+            "Likely Benign": 5,
+            "Benign": 6,
+        }
+        variant_records.sort(
+            key=lambda v: (cls_rank.get(v.get("classification", "VUS"), 2), -v.get("hpo_score", 0))
+        )
+
     # Build summary counts
     total = len(variant_records)
     pathogenic_count = sum(1 for r in variant_records if r["classification"] == "Pathogenic")
@@ -317,6 +364,7 @@ def run_pipeline(
             "krgdb_path": str(krgdb_file),
         },
         "mode": mode,
+        "hpo_results": hpo_results,
     }
 
     # ── Step 6: Generate report ────────────────────────────────────────────────
@@ -409,6 +457,12 @@ Examples:
         help="Report mode: cancer (somatic) or rare-disease (germline)",
     )
     parser.add_argument(
+        "--hpo",
+        type=str,
+        default=None,
+        help="Comma-separated HPO IDs for rare disease mode (e.g., HP:0001250,HP:0001263)",
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -430,6 +484,9 @@ Examples:
         else:
             json_output = args.json_flag
 
+    # Parse HPO IDs from comma-separated string
+    hpo_ids = [h.strip() for h in args.hpo.split(",")] if args.hpo else None
+
     result = run_pipeline(
         vcf_path=args.vcf_path,
         output_path=args.output,
@@ -438,6 +495,7 @@ Examples:
         json_output=json_output,
         skip_api=args.skip_api,
         mode=args.mode,
+        hpo_ids=hpo_ids,
     )
 
     if result is None:

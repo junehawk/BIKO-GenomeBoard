@@ -20,7 +20,9 @@
       "Glob",
       "Grep",
       "WebFetch",
-      "Bash(find /Users/JL/Research/gb/output -name *.json)"
+      "Bash(find /Users/JL/Research/gb/output -name *.json)",
+      "Bash(git -C /Users/JL/Research/gb log --oneline -5)",
+      "Bash(git:*)"
     ]
   }
 }

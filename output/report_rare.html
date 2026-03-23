@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GenomeBoard — Rare Disease Report — DEMO_VARIANTS_GRCH38</title>
+    <!-- Same CSS as cancer template -->
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+        /* ── CSS Variables — Clinical/Academic palette ── */
+        :root {
+          --teal:    #0F766E;
+          --teal-lt: #CCFBF1;
+          --navy:    #0F172A;
+          --slate:   #475569;
+          --text:    #1e293b;
+          --muted:   #64748b;
+          --border:  #cbd5e1;
+          --surface: #f8fafc;
+          --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+          --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          font-family: var(--font-sans);
+          font-size: 9.5pt;
+          line-height: 1.6;
+          color: var(--text);
+          background: #ffffff;
+        }
+
+        .page {
+          width: 210mm;
+          min-height: 297mm;
+          margin: 0 auto;
+          padding: 0;
+          position: relative;
+          background: #ffffff;
+        }
+
+        @page { size: A4; margin: 0; }
+
+        .page-header-bar {
+          background: var(--teal);
+          height: 5px;
+          width: 100%;
+        }
+
+        .page-body {
+          padding: 18mm 18mm 28mm 18mm;
+        }
+
+        .page-footer {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 22mm;
+          padding: 4mm 18mm;
+          border-top: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 7.5pt;
+          color: var(--muted);
+        }
+
+        .footer-disclaimer { flex: 1; }
+        .footer-right { text-align: right; }
+        .footer-brand-text { font-weight: 700; color: var(--teal); font-size: 8pt; }
+
+        .masthead {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 10mm;
+          padding-bottom: 5mm;
+          border-bottom: 2px solid var(--teal);
+        }
+
+        .masthead-brand {
+          font-size: 20pt;
+          font-weight: 800;
+          color: var(--navy);
+          letter-spacing: -0.5px;
+        }
+
+        .masthead-subtitle {
+          font-size: 9pt;
+          color: var(--slate);
+          margin-top: 2px;
+        }
+
+        .masthead-meta {
+          text-align: right;
+          font-size: 8.5pt;
+          color: var(--slate);
+          line-height: 1.8;
+        }
+
+        .section-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 8mm 0 4mm;
+        }
+
+        .section-badge {
+          background: var(--teal);
+          color: #fff;
+          font-size: 7.5pt;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 3px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 8.5pt;
+          margin-bottom: 6mm;
+        }
+
+        th {
+          background: var(--navy);
+          color: #fff;
+          padding: 5px 8px;
+          text-align: left;
+          font-weight: 600;
+          font-size: 7.5pt;
+        }
+
+        td {
+          padding: 5px 8px;
+          border-bottom: 1px solid var(--border);
+          vertical-align: top;
+        }
+
+        tr:nth-child(even) td { background: var(--surface); }
+
+        .acmg-code {
+          display: inline-block;
+          background: #e0f2fe;
+          color: #0369a1;
+          font-size: 7pt;
+          font-weight: 700;
+          padding: 1px 5px;
+          border-radius: 3px;
+          margin: 1px 2px 1px 0;
+          font-family: var(--font-mono);
+        }
+
+        p { margin-bottom: 4mm; }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="page-header-bar"></div>
+    <div class="page-body">
+        <div class="masthead">
+            <div>
+                <div class="masthead-brand">GenomeBoard</div>
+                <div class="masthead-subtitle">Rare Disease / Germline Variant Report</div>
+            </div>
+            <div class="masthead-meta">
+                <div><strong>Sample:</strong> DEMO_VARIANTS_GRCH38</div>
+                <div><strong>Date:</strong> 2026-03-23</div>
+                <div><strong>Mode:</strong> Rare Disease (Germline)</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <span class="section-badge">Report Summary</span>
+        </div>
+
+        <p>Total variants analyzed: <strong>10</strong></p>
+
+        <div style="background:#f0f4fa;border:1px solid #c7d6eb;border-radius:6px;padding:20px;margin:20px 0;text-align:center;">
+            <h3 style="color:#0F766E;margin-bottom:8px;">Rare Disease Report Mode — Under Construction</h3>
+            <p style="color:#475569;">
+                This report mode is in development (Phase 2). It will include:<br>
+                HPO phenotype matching, OMIM gene-disease associations,<br>
+                ClinGen gene validity, inheritance pattern display,<br>
+                and candidate gene ranking.
+            </p>
+        </div>
+
+        <!-- Show basic variant table (reuse from cancer) -->
+        <div class="section-header">
+            <span class="section-badge">Variant Summary</span>
+        </div>
+
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Gene</th>
+                    <th>Variant</th>
+                    <th>Classification</th>
+                    <th>ACMG Codes</th>
+                    <th>ClinVar</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                <tr>
+                    <td><strong>TP53</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr17:7675088:C&gt;A</td>
+                    <td>Likely Pathogenic</td>
+                    <td>
+                        
+                        <span class="acmg-code">PS1</span>
+                        
+                        <span class="acmg-code">PP5</span>
+                        
+                        <span class="acmg-code">PM2_Supporting</span>
+                        
+                    </td>
+                    <td>Likely pathogenic</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>BRCA2</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr13:32356550:C&gt;T</td>
+                    <td>VUS</td>
+                    <td>
+                        
+                        <span class="acmg-code">PM2_Supporting</span>
+                        
+                    </td>
+                    <td>Uncertain significance</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>CFTR</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr7:117559590:ATCT&gt;A</td>
+                    <td>Likely Pathogenic</td>
+                    <td>
+                        
+                        <span class="acmg-code">PS1</span>
+                        
+                        <span class="acmg-code">PP5</span>
+                        
+                        <span class="acmg-code">PM2_Supporting</span>
+                        
+                    </td>
+                    <td>Pathogenic</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>CYP2C19</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr10:94781859:G&gt;A</td>
+                    <td>Drug Response</td>
+                    <td>
+                        
+                        <span class="acmg-code">BA1</span>
+                        
+                    </td>
+                    <td>drug response</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>HLA-B</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr6:31464003:T&gt;G</td>
+                    <td>Drug Response</td>
+                    <td>
+                        
+                        <span class="acmg-code">PM2</span>
+                        
+                    </td>
+                    <td>Conflicting classifications of pathogenicity</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>NUDT15</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr13:48045719:C&gt;T</td>
+                    <td>Drug Response</td>
+                    <td>
+                        
+                        <span class="acmg-code">PM2</span>
+                        
+                    </td>
+                    <td>drug response</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>MUTYH</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr2:165342465:G&gt;A</td>
+                    <td>VUS</td>
+                    <td>
+                        
+                        <span class="acmg-code">PP5</span>
+                        
+                        <span class="acmg-code">PM2_Supporting</span>
+                        
+                    </td>
+                    <td>Pathogenic</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>PALB2</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr17:72122759:G&gt;A</td>
+                    <td>VUS</td>
+                    <td>
+                        
+                        <span class="acmg-code">PP5</span>
+                        
+                        <span class="acmg-code">PM2_Supporting</span>
+                        
+                    </td>
+                    <td>Pathogenic</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>PTPN11</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr12:25225628:C&gt;A</td>
+                    <td>VUS</td>
+                    <td>
+                        
+                        <span class="acmg-code">PS1</span>
+                        
+                        <span class="acmg-code">PM2_Supporting</span>
+                        
+                    </td>
+                    <td>Pathogenic/Likely pathogenic</td>
+                </tr>
+                
+                <tr>
+                    <td><strong>APOE</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">chr19:44908684:T&gt;C</td>
+                    <td>Risk Factor</td>
+                    <td>
+                        
+                        <span class="acmg-code">BA1</span>
+                        
+                    </td>
+                    <td>no classification for the single variant</td>
+                </tr>
+                
+            </tbody>
+        </table>
+        
+
+        <!-- Korean Population section (shared) -->
+        
+        <div class="section-header">
+            <span class="section-badge">Korean Population Findings</span>
+        </div>
+        <p>Korean population frequency analysis is shared across report modes.</p>
+        
+
+    </div>
+    <div class="page-footer">
+        <div class="footer-disclaimer">
+            <strong>Research Use Only — Not for clinical decision making.</strong>
+        </div>
+        <div class="footer-right">
+            <div class="footer-brand-text">GenomeBoard</div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
