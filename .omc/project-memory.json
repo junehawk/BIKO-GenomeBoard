@@ -135,8 +135,56 @@
   "hotPaths": [
     {
       "path": "templates/report.html",
-      "accessCount": 11,
-      "lastAccessed": 1774225012837,
+      "accessCount": 49,
+      "lastAccessed": 1774239498462,
+      "type": "file"
+    },
+    {
+      "path": "output/report_final.html",
+      "accessCount": 21,
+      "lastAccessed": 1774239310899,
+      "type": "file"
+    },
+    {
+      "path": "output/report_grch38_fixed.html",
+      "accessCount": 18,
+      "lastAccessed": 1774231220381,
+      "type": "file"
+    },
+    {
+      "path": "scripts/counselor/generate_pdf.py",
+      "accessCount": 14,
+      "lastAccessed": 1774239267093,
+      "type": "file"
+    },
+    {
+      "path": "data/gene_knowledge.json",
+      "accessCount": 10,
+      "lastAccessed": 1774239250560,
+      "type": "file"
+    },
+    {
+      "path": "data/korean_pgx_table.json",
+      "accessCount": 9,
+      "lastAccessed": 1774234329619,
+      "type": "file"
+    },
+    {
+      "path": "output/report_grch38.json",
+      "accessCount": 6,
+      "lastAccessed": 1774234301219,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 6,
+      "lastAccessed": 1774239014799,
+      "type": "directory"
+    },
+    {
+      "path": "scripts/pharma/korean_pgx.py",
+      "accessCount": 6,
+      "lastAccessed": 1774239255736,
       "type": "file"
     },
     {
@@ -158,39 +206,33 @@
       "type": "file"
     },
     {
-      "path": "data/gene_knowledge.json",
-      "accessCount": 3,
-      "lastAccessed": 1774225007581,
+      "path": "scripts/common/models.py",
+      "accessCount": 4,
+      "lastAccessed": 1774231163873,
+      "type": "file"
+    },
+    {
+      "path": "scripts/korean_pop/compare_freq.py",
+      "accessCount": 4,
+      "lastAccessed": 1774231204633,
+      "type": "file"
+    },
+    {
+      "path": "data/sample_vcf/demo_variants_grch38.vcf",
+      "accessCount": 4,
+      "lastAccessed": 1774234325636,
+      "type": "file"
+    },
+    {
+      "path": "scripts/classification/acmg_engine.py",
+      "accessCount": 4,
+      "lastAccessed": 1774239586160,
       "type": "file"
     },
     {
       "path": "tests/test_compare_freq.py",
       "accessCount": 3,
       "lastAccessed": 1774225032193,
-      "type": "file"
-    },
-    {
-      "path": "scripts/korean_pop/compare_freq.py",
-      "accessCount": 3,
-      "lastAccessed": 1774227487323,
-      "type": "file"
-    },
-    {
-      "path": "scripts/counselor/generate_pdf.py",
-      "accessCount": 3,
-      "lastAccessed": 1774227488887,
-      "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 3,
-      "lastAccessed": 1774228653977,
-      "type": "directory"
-    },
-    {
-      "path": "scripts/common/models.py",
-      "accessCount": 3,
-      "lastAccessed": 1774228668465,
       "type": "file"
     },
     {
@@ -212,16 +254,34 @@
       "type": "file"
     },
     {
-      "path": "scripts/common/gene_knowledge.py",
-      "accessCount": 2,
-      "lastAccessed": 1774224367347,
+      "path": "data/sample_vcf/demo_variants.vcf",
+      "accessCount": 3,
+      "lastAccessed": 1774230401444,
       "type": "file"
     },
     {
-      "path": "data/sample_vcf/demo_variants.vcf",
-      "accessCount": 2,
-      "lastAccessed": 1774228662664,
+      "path": "data/krgdb_freq.tsv",
+      "accessCount": 3,
+      "lastAccessed": 1774234234957,
       "type": "file"
+    },
+    {
+      "path": "scripts/orchestrate.py",
+      "accessCount": 3,
+      "lastAccessed": 1774234302248,
+      "type": "file"
+    },
+    {
+      "path": "scripts/common/gene_knowledge.py",
+      "accessCount": 3,
+      "lastAccessed": 1774234302584,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_acmg_logic.py",
+      "accessCount": 3,
+      "lastAccessed": 1774239702087,
+      "type": "directory"
     },
     {
       "path": "tests/test_gnomad.py",
@@ -233,6 +293,18 @@
       "path": "tests/test_intake.py",
       "accessCount": 2,
       "lastAccessed": 1774228742294,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_korean_pgx.py",
+      "accessCount": 2,
+      "lastAccessed": 1774234544078,
+      "type": "file"
+    },
+    {
+      "path": "output/report_final.json",
+      "accessCount": 2,
+      "lastAccessed": 1774239063173,
       "type": "file"
     },
     {
@@ -260,18 +332,6 @@
       "type": "file"
     },
     {
-      "path": "scripts/pharma/korean_pgx.py",
-      "accessCount": 1,
-      "lastAccessed": 1774227487777,
-      "type": "file"
-    },
-    {
-      "path": "scripts/classification/acmg_engine.py",
-      "accessCount": 1,
-      "lastAccessed": 1774227488168,
-      "type": "file"
-    },
-    {
       "path": "tests/conftest.py",
       "accessCount": 1,
       "lastAccessed": 1774227489016,
@@ -284,16 +344,22 @@
       "type": "file"
     },
     {
-      "path": "scripts/orchestrate.py",
-      "accessCount": 1,
-      "lastAccessed": 1774227558338,
-      "type": "file"
-    },
-    {
       "path": "tests/test_orchestrate.py",
       "accessCount": 1,
       "lastAccessed": 1774227579826,
       "type": "file"
+    },
+    {
+      "path": "data/acmg_rules.json",
+      "accessCount": 1,
+      "lastAccessed": 1774231141307,
+      "type": "file"
+    },
+    {
+      "path": "scripts",
+      "accessCount": 1,
+      "lastAccessed": 1774234296171,
+      "type": "directory"
     }
   ],
   "userDirectives": []

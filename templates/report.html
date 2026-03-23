@@ -1109,7 +1109,7 @@
       <div class="variant-badges">
         {{ class_badge(v.classification) }}
         {% if v.conflict is defined and v.conflict %}
-          <span class="conflict-flag">&#9888; Conflicting Interpretations</span>
+          <span class="conflict-flag">&#9888; Conflict: Engine={{ v.classification }} vs ClinVar={{ v.clinvar_significance | default(v.agents.clinical.clinvar_significance | default('N/A')) }}</span>
         {% endif %}
         {% if v.acmg_codes %}
           {% for code in v.acmg_codes %}

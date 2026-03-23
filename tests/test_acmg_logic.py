@@ -126,8 +126,8 @@ def test_non_risk_factor_gene_not_bypassed():
 
 # I-4: ClinVar conflict detection
 def test_check_clinvar_conflict_lp_vs_pathogenic():
-    """LP (rank 3) vs Pathogenic (rank 4) — diff=1 → conflict."""
-    assert check_clinvar_conflict("Likely Pathogenic", "Pathogenic") is True
+    """LP (rank 3) vs Pathogenic (rank 4) — diff=1 → NOT conflict (clinically acceptable)."""
+    assert check_clinvar_conflict("Likely Pathogenic", "Pathogenic") is False
 
 def test_check_clinvar_conflict_benign_vs_pathogenic():
     """Benign (rank 0) vs Pathogenic (rank 4) — diff=4 → conflict."""

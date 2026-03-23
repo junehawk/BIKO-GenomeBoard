@@ -69,12 +69,49 @@ RISK_FACTOR_GENES = {"APOE"}
 
 def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
     """Check if engine classification conflicts with ClinVar significance."""
-    if not clinvar_sig or clinvar_sig in ("Not Found", "Drug Response", "Risk Factor"):
+    if not clinvar_sig:
         return False
-    rank = {"Benign": 0, "Likely Benign": 1, "VUS": 2, "Likely Pathogenic": 3, "Pathogenic": 4, "Drug Response": -1, "Risk Factor": -1}
-    engine_rank = rank.get(classification, 2)
-    clinvar_rank = rank.get(clinvar_sig, 2)
-    return abs(engine_rank - clinvar_rank) >= 1
+
+    # Normalize to lowercase for comparison
+    engine_lower = classification.lower().strip()
+    clinvar_lower = clinvar_sig.lower().strip()
+
+    # Skip non-comparable ClinVar values
+    skip_values = {"not found", "no classification for the single variant", "not provided", "other"}
+    if clinvar_lower in skip_values:
+        return False
+
+    # Drug Response / Risk Factor engine outputs don't conflict with matching ClinVar
+    if engine_lower in ("drug response", "risk factor") and clinvar_lower in ("drug response", "risk factor"):
+        return False
+    # Drug Response engine vs non-standard ClinVar (e.g., "conflicting classifications") — flag it
+    if engine_lower in ("drug response", "risk factor") and clinvar_lower not in ("drug response", "risk factor"):
+        # Only flag if ClinVar has a strong pathogenic/benign call
+        if "pathogenic" in clinvar_lower or "benign" in clinvar_lower:
+            return True
+        return False
+
+    # Standard ACMG tier comparison (case-insensitive)
+    rank = {
+        "benign": 0, "likely benign": 1, "vus": 2, "uncertain significance": 2,
+        "likely pathogenic": 3, "pathogenic": 4,
+    }
+    engine_rank = rank.get(engine_lower, -1)
+    clinvar_rank = rank.get(clinvar_lower, -1)
+
+    # Handle compound ClinVar values like "Pathogenic/Likely pathogenic"
+    if clinvar_rank == -1 and "/" in clinvar_lower:
+        parts = [p.strip() for p in clinvar_lower.split("/")]
+        ranks = [rank.get(p, -1) for p in parts if rank.get(p, -1) >= 0]
+        if ranks:
+            clinvar_rank = max(ranks)
+
+    # If either is unranked, can't compare
+    if engine_rank == -1 or clinvar_rank == -1:
+        return False
+
+    # Conflict if difference >= 2 steps (LP vs P is only 1 step, not flagged)
+    return abs(engine_rank - clinvar_rank) >= 2
 
 def classify_variant(evidences: List[AcmgEvidence], gene: str = None) -> ClassificationResult:
     """Classify variant by ACMG rules. If gene is a PGx gene, return 'Drug Response' instead."""
