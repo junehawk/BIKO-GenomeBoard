@@ -811,15 +811,23 @@
         </div>
         <div class="info-row">
           <span class="info-label">Pathogenic / LP</span>
-          <span class="info-value" style="color:#991b1b;font-weight:700;">{{ summary.pathogenic }}</span>
+          <span class="info-value" style="color:#991b1b;font-weight:700;">{{ (summary.pathogenic | default(0)) + (summary.likely_pathogenic | default(0)) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">VUS</span>
-          <span class="info-value" style="color:#92400e;font-weight:700;">{{ summary.vus }}</span>
+          <span class="info-value" style="color:#92400e;font-weight:700;">{{ summary.vus | default(0) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Drug Response / PGx</span>
+          <span class="info-value" style="color:#1d4ed8;font-weight:700;">{{ summary.drug_response | default(0) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Risk Factor</span>
+          <span class="info-value" style="color:#7c3aed;font-weight:700;">{{ summary.risk_factor | default(0) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Benign / LB</span>
-          <span class="info-value" style="color:#166534;font-weight:700;">{{ summary.benign }}</span>
+          <span class="info-value" style="color:#166534;font-weight:700;">{{ (summary.benign | default(0)) + (summary.likely_benign | default(0)) }}</span>
         </div>
       </div>
     </div>
@@ -831,15 +839,19 @@
         <div class="label">Total Variants</div>
       </div>
       <div class="summary-card card-path">
-        <div class="count">{{ summary.pathogenic }}</div>
+        <div class="count">{{ (summary.pathogenic | default(0)) + (summary.likely_pathogenic | default(0)) }}</div>
         <div class="label">Pathogenic / LP</div>
       </div>
       <div class="summary-card card-vus">
-        <div class="count">{{ summary.vus }}</div>
+        <div class="count">{{ summary.vus | default(0) }}</div>
         <div class="label">VUS</div>
       </div>
+      <div class="summary-card" style="background:#eff6ff;color:#1d4ed8;">
+        <div class="count">{{ summary.drug_response | default(0) }}</div>
+        <div class="label">Drug Response</div>
+      </div>
       <div class="summary-card card-benign">
-        <div class="count">{{ summary.benign }}</div>
+        <div class="count">{{ (summary.benign | default(0)) + (summary.likely_benign | default(0)) }}</div>
         <div class="label">Benign / LB</div>
       </div>
     </div>
