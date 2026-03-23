@@ -6,7 +6,7 @@
       "korean_freq": 0.01,
       "western_freq": 0.055,
       "metric": "carrier_freq",
-      "clinical_impact": "코데인, 타목시펜 용량 조절",
+      "clinical_impact": "Codeine, tamoxifen dose adjustment required",
       "cpic_level": "A",
       "source": "CPIC 2019"
     },
@@ -15,7 +15,7 @@
       "korean_freq": 0.14,
       "western_freq": 0.025,
       "metric": "carrier_freq",
-      "clinical_impact": "클로피도그렐 저반응 위험",
+      "clinical_impact": "Clopidogrel poor response risk",
       "cpic_level": "A",
       "source": "CPIC 2022"
     },
@@ -24,7 +24,7 @@
       "korean_freq": 0.03,
       "western_freq": 0.08,
       "metric": "allele_freq",
-      "clinical_impact": "와파린 감량 필요",
+      "clinical_impact": "Warfarin dose reduction required",
       "cpic_level": "A",
       "source": "PharmGKB"
     },
@@ -34,7 +34,7 @@
       "korean_freq": 0.12,
       "western_freq": 0.02,
       "metric": "allele_freq",
-      "clinical_impact": "알로퓨리놀 중증 약물반응 위험",
+      "clinical_impact": "Allopurinol severe adverse drug reaction (SJS/TEN) risk",
       "cpic_level": "A",
       "source": "CPIC 2015"
     },
@@ -44,7 +44,7 @@
       "korean_freq": 0.115,
       "western_freq": 0.01,
       "metric": "carrier_freq",
-      "clinical_impact": "티오퓨린 골수억제 위험",
+      "clinical_impact": "Thiopurine myelosuppression risk",
       "cpic_level": "A",
       "source": "Yang et al. 2014"
     }
