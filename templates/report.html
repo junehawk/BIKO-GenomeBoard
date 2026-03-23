@@ -1068,6 +1068,9 @@
     <!-- Variant identity block -->
     <div class="variant-detail-header">
       <div class="variant-gene-name">{{ v.gene }}</div>
+      {% if v.gene_full_name is defined and v.gene_full_name %}
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">{{ v.gene_full_name }}</div>
+      {% endif %}
       <div class="variant-alteration">{{ v.variant }}</div>
       <div class="variant-badges">
         {{ class_badge(v.classification) }}
@@ -1092,6 +1095,9 @@
         {% if v.treatment_strategies is defined and v.treatment_strategies %}
           <div class="detail-label">Treatment Strategies</div>
           <div class="detail-value">{{ v.treatment_strategies }}</div>
+        {% else %}
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value no-data">해당 변이에 대한 치료 전략 정보가 아직 수집되지 않았습니다.</div>
         {% endif %}
 
         {% if clinical.clinvar_significance is defined and clinical.clinvar_significance %}
@@ -1099,11 +1105,19 @@
           <div class="detail-value">{{ clinical.clinvar_significance }}</div>
         {% endif %}
 
-        {% if clinical.associated_conditions is defined and clinical.associated_conditions %}
+        {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              {% for cond in v.associated_conditions %}
+                <li style="font-size:9pt;margin-bottom:2px;">{{ cond }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% elif clinical.associated_conditions is defined and clinical.associated_conditions %}
           <div class="detail-label">Associated Conditions</div>
           <div class="detail-value">{{ clinical.associated_conditions }}</div>
         {% elif clinical.clinvar_significance is defined %}
-          {# graceful fallback: infer condition context from gene #}
           <div class="detail-label">Associated Conditions</div>
           <div class="detail-value no-data">See ClinVar / OMIM for {{ v.gene }}</div>
         {% endif %}
@@ -1116,10 +1130,6 @@
         {% if clinical.review_stars is defined and clinical.review_stars %}
           <div class="detail-label">ClinVar Review Status</div>
           <div class="detail-value">{{ clinical.review_stars }}</div>
-        {% endif %}
-
-        {% if not (clinical.clinvar_significance is defined and clinical.clinvar_significance) and not (v.treatment_strategies is defined and v.treatment_strategies) %}
-          <p class="no-data">No clinical significance data available for this variant.</p>
         {% endif %}
       </div>
 
@@ -1156,10 +1166,10 @@
             <div class="korean-callout-title">Korean Population Note</div>
             <p>{{ kp.korean_flag }}</p>
           </div>
-        {% else %}
-          {% if not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
-            <p class="no-data">No Korean population frequency data for this variant.</p>
-          {% endif %}
+        {% endif %}
+
+        {% if not (v.frequency_prognosis is defined and v.frequency_prognosis) and not (kp.korean_flag is defined and kp.korean_flag) %}
+          <p class="no-data">No Korean population frequency data for this variant.</p>
         {% endif %}
       </div>
 
@@ -1169,6 +1179,17 @@
 
         {% if v.finding_summary is defined and v.finding_summary %}
           <p>{{ v.finding_summary }}</p>
+        {% endif %}
+
+        {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              {% for cond in v.associated_conditions %}
+                <li style="font-size:9pt;margin-bottom:2px;">{{ cond }}</li>
+              {% endfor %}
+            </ul>
+          </div>
         {% endif %}
 
         {% if kp.gene_description is defined and kp.gene_description %}
@@ -1202,6 +1223,13 @@
       </div>
 
     </div><!-- /detail-grid -->
+
+    {% if v.korean_specific_note is defined and v.korean_specific_note %}
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>{{ v.korean_specific_note }}</p>
+    </div>
+    {% endif %}
 
   </div><!-- /page-body -->
 

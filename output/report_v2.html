@@ -1,0 +1,3331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenomeBoard Consilium Report — DEMO-KR-2026-001</title>
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ── */
+    body {
+      font-family: Georgia, "Times New Roman", Times, serif;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      color: #1a1a1a;
+      background: #ffffff;
+    }
+
+    /* ── Page shell ── */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 0;
+      position: relative;
+      background: #ffffff;
+    }
+
+    /* ── Orange accent bar (top of every page) ── */
+    .page-header-bar {
+      background: #E8712A;
+      height: 8px;
+      width: 100%;
+      display: block;
+    }
+
+    /* ── Page inner content padding ── */
+    .page-body {
+      padding: 14mm 18mm 22mm 18mm;
+    }
+
+    /* ── Masthead (logo row) ── */
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1.5px solid #1c2b4a;
+    }
+
+    .masthead-logo {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .masthead-brand {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 17pt;
+      font-weight: 700;
+      color: #1c2b4a;
+      letter-spacing: -0.3px;
+      line-height: 1;
+    }
+
+    .masthead-brand span {
+      color: #E8712A;
+    }
+
+    .masthead-tagline {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-top: 2px;
+    }
+
+    .masthead-meta {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: #374151;
+      text-align: right;
+      line-height: 1.6;
+    }
+
+    .masthead-meta strong {
+      color: #1c2b4a;
+      font-weight: 600;
+    }
+
+    /* ── Info block grid (page 1 two-column) ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin: 10px 0;
+      border: 1px solid #d1d5db;
+      border-radius: 2px;
+    }
+
+    .info-block {
+      padding: 10px 12px;
+      border-right: 1px solid #d1d5db;
+    }
+
+    .info-block:last-child {
+      border-right: none;
+    }
+
+    .info-block-title {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ffffff;
+      background: #1c2b4a;
+      padding: 3px 8px;
+      margin: -10px -12px 8px -12px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 6px;
+      font-size: 9pt;
+      margin-bottom: 3px;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .info-label {
+      color: #6b7280;
+      font-size: 8.5pt;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      color: #111827;
+      font-weight: 500;
+    }
+
+    /* ── Summary counts strip ── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .summary-card {
+      border-radius: 3px;
+      padding: 10px 8px;
+      text-align: center;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .summary-card .count {
+      font-size: 24pt;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .summary-card .label {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-top: 3px;
+    }
+
+    .card-total    { background: #f0f4fa; color: #1c2b4a; }
+    .card-path     { background: #fff0f0; color: #991b1b; }
+    .card-vus      { background: #fdf8ee; color: #92400e; }
+    .card-benign   { background: #f0faf3; color: #166534; }
+
+    /* ── Section header (orange accent badge style) ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0 10px 0;
+    }
+
+    .section-badge {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+      background: #E8712A;
+      padding: 3px 10px 3px 10px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .section-badge.badge-navy {
+      background: #1c2b4a;
+    }
+
+    .section-badge.badge-blue {
+      background: #1d4ed8;
+    }
+
+    .section-rule {
+      flex: 1;
+      height: 1.5px;
+      background: #E8712A;
+    }
+
+    .section-rule.rule-navy { background: #1c2b4a; }
+    .section-rule.rule-blue { background: #1d4ed8; }
+
+    /* ── Genomic findings summary table (page 1 right column) ── */
+    .findings-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin: 0 0 14px 0;
+    }
+
+    .findings-panel {
+      border: 1px solid #e5e9f0;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .findings-panel-title {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 5px 10px;
+      color: #ffffff;
+    }
+
+    .findings-panel-title.title-path { background: #7f1d1d; }
+    .findings-panel-title.title-vus  { background: #78350f; }
+
+    .findings-panel-body {
+      padding: 8px 10px;
+    }
+
+    .finding-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+    }
+
+    .finding-row:last-child { border-bottom: none; }
+
+    .finding-gene {
+      font-weight: 700;
+      color: #1c2b4a;
+    }
+
+    .finding-variant {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 7.5pt;
+      color: #6b7280;
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Classification badges ── */
+    .badge {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 2px;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .badge-pathogenic        { background: #fecaca; color: #7f1d1d; }
+    .badge-likely-pathogenic { background: #fed7aa; color: #7c2d12; }
+    .badge-vus               { background: #e5e7eb; color: #374151; }
+    .badge-likely-benign     { background: #d1fae5; color: #065f46; }
+    .badge-benign            { background: #bbf7d0; color: #14532d; }
+    .badge-unknown           { background: #f3f4f6; color: #6b7280; }
+
+    /* ── ACMG code pills ── */
+    .acmg-code {
+      display: inline-block;
+      background: #eff6ff;
+      color: #1e40af;
+      border: 1px solid #bfdbfe;
+      border-radius: 2px;
+      padding: 0px 4px;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 7.5pt;
+      margin: 1px 2px 1px 0;
+    }
+
+    /* ── Conflict indicator ── */
+    .conflict-flag {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #f59e0b;
+      border-radius: 2px;
+      padding: 0px 5px;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 600;
+    }
+
+    /* ── Korean flag inline ── */
+    .korean-flag {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      color: #1d4ed8;
+      font-style: italic;
+    }
+
+    /* ── Variant detail page ── */
+    .variant-page {
+      page-break-before: always;
+    }
+
+    /* First detail page must not also break from summary */
+    .variant-page:first-of-type {
+      page-break-before: always;
+    }
+
+    .variant-detail-header {
+      margin: 0 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #1c2b4a;
+    }
+
+    .variant-gene-name {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 26pt;
+      font-weight: 700;
+      color: #1c2b4a;
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+
+    .variant-alteration {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+      color: #374151;
+      margin-top: 3px;
+    }
+
+    .variant-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    /* ── 3-column finding detail grid ── */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border: 1px solid #d1d5db;
+      border-radius: 2px;
+      margin: 12px 0;
+    }
+
+    .detail-col {
+      padding: 12px 14px;
+      border-right: 1px solid #d1d5db;
+    }
+
+    .detail-col:last-child {
+      border-right: none;
+    }
+
+    .detail-col-title {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ffffff;
+      background: #1c2b4a;
+      padding: 4px 8px;
+      margin: -12px -14px 10px -14px;
+    }
+
+    .detail-col p {
+      font-size: 9.5pt;
+      line-height: 1.55;
+      margin-bottom: 6px;
+      color: #1a1a1a;
+    }
+
+    .detail-col .detail-label {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 8px;
+      margin-bottom: 2px;
+    }
+
+    .detail-col .detail-value {
+      font-size: 9.5pt;
+      color: #111827;
+      margin-bottom: 6px;
+    }
+
+    .detail-col .detail-value.mono {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 8.5pt;
+    }
+
+    /* ── Frequency stat box ── */
+    .freq-stat {
+      background: #f8fafc;
+      border: 1px solid #e5e9f0;
+      border-radius: 2px;
+      padding: 7px 10px;
+      margin: 6px 0;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .freq-stat .freq-num {
+      font-size: 14pt;
+      font-weight: 700;
+      color: #1c2b4a;
+      line-height: 1;
+    }
+
+    .freq-stat .freq-label {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #6b7280;
+      margin-top: 1px;
+    }
+
+    .freq-enrichment {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 2px;
+      padding: 5px 10px;
+      margin: 6px 0;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 8.5pt;
+      color: #1d4ed8;
+      font-weight: 600;
+    }
+
+    /* ── Korean callout box ── */
+    .korean-callout {
+      background: #eff6ff;
+      border-left: 3px solid #3b82f6;
+      padding: 8px 12px;
+      border-radius: 0 2px 2px 0;
+      margin: 10px 0;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .korean-callout .korean-callout-title {
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #1d4ed8;
+      margin-bottom: 4px;
+    }
+
+    .korean-callout p {
+      font-size: 9pt;
+      color: #1e3a5f;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ── Actionability table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 16px 0;
+      font-size: 9pt;
+    }
+
+    thead th {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      background: #1c2b4a;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    tbody tr { border-bottom: 1px solid #e5e9f0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+
+    tbody td {
+      padding: 7px 10px;
+      vertical-align: top;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    /* ── "No reportable" list (page 1 bottom) ── */
+    .no-report-list {
+      background: #f9fafb;
+      border: 1px solid #e5e9f0;
+      border-radius: 2px;
+      padding: 10px 14px;
+      margin: 8px 0;
+    }
+
+    .no-report-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      columns: 2;
+      column-gap: 20px;
+    }
+
+    .no-report-list li {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      padding: 2px 0;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .no-report-list li::before {
+      content: "";
+      display: inline-block;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #9ca3af;
+      flex-shrink: 0;
+    }
+
+    /* ── PGx section ── */
+    .pgx-row {
+      border: 1px solid #e5e9f0;
+      border-radius: 2px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+
+    .pgx-row-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f0f4fa;
+      padding: 7px 12px;
+      border-bottom: 1px solid #e5e9f0;
+    }
+
+    .pgx-gene {
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+      font-size: 12pt;
+      font-weight: 700;
+      color: #1c2b4a;
+    }
+
+    .pgx-row-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+    }
+
+    .pgx-cell {
+      padding: 8px 12px;
+      border-right: 1px solid #e5e9f0;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .pgx-cell:last-child { border-right: none; }
+
+    .pgx-cell-label {
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #6b7280;
+      margin-bottom: 3px;
+    }
+
+    .pgx-cell-value {
+      font-size: 9.5pt;
+      color: #111827;
+    }
+
+    .pgx-korean-note {
+      font-size: 8.5pt;
+      color: #1d4ed8;
+      font-style: italic;
+    }
+
+    /* ── DB version table ── */
+    .db-table tbody td:first-child {
+      font-family: "Courier New", Courier, monospace;
+      font-weight: 600;
+      color: #374151;
+      width: 160px;
+    }
+
+    /* ── No-data placeholder ── */
+    .no-data {
+      font-style: italic;
+      color: #9ca3af;
+      font-size: 9pt;
+    }
+
+    /* ── Footer (every page) ── */
+    .page-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 6px 18mm 8mm 18mm;
+      border-top: 1px solid #e5e9f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+    }
+
+    .footer-disclaimer {
+      font-size: 7.5pt;
+      color: #6b7280;
+      max-width: 75%;
+      line-height: 1.4;
+    }
+
+    .footer-disclaimer strong {
+      color: #b91c1c;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .footer-right {
+      text-align: right;
+      font-size: 7.5pt;
+      color: #9ca3af;
+    }
+
+    .footer-brand-text {
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #E8712A;
+      font-size: 8pt;
+    }
+
+    /* ── Methodology ── */
+    .method-block {
+      margin: 12px 0;
+    }
+
+    .method-block p {
+      font-size: 9.5pt;
+      line-height: 1.6;
+      margin-bottom: 0.5em;
+    }
+
+    .method-block ul {
+      padding-left: 1.4em;
+      margin-bottom: 0.5em;
+    }
+
+    .method-block li {
+      font-size: 9.5pt;
+      margin-bottom: 0.2em;
+    }
+
+    /* ── Print layout ── */
+    @media print {
+      body { margin: 0; }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        min-height: 0;
+      }
+
+      .page-body {
+        padding: 12mm 16mm 24mm 16mm;
+      }
+
+      .page-footer {
+        padding: 6px 16mm 6mm 16mm;
+      }
+
+      .variant-page {
+        page-break-before: always;
+      }
+
+      .detail-grid { page-break-inside: avoid; }
+      table { page-break-inside: avoid; }
+      .pgx-row { page-break-inside: avoid; }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+
+    /* ── Screen preview spacing ── */
+    @media screen {
+      body { background: #e8eaf0; }
+      .page {
+        box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+        margin: 20px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+
+
+
+
+
+
+<div class="page" id="page-summary">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Masthead -->
+    <div class="masthead">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> DEMO-KR-2026-001</div>
+        <div><strong>Report Date:</strong> 2026-03-20</div>
+        <div><strong>Report Type:</strong> Consilium Report</div>
+      </div>
+    </div>
+
+    <!-- Specimen / Patient info row -->
+    <div class="info-grid">
+      <div class="info-block">
+        <div class="info-block-title">Specimen Information</div>
+        <div class="info-row">
+          <span class="info-label">Sample ID</span>
+          <span class="info-value">DEMO-KR-2026-001</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Report Date</span>
+          <span class="info-value">2026-03-20</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Analysis Type</span>
+          <span class="info-value">Germline / Somatic Panel</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pipeline</span>
+          <span class="info-value">GenomeBoard v1.0</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-block-title">Biomarker Summary</div>
+        <div class="info-row">
+          <span class="info-label">Total Variants</span>
+          <span class="info-value">10</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pathogenic / LP</span>
+          <span class="info-value" style="color:#991b1b;font-weight:700;">7</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">VUS</span>
+          <span class="info-value" style="color:#92400e;font-weight:700;">0</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Benign / LB</span>
+          <span class="info-value" style="color:#166534;font-weight:700;">3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary count strip -->
+    <div class="summary-strip">
+      <div class="summary-card card-total">
+        <div class="count">10</div>
+        <div class="label">Total Variants</div>
+      </div>
+      <div class="summary-card card-path">
+        <div class="count">7</div>
+        <div class="label">Pathogenic / LP</div>
+      </div>
+      <div class="summary-card card-vus">
+        <div class="count">0</div>
+        <div class="label">VUS</div>
+      </div>
+      <div class="summary-card card-benign">
+        <div class="count">3</div>
+        <div class="label">Benign / LB</div>
+      </div>
+    </div>
+
+    <!-- Genomic Findings section header -->
+    <div class="section-header">
+      <span class="section-badge">Genomic Findings</span>
+      <div class="section-rule"></div>
+    </div>
+
+    
+    
+    
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+
+    <div class="findings-two-col">
+      <!-- Clinically Significant panel -->
+      <div class="findings-panel">
+        <div class="findings-panel-title title-path">Clinically Significant</div>
+        <div class="findings-panel-body">
+          
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">TP53</span>
+                <br><span class="finding-variant">chr17:7577120:G&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">BRCA2</span>
+                <br><span class="finding-variant">chr13:32337326:C&gt;T</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">CFTR</span>
+                <br><span class="finding-variant">chr7:117559590:ATCT&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">ATM</span>
+                <br><span class="finding-variant">chr11:108175462:C&gt;T</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-likely-pathogenic">Likely Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">MUTYH</span>
+                <br><span class="finding-variant">chr1:45332562:G&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">PALB2</span>
+                <br><span class="finding-variant">chr16:23641240:G&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">PTPN11</span>
+                <br><span class="finding-variant">chr12:112888163:T&gt;C</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-likely-pathogenic">Likely Pathogenic</span>
+  
+
+            </div>
+            
+          
+        </div>
+      </div>
+
+      <!-- VUS / Benign panel -->
+      <div class="findings-panel">
+        <div class="findings-panel-title title-vus">VUS &amp; Benign</div>
+        <div class="findings-panel-body">
+          
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">CYP2C19</span>
+                <br><span class="finding-variant">chr10:96541616:G&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">HLA-B</span>
+                <br><span class="finding-variant">chr6:29943406:T&gt;G</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">APOE</span>
+                <br><span class="finding-variant">chr19:41858921:T&gt;C</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+            </div>
+            
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Korean Population Findings callout -->
+    
+    
+      
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+      
+      
+    
+
+    
+    <div class="section-header">
+      <span class="section-badge badge-blue">Korean Population Findings</span>
+      <div class="section-rule rule-blue"></div>
+    </div>
+    <div class="korean-callout">
+      <div class="korean-callout-title">Korean-Specific Annotations</div>
+      <p>The following variants carry population-specific annotations relevant to the Korean genome cohort (KRGDB):</p>
+      <table style="margin:8px 0 0 0;">
+        <thead>
+          <tr>
+            <th>Gene</th>
+            <th>Variant</th>
+            <th>Korean Population Note</th>
+            <th>Classification</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td><strong>BRCA2</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr13:32337326:C&gt;T</td>
+            <td><span class="korean-flag">Korean freq 6.1x higher than global</span></td>
+            <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>CFTR</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr7:117559590:ATCT&gt;A</td>
+            <td><span class="korean-flag">Korean freq much lower than global (ancestry override)</span></td>
+            <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>CYP2C19</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr10:96541616:G&gt;A</td>
+            <td><span class="korean-flag">Korean freq 5.6x higher (14pct vs 2.5pct)</span></td>
+            <td>
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>HLA-B</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr6:29943406:T&gt;G</td>
+            <td><span class="korean-flag">HLA-B*5801 requires separate HLA typing</span></td>
+            <td>
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+    
+
+    <!-- PGx summary -->
+    
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pharmacogenomics Summary</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Gene</th>
+          <th>Phenotype</th>
+          <th>CPIC Level</th>
+          <th>Korean Population Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td><strong>CYP2C19</strong></td>
+          <td>Poor Metabolizer (*2 carrier)</td>
+          <td>
+            
+            
+              <span class="badge badge-pathogenic">Level A</span>
+            
+          </td>
+          <td>
+            
+              <span class="no-data">—</span>
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td><strong>HLA-B</strong></td>
+          <td>HLA-B*5801 carrier (requires HLA typing)</td>
+          <td>
+            
+            
+              <span class="badge badge-pathogenic">Level A</span>
+            
+          </td>
+          <td>
+            
+              <span class="no-data">—</span>
+            
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+
+    <!-- Genomic findings with no reportable therapeutic options -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Genomic Findings — No Reportable Therapeutic Options</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+    <div class="no-report-list">
+      
+      
+        
+        
+      
+        
+        
+      
+        
+        
+      
+        
+        
+          
+        
+      
+        
+        
+          
+        
+      
+        
+        
+      
+        
+        
+      
+        
+        
+      
+        
+        
+      
+        
+        
+          
+        
+      
+      
+      <ul>
+        
+        <li>
+          <strong>CYP2C19</strong>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:#6b7280;">chr10:96541616:G&gt;A</span>&nbsp;
+          
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+        </li>
+        
+        <li>
+          <strong>HLA-B</strong>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:#6b7280;">chr6:29943406:T&gt;G</span>&nbsp;
+          
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+        </li>
+        
+        <li>
+          <strong>APOE</strong>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:#6b7280;">chr19:41858921:T&gt;C</span>&nbsp;
+          
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+        </li>
+        
+      </ul>
+      
+    </div>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong><br>
+      This report is generated for research purposes only. Findings have not been validated
+      in a CLIA-certified laboratory and must not be used to guide patient care without
+      independent clinical confirmation.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 1</div>
+    </div>
+  </div>
+</div><!-- /page-summary -->
+
+
+
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">TP53</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Tumor Protein P53</div>
+      
+      <div class="variant-alteration">chr17:7577120:G&gt;A</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PVS1</span>
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+            <span class="acmg-code">PP5</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">Li-Fraumeni syndrome 확인 시 전신 암 감시 프로토콜(Toronto protocol)을 권장하며, 연 1회 전신 MRI, 유방 MRI(여성), 뇌 MRI, 복부 초음파 등을 포함합니다. 방사선 노출을 최소화해야 하며, 방사선 치료는 이차 종양 유발 위험이 있어 가능한 회피합니다. 암 발생 시 수술적 절제가 일차 치료이며, platinum 기반 항암제와 immunotherapy(pembrolizumab 등)의 반응성을 개별 평가합니다. 가족 구성원에 대한 cascade genetic testing이 필수적이며, 생식세포 변이 보인자의 경우 착상전 유전자 검사(PGT)를 고려할 수 있습니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Li-Fraumeni Syndrome</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary breast cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Soft tissue sarcoma</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Osteosarcoma</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Brain tumors</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Adrenocortical carcinoma</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Leukemia</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>TP53 germline pathogenic variant의 인구 빈도는 약 1/5,000~1/20,000으로 추정됩니다. Li-Fraumeni syndrome 환자의 70세까지 누적 암 발생률은 남성 약 73%, 여성 약 100%에 이릅니다. 한국인에서 TP53 germline 변이의 정확한 빈도는 대규모 연구가 부족하나, 한국유전체데이터베이스(KRGDB)에서 해당 변이의 빈도가 매우 낮아 희귀 변이로 분류됩니다. 조기 진단과 적극적 감시 프로그램을 통해 조기 치료가 가능하며, 예후 개선에 기여합니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 TP53 유전자의 pathogenic variant가 확인되었으며, 이는 p53 단백질의 기능 상실을 초래할 가능성이 높습니다. 이 변이는 Li-Fraumeni syndrome과 연관되어 다발성 암 발생의 위험을 현저히 증가시킵니다. 유전 상담 및 가족력 평가를 통한 종합적 임상 관리가 권장되며, 정기적 전신 암 검진 프로그램 등록을 고려해야 합니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Li-Fraumeni Syndrome</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary breast cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Soft tissue sarcoma</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Osteosarcoma</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Brain tumors</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Adrenocortical carcinoma</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Leukemia</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PVS1</span>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+              <span class="acmg-code">PP5</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 2</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">BRCA2</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">BRCA2 DNA Repair Associated</div>
+      
+      <div class="variant-alteration">chr13:32337326:C&gt;T</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PVS1</span>
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+            <span class="acmg-code">PP5</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">BRCA2 pathogenic variant 보인자의 경우, 위험 감소 유방 절제술(risk-reducing mastectomy) 또는 강화 감시(25세부터 연 1회 유방 MRI + mammography)를 권장합니다. 난소암 예방을 위해 35-40세 또는 출산 완료 후 위험 감소 난관-난소 절제술(RRSO)을 강력히 권장합니다. BRCA2 변이 관련 암 발생 시 PARP inhibitor(olaparib, niraparib, rucaparib)가 FDA 승인을 받았으며, platinum 기반 항암제에 대한 감수성이 높습니다. 남성 보인자의 경우 40세부터 전립선암 선별검사(PSA + DRE)와 유방 자가검진을 권장합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary Breast and Ovarian Cancer Syndrome (HBOC)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Male breast cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Pancreatic cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Prostate cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Fanconi anemia (biallelic)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>BRCA2 pathogenic variant의 일반 인구 빈도는 약 1/400으로 추정됩니다. 한국인 유방암 환자에서 BRCA2 변이 빈도는 약 3-5%로 보고되며, 한국인 특이 founder mutation(예: c.7480C&gt;T)이 알려져 있습니다. 한국인 BRCA2 변이 보인자의 유방암 평생 위험은 서양인과 유사하게 49-57%로 보고되었습니다. PARP inhibitor 치료에 대한 반응률이 높아 예후 개선에 기여하며, 조기 발견 시 5년 생존율이 유의하게 향상됩니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+          <div class="korean-callout" style="margin-top:8px;">
+            <div class="korean-callout-title">Korean Population Note</div>
+            <p>Korean freq 6.1x higher than global</p>
+          </div>
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 BRCA2 유전자의 pathogenic variant가 확인되었으며, 이는 DNA 이중가닥 절단 복구 기능의 저하를 의미합니다. 유전성 유방-난소암 증후군(HBOC)에 해당하며, 유방암, 난소암, 전립선암, 췌장암 등의 위험이 증가합니다. 위험 관리 전략 수립을 위해 유전 상담이 필수적이며, 가족 구성원에 대한 cascade testing을 권장합니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary Breast and Ovarian Cancer Syndrome (HBOC)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Male breast cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Pancreatic cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Prostate cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Fanconi anemia (biallelic)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PVS1</span>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+              <span class="acmg-code">PP5</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국인에서 BRCA2 founder mutation(c.7480C&gt;T 등)이 보고되어 있으며, 한국 유전성 유방암 연구(KOHBRA study)에서 한국인 특이 변이 스펙트럼이 서양인과 차이를 보입니다. 한국 국가암검진 가이드라인에 따라 BRCA2 변이 보인자는 고위험군으로 분류되어 강화된 검진 프로그램 대상이 됩니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 3</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">CFTR</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Cystic Fibrosis Transmembrane Conductance Regulator</div>
+      
+      <div class="variant-alteration">chr7:117559590:ATCT&gt;A</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PVS1</span>
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+            <span class="acmg-code">PP5</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">낭포성 섬유증 진단 시 CFTR modulator therapy(ivacaftor, lumacaftor/ivacaftor, elexacaftor/tezacaftor/ivacaftor)가 변이 유형에 따라 적용됩니다. 특히 F508del 변이에 대해 Trikafta(elexacaftor/tezacaftor/ivacaftor)가 높은 치료 효과를 보이며, FEV1을 유의하게 개선합니다. 폐 감염 관리를 위한 흡입 항생제, 기도 청결 요법(airway clearance therapy), 췌장 효소 보충제가 표준 치료에 포함됩니다. 보인자 확인 시 배우자의 CFTR 변이 보인자 검사를 통해 자녀의 CF 발생 위험을 평가합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Cystic Fibrosis</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Congenital Bilateral Absence of Vas Deferens (CBAVD)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Chronic pancreatitis</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Bronchiectasis</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>낭포성 섬유증은 백인(Caucasian)에서 약 1/2,500의 빈도로 가장 흔한 상염색체 열성 질환이며, 보인자 빈도는 약 1/25입니다. 반면 한국인을 포함한 동아시아인에서는 극히 드물어 약 1/90,000~1/350,000으로 추정되며, 보인자 빈도도 약 1/150~1/300으로 매우 낮습니다. 한국인에서 보고된 CFTR 변이 스펙트럼은 서양인과 상이하며, F508del 변이의 빈도가 현저히 낮습니다. CFTR modulator therapy의 도입으로 CF 환자의 중앙 생존 연령이 50세 이상으로 크게 향상되었습니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+          <div class="korean-callout" style="margin-top:8px;">
+            <div class="korean-callout-title">Korean Population Note</div>
+            <p>Korean freq much lower than global (ancestry override)</p>
+          </div>
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 CFTR 유전자의 pathogenic variant가 확인되었습니다. 이 변이의 임상적 의의는 접합 상태(zygosity)에 따라 달라지며, biallelic 변이 시 낭포성 섬유증의 진단이 가능합니다. 한국인에서 CF는 극히 드문 질환이므로, 임상 증상과 sweat chloride test를 통한 종합적 평가가 필요합니다. 보인자인 경우 배우자 검사를 통해 자녀의 발병 위험을 평가하는 것이 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Cystic Fibrosis</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Congenital Bilateral Absence of Vas Deferens (CBAVD)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Chronic pancreatitis</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Bronchiectasis</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PVS1</span>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+              <span class="acmg-code">PP5</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국인에서 낭포성 섬유증은 극히 드물며(약 1/90,000), 서양인 대비 약 36배 낮은 빈도입니다. 한국인의 CFTR 변이 스펙트럼은 서양의 표준 선별 패널에 포함되지 않는 변이가 다수 존재하므로, 진단 시 전체 유전자 시퀀싱이 권장됩니다. 한국에서 보고된 CF 증례는 수십 건에 불과하여, 진단 지연이 흔합니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 4</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge badge-navy">Genomic Findings</span>
+        <div class="section-rule rule-navy"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">CYP2C19</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Cytochrome P450 Family 2 Subfamily C Member 19</div>
+      
+      <div class="variant-alteration">chr10:96541616:G&gt;A</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">BA1</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">CYP2C19 poor metabolizer 확인 시 clopidogrel 대신 prasugrel 또는 ticagrelor로 항혈소판 치료를 전환하며, 이는 CPIC 및 DPWG guideline에서 Level A 근거로 권장합니다. Proton pump inhibitor(PPI) 사용 시 PM에서 약물 농도가 상승하므로, omeprazole 등의 용량 감량 또는 대체 PPI(rabeprazole)를 고려합니다. 항우울제(escitalopram, sertraline) 처방 시 PM에서 혈중 농도 상승 가능성이 있어, 초기 저용량 시작 및 TDM(therapeutic drug monitoring)을 권장합니다. 약물유전체 결과를 전자의무기록(EMR)에 등록하여 향후 처방 시 자동 알림이 발생하도록 설정하는 것이 바람직합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Drug Response</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Clopidogrel resistance</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Altered proton pump inhibitor metabolism</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Variable antidepressant response (escitalopram, sertraline)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Variable anticonvulsant metabolism (phenytoin)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>CYP2C19 *2 대립유전자 빈도는 한국인에서 약 25-29%로, 서양인(약 12-15%)보다 유의하게 높습니다. 한국인의 CYP2C19 poor metabolizer(PM) 비율은 약 12-16%로, 서양인(약 2-5%)의 약 5-6배에 달합니다. 이로 인해 한국 환자에서 clopidogrel 저반응 위험이 인구 수준에서 유의하게 높으며, 2019년 한국 심혈관중재학회에서도 CYP2C19 검사를 권장합니다. CYP2C19 *3 대립유전자도 한국인에서 약 5-10%의 빈도로, 동아시아 특이적 loss-of-function 변이입니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+          <div class="korean-callout" style="margin-top:8px;">
+            <div class="korean-callout-title">Korean Population Note</div>
+            <p>Korean freq 5.6x higher (14pct vs 2.5pct)</p>
+          </div>
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 CYP2C19 유전자의 약물유전체(pharmacogenomic) 변이가 확인되었습니다. 이 변이는 clopidogrel을 포함한 다수 약물의 대사에 직접적 영향을 미치며, 특히 항혈소판 치료 시 약물 반응성을 결정하는 핵심 인자입니다. 한국인에서 PM 빈도가 서양인 대비 약 5-6배 높아 임상적 중요성이 크며, 해당 약물 처방 전 유전형 확인이 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Clopidogrel resistance</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Altered proton pump inhibitor metabolism</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Variable antidepressant response (escitalopram, sertraline)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Variable anticonvulsant metabolism (phenytoin)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">BA1</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국인 CYP2C19 poor metabolizer 빈도(약 14%)는 서양인(약 2.5%)의 약 5.6배로, 한국 인구에서 clopidogrel 저반응은 매우 중요한 임상적 문제입니다. 2019년 대한심혈관중재학회 합의문에서 경피적 관상동맥 중재술(PCI) 환자의 CYP2C19 유전형 검사를 권장하였으며, 한국 건강보험에서 CYP2C19 유전형 검사 급여를 인정하고 있습니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 5</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge badge-navy">Genomic Findings</span>
+        <div class="section-rule rule-navy"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">HLA-B</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Major Histocompatibility Complex, Class I, B</div>
+      
+      <div class="variant-alteration">chr6:29943406:T&gt;G</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">BA1</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">HLA-B*5801 양성인 경우 allopurinol은 절대적으로 금기이며, 대체 요산 저하제로 febuxostat 또는 benzbromarone을 사용합니다. 통풍 환자에서 요산 저하제 처방 전 HLA-B*5801 유전형 검사를 시행하는 것이 CPIC 및 ACR(American College of Rheumatology) guideline에서 권장됩니다. HLA-B*5701 양성 시 abacavir 사용을 금지하며, 대체 항레트로바이러스 약물을 선택합니다. HLA-B*1502 양성(동남아시아/동아시아 혈통)에서 carbamazepine 및 관련 약물(oxcarbazepine, phenytoin)의 사용을 회피합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Drug Response</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Allopurinol-induced SJS/TEN (HLA-B*5801)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Abacavir hypersensitivity (HLA-B*5701)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Carbamazepine-induced SJS/TEN (HLA-B*1502)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Ankylosing spondylitis (HLA-B*27)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>HLA-B*5801 대립유전자 빈도는 한국인에서 약 12%로, 유럽계 백인(약 1-2%)보다 6-12배 높습니다. 이로 인해 한국인 통풍 환자에서 allopurinol 유발 SJS/TEN 위험이 인구 수준에서 유의하게 높습니다. 한국에서는 2012년부터 allopurinol 처방 전 HLA-B*5801 검사가 건강보험 급여 적용되고 있으며, 이후 allopurinol 관련 SJS/TEN 발생이 감소하였습니다. SJS/TEN은 치사율이 10-30%에 달하는 중증 약물 이상반응으로, 예방적 유전형 검사의 비용-효과성이 입증되었습니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+          <div class="korean-callout" style="margin-top:8px;">
+            <div class="korean-callout-title">Korean Population Note</div>
+            <p>HLA-B*5801 requires separate HLA typing</p>
+          </div>
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 HLA-B 유전자 변이가 확인되었으며, 이는 특정 약물에 대한 중증 이상반응 위험과 관련될 수 있습니다. HLA-B*5801 보유 여부는 allopurinol 처방 전 반드시 확인해야 하며, 정확한 HLA typing이 필요합니다. 본 변이 결과는 참고용이며, 임상적 약물 처방 결정을 위해서는 별도의 확인 HLA typing 검사가 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Allopurinol-induced SJS/TEN (HLA-B*5801)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Abacavir hypersensitivity (HLA-B*5701)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Carbamazepine-induced SJS/TEN (HLA-B*1502)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Ankylosing spondylitis (HLA-B*27)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">BA1</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국인의 HLA-B*5801 보유율은 약 12%로, 유럽계(1-2%) 대비 매우 높아 allopurinol 유발 중증 약물 이상반응의 고위험 인구입니다. 대한류마티스학회에서 통풍 환자의 allopurinol 처방 전 HLA-B*5801 검사를 필수로 권장하고 있으며, 건강보험 급여가 적용됩니다. 한국인에서 HLA-B*1502 빈도(약 1-6%)도 유럽계보다 높아 carbamazepine 처방 시 주의가 필요합니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 6</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">ATM</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">ATM Serine/Threonine Kinase</div>
+      
+      <div class="variant-alteration">chr11:108175462:C&gt;T</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-likely-pathogenic">Likely Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">ATM heterozygous pathogenic variant 보인자의 경우, 유방암 위험 관리를 위해 40세부터 연 1회 유방 MRI와 mammography 병행 검진을 권장합니다(NCCN guideline). 위험 감소 유방 절제술의 적응증은 개별 가족력과 변이의 기능적 영향에 따라 결정합니다. 암 발생 시 ATM 결핍 종양은 platinum 기반 항암제와 PARP inhibitor에 대한 감수성이 보고되어 있으나, 근거 수준은 BRCA1/2보다 낮습니다. Ataxia-telangiectasia 환자에서 방사선 치료는 과도한 독성의 위험으로 금기이며, 방사선 촬영도 최소화해야 합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Likely Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Ataxia-Telangiectasia</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary breast cancer (moderate risk)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Pancreatic cancer predisposition</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Prostate cancer predisposition</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Mantle cell lymphoma (somatic)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>ATM pathogenic variant의 일반 인구 보인자 빈도는 약 1/100~1/200으로 추정됩니다. ATM heterozygous 보인자의 유방암 평생 위험은 약 15-40%로 보고되며, 이는 moderate penetrance에 해당합니다. 한국인에서 ATM 변이의 정확한 빈도에 대한 대규모 연구는 제한적이나, 한국 유전성 암 패널 검사에서 ATM pathogenic variant가 간헐적으로 보고됩니다. Ataxia-telangiectasia의 발생 빈도는 약 1/40,000~1/100,000입니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 ATM 유전자의 likely pathogenic variant가 확인되었으며, 이는 DNA 손상 복구 기능의 저하와 연관됩니다. ATM heterozygous 변이는 유방암, 췌장암, 전립선암의 위험을 중등도로 증가시킵니다. 유전 상담을 통한 위험 평가와 적절한 암 감시 프로그램 수립이 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Ataxia-Telangiectasia</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary breast cancer (moderate risk)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Pancreatic cancer predisposition</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Prostate cancer predisposition</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Mantle cell lymphoma (somatic)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 7</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">MUTYH</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">MutY DNA Glycosylase</div>
+      
+      <div class="variant-alteration">chr1:45332562:G&gt;A</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PVS1</span>
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">MUTYH biallelic 변이 확인(MAP) 시, 18-20세부터 1-2년 간격의 대장내시경 감시를 권장하며, 선종이 관리 불가능한 수준이면 예방적 대장 절제술을 고려합니다. 상부 위장관 감시를 위해 25-30세부터 3-5년 간격의 상부 위장관 내시경을 권장합니다. 대장암 발생 시 수술적 절제가 일차 치료이며, microsatellite stable(MSS)인 경우가 대부분이므로 표준 항암 요법을 적용합니다. Monoallelic 보인자의 경우 일반 인구 대비 약간 높은 대장암 위험을 고려하여, 일반 대장암 검진 가이드라인을 준수하되 가족력에 따라 조기 검진을 고려합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">MUTYH-Associated Polyposis (MAP)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Colorectal cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Duodenal adenomas</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Gastric cancer (increased risk)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>MUTYH pathogenic variant의 보인자(monoallelic) 빈도는 유럽계에서 약 1-2%이며, 가장 흔한 변이는 Y179C와 G396D입니다. MAP(biallelic)의 발생 빈도는 약 1/10,000~1/40,000으로 추정됩니다. 한국인에서 MUTYH 변이의 빈도는 서양인보다 낮은 것으로 보고되며, 변이 스펙트럼도 상이합니다. MAP 환자의 대장암 평생 위험은 약 43-100%로, 적절한 감시와 조기 개입이 예후에 결정적입니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 MUTYH 유전자의 pathogenic variant가 확인되었습니다. 접합 상태(biallelic vs monoallelic)에 따라 임상적 의의가 크게 달라지며, biallelic 변이 시 MUTYH-associated polyposis(MAP)의 진단과 대장암 감시 프로그램이 필요합니다. 상세한 가족력 평가와 두 번째 대립유전자의 변이 여부 확인을 위한 추가 검사가 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">MUTYH-Associated Polyposis (MAP)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Colorectal cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Duodenal adenomas</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Gastric cancer (increased risk)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PVS1</span>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국인에서 MUTYH 변이의 보고는 서양인보다 적으나, 한국인 특이 변이(예: p.Q400R)가 일부 보고되어 있습니다. 서양인에서 흔한 Y179C 및 G396D 변이는 한국인에서 드물어, 인종 특이적 변이 해석에 주의가 필요합니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 8</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">PALB2</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Partner and Localizer of BRCA2</div>
+      
+      <div class="variant-alteration">chr16:23641240:G&gt;A</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PVS1</span>
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">PALB2 pathogenic variant 보인자의 경우, 30세부터 연 1회 유방 MRI와 mammography 병행 검진을 권장하며(NCCN guideline), 위험 감소 유방 절제술도 개별적으로 논의합니다. PALB2 변이 관련 유방암 발생 시 PARP inhibitor(olaparib)가 HR-deficient 종양에서 효과를 보이며, 2023년 PALB2 변이 전이성 유방암에 대해 olaparib FDA 승인이 확대되었습니다. Platinum 기반 항암제에 대한 감수성이 높은 것으로 보고됩니다. 가족 구성원에 대한 cascade genetic testing이 권장됩니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary breast cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Pancreatic cancer predisposition</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Ovarian cancer (moderate risk)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Fanconi anemia subtype N (biallelic)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>PALB2 pathogenic variant의 일반 인구 빈도는 약 1/1,000으로 추정됩니다. PALB2 변이 보인자의 유방암 평생 위험은 약 35-60%로, BRCA2에 준하는 높은 침투도를 보입니다. 한국인 유방암 환자에서 PALB2 변이는 약 1-3%의 빈도로 보고되며, 한국인 특이 변이(예: c.2167_2168del)가 알려져 있습니다. 조기 발견과 적절한 치료를 통해 예후가 유의하게 개선될 수 있습니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 PALB2 유전자의 pathogenic variant가 확인되었으며, 이는 BRCA2 매개 DNA 복구 기능의 저하를 의미합니다. PALB2는 BRCA2의 핵심 파트너 유전자로서 유방암, 췌장암, 난소암의 위험을 유의하게 증가시킵니다. NCCN guideline에 따른 강화된 암 감시 프로그램과 유전 상담이 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Hereditary breast cancer</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Pancreatic cancer predisposition</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Ovarian cancer (moderate risk)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Fanconi anemia subtype N (biallelic)</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PVS1</span>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국 유전성 유방암 연구(KOHBRA)에서 PALB2는 BRCA1/2 다음으로 중요한 유전성 유방암 유전자로 보고되었으며, 한국인 특이 변이 스펙트럼이 확인되고 있습니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 9</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge">Genomic Findings</span>
+        <div class="section-rule"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">PTPN11</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Protein Tyrosine Phosphatase Non-Receptor Type 11</div>
+      
+      <div class="variant-alteration">chr12:112888163:T&gt;C</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-likely-pathogenic">Likely Pathogenic</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">PS1</span>
+          
+            <span class="acmg-code">PM1</span>
+          
+            <span class="acmg-code">PM2_Supporting</span>
+          
+            <span class="acmg-code">PP5</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">Noonan syndrome의 관리는 다학제적 접근이 필요하며, 선천성 심장 질환(폐동맥 협착 등)에 대한 심장 수술 또는 카테터 시술, 성장호르몬(GH) 치료(FDA 승인), 출혈 경향에 대한 혈액학적 관리를 포함합니다. RAS-MAPK 경로 억제제(MEK inhibitor: trametinib, selumetinib)가 Noonan syndrome 관련 hypertrophic cardiomyopathy와 JMML에서 연구 중이며, 일부 환자에서 유의한 효과가 보고되었습니다. JMML의 경우 조혈모세포이식(HSCT)이 유일한 완치적 치료이며, MEK inhibitor로 이식 전 질환 조절이 시도됩니다. 정기적 심장 초음파, 성장 평가, 발달 평가가 평생 필요합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Pathogenic</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Noonan Syndrome</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">LEOPARD Syndrome (Noonan syndrome with multiple lentigines)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Juvenile Myelomonocytic Leukemia (JMML)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Acute Myeloid Leukemia</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Neuroblastoma</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>Noonan syndrome의 발생 빈도는 약 1/1,000~1/2,500으로 비교적 흔한 유전 질환입니다. PTPN11 germline 변이는 Noonan syndrome의 약 50%를 차지하며, 대부분 de novo로 발생합니다. 한국에서도 Noonan syndrome은 비교적 흔하게 진단되며, PTPN11 변이가 가장 높은 빈도를 차지합니다. 예후는 심장 질환의 중증도에 크게 좌우되며, 적절한 관리 시 대부분 정상 수명이 가능합니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 PTPN11 유전자의 likely pathogenic variant가 확인되었으며, 이는 SHP-2 단백질의 gain-of-function으로 RAS-MAPK 경로의 과활성화를 초래할 가능성이 있습니다. Germline 변이인 경우 Noonan syndrome과의 연관성을, somatic 변이인 경우 혈액암과의 연관성을 평가해야 합니다. 임상 표현형과 가족력을 종합한 유전 상담이 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Noonan Syndrome</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">LEOPARD Syndrome (Noonan syndrome with multiple lentigines)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Juvenile Myelomonocytic Leukemia (JMML)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Acute Myeloid Leukemia</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Neuroblastoma</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">PS1</span>
+            
+              <span class="acmg-code">PM1</span>
+            
+              <span class="acmg-code">PM2_Supporting</span>
+            
+              <span class="acmg-code">PP5</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 10</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Section badge -->
+    <div class="section-header" style="margin-top:0;">
+      
+        <span class="section-badge badge-navy">Genomic Findings</span>
+        <div class="section-rule rule-navy"></div>
+      
+      <div class="masthead-meta" style="text-align:right;font-family:'Helvetica Neue',Arial,sans-serif;font-size:8.5pt;color:#6b7280;">
+        <strong style="color:#1c2b4a;">DEMO-KR-2026-001</strong> &nbsp;|&nbsp; 2026-03-20
+      </div>
+    </div>
+
+    <!-- Variant identity block -->
+    <div class="variant-detail-header">
+      <div class="variant-gene-name">APOE</div>
+      
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:10pt;color:#6b7280;margin-top:2px;">Apolipoprotein E</div>
+      
+      <div class="variant-alteration">chr19:41858921:T&gt;C</div>
+      <div class="variant-badges">
+        
+  
+  
+    <span class="badge badge-benign">Benign</span>
+  
+
+        
+        
+          
+            <span class="acmg-code">BA1</span>
+          
+        
+      </div>
+    </div>
+
+    <!-- 3-column detail grid -->
+    <div class="detail-grid">
+
+      <!-- Column 1: Clinical Significance -->
+      <div class="detail-col">
+        <div class="detail-col-title">Clinical Significance</div>
+
+        
+          <div class="detail-label">Treatment Strategies</div>
+          <div class="detail-value">APOE e4 보유자에서 알츠하이머병 예방을 위한 생활습관 중재(규칙적 운동, 지중해식 식단, 인지 자극 활동, 심혈관 위험 인자 관리)가 권장됩니다. 심혈관 위험 관리를 위해 지질 프로필 정기 모니터링과 필요 시 statin 치료를 고려하며, APOE e4 보유자에서 statin의 인지 기능 영향에 대한 관찰이 권장됩니다. Anti-amyloid 항체(lecanemab, donanemab)가 조기 알츠하이머병 치료에 승인되었으나, APOE e4/e4 보유자에서 ARIA(amyloid-related imaging abnormalities) 위험이 높아 신중한 적용이 필요합니다. APOE e2/e2에 의한 type III hyperlipoproteinemia는 식이 조절과 fibrate 계열 약물로 관리합니다.</div>
+        
+
+        
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">Risk Factor</div>
+        
+
+        
+          <div class="detail-label">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Alzheimer&#39;s Disease (risk factor)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Cardiovascular disease</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Type III Hyperlipoproteinemia (APOE e2/e2)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Cerebral amyloid angiopathy</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Age-related macular degeneration</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 2: Frequency & Korean Population -->
+      <div class="detail-col">
+        <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+        
+          <p>APOE e4 대립유전자 빈도는 한국인에서 약 8-11%로, 유럽계(약 14%)보다 다소 낮습니다. 한국인 APOE e4 보유자(e3/e4 또는 e4/e4)의 비율은 약 15-20%입니다. 한국인 알츠하이머병 환자에서 APOE e4 빈도는 약 40-50%로 일반 인구보다 현저히 높습니다. APOE e4의 알츠하이머병 위험 증가 효과는 한국인에서도 일관되게 확인되며, 한국 고령화 사회에서 APOE 유전형 검사의 임상적 중요성이 증가하고 있습니다.</p>
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+      </div>
+
+      <!-- Column 3: Finding Summary -->
+      <div class="detail-col">
+        <div class="detail-col-title">Finding Summary</div>
+
+        
+          <p>본 검체에서 APOE 유전자 변이가 확인되었으며, 이는 지질 대사 및 알츠하이머병 위험과 관련된 유전적 요인입니다. APOE 유전형(e2/e3/e4 조합)에 따라 임상적 의의가 결정되며, 특히 e4 대립유전자 보유 시 알츠하이머병 위험 증가와 심혈관 질환 위험 관리가 필요합니다. 유전 상담을 통해 개인화된 위험 평가 및 예방 전략 수립이 권장됩니다.</p>
+        
+
+        
+          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
+          <div class="detail-value">
+            <ul style="margin:0;padding-left:1.2em;">
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Alzheimer&#39;s Disease (risk factor)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Cardiovascular disease</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Type III Hyperlipoproteinemia (APOE e2/e2)</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Cerebral amyloid angiopathy</li>
+              
+                <li style="font-size:9pt;margin-bottom:2px;">Age-related macular degeneration</li>
+              
+            </ul>
+          </div>
+        
+
+        
+
+        
+
+        
+
+        
+
+        <!-- ACMG code reference -->
+        
+          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
+          <div>
+            
+              <span class="acmg-code">BA1</span>
+            
+          </div>
+        
+      </div>
+
+    </div><!-- /detail-grid -->
+
+    
+    <div class="korean-callout" style="margin-top:12px;">
+      <div class="korean-callout-title">Korean Population-Specific Note</div>
+      <p>한국인에서 APOE e4 빈도는 서양인보다 다소 낮으나, 빠른 고령화로 인해 알츠하이머병의 절대적 환자 수가 급증하고 있습니다. 한국 치매 국가책임제 하에서 APOE 유전형 검사가 치매 위험 평가에 참고 자료로 활용될 수 있습니다.</p>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 11</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="masthead" style="margin-bottom:12px;">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> DEMO-KR-2026-001</div>
+        <div><strong>Report Date:</strong> 2026-03-20</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pharmacogenomics (PGx) Detailed Findings</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    
+    <div class="pgx-row">
+      <div class="pgx-row-header">
+        <div class="pgx-gene">CYP2C19</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          
+          
+            <span class="badge badge-pathogenic">CPIC Level A</span>
+          
+        </div>
+      </div>
+      <div class="pgx-row-body">
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Phenotype</div>
+          <div class="pgx-cell-value">Poor Metabolizer (*2 carrier)</div>
+          
+        </div>
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Korean vs Western Prevalence</div>
+          
+            <div class="no-data">Prevalence data not available</div>
+          
+        </div>
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Clinical Impact</div>
+          <div class="pgx-cell-value">
+            
+              <span class="no-data">See CPIC guideline for CYP2C19</span>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+    <div class="pgx-row">
+      <div class="pgx-row-header">
+        <div class="pgx-gene">HLA-B</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          
+          
+            <span class="badge badge-pathogenic">CPIC Level A</span>
+          
+        </div>
+      </div>
+      <div class="pgx-row-body">
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Phenotype</div>
+          <div class="pgx-cell-value">HLA-B*5801 carrier (requires HLA typing)</div>
+          
+        </div>
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Korean vs Western Prevalence</div>
+          
+            <div class="no-data">Prevalence data not available</div>
+          
+        </div>
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Clinical Impact</div>
+          <div class="pgx-cell-value">
+            
+              <span class="no-data">See CPIC guideline for HLA-B</span>
+            
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 12</div>
+    </div>
+  </div>
+</div><!-- /pgx detail page -->
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="masthead" style="margin-bottom:12px;">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> DEMO-KR-2026-001</div>
+        <div><strong>Report Date:</strong> 2026-03-20</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Methodology &amp; Database Versions</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <!-- DB versions table -->
+    
+    <table class="db-table" style="width:auto;min-width:360px;margin-bottom:20px;">
+      <thead>
+        <tr>
+          <th>Database / Resource</th>
+          <th>Version / Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>ClinVar</td>
+          <td>2026-03</td>
+        </tr>
+        
+        <tr>
+          <td>KRGDB</td>
+          <td>v3.0 (2025-12)</td>
+        </tr>
+        
+        <tr>
+          <td>gnomAD</td>
+          <td>v4.1 (2025)</td>
+        </tr>
+        
+        <tr>
+          <td>CPIC</td>
+          <td>2022</td>
+        </tr>
+        
+        <tr>
+          <td>PharmGKB</td>
+          <td>2026-03</td>
+        </tr>
+        
+        <tr>
+          <td>ACMG</td>
+          <td>ACMG/AMP 2015 + ClinGen SVI</td>
+        </tr>
+        
+      </tbody>
+    </table>
+    
+
+    <!-- Pipeline description -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pipeline Description</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <div class="method-block">
+      <p>
+        The GenomeBoard Consilium pipeline performs multi-agent variant interpretation
+        integrating ACMG/AMP 2015 classification criteria with Korean population-specific
+        frequency data from the Korea Reference Genome Database (KRGDB v3.0). Each variant
+        undergoes parallel evaluation by three AI-assisted consilium agents:
+      </p>
+      <ul>
+        <li><strong>Clinical Agent</strong> — queries ClinVar for significance calls, associated conditions, and review star ratings</li>
+        <li><strong>Korean Population Agent</strong> — compares allele frequencies between KRGDB and gnomAD (EAS/global), flags variants with &ge;2x enrichment in Korean cohorts</li>
+        <li><strong>Pharmacogenomics Agent</strong> — cross-references CPIC and PharmGKB guidelines with Korean-specific prevalence adjustments</li>
+      </ul>
+      <p>
+        Final classification follows ACMG/AMP 2015 criteria with ClinGen SVI updates.
+        Korean enrichment ratio is calculated as KRGDB frequency / gnomAD global frequency.
+      </p>
+    </div>
+
+    <!-- Limitations -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Limitations</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <div class="method-block">
+      <ul>
+        <li>This report is generated for <strong>research purposes only</strong> and has not been validated in a CLIA-certified or CAP-accredited laboratory.</li>
+        <li>KRGDB frequency data reflects the Korean genome cohort; individual ancestry may vary.</li>
+        <li>ClinVar entries reflect community-submitted evidence and may contain conflicting interpretations.</li>
+        <li>PGx phenotype predictions are probabilistic; functional testing (e.g., HLA typing for HLA-B*5801) is required for confirmatory clinical use.</li>
+        <li>Variants of uncertain significance (VUS) may be reclassified as new evidence accrues; periodic re-analysis is recommended.</li>
+        <li>This report does not constitute medical advice. Clinical decisions must involve a board-certified clinical geneticist or genetic counselor.</li>
+      </ul>
+    </div>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 13</div>
+    </div>
+  </div>
+</div><!-- /methodology page -->
+
+</body>
+</html>
