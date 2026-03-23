@@ -289,6 +289,8 @@
     .badge-vus               { background: #e5e7eb; color: #374151; }
     .badge-likely-benign     { background: #d1fae5; color: #065f46; }
     .badge-benign            { background: #bbf7d0; color: #14532d; }
+    .badge-drug-response     { background: #dbeafe; color: #1e40af; }
+    .badge-risk-factor       { background: #ede9fe; color: #5b21b6; }
     .badge-unknown           { background: #f3f4f6; color: #6b7280; }
 
     /* ── ACMG code pills ── */
@@ -749,6 +751,10 @@
     <span class="badge badge-likely-benign">Likely Benign</span>
   {% elif "benign" in c %}
     <span class="badge badge-benign">Benign</span>
+  {% elif "drug response" in c %}
+    <span class="badge badge-drug-response">Drug Response</span>
+  {% elif "risk factor" in c %}
+    <span class="badge badge-risk-factor">Risk Factor</span>
   {% else %}
     <span class="badge badge-unknown">{{ cls }}</span>
   {% endif %}
@@ -847,8 +853,8 @@
         <div class="label">VUS</div>
       </div>
       <div class="summary-card" style="background:#eff6ff;color:#1d4ed8;">
-        <div class="count">{{ summary.drug_response | default(0) }}</div>
-        <div class="label">Drug Response</div>
+        <div class="count">{{ (summary.drug_response | default(0)) + (summary.risk_factor | default(0)) }}</div>
+        <div class="label">Drug Response / Risk</div>
       </div>
       <div class="summary-card card-benign">
         <div class="count">{{ (summary.benign | default(0)) + (summary.likely_benign | default(0)) }}</div>
