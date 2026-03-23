@@ -7,15 +7,15 @@
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
-    /* ── CSS Variables ── */
+    /* ── CSS Variables — Clinical/Academic palette ── */
     :root {
-      --orange:  #E8712A;
-      --navy:    #1c2b4a;
-      --blue:    #3b82f6;
-      --blue-dk: #1d4ed8;
-      --text:    #1a1a1a;
-      --muted:   #6b7280;
-      --border:  #d1d5db;
+      --teal:    #0F766E;
+      --teal-lt: #CCFBF1;
+      --navy:    #0F172A;
+      --slate:   #475569;
+      --text:    #1e293b;
+      --muted:   #64748b;
+      --border:  #cbd5e1;
       --surface: #f8fafc;
       --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
       --font-mono: 'Courier New', Courier, monospace;
@@ -27,8 +27,8 @@
     /* ── Base ── */
     body {
       font-family: var(--font-sans);
-      font-size: 10.5pt;
-      line-height: 1.65;
+      font-size: 9.5pt;
+      line-height: 1.6;
       color: var(--text);
       background: #ffffff;
     }
@@ -43,17 +43,17 @@
       background: #ffffff;
     }
 
-    /* ── Orange accent bar (top of every page) ── */
+    /* ── Teal accent bar (top of every page) ── */
     .page-header-bar {
-      background: #E8712A;
-      height: 8px;
+      background: var(--teal);
+      height: 5px;
       width: 100%;
       display: block;
     }
 
     /* ── Page inner content padding ── */
     .page-body {
-      padding: 14mm 18mm 22mm 18mm;
+      padding: 12mm 16mm 20mm 16mm;
     }
 
     /* ── Masthead (logo row) ── */
@@ -61,9 +61,9 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1.5px solid #1c2b4a;
+      margin-bottom: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--navy);
     }
 
     .masthead-logo {
@@ -74,7 +74,7 @@
 
     .masthead-brand {
       font-family: var(--font-sans);
-      font-size: 18pt;
+      font-size: 16pt;
       font-weight: 800;
       color: var(--navy);
       letter-spacing: -0.5px;
@@ -82,12 +82,12 @@
     }
 
     .masthead-brand span {
-      color: var(--orange);
+      color: var(--teal);
     }
 
     .masthead-tagline {
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 500;
       color: var(--muted);
       text-transform: uppercase;
@@ -97,10 +97,10 @@
 
     .masthead-meta {
       font-family: var(--font-sans);
-      font-size: 9pt;
-      color: #374151;
+      font-size: 8.5pt;
+      color: var(--slate);
       text-align: right;
-      line-height: 1.7;
+      line-height: 1.65;
     }
 
     .masthead-meta strong {
@@ -113,14 +113,14 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 0;
-      margin: 10px 0;
-      border: 1px solid #d1d5db;
+      margin: 9px 0;
+      border: 1px solid var(--border);
       border-radius: 2px;
     }
 
     .info-block {
-      padding: 10px 12px;
-      border-right: 1px solid #d1d5db;
+      padding: 9px 12px;
+      border-right: 1px solid var(--border);
     }
 
     .info-block:last-child {
@@ -129,34 +129,34 @@
 
     .info-block-title {
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.2px;
       color: #ffffff;
-      background: var(--navy);
+      background: var(--teal);
       padding: 4px 10px;
-      margin: -10px -12px 10px -12px;
+      margin: -9px -12px 9px -12px;
     }
 
     .info-row {
       display: flex;
       gap: 6px;
-      font-size: 9.5pt;
-      margin-bottom: 4px;
+      font-size: 9pt;
+      margin-bottom: 3px;
       font-family: var(--font-sans);
     }
 
     .info-label {
       color: var(--muted);
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 500;
       min-width: 90px;
       flex-shrink: 0;
     }
 
     .info-value {
-      color: #111827;
+      color: #0f172a;
       font-weight: 600;
     }
 
@@ -164,57 +164,57 @@
     .summary-strip {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-      margin: 12px 0;
+      gap: 6px;
+      margin: 10px 0;
     }
 
     .summary-card {
-      border-radius: 4px;
-      padding: 14px 10px 12px;
+      border-radius: 2px;
+      padding: 10px 8px 9px;
       text-align: center;
       font-family: var(--font-sans);
-      border-top: 3px solid transparent;
+      border-top: 2px solid transparent;
     }
 
     .summary-card .count {
-      font-size: 30pt;
+      font-size: 24pt;
       font-weight: 800;
       line-height: 1;
       letter-spacing: -1px;
     }
 
     .summary-card .label {
-      font-size: 7pt;
+      font-size: 6.5pt;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.9px;
-      margin-top: 5px;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
       opacity: 0.8;
     }
 
-    .card-total    { background: #eef2fa; color: var(--navy);  border-top-color: var(--navy); }
-    .card-path     { background: #fff0f0; color: #991b1b;      border-top-color: #991b1b; }
-    .card-vus      { background: #fdf8ee; color: #92400e;      border-top-color: #f59e0b; }
-    .card-benign   { background: #f0faf3; color: #166534;      border-top-color: #22c55e; }
+    .card-total  { background: #f0fdf9; color: var(--teal);  border-top-color: var(--teal); }
+    .card-path   { background: #FEF2F2; color: #991B1B;      border-top-color: #991B1B; }
+    .card-vus    { background: #F3F4F6; color: #374151;      border-top-color: #9ca3af; }
+    .card-benign { background: #ECFDF5; color: #065F46;      border-top-color: #10b981; }
 
-    /* ── Section header (orange accent badge style) ── */
+    /* ── Section header (teal badge style) ── */
     .section-header {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin: 16px 0 10px 0;
+      gap: 8px;
+      margin: 14px 0 8px 0;
     }
 
     .section-badge {
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 1.3px;
+      letter-spacing: 1.2px;
       color: #ffffff;
-      background: var(--orange);
-      padding: 4px 12px;
-      border-radius: 3px;
+      background: var(--teal);
+      padding: 3px 10px;
+      border-radius: 2px;
       white-space: nowrap;
     }
 
@@ -223,57 +223,57 @@
     }
 
     .section-badge.badge-blue {
-      background: var(--blue-dk);
+      background: #1E40AF;
     }
 
     .section-rule {
       flex: 1;
-      height: 1.5px;
-      background: #E8712A;
+      height: 1px;
+      background: var(--teal);
     }
 
-    .section-rule.rule-navy { background: #1c2b4a; }
-    .section-rule.rule-blue { background: #1d4ed8; }
+    .section-rule.rule-navy { background: var(--navy); }
+    .section-rule.rule-blue { background: #1E40AF; }
 
-    /* ── Genomic findings summary table (page 1 right column) ── */
+    /* ── Genomic findings summary table (page 1) ── */
     .findings-two-col {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin: 0 0 14px 0;
+      gap: 10px;
+      margin: 0 0 10px 0;
     }
 
     .findings-panel {
-      border: 1px solid #e5e9f0;
+      border: 1px solid var(--border);
       border-radius: 2px;
       overflow: hidden;
     }
 
     .findings-panel-title {
       font-family: var(--font-sans);
-      font-size: 8pt;
+      font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1px;
-      padding: 6px 12px;
+      padding: 5px 10px;
       color: #ffffff;
     }
 
     .findings-panel-title.title-path { background: #7f1d1d; }
-    .findings-panel-title.title-vus  { background: #78350f; }
+    .findings-panel-title.title-vus  { background: var(--navy); }
 
     .findings-panel-body {
-      padding: 8px 10px;
+      padding: 7px 10px;
     }
 
     .finding-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 6px 0;
-      border-bottom: 1px solid #f3f4f6;
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f5f9;
       font-family: var(--font-sans);
-      font-size: 9.5pt;
+      font-size: 9pt;
     }
 
     .finding-row:last-child { border-bottom: none; }
@@ -285,7 +285,7 @@
 
     .finding-variant {
       font-family: var(--font-mono);
-      font-size: 7.5pt;
+      font-size: 7pt;
       color: var(--muted);
       max-width: 140px;
       overflow: hidden;
@@ -296,35 +296,35 @@
     /* ── Classification badges ── */
     .badge {
       display: inline-block;
-      padding: 2px 9px;
-      border-radius: 3px;
+      padding: 2px 8px;
+      border-radius: 2px;
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.4px;
       white-space: nowrap;
     }
 
-    .badge-pathogenic        { background: #fecaca; color: #7f1d1d; border: 1px solid #fca5a5; }
-    .badge-likely-pathogenic { background: #fed7aa; color: #7c2d12; border: 1px solid #fdba74; }
-    .badge-vus               { background: #e5e7eb; color: #374151; border: 1px solid #d1d5db; }
-    .badge-likely-benign     { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-    .badge-benign            { background: #bbf7d0; color: #14532d; border: 1px solid #86efac; }
-    .badge-drug-response     { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
-    .badge-risk-factor       { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
-    .badge-unknown           { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+    .badge-pathogenic        { background: #FEF2F2; color: #991B1B; border: 1px solid #fecaca; }
+    .badge-likely-pathogenic { background: #FFF7ED; color: #92400E; border: 1px solid #fed7aa; }
+    .badge-vus               { background: #F3F4F6; color: #374151; border: 1px solid #d1d5db; }
+    .badge-likely-benign     { background: #ECFDF5; color: #065F46; border: 1px solid #a7f3d0; }
+    .badge-benign            { background: #ECFDF5; color: #065F46; border: 1px solid #6ee7b7; }
+    .badge-drug-response     { background: #EFF6FF; color: #1E40AF; border: 1px solid #bfdbfe; }
+    .badge-risk-factor       { background: #F5F3FF; color: #5B21B6; border: 1px solid #ddd6fe; }
+    .badge-unknown           { background: #F3F4F6; color: #6b7280; border: 1px solid #e5e7eb; }
 
     /* ── ACMG code pills ── */
     .acmg-code {
       display: inline-block;
-      background: #eff6ff;
-      color: #1e40af;
-      border: 1px solid #bfdbfe;
-      border-radius: 3px;
+      background: #f0fdf9;
+      color: var(--teal);
+      border: 1px solid #99f6e4;
+      border-radius: 2px;
       padding: 1px 5px;
       font-family: var(--font-mono);
-      font-size: 7.5pt;
+      font-size: 7pt;
       margin: 1px 2px 1px 0;
     }
 
@@ -333,82 +333,105 @@
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      background: #fef3c7;
-      color: #78350f;
-      border: 1.5px solid #f59e0b;
-      border-radius: 3px;
-      padding: 2px 8px;
+      background: #FFFBEB;
+      color: #92400E;
+      border: 1px solid #fbbf24;
+      border-radius: 2px;
+      padding: 2px 7px;
       font-family: var(--font-sans);
-      font-size: 8pt;
+      font-size: 7.5pt;
       font-weight: 700;
     }
 
     /* ── Korean flag inline ── */
     .korean-flag {
       font-family: var(--font-sans);
-      font-size: 8.5pt;
+      font-size: 8pt;
       font-weight: 600;
-      color: var(--blue-dk);
+      color: #1E40AF;
     }
 
-    /* ── Variant detail page ── */
+    /* ── Variant detail page — two variants per A4 page ── */
     .variant-page {
       page-break-before: always;
     }
 
-    /* First detail page must not also break from summary */
     .variant-page:first-of-type {
       page-break-before: always;
     }
 
+    /* Each variant block sized to ~half A4 usable height */
+    .variant-block {
+      page-break-inside: avoid;
+      margin-bottom: 8mm;
+      padding-bottom: 6mm;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .variant-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
     .variant-detail-header {
-      margin: 0 0 12px 0;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #1c2b4a;
+      margin: 0 0 8px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--navy);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .variant-gene-name {
       font-family: var(--font-sans);
-      font-size: 30pt;
+      font-size: 22pt;
       font-weight: 800;
       color: var(--navy);
       line-height: 1;
-      letter-spacing: -1px;
+      letter-spacing: -0.8px;
+    }
+
+    .variant-header-right {
+      flex: 1;
+      min-width: 0;
     }
 
     .variant-alteration {
-      font-family: "Courier New", Courier, monospace;
-      font-size: 10pt;
-      color: #374151;
-      margin-top: 3px;
+      font-family: var(--font-mono);
+      font-size: 8.5pt;
+      color: var(--slate);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .variant-badges {
       display: flex;
       align-items: center;
-      gap: 6px;
-      margin-top: 6px;
+      gap: 5px;
+      margin-top: 4px;
       flex-wrap: wrap;
     }
 
-    /* ── 3-column finding detail grid ── */
+    /* ── 3-column finding detail grid — horizontal, compact ── */
     .detail-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 0;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border);
       border-radius: 2px;
-      margin: 12px 0;
+      margin: 6px 0;
     }
 
     .detail-col {
-      padding: 12px 14px;
+      padding: 8px 10px;
       border-right: 1px solid var(--border);
     }
 
-    .detail-col:nth-child(1) { background: #fafbfd; }
-    .detail-col:nth-child(2) { background: #f7fbff; }
-    .detail-col:nth-child(3) { background: #fafaf7; }
+    .detail-col:nth-child(1) { background: #fafcff; }
+    .detail-col:nth-child(2) { background: #f8fffe; }
+    .detail-col:nth-child(3) { background: #fafaf8; }
 
     .detail-col:last-child {
       border-right: none;
@@ -416,166 +439,168 @@
 
     .detail-col-title {
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 1.2px;
-      color: #ffffff;
-      background: var(--navy);
-      padding: 5px 10px;
-      margin: -12px -14px 12px -14px;
+      color: var(--teal);
+      padding: 0 0 5px 0;
+      margin-bottom: 5px;
+      border-bottom: 1px solid var(--teal-lt);
     }
 
     .detail-col p {
-      font-size: 10pt;
-      line-height: 1.65;
-      margin-bottom: 8px;
+      font-size: 9pt;
+      line-height: 1.5;
+      margin-bottom: 5px;
       color: var(--text);
     }
 
     .detail-col .detail-label {
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 6.5pt;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.7px;
-      margin-top: 10px;
-      margin-bottom: 3px;
+      margin-top: 7px;
+      margin-bottom: 2px;
     }
 
     .detail-col .detail-value {
-      font-size: 9.5pt;
-      color: #111827;
-      margin-bottom: 6px;
-      line-height: 1.6;
+      font-size: 9pt;
+      color: #0f172a;
+      margin-bottom: 4px;
+      line-height: 1.5;
     }
 
     .detail-col .detail-value.mono {
       font-family: var(--font-mono);
-      font-size: 8.5pt;
+      font-size: 8pt;
     }
 
-    /* ── Frequency stat box ── */
+    /* ── Frequency stat box — compact ── */
     .freq-stat {
       background: var(--surface);
-      border: 1px solid #e5e9f0;
-      border-radius: 3px;
-      padding: 8px 12px;
-      margin: 6px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      padding: 5px 8px;
+      margin: 4px 0;
       font-family: var(--font-sans);
     }
 
     .freq-stat .freq-num {
-      font-size: 15pt;
+      font-size: 11pt;
       font-weight: 800;
       color: var(--navy);
       line-height: 1;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.3px;
     }
 
     .freq-stat .freq-label {
-      font-size: 7.5pt;
+      font-size: 6.5pt;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.7px;
+      letter-spacing: 0.6px;
       color: var(--muted);
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .freq-enrichment {
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
-      border-radius: 3px;
-      padding: 6px 10px;
-      margin: 6px 0;
+      background: #EFF6FF;
+      border: 1px solid #bfdbfe;
+      border-radius: 2px;
+      padding: 4px 8px;
+      margin: 4px 0;
       font-family: var(--font-sans);
-      font-size: 8.5pt;
-      color: var(--blue-dk);
+      font-size: 8pt;
+      color: #1E40AF;
       font-weight: 700;
     }
 
-    /* ── Korean callout box ── */
+    /* ── Korean callout box — compact ── */
     .korean-callout {
-      background: #eff6ff;
-      border-left: 4px solid var(--blue);
-      padding: 10px 14px;
-      border-radius: 0 3px 3px 0;
-      margin: 12px 0;
+      background: #F0F4FF;
+      border-left: 3px solid #1E40AF;
+      padding: 7px 10px;
+      border-radius: 0 2px 2px 0;
+      margin: 8px 0;
       font-family: var(--font-sans);
     }
 
     .korean-callout .korean-callout-title {
-      font-size: 8pt;
+      font-size: 7pt;
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: 1px;
-      color: var(--blue-dk);
-      margin-bottom: 5px;
+      color: #1E40AF;
+      margin-bottom: 3px;
     }
 
     .korean-callout p {
-      font-size: 9.5pt;
+      font-size: 9pt;
       font-weight: 500;
       color: #1e3a5f;
-      line-height: 1.65;
+      line-height: 1.5;
       margin: 0;
     }
 
-    /* ── Associated conditions pill tags ── */
+    /* ── Associated conditions pill tags — inline ── */
     .condition-pill {
       display: inline-block;
       background: #f0f4fa;
       color: var(--navy);
       border: 1px solid #c7d6eb;
-      border-radius: 12px;
-      padding: 2px 10px;
-      font-size: 8.5pt;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 7.5pt;
       font-weight: 500;
-      margin: 2px 3px 2px 0;
+      margin: 1px 2px 1px 0;
       font-family: var(--font-sans);
+      white-space: nowrap;
     }
 
     /* ── Actionability table ── */
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 8px 0 16px 0;
-      font-size: 9.5pt;
+      margin: 6px 0 12px 0;
+      font-size: 9pt;
       font-family: var(--font-sans);
     }
 
     thead th {
       font-family: var(--font-sans);
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: #ffffff;
-      background: var(--navy);
-      padding: 7px 12px;
+      background: var(--teal);
+      padding: 6px 10px;
       text-align: left;
     }
 
-    tbody tr { border-bottom: 1px solid #e5e9f0; }
+    tbody tr { border-bottom: 1px solid #e2e8f0; }
     tbody tr:last-child { border-bottom: none; }
     tbody tr:nth-child(odd)  { background: #ffffff; }
-    tbody tr:nth-child(even) { background: #f5f7fb; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
 
     tbody td {
-      padding: 8px 12px;
+      padding: 6px 10px;
       vertical-align: top;
       font-family: var(--font-sans);
-      line-height: 1.6;
+      line-height: 1.5;
+      font-size: 9pt;
     }
 
     /* ── "No reportable" list (page 1 bottom) ── */
     .no-report-list {
-      background: #f9fafb;
-      border: 1px solid #e5e9f0;
-      border-radius: 3px;
-      padding: 12px 16px;
-      margin: 8px 0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      padding: 10px 14px;
+      margin: 6px 0;
     }
 
     .no-report-list ul {
@@ -588,29 +613,29 @@
 
     .no-report-list li {
       font-family: var(--font-sans);
-      font-size: 9.5pt;
-      padding: 3px 0;
-      color: #374151;
+      font-size: 9pt;
+      padding: 2px 0;
+      color: var(--slate);
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
     }
 
     .no-report-list li::before {
       content: "";
       display: inline-block;
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
       border-radius: 50%;
-      background: #9ca3af;
+      background: #94a3b8;
       flex-shrink: 0;
     }
 
     /* ── PGx section ── */
     .pgx-row {
-      border: 1px solid #e5e9f0;
-      border-radius: 4px;
-      margin: 10px 0;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      margin: 8px 0;
       overflow: hidden;
     }
 
@@ -618,14 +643,14 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: #eef2fa;
-      padding: 9px 14px;
-      border-bottom: 1px solid #d8e1f0;
+      background: #f0fdf9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #ccfbf1;
     }
 
     .pgx-gene {
       font-family: var(--font-sans);
-      font-size: 13pt;
+      font-size: 12pt;
       font-weight: 800;
       color: var(--navy);
       letter-spacing: -0.3px;
@@ -638,74 +663,72 @@
     }
 
     .pgx-cell {
-      padding: 10px 14px;
-      border-right: 1px solid #e5e9f0;
+      padding: 9px 12px;
+      border-right: 1px solid #e2e8f0;
       font-family: var(--font-sans);
     }
 
-    /* PGx side-by-side Korean vs Western comparison */
-    .pgx-cell:nth-child(2) { background: #f7fbff; }
-
+    .pgx-cell:nth-child(2) { background: #f8fffe; }
     .pgx-cell:last-child { border-right: none; }
 
     .pgx-cell-label {
-      font-size: 7.5pt;
+      font-size: 7pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: var(--muted);
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .pgx-cell-value {
-      font-size: 10pt;
-      color: #111827;
-      line-height: 1.6;
+      font-size: 9.5pt;
+      color: #0f172a;
+      line-height: 1.55;
     }
 
     .pgx-korean-note {
-      font-size: 9pt;
+      font-size: 8.5pt;
       font-weight: 600;
-      color: var(--blue-dk);
+      color: #1E40AF;
     }
 
     /* Korean vs Western comparison boxes */
     .pgx-comparison-box {
       display: inline-block;
-      border-radius: 3px;
-      padding: 6px 10px;
-      margin-right: 6px;
-      margin-bottom: 4px;
-      min-width: 72px;
+      border-radius: 2px;
+      padding: 5px 9px;
+      margin-right: 5px;
+      margin-bottom: 3px;
+      min-width: 68px;
       text-align: center;
     }
 
     .pgx-comparison-box.box-korean {
-      background: #eff6ff;
-      border: 1.5px solid #bfdbfe;
+      background: #EFF6FF;
+      border: 1px solid #bfdbfe;
     }
 
     .pgx-comparison-box.box-western {
-      background: #f5f3ff;
-      border: 1.5px solid #ddd6fe;
+      background: #F5F3FF;
+      border: 1px solid #ddd6fe;
     }
 
     .pgx-comparison-box .box-pct {
-      font-size: 13pt;
+      font-size: 12pt;
       font-weight: 800;
       line-height: 1;
-      letter-spacing: -0.5px;
+      letter-spacing: -0.4px;
     }
 
-    .pgx-comparison-box.box-korean .box-pct  { color: var(--blue-dk); }
-    .pgx-comparison-box.box-western .box-pct { color: #6d28d9; }
+    .pgx-comparison-box.box-korean .box-pct  { color: #1E40AF; }
+    .pgx-comparison-box.box-western .box-pct { color: #5B21B6; }
 
     .pgx-comparison-box .box-lbl {
-      font-size: 7pt;
+      font-size: 6.5pt;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.6px;
-      margin-top: 3px;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
       opacity: 0.7;
     }
 
@@ -713,15 +736,23 @@
     .db-table tbody td:first-child {
       font-family: var(--font-mono);
       font-weight: 600;
-      color: #374151;
+      color: var(--slate);
       width: 160px;
     }
 
     /* ── No-data placeholder ── */
     .no-data {
       font-style: italic;
-      color: #9ca3af;
-      font-size: 9pt;
+      color: #94a3b8;
+      font-size: 8.5pt;
+    }
+
+    /* ── Variant bottom notes (conflict / korean) — single line ── */
+    .variant-notes-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 4px 0 0 0;
     }
 
     /* ── Footer (every page) ── */
@@ -730,8 +761,8 @@
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 6px 18mm 8mm 18mm;
-      border-top: 1px solid #e5e9f0;
+      padding: 5px 16mm 7mm 16mm;
+      border-top: 1px solid #e2e8f0;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
@@ -739,53 +770,53 @@
     }
 
     .footer-disclaimer {
-      font-size: 7.5pt;
+      font-size: 7pt;
       color: var(--muted);
-      max-width: 75%;
-      line-height: 1.5;
+      max-width: 76%;
+      line-height: 1.45;
     }
 
     .footer-disclaimer strong {
       color: #b91c1c;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.3px;
     }
 
     .footer-right {
       text-align: right;
-      font-size: 7.5pt;
-      color: #9ca3af;
+      font-size: 7pt;
+      color: #94a3b8;
     }
 
     .footer-brand-text {
       font-family: var(--font-sans);
       font-weight: 800;
-      letter-spacing: 1.5px;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: var(--orange);
-      font-size: 8pt;
+      color: var(--teal);
+      font-size: 7.5pt;
     }
 
     /* ── Methodology ── */
     .method-block {
-      margin: 12px 0;
+      margin: 10px 0;
     }
 
     .method-block p {
-      font-size: 10pt;
-      line-height: 1.7;
-      margin-bottom: 0.6em;
+      font-size: 9.5pt;
+      line-height: 1.65;
+      margin-bottom: 0.5em;
     }
 
     .method-block ul {
-      padding-left: 1.5em;
-      margin-bottom: 0.6em;
+      padding-left: 1.4em;
+      margin-bottom: 0.5em;
     }
 
     .method-block li {
-      font-size: 10pt;
-      line-height: 1.65;
-      margin-bottom: 0.3em;
+      font-size: 9.5pt;
+      line-height: 1.6;
+      margin-bottom: 0.25em;
     }
 
     /* ── Print layout ── */
@@ -799,20 +830,21 @@
       }
 
       .page-body {
-        padding: 12mm 16mm 24mm 16mm;
+        padding: 10mm 14mm 22mm 14mm;
       }
 
       .page-footer {
-        padding: 6px 16mm 6mm 16mm;
+        padding: 5px 14mm 5mm 14mm;
       }
 
       .variant-page {
         page-break-before: always;
       }
 
-      .detail-grid { page-break-inside: avoid; }
-      table { page-break-inside: avoid; }
-      .pgx-row { page-break-inside: avoid; }
+      .variant-block { page-break-inside: avoid; }
+      .detail-grid   { page-break-inside: avoid; }
+      table          { page-break-inside: avoid; }
+      .pgx-row       { page-break-inside: avoid; }
 
       @page {
         size: A4;
@@ -822,9 +854,9 @@
 
     /* ── Screen preview spacing ── */
     @media screen {
-      body { background: #e8eaf0; }
+      body { background: #dde3e9; }
       .page {
-        box-shadow: 0 2px 16px rgba(0,0,0,0.15);
+        box-shadow: 0 1px 8px rgba(0,0,0,0.12);
         margin: 20px auto;
       }
     }
@@ -874,7 +906,7 @@
     <!-- Masthead -->
     <div class="masthead">
       <div class="masthead-logo">
-        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-brand">Genome<span style="color:var(--teal);">Board</span></div>
         <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
       </div>
       <div class="masthead-meta">
@@ -921,7 +953,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">Drug Response / PGx</span>
-          <span class="info-value" style="color:#1d4ed8;font-weight:700;">{{ summary.drug_response | default(0) }}</span>
+          <span class="info-value" style="color:#1E40AF;font-weight:700;">{{ summary.drug_response | default(0) }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Risk Factor</span>
@@ -948,7 +980,7 @@
         <div class="count">{{ summary.vus | default(0) }}</div>
         <div class="label">VUS</div>
       </div>
-      <div class="summary-card" style="background:#eff6ff;color:#1d4ed8;">
+      <div class="summary-card" style="background:#EFF6FF;color:#1E40AF;border-top:2px solid #1E40AF;">
         <div class="count">{{ (summary.drug_response | default(0)) + (summary.risk_factor | default(0)) }}</div>
         <div class="label">Drug Response / Risk</div>
       </div>
@@ -990,7 +1022,7 @@
                   <span class="conflict-flag">&#9888;</span>
                 {% endif %}
                 {% if v.variant_effect is defined and v.variant_effect %}
-                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                  <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
                 {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
@@ -1016,7 +1048,7 @@
                   <span class="conflict-flag">&#9888;</span>
                 {% endif %}
                 {% if v.variant_effect is defined and v.variant_effect %}
-                  <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                  <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
                 {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
@@ -1137,7 +1169,7 @@
         {% for v in no_report %}
         <li>
           <strong>{{ v.gene }}</strong>&nbsp;
-          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:#6b7280;">{{ v.variant }}</span>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:var(--muted);">{{ v.variant }}</span>&nbsp;
           {{ class_badge(v.classification) }}
         </li>
         {% endfor %}
@@ -1165,7 +1197,7 @@
 
 
 {# ══════════════════════════════════════════════════════════════
-   PAGE 2+ — GENOMIC FINDINGS DETAIL (one section per variant)
+   PAGE 2+ — GENOMIC FINDINGS DETAIL (two variants per A4 page)
 ══════════════════════════════════════════════════════════════ #}
 {% for v in variants %}
 {% set cls = v.classification | lower %}
@@ -1173,214 +1205,201 @@
 {% set clinical = v.agents.clinical if v.agents is defined and v.agents.clinical is defined else {} %}
 {% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
 
+{# Open a new page div on every odd-indexed variant (1st, 3rd, 5th…) #}
+{% if loop.index is odd %}
 <div class="page variant-page">
   <div class="page-header-bar"></div>
   <div class="page-body">
 
-    <!-- Section badge -->
-    <div class="section-header" style="margin-top:0;">
-      {% if is_sig %}
-        <span class="section-badge">Genomic Findings</span>
-        <div class="section-rule"></div>
-      {% else %}
-        <span class="section-badge badge-navy">Genomic Findings</span>
-        <div class="section-rule rule-navy"></div>
-      {% endif %}
-      <div class="masthead-meta" style="text-align:right;font-family:var(--font-sans);font-size:8.5pt;color:#6b7280;">
-        <strong style="color:#1c2b4a;">{{ sample_id }}</strong> &nbsp;|&nbsp; {{ date }}
+    <!-- Page-level section header with sample ID -->
+    <div class="section-header" style="margin-top:0;margin-bottom:6px;">
+      <span class="section-badge">Genomic Findings</span>
+      <div class="section-rule"></div>
+      <div style="font-family:var(--font-sans);font-size:8pt;color:var(--muted);white-space:nowrap;">
+        <strong style="color:var(--navy);">{{ sample_id }}</strong> &nbsp;|&nbsp; {{ date }}
       </div>
     </div>
+{% endif %}
 
-    <!-- Variant identity block -->
-    <div class="variant-detail-header">
-      <div class="variant-gene-name">{{ v.gene }}</div>
-      {% if v.gene_full_name is defined and v.gene_full_name %}
-        <div style="font-family:var(--font-sans);font-size:10pt;color:#6b7280;margin-top:2px;">{{ v.gene_full_name }}</div>
-      {% endif %}
-      <div class="variant-alteration">{{ v.variant }}</div>
-      {% if v.hgvs is defined and v.hgvs %}
-        <div class="variant-hgvs">
-          {% if v.hgvs.transcript is defined and v.hgvs.transcript %}
-            <span style="font-family:monospace;font-size:9pt;color:#374151;">
-              {{ v.hgvs.transcript }}:{{ v.hgvs.cdna | default('') }}
-              {% if v.hgvs.protein is defined and v.hgvs.protein %} ({{ v.hgvs.protein }}){% endif %}
-            </span>
-            {% if v.variant_effect is defined and v.variant_effect %}
-              <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:var(--font-sans);font-size:8.5pt;font-weight:600;margin-left:8px;">{{ v.variant_effect }}</span>
+    <!-- ── Variant block ── -->
+    <div class="variant-block">
+
+      <!-- Identity header: gene name + HGVS + badges in one compact row -->
+      <div class="variant-detail-header">
+        <div class="variant-gene-name">{{ v.gene }}</div>
+        <div class="variant-header-right">
+          <div class="variant-alteration">
+            {% if v.hgvs is defined and v.hgvs and v.hgvs.transcript is defined and v.hgvs.transcript %}
+              {{ v.hgvs.transcript }}:{{ v.hgvs.cdna | default('') }}{% if v.hgvs.protein is defined and v.hgvs.protein %} ({{ v.hgvs.protein }}){% endif %}
+            {% else %}
+              {{ v.variant }}
             {% endif %}
+            {% if v.variant_effect is defined and v.variant_effect %}
+              <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+            {% endif %}
+          </div>
+          {% if v.gene_full_name is defined and v.gene_full_name %}
+            <div style="font-size:8pt;color:var(--muted);margin-top:1px;">{{ v.gene_full_name }}</div>
+          {% endif %}
+          <div class="variant-badges">
+            {{ class_badge(v.classification) }}
+            {% if v.acmg_codes %}
+              {% for code in v.acmg_codes %}
+                <span class="acmg-code">{{ code }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-column detail grid — side by side, compact -->
+      <div class="detail-grid">
+
+        <!-- Column 1: Clinical Significance -->
+        <div class="detail-col">
+          <div class="detail-col-title">Clinical Significance</div>
+
+          {% if v.clinvar_significance is defined and v.clinvar_significance %}
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">{{ v.clinvar_significance }}{% if v.clinvar_id is defined and v.clinvar_id %} <span style="font-size:7.5pt;color:var(--muted);">({{ v.clinvar_id }})</span>{% endif %}</div>
+          {% elif clinical.clinvar_significance is defined and clinical.clinvar_significance %}
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">{{ clinical.clinvar_significance }}</div>
+          {% endif %}
+
+          {% if v.review_status is defined and v.review_status %}
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">{{ v.review_status }}</div>
+          {% elif clinical.review_status is defined and clinical.review_status %}
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">{{ clinical.review_status }}</div>
+          {% endif %}
+
+          {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
+            <div class="detail-label">Conditions</div>
+            <div class="detail-value" style="margin-top:2px;">
+              {% for cond in v.associated_conditions %}
+                <span class="condition-pill">{{ cond }}</span>
+              {% endfor %}
+            </div>
+          {% elif clinical.associated_conditions is defined and clinical.associated_conditions %}
+            <div class="detail-label">Conditions</div>
+            <div class="detail-value">{{ clinical.associated_conditions }}</div>
+          {% elif clinical.clinvar_significance is defined %}
+            <div class="detail-label">Conditions</div>
+            <div class="detail-value no-data">See ClinVar / OMIM for {{ v.gene }}</div>
+          {% endif %}
+
+          {% if clinical.inheritance is defined and clinical.inheritance %}
+            <div class="detail-label">Inheritance</div>
+            <div class="detail-value">{{ clinical.inheritance }}</div>
+          {% endif %}
+
+          {% if v.treatment_strategies is defined and v.treatment_strategies %}
+            <div class="detail-label">Treatment Strategies</div>
+            <div class="detail-value">{{ v.treatment_strategies }}</div>
           {% endif %}
         </div>
-      {% endif %}
-      <div class="variant-badges">
-        {{ class_badge(v.classification) }}
+
+        <!-- Column 2: Frequency & Korean Population -->
+        <div class="detail-col">
+          <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+          {% if v.gnomad_all is defined and v.gnomad_all is not none %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ "%.4e"|format(v.gnomad_all) }}</div>
+              <div class="freq-label">gnomAD Global AF</div>
+            </div>
+          {% endif %}
+
+          {% if v.gnomad_eas is defined and v.gnomad_eas is not none %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ "%.4e"|format(v.gnomad_eas) }}</div>
+              <div class="freq-label">gnomAD East Asian AF</div>
+            </div>
+          {% endif %}
+
+          {% if kp.krgdb_freq is defined and kp.krgdb_freq %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ kp.krgdb_freq }}</div>
+              <div class="freq-label">KRGDB Korean AF</div>
+            </div>
+          {% endif %}
+
+          {% if kp.enrichment_ratio is defined and kp.enrichment_ratio %}
+            <div class="freq-enrichment">
+              Korean enrichment: {{ kp.enrichment_ratio }}x vs global
+            </div>
+          {% endif %}
+
+          {% if v.frequency_prognosis is defined and v.frequency_prognosis %}
+            <div class="detail-label" style="margin-top:5px;">Frequency Note</div>
+            <div class="detail-value">{{ v.frequency_prognosis }}</div>
+          {% endif %}
+
+          {% if not (v.gnomad_all is defined and v.gnomad_all is not none) and not (kp.krgdb_freq is defined and kp.krgdb_freq) and not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
+            <p class="no-data">No population frequency data available.</p>
+          {% endif %}
+        </div>
+
+        <!-- Column 3: Finding Summary -->
+        <div class="detail-col">
+          <div class="detail-col-title">Finding Summary</div>
+
+          {% if v.finding_summary is defined and v.finding_summary %}
+            <p>{{ v.finding_summary }}</p>
+          {% endif %}
+
+          {% if kp.gene_description is defined and kp.gene_description %}
+            <div class="detail-label">Gene</div>
+            <div class="detail-value">{{ kp.gene_description }}</div>
+          {% endif %}
+
+          {% if clinical.clinical_implications is defined and clinical.clinical_implications %}
+            <div class="detail-label">Clinical Implications</div>
+            <div class="detail-value">{{ clinical.clinical_implications }}</div>
+          {% endif %}
+
+          {% if kp.korean_clinical_note is defined and kp.korean_clinical_note %}
+            <div class="detail-label">Korean Clinical Note</div>
+            <div class="detail-value" style="color:#1E40AF;">{{ kp.korean_clinical_note }}</div>
+          {% endif %}
+
+          {% if not (v.finding_summary is defined and v.finding_summary) and not (kp.gene_description is defined and kp.gene_description) and not (clinical.clinical_implications is defined and clinical.clinical_implications) %}
+            <p class="no-data">Extended summary pending consilium analysis.</p>
+          {% endif %}
+
+          {% if v.acmg_codes %}
+            <div class="detail-label" style="margin-top:7px;">ACMG Codes</div>
+            <div>
+              {% for code in v.acmg_codes %}
+                <span class="acmg-code">{{ code }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+      </div><!-- /detail-grid -->
+
+      <!-- Bottom notes bar: conflict + korean note — single line -->
+      {% set has_notes = (v.conflict is defined and v.conflict) or (v.korean_specific_note is defined and v.korean_specific_note) or (kp.korean_flag is defined and kp.korean_flag) %}
+      {% if has_notes %}
+      <div class="variant-notes-bar">
         {% if v.conflict is defined and v.conflict %}
           <span class="conflict-flag">&#9888; Conflict: Engine={{ v.classification }} vs ClinVar={{ v.clinvar_significance | default(v.agents.clinical.clinvar_significance | default('N/A')) }}</span>
         {% endif %}
-        {% if v.acmg_codes %}
-          {% for code in v.acmg_codes %}
-            <span class="acmg-code">{{ code }}</span>
-          {% endfor %}
+        {% if v.korean_specific_note is defined and v.korean_specific_note %}
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; {{ v.korean_specific_note }}</span>
+        {% elif kp.korean_flag is defined and kp.korean_flag %}
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; {{ kp.korean_flag }}</span>
         {% endif %}
       </div>
-    </div>
+      {% endif %}
 
-    <!-- 3-column detail grid -->
-    <div class="detail-grid">
+    </div><!-- /variant-block -->
 
-      <!-- Column 1: Clinical Significance -->
-      <div class="detail-col">
-        <div class="detail-col-title">Clinical Significance</div>
-
-        {% if v.treatment_strategies is defined and v.treatment_strategies %}
-          <div class="detail-label">Treatment Strategies</div>
-          <div class="detail-value">{{ v.treatment_strategies }}</div>
-        {% else %}
-          <div class="detail-label">Treatment Strategies</div>
-          <div class="detail-value no-data">No treatment strategy information available for this variant.</div>
-        {% endif %}
-
-        {% if v.clinvar_significance is defined and v.clinvar_significance %}
-          <div class="detail-label">ClinVar Significance</div>
-          <div class="detail-value">{{ v.clinvar_significance }}{% if v.clinvar_id is defined and v.clinvar_id %} <span style="font-size:8pt;color:#6b7280;">({{ v.clinvar_id }})</span>{% endif %}</div>
-        {% elif clinical.clinvar_significance is defined and clinical.clinvar_significance %}
-          <div class="detail-label">ClinVar Significance</div>
-          <div class="detail-value">{{ clinical.clinvar_significance }}</div>
-        {% endif %}
-
-        {% if v.review_status is defined and v.review_status %}
-          <div class="detail-label">ClinVar Review Status</div>
-          <div class="detail-value">{{ v.review_status }}</div>
-        {% elif clinical.review_status is defined and clinical.review_status %}
-          <div class="detail-label">ClinVar Review Status</div>
-          <div class="detail-value">{{ clinical.review_status }}</div>
-        {% endif %}
-
-        {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
-          <div class="detail-label">Associated Conditions</div>
-          <div class="detail-value" style="margin-top:4px;">
-            {% for cond in v.associated_conditions %}
-              <span class="condition-pill">{{ cond }}</span>
-            {% endfor %}
-          </div>
-        {% elif clinical.associated_conditions is defined and clinical.associated_conditions %}
-          <div class="detail-label">Associated Conditions</div>
-          <div class="detail-value">{{ clinical.associated_conditions }}</div>
-        {% elif clinical.clinvar_significance is defined %}
-          <div class="detail-label">Associated Conditions</div>
-          <div class="detail-value no-data">See ClinVar / OMIM for {{ v.gene }}</div>
-        {% endif %}
-
-        {% if clinical.inheritance is defined and clinical.inheritance %}
-          <div class="detail-label">Inheritance Pattern</div>
-          <div class="detail-value">{{ clinical.inheritance }}</div>
-        {% endif %}
-
-        {# review_status now shown above alongside ClinVar significance #}
-      </div>
-
-      <!-- Column 2: Frequency & Korean Population -->
-      <div class="detail-col">
-        <div class="detail-col-title">Frequency &amp; Korean Population</div>
-
-        {% if v.frequency_prognosis is defined and v.frequency_prognosis %}
-          <p>{{ v.frequency_prognosis }}</p>
-        {% endif %}
-
-        {% if v.gnomad_all is defined and v.gnomad_all is not none %}
-          <div class="freq-stat">
-            <div class="freq-num">{{ "%.4e"|format(v.gnomad_all) }}</div>
-            <div class="freq-label">gnomAD Global AF</div>
-          </div>
-        {% endif %}
-
-        {% if v.gnomad_eas is defined and v.gnomad_eas is not none %}
-          <div class="freq-stat">
-            <div class="freq-num">{{ "%.4e"|format(v.gnomad_eas) }}</div>
-            <div class="freq-label">gnomAD East Asian AF</div>
-          </div>
-        {% endif %}
-
-        {% if kp.krgdb_freq is defined and kp.krgdb_freq %}
-          <div class="freq-stat">
-            <div class="freq-num">{{ kp.krgdb_freq }}</div>
-            <div class="freq-label">KRGDB Korean AF</div>
-          </div>
-        {% endif %}
-
-        {% if kp.enrichment_ratio is defined and kp.enrichment_ratio %}
-          <div class="freq-enrichment">
-            Korean enrichment: {{ kp.enrichment_ratio }}x vs global
-          </div>
-        {% endif %}
-
-        {% if kp.korean_flag is defined and kp.korean_flag %}
-          <div class="korean-callout" style="margin-top:8px;">
-            <div class="korean-callout-title">Korean Population Note</div>
-            <p>{{ kp.korean_flag }}</p>
-          </div>
-        {% endif %}
-
-        {% if not (v.frequency_prognosis is defined and v.frequency_prognosis) and not (kp.korean_flag is defined and kp.korean_flag) %}
-          <p class="no-data">No Korean population frequency data for this variant.</p>
-        {% endif %}
-      </div>
-
-      <!-- Column 3: Finding Summary -->
-      <div class="detail-col">
-        <div class="detail-col-title">Finding Summary</div>
-
-        {% if v.finding_summary is defined and v.finding_summary %}
-          <p>{{ v.finding_summary }}</p>
-        {% endif %}
-
-        {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
-          <div class="detail-label" style="margin-top:8px;">Associated Conditions</div>
-          <div class="detail-value" style="margin-top:4px;">
-            {% for cond in v.associated_conditions %}
-              <span class="condition-pill">{{ cond }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-
-        {% if kp.gene_description is defined and kp.gene_description %}
-          <div class="detail-label">Gene Description</div>
-          <div class="detail-value">{{ kp.gene_description }}</div>
-        {% endif %}
-
-        {% if clinical.clinical_implications is defined and clinical.clinical_implications %}
-          <div class="detail-label">Clinical Implications</div>
-          <div class="detail-value">{{ clinical.clinical_implications }}</div>
-        {% endif %}
-
-        {% if kp.korean_clinical_note is defined and kp.korean_clinical_note %}
-          <div class="detail-label">Korean-Specific Clinical Note</div>
-          <div class="detail-value" style="color:#1d4ed8;">{{ kp.korean_clinical_note }}</div>
-        {% endif %}
-
-        {% if not (v.finding_summary is defined and v.finding_summary) and not (kp.gene_description is defined and kp.gene_description) and not (clinical.clinical_implications is defined and clinical.clinical_implications) %}
-          <p class="no-data">Extended finding summary pending consilium agent analysis.</p>
-        {% endif %}
-
-        <!-- ACMG code reference -->
-        {% if v.acmg_codes %}
-          <div class="detail-label" style="margin-top:12px;">ACMG Evidence Codes</div>
-          <div>
-            {% for code in v.acmg_codes %}
-              <span class="acmg-code">{{ code }}</span>
-            {% endfor %}
-          </div>
-        {% endif %}
-      </div>
-
-    </div><!-- /detail-grid -->
-
-    {% if v.korean_specific_note is defined and v.korean_specific_note %}
-    <div class="korean-callout" style="margin-top:12px;">
-      <div class="korean-callout-title">Korean Population-Specific Note</div>
-      <p>{{ v.korean_specific_note }}</p>
-    </div>
-    {% endif %}
-
+{# Close the page div after every even-indexed variant, or on the last variant if odd count #}
+{% if loop.index is even or loop.last %}
   </div><!-- /page-body -->
 
   <div class="page-footer">
@@ -1390,10 +1409,12 @@
     </div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ loop.index + 1 }}</div>
+      <div>Page {{ (loop.index / 2) | round(0, 'ceil') | int + 1 }}</div>
     </div>
   </div>
 </div><!-- /variant-page -->
+{% endif %}
+
 {% endfor %}
 
 
@@ -1407,7 +1428,7 @@
 
     <div class="masthead" style="margin-bottom:12px;">
       <div class="masthead-logo">
-        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-brand">Genome<span style="color:var(--teal);">Board</span></div>
         <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
       </div>
       <div class="masthead-meta">
@@ -1450,11 +1471,11 @@
           {% if pgx.hgvs is defined and pgx.hgvs and pgx.hgvs.cdna is defined and pgx.hgvs.cdna %}
             <div style="margin-top:6px;">
               <div class="pgx-cell-label">Variant (HGVS)</div>
-              <div style="font-family:monospace;font-size:8pt;color:#374151;">
+              <div style="font-family:monospace;font-size:8pt;color:var(--slate);">
                 {% if pgx.hgvs.transcript is defined and pgx.hgvs.transcript and pgx.hgvs.transcript != 'N/A (HLA typing required)' %}{{ pgx.hgvs.transcript }}:{% endif %}{{ pgx.hgvs.cdna }}{% if pgx.hgvs.protein is defined and pgx.hgvs.protein and pgx.hgvs.protein != 'N/A' %} ({{ pgx.hgvs.protein }}){% endif %}
               </div>
               {% if pgx.variant_effect is defined and pgx.variant_effect %}
-                <span style="display:inline-block;background:#f0f4fa;color:#1c2b4a;border:1px solid #c7d6eb;border-radius:3px;padding:2px 8px;font-family:var(--font-sans);font-size:8pt;font-weight:600;margin-top:4px;">{{ pgx.variant_effect }}</span>
+                <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:2px 8px;font-family:var(--font-sans);font-size:8pt;font-weight:600;margin-top:4px;">{{ pgx.variant_effect }}</span>
               {% endif %}
             </div>
           {% endif %}
@@ -1529,7 +1550,7 @@
 
     <div class="masthead" style="margin-bottom:12px;">
       <div class="masthead-logo">
-        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-brand">Genome<span style="color:var(--teal);">Board</span></div>
         <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
       </div>
       <div class="masthead-meta">
@@ -1670,7 +1691,7 @@
       </tbody>
     </table>
 
-    <h3 style="color:#1c2b4a;margin-top:16px;">Classification Criteria (ACMG/AMP 2015 Table 5)</h3>
+    <h3 style="color:var(--navy);margin-top:16px;">Classification Criteria (ACMG/AMP 2015 Table 5)</h3>
     <table>
       <thead>
         <tr><th>Classification</th><th>Required Evidence Combinations</th></tr>
@@ -1684,14 +1705,14 @@
       </tbody>
     </table>
 
-    <p style="font-size:8.5pt;color:#6b7280;margin-top:12px;">
+    <p style="font-size:8.5pt;color:var(--muted);margin-top:12px;">
       Reference: Richards S, et al. <em>Standards and guidelines for the interpretation of sequence variants.</em>
       Genet Med. 2015;17(5):405-424. PMID: 25741868.
       ClinGen Sequence Variant Interpretation Working Group updates: PMID: 30311383 (PP5/BP6 deprecation),
       PMID: 31164752 (BA1 modification).
     </p>
 
-    <h3 style="color:#1d4ed8;margin-top:24px;">CPIC Evidence Levels for Pharmacogenomics (PGx)</h3>
+    <h3 style="color:#1E40AF;margin-top:24px;">CPIC Evidence Levels for Pharmacogenomics (PGx)</h3>
     <p style="font-size:9.5pt;margin-bottom:12px;">
       The Clinical Pharmacogenetics Implementation Consortium (CPIC) assigns evidence levels to gene-drug pairs
       to guide clinical implementation of pharmacogenomic test results.
@@ -1724,7 +1745,7 @@
       </tbody>
     </table>
 
-    <p style="font-size:8.5pt;color:#6b7280;margin-top:12px;">
+    <p style="font-size:8.5pt;color:var(--muted);margin-top:12px;">
       Reference: Relling MV, Klein TE. <em>CPIC: Clinical Pharmacogenetics Implementation Consortium of the Pharmacogenomics Research Network.</em>
       Clin Pharmacol Ther. 2011;89(3):464-467. PMID: 21270786.
       CPIC guidelines and gene-drug pair assignments are updated regularly at <strong>cpicpgx.org</strong>.

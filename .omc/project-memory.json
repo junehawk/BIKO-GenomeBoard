@@ -135,14 +135,20 @@
   "hotPaths": [
     {
       "path": "templates/report.html",
-      "accessCount": 49,
-      "lastAccessed": 1774239498462,
+      "accessCount": 122,
+      "lastAccessed": 1774245086322,
       "type": "file"
     },
     {
       "path": "output/report_final.html",
       "accessCount": 21,
       "lastAccessed": 1774239310899,
+      "type": "file"
+    },
+    {
+      "path": "data/gene_knowledge.json",
+      "accessCount": 21,
+      "lastAccessed": 1774240594529,
       "type": "file"
     },
     {
@@ -153,14 +159,14 @@
     },
     {
       "path": "scripts/counselor/generate_pdf.py",
-      "accessCount": 14,
-      "lastAccessed": 1774239267093,
+      "accessCount": 17,
+      "lastAccessed": 1774240616712,
       "type": "file"
     },
     {
-      "path": "data/gene_knowledge.json",
+      "path": "tests/test_generate_pdf.py",
       "accessCount": 10,
-      "lastAccessed": 1774239250560,
+      "lastAccessed": 1774245846370,
       "type": "file"
     },
     {
@@ -197,12 +203,6 @@
       "path": "scripts/clinical/query_clinvar.py",
       "accessCount": 5,
       "lastAccessed": 1774229004490,
-      "type": "file"
-    },
-    {
-      "path": "tests/test_generate_pdf.py",
-      "accessCount": 4,
-      "lastAccessed": 1774225043328,
       "type": "file"
     },
     {
