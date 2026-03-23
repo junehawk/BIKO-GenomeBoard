@@ -1,0 +1,3 @@
+{"t":0,"agent":"system","event":"keyword_detected","keyword":"sciomc"}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"oh-my-claudecode:sciomc"}
+{"t":0,"agent":"system","event":"skill_invoked","skill_name":"paperclip"}

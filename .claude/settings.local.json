@@ -19,7 +19,8 @@
       "Edit",
       "Glob",
       "Grep",
-      "WebFetch"
+      "WebFetch",
+      "Bash(find /Users/JL/Research/gb/output -name *.json)"
     ]
   }
 }

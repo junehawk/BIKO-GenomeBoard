@@ -1,0 +1,92 @@
+[
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr17:7577120:G>A",
+    "gene": "TP53",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr13:32337326:C>T",
+    "gene": "BRCA2",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr7:117559590:ATCT>A",
+    "gene": "CFTR",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr10:96541616:G>A",
+    "gene": "CYP2C19",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr6:29943406:T>G",
+    "gene": "HLA-B",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr11:108175462:C>T",
+    "gene": "ATM",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr1:45332562:G>A",
+    "gene": "MUTYH",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr16:23641240:G>A",
+    "gene": "PALB2",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr12:112888163:T>C",
+    "gene": "PTPN11",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  },
+  {
+    "agent": "clinical_geneticist",
+    "variant": "chr19:41858921:T>C",
+    "gene": "APOE",
+    "clinvar_significance": "Not Found",
+    "clinvar_id": null,
+    "acmg_codes": [],
+    "review_status": null
+  }
+]

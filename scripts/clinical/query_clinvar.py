@@ -48,17 +48,36 @@ def _search_clinvar_variant(variant: Variant) -> Optional[dict]:
 
     return None
 
+def _extract_significance(clinvar_data: dict) -> tuple:
+    """Extract clinical significance and review status from ClinVar data.
+    Handles both old format (clinical_significance) and new format (germline_classification).
+    """
+    # New format (2024+): germline_classification
+    gc = clinvar_data.get("germline_classification", {})
+    if gc and gc.get("description"):
+        return gc["description"], gc.get("review_status", "")
+
+    # Old format: clinical_significance
+    cs = clinvar_data.get("clinical_significance", {})
+    if cs and cs.get("description"):
+        return cs["description"], clinvar_data.get("review_status", "")
+
+    return "Unknown", ""
+
 def _derive_acmg_codes(clinvar_data: dict) -> List[str]:
     """Derive ACMG evidence codes from ClinVar data."""
     codes = []
-    sig = clinvar_data.get("clinical_significance", {}).get("description", "").lower()
-    review = clinvar_data.get("review_status", "")
+    sig, review = _extract_significance(clinvar_data)
+    sig_lower = sig.lower()
 
-    if "pathogenic" in sig and "conflict" not in sig:
-        if "multiple submitters" in review:
+    if "pathogenic" in sig_lower and "conflict" not in sig_lower:
+        if "expert panel" in review.lower() or "practice guideline" in review.lower():
+            codes.append("PS1")
+            codes.append("PP5")
+        elif "multiple submitters" in review.lower():
             codes.append("PS1")
         else:
-            codes.append("PP3")
+            codes.append("PP5")
 
     return codes
 
@@ -78,16 +97,17 @@ def query_clinvar(variant: Variant) -> Dict:
             "api_available": False,
         }
 
-    sig = clinvar_data.get("clinical_significance", {}).get("description", "Unknown")
+    sig, review = _extract_significance(clinvar_data)
     acmg_codes = _derive_acmg_codes(clinvar_data)
+    accession = clinvar_data.get("accession", clinvar_data.get("variation_id"))
 
     return {
         "agent": "clinical_geneticist",
         "variant": variant.variant_id,
         "gene": variant.gene or clinvar_data.get("gene", {}).get("symbol"),
         "clinvar_significance": sig,
-        "clinvar_id": clinvar_data.get("variation_id"),
-        "review_status": clinvar_data.get("review_status"),
+        "clinvar_id": accession,
+        "review_status": review,
         "acmg_codes": acmg_codes,
         "api_available": True,
     }

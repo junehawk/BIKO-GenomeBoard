@@ -4,7 +4,7 @@
   "description": "Korean population-aware variant interpretation consilium on Paperclip",
   "private": true,
   "scripts": {
-    "dev": "npx paperclipai dev",
+    "dev": "npx paperclipai run",
     "test": "pytest tests/ -v",
     "test:cov": "pytest tests/ --cov=scripts --cov-report=html"
   },

@@ -1,0 +1,300 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774224215344,
+  "projectRoot": "/Users/JL/Research/gb",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "Python",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "requirements.txt"
+        ]
+      }
+    ],
+    "frameworks": [],
+    "packageManager": "npm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": "npm test",
+    "lintCommand": null,
+    "devCommand": "npm run dev",
+    "scripts": {
+      "dev": "npx paperclipai run",
+      "test": "pytest tests/ -v",
+      "test:cov": "pytest tests/ --cov=scripts --cov-report=html"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "scripts",
+      "tests"
+    ],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "data": {
+      "path": "data",
+      "purpose": "Data files",
+      "fileCount": 3,
+      "lastAccessed": 1774224215319,
+      "keyFiles": [
+        "acmg_rules.json",
+        "korean_pgx_table.json",
+        "krgdb_freq.tsv"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 4,
+      "lastAccessed": 1774224215319,
+      "keyFiles": [
+        "API_KEYS.md",
+        "ARCHITECTURE.md",
+        "KOREAN_STRATEGY.md",
+        "SETUP.md"
+      ]
+    },
+    "output": {
+      "path": "output",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1774224215326,
+      "keyFiles": [
+        "consilium_data.json",
+        "consilium_report.html",
+        "consilium_report.pdf",
+        "improvement_roadmap.md",
+        "report_v2.html"
+      ]
+    },
+    "paperclip-config": {
+      "path": "paperclip-config",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1774224215326,
+      "keyFiles": [
+        "company.md",
+        "paperclip.manifest.json"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 1,
+      "lastAccessed": 1774224215327,
+      "keyFiles": [
+        "__init__.py"
+      ]
+    },
+    "templates": {
+      "path": "templates",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1774224215327,
+      "keyFiles": [
+        "report.html"
+      ]
+    },
+    "tests": {
+      "path": "tests",
+      "purpose": "Test files",
+      "fileCount": 15,
+      "lastAccessed": 1774224215327,
+      "keyFiles": [
+        "__init__.py",
+        "conftest.py",
+        "test_acmg_logic.py",
+        "test_api_utils.py",
+        "test_clinvar.py"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "templates/report.html",
+      "accessCount": 11,
+      "lastAccessed": 1774225012837,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_models.py",
+      "accessCount": 5,
+      "lastAccessed": 1774228658155,
+      "type": "file"
+    },
+    {
+      "path": "scripts/clinical/query_clinvar.py",
+      "accessCount": 5,
+      "lastAccessed": 1774229004490,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_generate_pdf.py",
+      "accessCount": 4,
+      "lastAccessed": 1774225043328,
+      "type": "file"
+    },
+    {
+      "path": "data/gene_knowledge.json",
+      "accessCount": 3,
+      "lastAccessed": 1774225007581,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_compare_freq.py",
+      "accessCount": 3,
+      "lastAccessed": 1774225032193,
+      "type": "file"
+    },
+    {
+      "path": "scripts/korean_pop/compare_freq.py",
+      "accessCount": 3,
+      "lastAccessed": 1774227487323,
+      "type": "file"
+    },
+    {
+      "path": "scripts/counselor/generate_pdf.py",
+      "accessCount": 3,
+      "lastAccessed": 1774227488887,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 3,
+      "lastAccessed": 1774228653977,
+      "type": "directory"
+    },
+    {
+      "path": "scripts/common/models.py",
+      "accessCount": 3,
+      "lastAccessed": 1774228668465,
+      "type": "file"
+    },
+    {
+      "path": "scripts/intake/parse_vcf.py",
+      "accessCount": 3,
+      "lastAccessed": 1774228674768,
+      "type": "file"
+    },
+    {
+      "path": "scripts/korean_pop/query_gnomad.py",
+      "accessCount": 3,
+      "lastAccessed": 1774228710607,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_clinvar.py",
+      "accessCount": 3,
+      "lastAccessed": 1774228759924,
+      "type": "file"
+    },
+    {
+      "path": "scripts/common/gene_knowledge.py",
+      "accessCount": 2,
+      "lastAccessed": 1774224367347,
+      "type": "file"
+    },
+    {
+      "path": "data/sample_vcf/demo_variants.vcf",
+      "accessCount": 2,
+      "lastAccessed": 1774228662664,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_gnomad.py",
+      "accessCount": 2,
+      "lastAccessed": 1774228732410,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_intake.py",
+      "accessCount": 2,
+      "lastAccessed": 1774228742294,
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "accessCount": 1,
+      "lastAccessed": 1774224236957,
+      "type": "file"
+    },
+    {
+      "path": "tests",
+      "accessCount": 1,
+      "lastAccessed": 1774224853765,
+      "type": "directory"
+    },
+    {
+      "path": "output/improvement_roadmap.md",
+      "accessCount": 1,
+      "lastAccessed": 1774225226619,
+      "type": "file"
+    },
+    {
+      "path": "scripts/korean_pop/query_krgdb.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227483063,
+      "type": "file"
+    },
+    {
+      "path": "scripts/pharma/korean_pgx.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227487777,
+      "type": "file"
+    },
+    {
+      "path": "scripts/classification/acmg_engine.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227488168,
+      "type": "file"
+    },
+    {
+      "path": "tests/conftest.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227489016,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_integration.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227494218,
+      "type": "file"
+    },
+    {
+      "path": "scripts/orchestrate.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227558338,
+      "type": "file"
+    },
+    {
+      "path": "tests/test_orchestrate.py",
+      "accessCount": 1,
+      "lastAccessed": 1774227579826,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}
