@@ -1582,6 +1582,27 @@
               {% endfor %}
             </div>
           {% endif %}
+
+          {% if v.references is defined and v.references %}
+          <div style="margin-top:8px;padding-top:6px;border-top:1px solid #e2e8f0;">
+            <span style="font-size:7.5pt;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">References</span>
+            <div style="font-size:7.5pt;color:#64748b;line-height:1.4;margin-top:2px;">
+              {% for ref in v.references[:5] %}
+              <span>[PMID:{{ ref.pmid }}]</span> {{ ref.note }}{% if ref.source %} &mdash; <em>{{ ref.source }}</em>{% endif %}{% if not loop.last %}; {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          {% if v.content_status is defined and v.content_status == "ai-generated-with-references" %}
+          <div style="font-size:7pt;color:#94a3b8;margin-top:4px;font-style:italic;">
+            Clinical text AI-generated. Referenced PMIDs provided for verification.
+          </div>
+          {% elif v.content_status is defined and v.content_status == "ai-generated" %}
+          <div style="font-size:7pt;color:#94a3b8;margin-top:4px;font-style:italic;">
+            Clinical text AI-generated. Not peer-reviewed. Verify with primary sources.
+          </div>
+          {% endif %}
         </div>
 
       </div><!-- /detail-grid -->

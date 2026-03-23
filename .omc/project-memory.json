@@ -140,21 +140,21 @@
       "type": "file"
     },
     {
+      "path": "data/gene_knowledge.json",
+      "accessCount": 34,
+      "lastAccessed": 1774308930175,
+      "type": "file"
+    },
+    {
       "path": "scripts/counselor/generate_pdf.py",
-      "accessCount": 27,
-      "lastAccessed": 1774257098856,
+      "accessCount": 29,
+      "lastAccessed": 1774308936321,
       "type": "file"
     },
     {
       "path": "scripts/orchestrate.py",
       "accessCount": 26,
       "lastAccessed": 1774308695209,
-      "type": "file"
-    },
-    {
-      "path": "data/gene_knowledge.json",
-      "accessCount": 22,
-      "lastAccessed": 1774248532345,
       "type": "file"
     },
     {
@@ -170,16 +170,16 @@
       "type": "file"
     },
     {
-      "path": "tests/test_generate_pdf.py",
-      "accessCount": 12,
-      "lastAccessed": 1774256165531,
-      "type": "file"
+      "path": "",
+      "accessCount": 14,
+      "lastAccessed": 1774308812684,
+      "type": "directory"
     },
     {
-      "path": "",
-      "accessCount": 11,
-      "lastAccessed": 1774256378085,
-      "type": "directory"
+      "path": "tests/test_generate_pdf.py",
+      "accessCount": 13,
+      "lastAccessed": 1774308802325,
+      "type": "file"
     },
     {
       "path": "data/korean_pgx_table.json",
@@ -248,9 +248,21 @@
       "type": "file"
     },
     {
+      "path": "templates/rare-disease/report.html",
+      "accessCount": 6,
+      "lastAccessed": 1774308948879,
+      "type": "file"
+    },
+    {
       "path": "data/sample_vcf/demo_variants_grch38.vcf",
       "accessCount": 5,
       "lastAccessed": 1774255899912,
+      "type": "file"
+    },
+    {
+      "path": "scripts/common/api_utils.py",
+      "accessCount": 5,
+      "lastAccessed": 1774308797165,
       "type": "file"
     },
     {
@@ -275,12 +287,6 @@
       "path": "requirements.txt",
       "accessCount": 4,
       "lastAccessed": 1774256382225,
-      "type": "file"
-    },
-    {
-      "path": "scripts/common/api_utils.py",
-      "accessCount": 4,
-      "lastAccessed": 1774257082352,
       "type": "file"
     },
     {
@@ -329,12 +335,6 @@
       "path": "tests/conftest.py",
       "accessCount": 3,
       "lastAccessed": 1774257111188,
-      "type": "file"
-    },
-    {
-      "path": "templates/rare-disease/report.html",
-      "accessCount": 3,
-      "lastAccessed": 1774257461735,
       "type": "file"
     },
     {

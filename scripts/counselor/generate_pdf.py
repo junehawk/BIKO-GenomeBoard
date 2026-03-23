@@ -60,6 +60,8 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                 v.setdefault("associated_conditions", info.get("associated_conditions", []))
                 v.setdefault("korean_specific_note", info.get("korean_specific_note"))
                 v.setdefault("finding_summary", info.get("finding_summary", ""))
+                v.setdefault("references", info.get("references", []))
+                v.setdefault("content_status", info.get("content_status", "ai-generated"))
                 # VCF annotation takes priority over static gene_knowledge for hgvs/variant_effect
                 if v.get("hgvsc") or v.get("hgvsp"):
                     v.setdefault(
