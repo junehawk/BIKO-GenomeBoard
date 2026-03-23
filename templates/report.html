@@ -145,7 +145,7 @@
     /* ── Summary counts strip ── */
     .summary-strip {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
       margin: 12px 0;
     }
@@ -765,7 +765,7 @@
 ══════════════════════════════════════════════════════════════ #}
 {% macro is_significant(cls) %}
   {% set c = cls | lower %}
-  {% if "pathogenic" in c %}1{% else %}0{% endif %}
+  {% if "pathogenic" in c or "drug response" in c %}1{% else %}0{% endif %}
 {% endmacro %}
 
 {# ══════════════════════════════════════════════════════════════
@@ -873,7 +873,7 @@
     {% set other_variants = [] %}
     {% for v in variants %}
       {% set c = v.classification | lower %}
-      {% if "pathogenic" in c %}
+      {% if "pathogenic" in c or "drug response" in c %}
         {% if sig_variants.append(v) %}{% endif %}
       {% else %}
         {% if other_variants.append(v) %}{% endif %}
@@ -890,6 +890,9 @@
             <div class="finding-row">
               <div>
                 <span class="finding-gene">{{ v.gene }}</span>
+                {% if v.conflict is defined and v.conflict %}
+                  <span class="conflict-flag">&#9888;</span>
+                {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
               {{ class_badge(v.classification) }}
@@ -910,6 +913,9 @@
             <div class="finding-row">
               <div>
                 <span class="finding-gene">{{ v.gene }}</span>
+                {% if v.conflict is defined and v.conflict %}
+                  <span class="conflict-flag">&#9888;</span>
+                {% endif %}
                 <br><span class="finding-variant">{{ v.variant }}</span>
               </div>
               {{ class_badge(v.classification) }}
@@ -1118,9 +1124,20 @@
           <div class="detail-value no-data">No treatment strategy information available for this variant.</div>
         {% endif %}
 
-        {% if clinical.clinvar_significance is defined and clinical.clinvar_significance %}
+        {% if v.clinvar_significance is defined and v.clinvar_significance %}
+          <div class="detail-label">ClinVar Significance</div>
+          <div class="detail-value">{{ v.clinvar_significance }}{% if v.clinvar_id is defined and v.clinvar_id %} <span style="font-size:8pt;color:#6b7280;">({{ v.clinvar_id }})</span>{% endif %}</div>
+        {% elif clinical.clinvar_significance is defined and clinical.clinvar_significance %}
           <div class="detail-label">ClinVar Significance</div>
           <div class="detail-value">{{ clinical.clinvar_significance }}</div>
+        {% endif %}
+
+        {% if v.review_status is defined and v.review_status %}
+          <div class="detail-label">ClinVar Review Status</div>
+          <div class="detail-value">{{ v.review_status }}</div>
+        {% elif clinical.review_status is defined and clinical.review_status %}
+          <div class="detail-label">ClinVar Review Status</div>
+          <div class="detail-value">{{ clinical.review_status }}</div>
         {% endif %}
 
         {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
@@ -1145,10 +1162,7 @@
           <div class="detail-value">{{ clinical.inheritance }}</div>
         {% endif %}
 
-        {% if clinical.review_stars is defined and clinical.review_stars %}
-          <div class="detail-label">ClinVar Review Status</div>
-          <div class="detail-value">{{ clinical.review_stars }}</div>
-        {% endif %}
+        {# review_status now shown above alongside ClinVar significance #}
       </div>
 
       <!-- Column 2: Frequency & Korean Population -->
@@ -1159,10 +1173,17 @@
           <p>{{ v.frequency_prognosis }}</p>
         {% endif %}
 
-        {% if clinical.gnomad_freq is defined and clinical.gnomad_freq %}
+        {% if v.gnomad_all is defined and v.gnomad_all is not none %}
           <div class="freq-stat">
-            <div class="freq-num">{{ clinical.gnomad_freq }}</div>
+            <div class="freq-num">{{ "%.4e"|format(v.gnomad_all) }}</div>
             <div class="freq-label">gnomAD Global AF</div>
+          </div>
+        {% endif %}
+
+        {% if v.gnomad_eas is defined and v.gnomad_eas is not none %}
+          <div class="freq-stat">
+            <div class="freq-num">{{ "%.4e"|format(v.gnomad_eas) }}</div>
+            <div class="freq-label">gnomAD East Asian AF</div>
           </div>
         {% endif %}
 
