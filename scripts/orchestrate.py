@@ -22,6 +22,7 @@ from scripts.pharma.korean_pgx import check_korean_pgx
 from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict
 from scripts.counselor.generate_pdf import generate_report_html, generate_pdf
 from scripts.common.models import AcmgEvidence, FrequencyData
+from scripts.common.config import get
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("genomeboard")
@@ -118,11 +119,13 @@ def run_pipeline(
     sample_id: str = None,
     json_output: str = None,
     skip_api: bool = False,
+    mode: str = None,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
     Returns the assembled report data dict (or None on fatal error).
     """
+    mode = mode or get("report.default_mode", "cancer")
     start_time = time.time()
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -311,16 +314,17 @@ def run_pipeline(
             "skip_api": skip_api,
             "krgdb_path": str(krgdb_file),
         },
+        "mode": mode,
     }
 
     # ── Step 6: Generate report ────────────────────────────────────────────────
     _progress("[6/6] Generating report...")
     output_str = str(output_path)
     if output_str.endswith(".pdf"):
-        actual_path = generate_pdf(report_data, output_str)
+        actual_path = generate_pdf(report_data, output_str, mode=mode)
         final_path = Path(actual_path)
     else:
-        html = generate_report_html(report_data)
+        html = generate_report_html(report_data, mode=mode)
         output_path.write_text(html, encoding="utf-8")
         final_path = output_path
 
@@ -396,6 +400,12 @@ Examples:
         help="Skip external API calls (ClinVar, gnomAD) for offline mode",
     )
     parser.add_argument(
+        "--mode",
+        choices=["cancer", "rare-disease"],
+        default=None,  # will use config default
+        help="Report mode: cancer (somatic) or rare-disease (germline)",
+    )
+    parser.add_argument(
         "--verbose", "-v",
         action="store_true",
         help="Enable verbose (DEBUG) logging",
@@ -423,6 +433,7 @@ Examples:
         sample_id=args.sample_id,
         json_output=json_output,
         skip_api=args.skip_api,
+        mode=args.mode,
     )
 
     if result is None:

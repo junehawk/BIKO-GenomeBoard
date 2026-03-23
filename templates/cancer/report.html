@@ -1,0 +1,1769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenomeBoard Consilium Report — {{ sample_id }}</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+    /* ── CSS Variables — Clinical/Academic palette ── */
+    :root {
+      --teal:    #0F766E;
+      --teal-lt: #CCFBF1;
+      --navy:    #0F172A;
+      --slate:   #475569;
+      --text:    #1e293b;
+      --muted:   #64748b;
+      --border:  #cbd5e1;
+      --surface: #f8fafc;
+      --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'Courier New', Courier, monospace;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ── */
+    body {
+      font-family: var(--font-sans);
+      font-size: 9.5pt;
+      line-height: 1.6;
+      color: var(--text);
+      background: #ffffff;
+    }
+
+    /* ── Page shell ── */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 0;
+      position: relative;
+      background: #ffffff;
+    }
+
+    /* ── Teal accent bar (top of every page) ── */
+    .page-header-bar {
+      background: var(--teal);
+      height: 5px;
+      width: 100%;
+      display: block;
+    }
+
+    /* ── Page inner content padding ── */
+    .page-body {
+      padding: 12mm 16mm 20mm 16mm;
+    }
+
+    /* ── Masthead (logo row) ── */
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--navy);
+    }
+
+    .masthead-logo {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .masthead-brand {
+      font-family: var(--font-sans);
+      font-size: 16pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .masthead-brand span {
+      color: var(--teal);
+    }
+
+    .masthead-tagline {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      margin-top: 3px;
+    }
+
+    .masthead-meta {
+      font-family: var(--font-sans);
+      font-size: 8.5pt;
+      color: var(--slate);
+      text-align: right;
+      line-height: 1.65;
+    }
+
+    .masthead-meta strong {
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    /* ── Info block grid (page 1 two-column) ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin: 9px 0;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .info-block {
+      padding: 9px 12px;
+      border-right: 1px solid var(--border);
+    }
+
+    .info-block:last-child {
+      border-right: none;
+    }
+
+    .info-block-title {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+      background: var(--teal);
+      padding: 4px 10px;
+      margin: -9px -12px 9px -12px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 6px;
+      font-size: 9pt;
+      margin-bottom: 3px;
+      font-family: var(--font-sans);
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-size: 8pt;
+      font-weight: 500;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* ── Summary counts strip ── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .summary-card {
+      border-radius: 2px;
+      padding: 10px 8px 9px;
+      text-align: center;
+      font-family: var(--font-sans);
+      border-top: 2px solid transparent;
+    }
+
+    .summary-card .count {
+      font-size: 24pt;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .summary-card .label {
+      font-size: 6.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    .card-total  { background: #f0fdf9; color: var(--teal);  border-top-color: var(--teal); }
+    .card-path   { background: #FEF2F2; color: #991B1B;      border-top-color: #991B1B; }
+    .card-vus    { background: #F3F4F6; color: #374151;      border-top-color: #9ca3af; }
+    .card-benign { background: #ECFDF5; color: #065F46;      border-top-color: #10b981; }
+
+    /* ── Section header (teal badge style) ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 14px 0 8px 0;
+    }
+
+    .section-badge {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+      background: var(--teal);
+      padding: 3px 10px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .section-badge.badge-navy {
+      background: var(--navy);
+    }
+
+    .section-badge.badge-blue {
+      background: #1E40AF;
+    }
+
+    .section-rule {
+      flex: 1;
+      height: 1px;
+      background: var(--teal);
+    }
+
+    .section-rule.rule-navy { background: var(--navy); }
+    .section-rule.rule-blue { background: #1E40AF; }
+
+    /* ── Genomic findings summary table (page 1) ── */
+    .findings-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 0 0 10px 0;
+    }
+
+    .findings-panel {
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .findings-panel-title {
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 5px 10px;
+      color: #ffffff;
+    }
+
+    .findings-panel-title.title-path { background: #7f1d1d; }
+    .findings-panel-title.title-vus  { background: var(--navy); }
+
+    .findings-panel-body {
+      padding: 7px 10px;
+    }
+
+    .finding-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-family: var(--font-sans);
+      font-size: 9pt;
+    }
+
+    .finding-row:last-child { border-bottom: none; }
+
+    .finding-gene {
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .finding-variant {
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      color: var(--muted);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Classification badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+
+    .badge-pathogenic        { background: #FEF2F2; color: #991B1B; border: 1px solid #fecaca; }
+    .badge-likely-pathogenic { background: #FFF7ED; color: #92400E; border: 1px solid #fed7aa; }
+    .badge-vus               { background: #F3F4F6; color: #374151; border: 1px solid #d1d5db; }
+    .badge-likely-benign     { background: #ECFDF5; color: #065F46; border: 1px solid #a7f3d0; }
+    .badge-benign            { background: #ECFDF5; color: #065F46; border: 1px solid #6ee7b7; }
+    .badge-drug-response     { background: #EFF6FF; color: #1E40AF; border: 1px solid #bfdbfe; }
+    .badge-risk-factor       { background: #F5F3FF; color: #5B21B6; border: 1px solid #ddd6fe; }
+    .badge-unknown           { background: #F3F4F6; color: #6b7280; border: 1px solid #e5e7eb; }
+
+    /* ── ACMG code pills ── */
+    .acmg-code {
+      display: inline-block;
+      background: #f0fdf9;
+      color: var(--teal);
+      border: 1px solid #99f6e4;
+      border-radius: 2px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      margin: 1px 2px 1px 0;
+    }
+
+    /* ── Conflict indicator ── */
+    .conflict-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #FFFBEB;
+      color: #92400E;
+      border: 1px solid #fbbf24;
+      border-radius: 2px;
+      padding: 2px 7px;
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
+      font-weight: 700;
+    }
+
+    /* ── Korean flag inline ── */
+    .korean-flag {
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      font-weight: 600;
+      color: #1E40AF;
+    }
+
+    /* ── Variant detail page — two variants per A4 page ── */
+    .variant-page {
+      page-break-before: always;
+    }
+
+    .variant-page:first-of-type {
+      page-break-before: always;
+    }
+
+    /* Each variant block sized to ~half A4 usable height */
+    .variant-block {
+      page-break-inside: avoid;
+      margin-bottom: 8mm;
+      padding-bottom: 6mm;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .variant-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .variant-detail-header {
+      margin: 0 0 8px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--navy);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .variant-gene-name {
+      font-family: var(--font-sans);
+      font-size: 22pt;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      letter-spacing: -0.8px;
+    }
+
+    .variant-header-right {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .variant-alteration {
+      font-family: var(--font-mono);
+      font-size: 8.5pt;
+      color: var(--slate);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .variant-badges {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    /* ── 3-column finding detail grid — horizontal, compact ── */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin: 6px 0;
+    }
+
+    .detail-col {
+      padding: 8px 10px;
+      border-right: 1px solid var(--border);
+    }
+
+    .detail-col:nth-child(1) { background: #fafcff; }
+    .detail-col:nth-child(2) { background: #f8fffe; }
+    .detail-col:nth-child(3) { background: #fafaf8; }
+
+    .detail-col:last-child {
+      border-right: none;
+    }
+
+    .detail-col-title {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--teal);
+      padding: 0 0 5px 0;
+      margin-bottom: 5px;
+      border-bottom: 1px solid var(--teal-lt);
+    }
+
+    .detail-col p {
+      font-size: 9pt;
+      line-height: 1.5;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+
+    .detail-col .detail-label {
+      font-family: var(--font-sans);
+      font-size: 6.5pt;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-top: 7px;
+      margin-bottom: 2px;
+    }
+
+    .detail-col .detail-value {
+      font-size: 9pt;
+      color: #0f172a;
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    .detail-col .detail-value.mono {
+      font-family: var(--font-mono);
+      font-size: 8pt;
+    }
+
+    /* ── Frequency stat box — compact ── */
+    .freq-stat {
+      background: var(--surface);
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      padding: 5px 8px;
+      margin: 4px 0;
+      font-family: var(--font-sans);
+    }
+
+    .freq-stat .freq-num {
+      font-size: 11pt;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      letter-spacing: -0.3px;
+    }
+
+    .freq-stat .freq-label {
+      font-size: 6.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .freq-enrichment {
+      background: #EFF6FF;
+      border: 1px solid #bfdbfe;
+      border-radius: 2px;
+      padding: 4px 8px;
+      margin: 4px 0;
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      color: #1E40AF;
+      font-weight: 700;
+    }
+
+    /* ── Korean callout box — compact ── */
+    .korean-callout {
+      background: #F0F4FF;
+      border-left: 3px solid #1E40AF;
+      padding: 7px 10px;
+      border-radius: 0 2px 2px 0;
+      margin: 8px 0;
+      font-family: var(--font-sans);
+    }
+
+    .korean-callout .korean-callout-title {
+      font-size: 7pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #1E40AF;
+      margin-bottom: 3px;
+    }
+
+    .korean-callout p {
+      font-size: 9pt;
+      font-weight: 500;
+      color: #1e3a5f;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ── Associated conditions pill tags — inline ── */
+    .condition-pill {
+      display: inline-block;
+      background: #f0f4fa;
+      color: var(--navy);
+      border: 1px solid #c7d6eb;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 7.5pt;
+      font-weight: 500;
+      margin: 1px 2px 1px 0;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+    }
+
+    /* ── Actionability table ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px 0;
+      font-size: 9pt;
+      font-family: var(--font-sans);
+    }
+
+    thead th {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      background: var(--teal);
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    tbody tr { border-bottom: 1px solid #e2e8f0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(odd)  { background: #ffffff; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+
+    tbody td {
+      padding: 6px 10px;
+      vertical-align: top;
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      font-size: 9pt;
+    }
+
+    /* ── "No reportable" list (page 1 bottom) ── */
+    .no-report-list {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      padding: 10px 14px;
+      margin: 6px 0;
+    }
+
+    .no-report-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      columns: 2;
+      column-gap: 20px;
+    }
+
+    .no-report-list li {
+      font-family: var(--font-sans);
+      font-size: 9pt;
+      padding: 2px 0;
+      color: var(--slate);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .no-report-list li::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    /* ── PGx section ── */
+    .pgx-row {
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+
+    .pgx-row-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f0fdf9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #ccfbf1;
+    }
+
+    .pgx-gene {
+      font-family: var(--font-sans);
+      font-size: 12pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.3px;
+    }
+
+    .pgx-row-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+    }
+
+    .pgx-cell {
+      padding: 9px 12px;
+      border-right: 1px solid #e2e8f0;
+      font-family: var(--font-sans);
+    }
+
+    .pgx-cell:nth-child(2) { background: #f8fffe; }
+    .pgx-cell:last-child { border-right: none; }
+
+    .pgx-cell-label {
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .pgx-cell-value {
+      font-size: 9.5pt;
+      color: #0f172a;
+      line-height: 1.55;
+    }
+
+    .pgx-korean-note {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #1E40AF;
+    }
+
+    /* Korean vs Western comparison boxes */
+    .pgx-comparison-box {
+      display: inline-block;
+      border-radius: 2px;
+      padding: 5px 9px;
+      margin-right: 5px;
+      margin-bottom: 3px;
+      min-width: 68px;
+      text-align: center;
+    }
+
+    .pgx-comparison-box.box-korean {
+      background: #EFF6FF;
+      border: 1px solid #bfdbfe;
+    }
+
+    .pgx-comparison-box.box-western {
+      background: #F5F3FF;
+      border: 1px solid #ddd6fe;
+    }
+
+    .pgx-comparison-box .box-pct {
+      font-size: 12pt;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.4px;
+    }
+
+    .pgx-comparison-box.box-korean .box-pct  { color: #1E40AF; }
+    .pgx-comparison-box.box-western .box-pct { color: #5B21B6; }
+
+    .pgx-comparison-box .box-lbl {
+      font-size: 6.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+      opacity: 0.7;
+    }
+
+    /* ── DB version table ── */
+    .db-table tbody td:first-child {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--slate);
+      width: 160px;
+    }
+
+    /* ── No-data placeholder ── */
+    .no-data {
+      font-style: italic;
+      color: #94a3b8;
+      font-size: 8.5pt;
+    }
+
+    /* ── Variant bottom notes (conflict / korean) — single line ── */
+    .variant-notes-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 4px 0 0 0;
+    }
+
+    /* ── Footer (every page) ── */
+    .page-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 5px 16mm 7mm 16mm;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-family: var(--font-sans);
+    }
+
+    .footer-disclaimer {
+      font-size: 7pt;
+      color: var(--muted);
+      max-width: 76%;
+      line-height: 1.45;
+    }
+
+    .footer-disclaimer strong {
+      color: #b91c1c;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-right {
+      text-align: right;
+      font-size: 7pt;
+      color: #94a3b8;
+    }
+
+    .footer-brand-text {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-size: 7.5pt;
+    }
+
+    /* ── Methodology ── */
+    .method-block {
+      margin: 10px 0;
+    }
+
+    .method-block p {
+      font-size: 9.5pt;
+      line-height: 1.65;
+      margin-bottom: 0.5em;
+    }
+
+    .method-block ul {
+      padding-left: 1.4em;
+      margin-bottom: 0.5em;
+    }
+
+    .method-block li {
+      font-size: 9.5pt;
+      line-height: 1.6;
+      margin-bottom: 0.25em;
+    }
+
+    /* ── Print layout ── */
+    @media print {
+      body { margin: 0; }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        min-height: 0;
+      }
+
+      .page-body {
+        padding: 10mm 14mm 22mm 14mm;
+      }
+
+      .page-footer {
+        padding: 5px 14mm 5mm 14mm;
+      }
+
+      .variant-page {
+        page-break-before: always;
+      }
+
+      .variant-block { page-break-inside: avoid; }
+      .detail-grid   { page-break-inside: avoid; }
+      table          { page-break-inside: avoid; }
+      .pgx-row       { page-break-inside: avoid; }
+
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    }
+
+    /* ── Screen preview spacing ── */
+    @media screen {
+      body { background: #dde3e9; }
+      .page {
+        box-shadow: 0 1px 8px rgba(0,0,0,0.12);
+        margin: 20px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+{# ══════════════════════════════════════════════════════════════
+   MACRO: classification badge
+══════════════════════════════════════════════════════════════ #}
+{% macro class_badge(cls) %}
+  {% set c = cls | lower %}
+  {% if "pathogenic" in c and "likely" not in c %}
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  {% elif "likely pathogenic" in c %}
+    <span class="badge badge-likely-pathogenic">Likely Pathogenic</span>
+  {% elif "vus" in c or "uncertain" in c %}
+    <span class="badge badge-vus">VUS</span>
+  {% elif "likely benign" in c %}
+    <span class="badge badge-likely-benign">Likely Benign</span>
+  {% elif "benign" in c %}
+    <span class="badge badge-benign">Benign</span>
+  {% elif "drug response" in c %}
+    <span class="badge badge-drug-response">Drug Response</span>
+  {% elif "risk factor" in c %}
+    <span class="badge badge-risk-factor">Risk Factor</span>
+  {% else %}
+    <span class="badge badge-unknown">{{ cls }}</span>
+  {% endif %}
+{% endmacro %}
+
+{# ══════════════════════════════════════════════════════════════
+   MACRO: is clinically significant?
+══════════════════════════════════════════════════════════════ #}
+{% macro is_significant(cls) %}
+  {% set c = cls | lower %}
+  {% if "pathogenic" in c or "drug response" in c %}1{% else %}0{% endif %}
+{% endmacro %}
+
+{# ══════════════════════════════════════════════════════════════
+   PAGE 1 — SUMMARY DASHBOARD
+══════════════════════════════════════════════════════════════ #}
+<div class="page" id="page-summary">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Masthead -->
+    <div class="masthead">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span style="color:var(--teal);">Board</span></div>
+        <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> {{ sample_id }}</div>
+        <div><strong>Report Date:</strong> {{ date }}</div>
+        <div><strong>Report Type:</strong> Consilium Report</div>
+      </div>
+    </div>
+
+    <!-- Specimen / Patient info row -->
+    <div class="info-grid">
+      <div class="info-block">
+        <div class="info-block-title">Specimen Information</div>
+        <div class="info-row">
+          <span class="info-label">Sample ID</span>
+          <span class="info-value">{{ sample_id }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Report Date</span>
+          <span class="info-value">{{ date }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Analysis Type</span>
+          <span class="info-value">Germline / Somatic Panel</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pipeline</span>
+          <span class="info-value">GenomeBoard v1.0</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-block-title">Biomarker Summary</div>
+        <div class="info-row">
+          <span class="info-label">Total Variants</span>
+          <span class="info-value">{{ summary.total }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pathogenic / LP</span>
+          <span class="info-value" style="color:#991b1b;font-weight:700;">{{ (summary.pathogenic | default(0)) + (summary.likely_pathogenic | default(0)) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">VUS</span>
+          <span class="info-value" style="color:#92400e;font-weight:700;">{{ summary.vus | default(0) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Drug Response / PGx</span>
+          <span class="info-value" style="color:#1E40AF;font-weight:700;">{{ summary.drug_response | default(0) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Risk Factor</span>
+          <span class="info-value" style="color:#7c3aed;font-weight:700;">{{ summary.risk_factor | default(0) }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Benign / LB</span>
+          <span class="info-value" style="color:#166534;font-weight:700;">{{ (summary.benign | default(0)) + (summary.likely_benign | default(0)) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary count strip -->
+    <div class="summary-strip">
+      <div class="summary-card card-total">
+        <div class="count">{{ summary.total }}</div>
+        <div class="label">Total Variants</div>
+      </div>
+      <div class="summary-card card-path">
+        <div class="count">{{ (summary.pathogenic | default(0)) + (summary.likely_pathogenic | default(0)) }}</div>
+        <div class="label">Pathogenic / LP</div>
+      </div>
+      <div class="summary-card card-vus">
+        <div class="count">{{ summary.vus | default(0) }}</div>
+        <div class="label">VUS</div>
+      </div>
+      <div class="summary-card" style="background:#EFF6FF;color:#1E40AF;border-top:2px solid #1E40AF;">
+        <div class="count">{{ (summary.drug_response | default(0)) + (summary.risk_factor | default(0)) }}</div>
+        <div class="label">Drug Response / Risk</div>
+      </div>
+      <div class="summary-card card-benign">
+        <div class="count">{{ (summary.benign | default(0)) + (summary.likely_benign | default(0)) }}</div>
+        <div class="label">Benign / LB</div>
+      </div>
+    </div>
+
+    <!-- Genomic Findings section header -->
+    <div class="section-header">
+      <span class="section-badge">Genomic Findings</span>
+      <div class="section-rule"></div>
+    </div>
+
+    {# Split variants into significant vs VUS/Benign #}
+    {% set sig_variants = [] %}
+    {% set other_variants = [] %}
+    {% for v in variants %}
+      {% set c = v.classification | lower %}
+      {% if "pathogenic" in c or "drug response" in c %}
+        {% if sig_variants.append(v) %}{% endif %}
+      {% else %}
+        {% if other_variants.append(v) %}{% endif %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="findings-two-col">
+      <!-- Clinically Significant panel -->
+      <div class="findings-panel">
+        <div class="findings-panel-title title-path">Clinically Significant</div>
+        <div class="findings-panel-body">
+          {% if sig_variants %}
+            {% for v in sig_variants %}
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">{{ v.gene }}</span>
+                {% if v.conflict is defined and v.conflict %}
+                  <span class="conflict-flag">&#9888;</span>
+                {% endif %}
+                {% if v.variant_effect is defined and v.variant_effect %}
+                  <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                {% endif %}
+                <br><span class="finding-variant">{{ v.variant }}</span>
+              </div>
+              {{ class_badge(v.classification) }}
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="no-data" style="padding:8px 0;">No clinically significant variants identified.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- VUS / Benign panel -->
+      <div class="findings-panel">
+        <div class="findings-panel-title title-vus">VUS &amp; Benign</div>
+        <div class="findings-panel-body">
+          {% if other_variants %}
+            {% for v in other_variants %}
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">{{ v.gene }}</span>
+                {% if v.conflict is defined and v.conflict %}
+                  <span class="conflict-flag">&#9888;</span>
+                {% endif %}
+                {% if v.variant_effect is defined and v.variant_effect %}
+                  <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+                {% endif %}
+                <br><span class="finding-variant">{{ v.variant }}</span>
+              </div>
+              {{ class_badge(v.classification) }}
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="no-data" style="padding:8px 0;">No VUS or benign variants.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Korean Population Findings callout -->
+    {% set korean_variants = [] %}
+    {% for v in variants %}
+      {% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
+      {% if kp.korean_flag is defined and kp.korean_flag %}
+        {% if korean_variants.append(v) %}{% endif %}
+      {% endif %}
+    {% endfor %}
+
+    {% if korean_variants %}
+    <div class="section-header">
+      <span class="section-badge badge-blue">Korean Population Findings</span>
+      <div class="section-rule rule-blue"></div>
+    </div>
+    <div class="korean-callout">
+      <div class="korean-callout-title">Korean-Specific Annotations</div>
+      <p>The following variants carry population-specific annotations relevant to the Korean genome cohort (KRGDB):</p>
+      <table style="margin:8px 0 0 0;">
+        <thead>
+          <tr>
+            <th>Gene</th>
+            <th>Variant</th>
+            <th>Korean Population Note</th>
+            <th>Classification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for v in korean_variants %}
+          {% set kp = v.agents.korean_pop %}
+          <tr>
+            <td><strong>{{ v.gene }}</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">{{ v.variant }}</td>
+            <td><span class="korean-flag">{{ kp.korean_flag }}</span></td>
+            <td>{{ class_badge(v.classification) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- PGx summary -->
+    {% if pgx_results %}
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pharmacogenomics Summary</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Gene</th>
+          <th>Phenotype</th>
+          <th>CPIC Level</th>
+          <th>Korean Population Context</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pgx in pgx_results %}
+        <tr>
+          <td><strong>{{ pgx.gene }}</strong></td>
+          <td>{{ pgx.phenotype }}</td>
+          <td>
+            {% set level = pgx.cpic_level | upper %}
+            {% if level == "A" %}
+              <span class="badge badge-pathogenic">Level A</span>
+            {% elif level == "B" %}
+              <span class="badge badge-likely-pathogenic">Level B</span>
+            {% elif level == "C" %}
+              <span class="badge badge-vus">Level C</span>
+            {% else %}
+              <span class="badge badge-unknown">{{ pgx.cpic_level }}</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if pgx.korean_prevalence is defined and pgx.western_prevalence is defined %}
+              <span class="pgx-korean-note">
+                Korean: {{ "%.1f"|format(pgx.korean_prevalence * 100) }}% &nbsp;|&nbsp;
+                Western: {{ "%.1f"|format(pgx.western_prevalence * 100) }}%
+              </span>
+            {% else %}
+              <span class="no-data">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Genomic findings with no reportable therapeutic options -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Genomic Findings — No Reportable Therapeutic Options</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+    <div class="no-report-list">
+      {% set no_report = [] %}
+      {% for v in variants %}
+        {% set c = v.classification | lower %}
+        {% if "benign" in c or "vus" in c or "uncertain" in c %}
+          {% if no_report.append(v) %}{% endif %}
+        {% endif %}
+      {% endfor %}
+      {% if no_report %}
+      <ul>
+        {% for v in no_report %}
+        <li>
+          <strong>{{ v.gene }}</strong>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:var(--muted);">{{ v.variant }}</span>&nbsp;
+          {{ class_badge(v.classification) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="no-data">All identified variants have reportable significance.</div>
+      {% endif %}
+    </div>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong><br>
+      This report is generated for research purposes only. Findings have not been validated
+      in a CLIA-certified laboratory and must not be used to guide patient care without
+      independent clinical confirmation.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 1</div>
+    </div>
+  </div>
+</div><!-- /page-summary -->
+
+
+{# ══════════════════════════════════════════════════════════════
+   PAGE 2+ — GENOMIC FINDINGS DETAIL (two variants per A4 page)
+══════════════════════════════════════════════════════════════ #}
+{% for v in variants %}
+{% set cls = v.classification | lower %}
+{% set is_sig = "pathogenic" in cls %}
+{% set clinical = v.agents.clinical if v.agents is defined and v.agents.clinical is defined else {} %}
+{% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
+
+{# Open a new page div on every odd-indexed variant (1st, 3rd, 5th…) #}
+{% if loop.index is odd %}
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Page-level section header with sample ID -->
+    <div class="section-header" style="margin-top:0;margin-bottom:6px;">
+      <span class="section-badge">Genomic Findings</span>
+      <div class="section-rule"></div>
+      <div style="font-family:var(--font-sans);font-size:8pt;color:var(--muted);white-space:nowrap;">
+        <strong style="color:var(--navy);">{{ sample_id }}</strong> &nbsp;|&nbsp; {{ date }}
+      </div>
+    </div>
+{% endif %}
+
+    <!-- ── Variant block ── -->
+    <div class="variant-block">
+
+      <!-- Identity header: gene name + HGVS + badges in one compact row -->
+      <div class="variant-detail-header">
+        <div class="variant-gene-name">{{ v.gene }}</div>
+        <div class="variant-header-right">
+          <div class="variant-alteration">
+            {% if v.hgvs is defined and v.hgvs and v.hgvs.transcript is defined and v.hgvs.transcript %}
+              {{ v.hgvs.transcript }}:{{ v.hgvs.cdna | default('') }}{% if v.hgvs.protein is defined and v.hgvs.protein %} ({{ v.hgvs.protein }}){% endif %}
+            {% else %}
+              {{ v.variant }}
+            {% endif %}
+            {% if v.variant_effect is defined and v.variant_effect %}
+              <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
+            {% endif %}
+          </div>
+          {% if v.gene_full_name is defined and v.gene_full_name %}
+            <div style="font-size:8pt;color:var(--muted);margin-top:1px;">{{ v.gene_full_name }}</div>
+          {% endif %}
+          <div class="variant-badges">
+            {{ class_badge(v.classification) }}
+            {% if v.acmg_codes %}
+              {% for code in v.acmg_codes %}
+                <span class="acmg-code">{{ code }}</span>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-column detail grid — side by side, compact -->
+      <div class="detail-grid">
+
+        <!-- Column 1: Clinical Significance -->
+        <div class="detail-col">
+          <div class="detail-col-title">Clinical Significance</div>
+
+          {% if v.clinvar_significance is defined and v.clinvar_significance %}
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">{{ v.clinvar_significance }}{% if v.clinvar_id is defined and v.clinvar_id %} <span style="font-size:7.5pt;color:var(--muted);">({{ v.clinvar_id }})</span>{% endif %}</div>
+          {% elif clinical.clinvar_significance is defined and clinical.clinvar_significance %}
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">{{ clinical.clinvar_significance }}</div>
+          {% endif %}
+
+          {% if v.review_status is defined and v.review_status %}
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">{{ v.review_status }}</div>
+          {% elif clinical.review_status is defined and clinical.review_status %}
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">{{ clinical.review_status }}</div>
+          {% endif %}
+
+          {% if v.associated_conditions is defined and v.associated_conditions is iterable and v.associated_conditions is not string and v.associated_conditions | length > 0 %}
+            <div class="detail-label">Conditions</div>
+            <div class="detail-value" style="margin-top:2px;">
+              {% for cond in v.associated_conditions %}
+                <span class="condition-pill">{{ cond }}</span>
+              {% endfor %}
+            </div>
+          {% elif clinical.associated_conditions is defined and clinical.associated_conditions %}
+            <div class="detail-label">Conditions</div>
+            <div class="detail-value">{{ clinical.associated_conditions }}</div>
+          {% elif clinical.clinvar_significance is defined %}
+            <div class="detail-label">Conditions</div>
+            <div class="detail-value no-data">See ClinVar / OMIM for {{ v.gene }}</div>
+          {% endif %}
+
+          {% if clinical.inheritance is defined and clinical.inheritance %}
+            <div class="detail-label">Inheritance</div>
+            <div class="detail-value">{{ clinical.inheritance }}</div>
+          {% endif %}
+
+          {% if v.treatment_strategies is defined and v.treatment_strategies %}
+            <div class="detail-label">Treatment Strategies</div>
+            <div class="detail-value">{{ v.treatment_strategies }}</div>
+          {% endif %}
+        </div>
+
+        <!-- Column 2: Frequency & Korean Population -->
+        <div class="detail-col">
+          <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+          {% if v.gnomad_all is defined and v.gnomad_all is not none %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ "%.4e"|format(v.gnomad_all) }}</div>
+              <div class="freq-label">gnomAD Global AF</div>
+            </div>
+          {% endif %}
+
+          {% if v.gnomad_eas is defined and v.gnomad_eas is not none %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ "%.4e"|format(v.gnomad_eas) }}</div>
+              <div class="freq-label">gnomAD East Asian AF</div>
+            </div>
+          {% endif %}
+
+          {% if kp.krgdb_freq is defined and kp.krgdb_freq %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ kp.krgdb_freq }}</div>
+              <div class="freq-label">KRGDB Korean AF</div>
+            </div>
+          {% endif %}
+
+          {% if kp.enrichment_ratio is defined and kp.enrichment_ratio %}
+            <div class="freq-enrichment">
+              Korean enrichment: {{ kp.enrichment_ratio }}x vs global
+            </div>
+          {% endif %}
+
+          {% if v.frequency_prognosis is defined and v.frequency_prognosis %}
+            <div class="detail-label" style="margin-top:5px;">Frequency Note</div>
+            <div class="detail-value">{{ v.frequency_prognosis }}</div>
+          {% endif %}
+
+          {% if not (v.gnomad_all is defined and v.gnomad_all is not none) and not (kp.krgdb_freq is defined and kp.krgdb_freq) and not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
+            <p class="no-data">No population frequency data available.</p>
+          {% endif %}
+        </div>
+
+        <!-- Column 3: Finding Summary -->
+        <div class="detail-col">
+          <div class="detail-col-title">Finding Summary</div>
+
+          {% if v.finding_summary is defined and v.finding_summary %}
+            <p>{{ v.finding_summary }}</p>
+          {% endif %}
+
+          {% if kp.gene_description is defined and kp.gene_description %}
+            <div class="detail-label">Gene</div>
+            <div class="detail-value">{{ kp.gene_description }}</div>
+          {% endif %}
+
+          {% if clinical.clinical_implications is defined and clinical.clinical_implications %}
+            <div class="detail-label">Clinical Implications</div>
+            <div class="detail-value">{{ clinical.clinical_implications }}</div>
+          {% endif %}
+
+          {% if kp.korean_clinical_note is defined and kp.korean_clinical_note %}
+            <div class="detail-label">Korean Clinical Note</div>
+            <div class="detail-value" style="color:#1E40AF;">{{ kp.korean_clinical_note }}</div>
+          {% endif %}
+
+          {% if not (v.finding_summary is defined and v.finding_summary) and not (kp.gene_description is defined and kp.gene_description) and not (clinical.clinical_implications is defined and clinical.clinical_implications) %}
+            <p class="no-data">Extended summary pending consilium analysis.</p>
+          {% endif %}
+
+          {% if v.acmg_codes %}
+            <div class="detail-label" style="margin-top:7px;">ACMG Codes</div>
+            <div>
+              {% for code in v.acmg_codes %}
+                <span class="acmg-code">{{ code }}</span>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+
+      </div><!-- /detail-grid -->
+
+      <!-- Bottom notes bar: conflict + korean note — single line -->
+      {% set has_notes = (v.conflict is defined and v.conflict) or (v.korean_specific_note is defined and v.korean_specific_note) or (kp.korean_flag is defined and kp.korean_flag) %}
+      {% if has_notes %}
+      <div class="variant-notes-bar">
+        {% if v.conflict is defined and v.conflict %}
+          <span class="conflict-flag">&#9888; Conflict: Engine={{ v.classification }} vs ClinVar={{ v.clinvar_significance | default(v.agents.clinical.clinvar_significance | default('N/A')) }}</span>
+        {% endif %}
+        {% if v.korean_specific_note is defined and v.korean_specific_note %}
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; {{ v.korean_specific_note }}</span>
+        {% elif kp.korean_flag is defined and kp.korean_flag %}
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; {{ kp.korean_flag }}</span>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div><!-- /variant-block -->
+
+{# Close the page div after every even-indexed variant, or on the last variant if odd count #}
+{% if loop.index is even or loop.last %}
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page {{ (loop.index / 2) | round(0, 'ceil') | int + 1 }}</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+{% endif %}
+
+{% endfor %}
+
+
+{# ══════════════════════════════════════════════════════════════
+   PGx DETAIL SECTION
+══════════════════════════════════════════════════════════════ #}
+{% if pgx_results %}
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="masthead" style="margin-bottom:12px;">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span style="color:var(--teal);">Board</span></div>
+        <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> {{ sample_id }}</div>
+        <div><strong>Report Date:</strong> {{ date }}</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pharmacogenomics (PGx) Detailed Findings</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    {% for pgx in pgx_results %}
+    <div class="pgx-row">
+      <div class="pgx-row-header">
+        <div class="pgx-gene">{{ pgx.gene }}</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          {% set level = pgx.cpic_level | upper %}
+          {% if level == "A" %}
+            <span class="badge badge-pathogenic">CPIC Level A</span>
+          {% elif level == "B" %}
+            <span class="badge badge-likely-pathogenic">CPIC Level B</span>
+          {% elif level == "C" %}
+            <span class="badge badge-vus">CPIC Level C</span>
+          {% else %}
+            <span class="badge badge-unknown">CPIC {{ pgx.cpic_level }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="pgx-row-body">
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Phenotype</div>
+          <div class="pgx-cell-value">{{ pgx.phenotype }}</div>
+          {% if pgx.star_allele is defined and pgx.star_allele %}
+            <div style="margin-top:4px;">
+              <span class="acmg-code">{{ pgx.star_allele }}</span>
+            </div>
+          {% endif %}
+          {% if pgx.hgvs is defined and pgx.hgvs and pgx.hgvs.cdna is defined and pgx.hgvs.cdna %}
+            <div style="margin-top:6px;">
+              <div class="pgx-cell-label">Variant (HGVS)</div>
+              <div style="font-family:monospace;font-size:8pt;color:var(--slate);">
+                {% if pgx.hgvs.transcript is defined and pgx.hgvs.transcript and pgx.hgvs.transcript != 'N/A (HLA typing required)' %}{{ pgx.hgvs.transcript }}:{% endif %}{{ pgx.hgvs.cdna }}{% if pgx.hgvs.protein is defined and pgx.hgvs.protein and pgx.hgvs.protein != 'N/A' %} ({{ pgx.hgvs.protein }}){% endif %}
+              </div>
+              {% if pgx.variant_effect is defined and pgx.variant_effect %}
+                <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:2px 8px;font-family:var(--font-sans);font-size:8pt;font-weight:600;margin-top:4px;">{{ pgx.variant_effect }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Korean vs Western Prevalence</div>
+          {% if pgx.korean_prevalence is defined and pgx.western_prevalence is defined %}
+            <div class="pgx-cell-value">
+              <div class="pgx-comparison-box box-korean">
+                <div class="box-pct">{{ "%.1f"|format(pgx.korean_prevalence * 100) }}%</div>
+                <div class="box-lbl">Korean</div>
+              </div>
+              <div class="pgx-comparison-box box-western">
+                <div class="box-pct">{{ "%.1f"|format(pgx.western_prevalence * 100) }}%</div>
+                <div class="box-lbl">Western</div>
+              </div>
+            </div>
+            {% set ratio = pgx.korean_prevalence / pgx.western_prevalence if pgx.western_prevalence > 0 else 0 %}
+            {% if ratio >= 2.0 %}
+              <div class="freq-enrichment" style="margin-top:6px;">
+                Korean prevalence {{ "%.1f"|format(ratio) }}x higher — population-specific monitoring recommended
+              </div>
+            {% elif pgx.western_prevalence > 0 and ratio < 0.5 %}
+              <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:3px;padding:5px 10px;margin-top:6px;font-family:var(--font-sans);font-size:8.5pt;font-weight:700;color:#166534;">
+                Korean prevalence {{ "%.1f"|format(ratio) }}x lower than Western
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="no-data">Prevalence data not available</div>
+          {% endif %}
+        </div>
+        <div class="pgx-cell">
+          <div class="pgx-cell-label">Clinical Impact</div>
+          <div class="pgx-cell-value">
+            {% if pgx.clinical_impact is defined and pgx.clinical_impact %}
+              {{ pgx.clinical_impact }}
+            {% else %}
+              <span class="no-data">See CPIC guideline for {{ pgx.gene }}</span>
+            {% endif %}
+          </div>
+          {% if pgx.cpic_recommendation is defined and pgx.cpic_recommendation %}
+            <div class="detail-label" style="margin-top:6px;">CPIC Recommendation</div>
+            <div class="pgx-cell-value" style="font-size:9pt;">{{ pgx.cpic_recommendation }}</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page {{ variants | length + 2 }}</div>
+    </div>
+  </div>
+</div><!-- /pgx detail page -->
+{% endif %}
+
+
+{# ══════════════════════════════════════════════════════════════
+   METHODOLOGY & DATABASE VERSIONS (last page)
+══════════════════════════════════════════════════════════════ #}
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="masthead" style="margin-bottom:12px;">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span style="color:var(--teal);">Board</span></div>
+        <div class="masthead-tagline">Korean Population-Aware Variant Consilium</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> {{ sample_id }}</div>
+        <div><strong>Report Date:</strong> {{ date }}</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Methodology &amp; Database Versions</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <!-- DB versions table -->
+    {% if db_versions %}
+    <table class="db-table" style="width:auto;min-width:360px;margin-bottom:20px;">
+      <thead>
+        <tr>
+          <th>Database / Resource</th>
+          <th>Version / Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for db, version in db_versions.items() %}
+        <tr>
+          <td>{{ db }}</td>
+          <td>{{ version }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="no-data">Database version information not available.</p>
+    {% endif %}
+
+    <!-- Pipeline description -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pipeline Description</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <div class="method-block">
+      <p>
+        The GenomeBoard Consilium pipeline performs multi-agent variant interpretation
+        integrating ACMG/AMP 2015 classification criteria with Korean population-specific
+        frequency data from the Korea Reference Genome Database (KRGDB v3.0). Each variant
+        undergoes parallel evaluation by three AI-assisted consilium agents:
+      </p>
+      <ul>
+        <li><strong>Clinical Agent</strong> — queries ClinVar for significance calls, associated conditions, and review star ratings</li>
+        <li><strong>Korean Population Agent</strong> — compares allele frequencies between KRGDB and gnomAD (EAS/global), flags variants with &ge;2x enrichment in Korean cohorts</li>
+        <li><strong>Pharmacogenomics Agent</strong> — cross-references CPIC and PharmGKB guidelines with Korean-specific prevalence adjustments</li>
+      </ul>
+      <p>
+        Final classification follows ACMG/AMP 2015 criteria with ClinGen SVI updates.
+        Korean enrichment ratio is calculated as KRGDB frequency / gnomAD global frequency.
+      </p>
+    </div>
+
+    <!-- Limitations -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Limitations</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <div class="method-block">
+      <ul>
+        <li>This report is generated for <strong>research purposes only</strong> and has not been validated in a CLIA-certified or CAP-accredited laboratory.</li>
+        <li>KRGDB frequency data reflects the Korean genome cohort; individual ancestry may vary.</li>
+        <li>ClinVar entries reflect community-submitted evidence and may contain conflicting interpretations.</li>
+        <li>PGx phenotype predictions are probabilistic; functional testing (e.g., HLA typing for HLA-B*5801) is required for confirmatory clinical use.</li>
+        <li>Variants of uncertain significance (VUS) may be reclassified as new evidence accrues; periodic re-analysis is recommended.</li>
+        <li>This report does not constitute medical advice. Clinical decisions must involve a board-certified clinical geneticist or genetic counselor.</li>
+      </ul>
+    </div>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page {{ variants | length + (3 if pgx_results else 2) }}</div>
+    </div>
+  </div>
+</div><!-- /methodology page -->
+
+<!-- ══════════════════════════════════════════════════════════════
+     APPENDIX: ACMG EVIDENCE CODE REFERENCE
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Appendix: ACMG/AMP Evidence Code Reference</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <p style="font-size:9.5pt;margin-bottom:12px;">
+      The following table describes the ACMG/AMP evidence codes used in this report for variant classification
+      (Richards et al., <em>Genet Med</em> 2015; with ClinGen SVI updates 2018–2020).
+    </p>
+
+    <h3 style="color:#991b1b;margin-top:16px;">Pathogenic Evidence</h3>
+    <table>
+      <thead>
+        <tr><th style="width:120px;">Code</th><th style="width:130px;">Strength</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="acmg-code">PVS1</span></td><td>Very Strong</td><td>Null variant (nonsense, frameshift, canonical splice site, initiation codon, single/multi-exon deletion) in a gene where loss of function is a known mechanism of disease</td></tr>
+        <tr><td><span class="acmg-code">PS1</span></td><td>Strong</td><td>Same amino acid change as a previously established pathogenic variant, regardless of nucleotide change</td></tr>
+        <tr><td><span class="acmg-code">PS3</span></td><td>Strong</td><td>Well-established functional studies show a deleterious effect on the gene product</td></tr>
+        <tr><td><span class="acmg-code">PS4</span></td><td>Strong</td><td>Prevalence of the variant in affected individuals is significantly increased compared to controls</td></tr>
+        <tr><td><span class="acmg-code">PM1</span></td><td>Moderate</td><td>Located in a mutational hotspot and/or critical, well-established functional domain</td></tr>
+        <tr><td><span class="acmg-code">PM2</span></td><td>Moderate</td><td>Absent or extremely low frequency in population databases (gnomAD, KRGDB)</td></tr>
+        <tr><td><span class="acmg-code">PM2_Supporting</span></td><td>Supporting</td><td>Low frequency in population databases — downgraded from Moderate per ClinGen SVI 2020 recommendation</td></tr>
+        <tr><td><span class="acmg-code">PM4</span></td><td>Moderate</td><td>Protein length change due to in-frame deletion/insertion or stop-loss variant</td></tr>
+        <tr><td><span class="acmg-code">PM5</span></td><td>Moderate</td><td>Missense change at residue where a different pathogenic missense has been seen before</td></tr>
+        <tr><td><span class="acmg-code">PP3</span></td><td>Supporting</td><td>Multiple lines of computational evidence support a deleterious effect (conservation, evolutionary, splicing)</td></tr>
+        <tr><td><span class="acmg-code">PP5</span></td><td>Supporting</td><td>Reputable source recently reports variant as pathogenic (note: deprecated by ClinGen SVI 2020, retained for legacy compatibility)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#166534;margin-top:16px;">Benign Evidence</h3>
+    <table>
+      <thead>
+        <tr><th style="width:120px;">Code</th><th style="width:130px;">Strength</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="acmg-code">BA1</span></td><td>Stand-alone</td><td>Allele frequency &gt;5% in any general continental population dataset (gnomAD, KRGDB) — classified as Benign</td></tr>
+        <tr><td><span class="acmg-code">BS1</span></td><td>Strong</td><td>Allele frequency greater than expected for the disorder (typically &ge;1%)</td></tr>
+        <tr><td><span class="acmg-code">BS2</span></td><td>Strong</td><td>Observed in a healthy adult individual for a fully penetrant early-onset condition</td></tr>
+        <tr><td><span class="acmg-code">BP1</span></td><td>Supporting</td><td>Missense variant in a gene for which primarily truncating variants are known to cause disease</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:var(--navy);margin-top:16px;">Classification Criteria (ACMG/AMP 2015 Table 5)</h3>
+    <table>
+      <thead>
+        <tr><th>Classification</th><th>Required Evidence Combinations</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge badge-pathogenic">Pathogenic</span></td><td>PVS1 + &ge;1 Strong (PS); OR 2 Strong (PS); OR PVS1 + &ge;2 Moderate (PM); OR 1 Strong + &ge;3 Moderate</td></tr>
+        <tr><td><span class="badge badge-likely-pathogenic">Likely Pathogenic</span></td><td>PVS1 + 1 Moderate (PM); OR 1 Strong + 1–2 Moderate; OR &ge;3 Moderate; OR 2 Moderate + &ge;2 Supporting</td></tr>
+        <tr><td><span class="badge badge-vus">VUS</span></td><td>Criteria for Benign or Pathogenic are not met, or evidence is contradictory</td></tr>
+        <tr><td><span class="badge badge-benign">Benign</span></td><td>BA1 (stand-alone); OR &ge;2 Strong Benign (BS)</td></tr>
+        <tr style="border-bottom:none;"><td><span class="badge badge-drug-response">Drug Response</span></td><td>Pharmacogenomic variant — classified using CPIC guidelines, not ACMG Mendelian framework</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:8.5pt;color:var(--muted);margin-top:12px;">
+      Reference: Richards S, et al. <em>Standards and guidelines for the interpretation of sequence variants.</em>
+      Genet Med. 2015;17(5):405-424. PMID: 25741868.
+      ClinGen Sequence Variant Interpretation Working Group updates: PMID: 30311383 (PP5/BP6 deprecation),
+      PMID: 31164752 (BA1 modification).
+    </p>
+
+    <h3 style="color:#1E40AF;margin-top:24px;">CPIC Evidence Levels for Pharmacogenomics (PGx)</h3>
+    <p style="font-size:9.5pt;margin-bottom:12px;">
+      The Clinical Pharmacogenetics Implementation Consortium (CPIC) assigns evidence levels to gene-drug pairs
+      to guide clinical implementation of pharmacogenomic test results.
+    </p>
+    <table>
+      <thead>
+        <tr><th style="width:100px;">Level</th><th style="width:180px;">Classification</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-pathogenic">Level A</span></td>
+          <td>Strong evidence</td>
+          <td>Prescribing action recommended. Strong evidence linking the gene-drug pair to a clinical outcome, with a published CPIC guideline providing specific dosing or drug selection recommendations.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-likely-pathogenic">Level B</span></td>
+          <td>Moderate evidence</td>
+          <td>Prescribing action may be recommended. Moderate evidence supports changing pharmacotherapy based on genetic information, but a full CPIC guideline may not yet be available.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-vus">Level C</span></td>
+          <td>Optional evidence</td>
+          <td>Clinical action is optional. Evidence supports a gene-drug association, but the clinical impact of adjusting therapy is unclear or the magnitude of effect is small.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-unknown">Level D</span></td>
+          <td>Informational only</td>
+          <td>No prescribing action recommended. Evidence is insufficient to support changing clinical practice based on this gene-drug pair at this time.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:8.5pt;color:var(--muted);margin-top:12px;">
+      Reference: Relling MV, Klein TE. <em>CPIC: Clinical Pharmacogenetics Implementation Consortium of the Pharmacogenomics Research Network.</em>
+      Clin Pharmacol Ther. 2011;89(3):464-467. PMID: 21270786.
+      CPIC guidelines and gene-drug pair assignments are updated regularly at <strong>cpicpgx.org</strong>.
+    </p>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Appendix</div>
+    </div>
+  </div>
+</div><!-- /appendix page -->
+
+</body>
+</html>

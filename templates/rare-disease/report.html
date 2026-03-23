@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GenomeBoard — Rare Disease Report — {{ sample_id }}</title>
+    <!-- Same CSS as cancer template -->
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+        /* ── CSS Variables — Clinical/Academic palette ── */
+        :root {
+          --teal:    #0F766E;
+          --teal-lt: #CCFBF1;
+          --navy:    #0F172A;
+          --slate:   #475569;
+          --text:    #1e293b;
+          --muted:   #64748b;
+          --border:  #cbd5e1;
+          --surface: #f8fafc;
+          --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+          --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+          font-family: var(--font-sans);
+          font-size: 9.5pt;
+          line-height: 1.6;
+          color: var(--text);
+          background: #ffffff;
+        }
+
+        .page {
+          width: 210mm;
+          min-height: 297mm;
+          margin: 0 auto;
+          padding: 0;
+          position: relative;
+          background: #ffffff;
+        }
+
+        @page { size: A4; margin: 0; }
+
+        .page-header-bar {
+          background: var(--teal);
+          height: 5px;
+          width: 100%;
+        }
+
+        .page-body {
+          padding: 18mm 18mm 28mm 18mm;
+        }
+
+        .page-footer {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 22mm;
+          padding: 4mm 18mm;
+          border-top: 1px solid var(--border);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          font-size: 7.5pt;
+          color: var(--muted);
+        }
+
+        .footer-disclaimer { flex: 1; }
+        .footer-right { text-align: right; }
+        .footer-brand-text { font-weight: 700; color: var(--teal); font-size: 8pt; }
+
+        .masthead {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 10mm;
+          padding-bottom: 5mm;
+          border-bottom: 2px solid var(--teal);
+        }
+
+        .masthead-brand {
+          font-size: 20pt;
+          font-weight: 800;
+          color: var(--navy);
+          letter-spacing: -0.5px;
+        }
+
+        .masthead-subtitle {
+          font-size: 9pt;
+          color: var(--slate);
+          margin-top: 2px;
+        }
+
+        .masthead-meta {
+          text-align: right;
+          font-size: 8.5pt;
+          color: var(--slate);
+          line-height: 1.8;
+        }
+
+        .section-header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 8mm 0 4mm;
+        }
+
+        .section-badge {
+          background: var(--teal);
+          color: #fff;
+          font-size: 7.5pt;
+          font-weight: 700;
+          padding: 3px 10px;
+          border-radius: 3px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 8.5pt;
+          margin-bottom: 6mm;
+        }
+
+        th {
+          background: var(--navy);
+          color: #fff;
+          padding: 5px 8px;
+          text-align: left;
+          font-weight: 600;
+          font-size: 7.5pt;
+        }
+
+        td {
+          padding: 5px 8px;
+          border-bottom: 1px solid var(--border);
+          vertical-align: top;
+        }
+
+        tr:nth-child(even) td { background: var(--surface); }
+
+        .acmg-code {
+          display: inline-block;
+          background: #e0f2fe;
+          color: #0369a1;
+          font-size: 7pt;
+          font-weight: 700;
+          padding: 1px 5px;
+          border-radius: 3px;
+          margin: 1px 2px 1px 0;
+          font-family: var(--font-mono);
+        }
+
+        p { margin-bottom: 4mm; }
+    </style>
+</head>
+<body>
+
+<div class="page">
+    <div class="page-header-bar"></div>
+    <div class="page-body">
+        <div class="masthead">
+            <div>
+                <div class="masthead-brand">GenomeBoard</div>
+                <div class="masthead-subtitle">Rare Disease / Germline Variant Report</div>
+            </div>
+            <div class="masthead-meta">
+                <div><strong>Sample:</strong> {{ sample_id }}</div>
+                <div><strong>Date:</strong> {{ date }}</div>
+                <div><strong>Mode:</strong> Rare Disease (Germline)</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <span class="section-badge">Report Summary</span>
+        </div>
+
+        <p>Total variants analyzed: <strong>{{ summary.total }}</strong></p>
+
+        <div style="background:#f0f4fa;border:1px solid #c7d6eb;border-radius:6px;padding:20px;margin:20px 0;text-align:center;">
+            <h3 style="color:#0F766E;margin-bottom:8px;">Rare Disease Report Mode — Under Construction</h3>
+            <p style="color:#475569;">
+                This report mode is in development (Phase 2). It will include:<br>
+                HPO phenotype matching, OMIM gene-disease associations,<br>
+                ClinGen gene validity, inheritance pattern display,<br>
+                and candidate gene ranking.
+            </p>
+        </div>
+
+        <!-- Show basic variant table (reuse from cancer) -->
+        <div class="section-header">
+            <span class="section-badge">Variant Summary</span>
+        </div>
+
+        {% if variants %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Gene</th>
+                    <th>Variant</th>
+                    <th>Classification</th>
+                    <th>ACMG Codes</th>
+                    <th>ClinVar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in variants %}
+                <tr>
+                    <td><strong>{{ v.gene }}</strong></td>
+                    <td style="font-family:monospace;font-size:9pt;">{{ v.variant }}</td>
+                    <td>{{ v.classification }}</td>
+                    <td>
+                        {% for code in v.acmg_codes %}
+                        <span class="acmg-code">{{ code }}</span>
+                        {% endfor %}
+                    </td>
+                    <td>{{ v.clinvar_significance | default('N/A') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <!-- Korean Population section (shared) -->
+        {% if variants %}
+        <div class="section-header">
+            <span class="section-badge">Korean Population Findings</span>
+        </div>
+        <p>Korean population frequency analysis is shared across report modes.</p>
+        {% endif %}
+
+    </div>
+    <div class="page-footer">
+        <div class="footer-disclaimer">
+            <strong>Research Use Only — Not for clinical decision making.</strong>
+        </div>
+        <div class="footer-right">
+            <div class="footer-brand-text">GenomeBoard</div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

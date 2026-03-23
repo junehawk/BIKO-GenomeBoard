@@ -1,12 +1,11 @@
 # scripts/counselor/generate_pdf.py
+import os
 from pathlib import Path
 from typing import Dict
 from jinja2 import Environment, FileSystemLoader
 
 from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.config import get
-
-TEMPLATE_DIR = Path(get("paths.templates") or str(Path(__file__).parent.parent.parent / "templates"))
 
 
 def _adjust_finding_summary(summary: str, classification: str) -> str:
@@ -40,7 +39,15 @@ def _adjust_finding_summary(summary: str, classification: str) -> str:
     return summary
 
 
-def generate_report_html(report_data: Dict) -> str:
+def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
+    # Determine template directory based on mode
+    templates_base = get("paths.templates") or str(Path(__file__).parent.parent.parent / "templates")
+    template_dir = os.path.join(templates_base, mode)
+
+    # Fall back to cancer if mode-specific template doesn't exist
+    if not os.path.exists(os.path.join(template_dir, "report.html")):
+        template_dir = os.path.join(templates_base, "cancer")
+
     # Enrich variants with gene knowledge
     for v in report_data.get("variants", []):
         gene = v.get("gene")
@@ -81,13 +88,13 @@ def generate_report_html(report_data: Dict) -> str:
                 pgx.setdefault("hgvs", info.get("hgvs", {}))
                 pgx.setdefault("variant_effect", info.get("hgvs", {}).get("variant_effect", ""))
 
-    env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=True)
+    env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
     template = env.get_template("report.html")
     return template.render(**report_data)
 
 
-def generate_pdf(report_data: Dict, output_path: str) -> str:
-    html = generate_report_html(report_data)
+def generate_pdf(report_data: Dict, output_path: str, mode: str = "cancer") -> str:
+    html = generate_report_html(report_data, mode=mode)
     try:
         from weasyprint import HTML
         HTML(string=html).write_pdf(output_path)
