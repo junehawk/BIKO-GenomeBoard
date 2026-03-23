@@ -16,7 +16,7 @@ MINIMAL_REPORT = {
             "acmg_codes": ["PVS1", "PS1"],
             "agents": {
                 "clinical": {"clinvar_significance": "Pathogenic"},
-                "korean_pop": {"korean_flag": "한국인 희귀 변이"},
+                "korean_pop": {"korean_flag": "Rare variant (Korean population)"},
             },
             "conflict": False,
         }
@@ -72,7 +72,7 @@ FULL_REPORT = {
             "cpic_level": "A",
             "korean_prevalence": 0.14,
             "western_prevalence": 0.025,
-            "clinical_impact": "클로피도그렐 저반응 위험",
+            "clinical_impact": "Risk of clopidogrel hyporesponse",
             "star_allele": "*2/*2",
             "cpic_recommendation": "Consider alternative antiplatelet therapy.",
         }
@@ -189,7 +189,7 @@ def test_korean_callout_rendered_when_flag_present():
     """When korean_flag is populated, Korean callout box must appear."""
     html = generate_report_html(MINIMAL_REPORT)
     assert "korean-callout" in html
-    assert "한국인 희귀 변이" in html
+    assert "Rare variant (Korean population)" in html
 
 
 def test_korean_callout_absent_when_no_flag():

@@ -20,12 +20,12 @@ def test_no_data():
     freq = FrequencyData(krgdb=None, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
     assert result["acmg_codes"] == []
-    assert "데이터 없음" in result["korean_flag"]
+    assert "No frequency data available" in result["korean_flag"]
 
 def test_korean_specific_variant():
     freq = FrequencyData(krgdb=0.001, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
-    assert "한국인 특이 변이" in result["korean_flag"]
+    assert "Korean-specific variant" in result["korean_flag"]
 
 # I-5b: PM2 moderate for freq between PM2_THRESHOLD and BS1_THRESHOLD
 def test_pm2_moderate_freq_mid_range():

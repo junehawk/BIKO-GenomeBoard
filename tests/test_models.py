@@ -11,7 +11,7 @@ def test_variant_from_string():
 
 def test_variant_from_string_with_chr_prefix():
     v = Variant.from_string("17:7577120 G>A")
-    assert v.chrom == "chr17"  # 자동 chr 접두사
+    assert v.chrom == "chr17"  # auto chr prefix
 
 def test_variant_id():
     v = Variant(chrom="chr17", pos=7577120, ref="G", alt="A")
@@ -19,7 +19,7 @@ def test_variant_id():
 
 def test_acmg_evidence_creation():
     e = AcmgEvidence(code="PVS1", source="clinical_geneticist", description="null variant")
-    assert e.strength == "very_strong"  # PVS1 → very_strong 자동 매핑
+    assert e.strength == "very_strong"  # PVS1 → very_strong auto mapping
 
 def test_acmg_evidence_strength_mapping():
     assert AcmgEvidence(code="PS1", source="test", description="").strength == "strong"
@@ -36,4 +36,4 @@ def test_pgx_result():
         gene="CYP2C19", star_allele="*2", phenotype="Poor Metabolizer",
         cpic_level="A", korean_prevalence=0.15, western_prevalence=0.03
     )
-    assert p.korean_flag is True  # 5배 이상 차이
+    assert p.korean_flag is True  # >= 5x difference

@@ -15,40 +15,40 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     if max_freq is None:
         return {
             "acmg_codes": [],
-            "korean_flag": "빈도 데이터 없음",
+            "korean_flag": "No frequency data available",
             "frequencies": freq,
         }
 
     # BA1: stand-alone benign
     if max_freq > BA1_THRESHOLD:
         acmg_codes.append("BA1")
-        flags.append("매우 흔한 변이")
+        flags.append("Very common variant")
     # BS1: strong benign
     elif max_freq >= BS1_THRESHOLD:
         acmg_codes.append("BS1")
-        flags.append("흔한 변이")
+        flags.append("Common variant")
     # PM2_Supporting: rare
     elif max_freq <= PM2_THRESHOLD:
         acmg_codes.append("PM2_Supporting")
-        flags.append("희귀 변이")
+        flags.append("Rare variant")
     # PM2: moderately rare (between PM2_Supporting and BS1 thresholds)
     elif max_freq < BS1_THRESHOLD:
         acmg_codes.append("PM2")
-        flags.append("저빈도 변이")
+        flags.append("Low frequency variant")
 
     # Korean-specific flags
     if freq.krgdb is not None and freq.gnomad_all is not None and freq.gnomad_all > 0:
         ratio = freq.krgdb / freq.gnomad_all
         if ratio >= 5:
-            flags.append("한국인 빈도 글로벌 대비 5배 이상 높음")
+            flags.append("Korean frequency 5x+ higher than global")
         elif ratio <= 0.2:
-            flags.append("한국인 빈도 글로벌 대비 매우 낮음")
+            flags.append("Korean frequency much lower than global")
     elif freq.krgdb is not None and freq.gnomad_eas is None and freq.gnomad_all is None:
-        flags.append("한국인 특이 변이 (KRGDB only)")
+        flags.append("Korean-specific variant (KRGDB only)")
 
     return {
         "acmg_codes": acmg_codes,
-        "korean_flag": " | ".join(flags) if flags else "특이사항 없음",
+        "korean_flag": " | ".join(flags) if flags else "No notable findings",
         "frequencies": freq,
     }
 
