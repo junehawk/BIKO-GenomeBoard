@@ -12,5 +12,10 @@ htmlcov/
 data/db/*.sqlite3
 !data/db/clinvar_test.sqlite3
 !data/db/gnomad_test.sqlite3
+data/db/gnomad_vcf/
+data/db/variant_summary.txt.gz
 data/cache/
 input/
+output/*.html
+output/*.json
+output/*.pdf
