@@ -1588,7 +1588,7 @@
             <span style="font-size:7.5pt;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">References</span>
             <div style="font-size:7.5pt;color:#64748b;line-height:1.4;margin-top:2px;">
               {% for ref in v.references[:5] %}
-              <span>[PMID:{{ ref.pmid }}]</span> {{ ref.note }}{% if ref.source %} &mdash; <em>{{ ref.source }}</em>{% endif %}{% if not loop.last %}; {% endif %}
+              <a href="https://pubmed.ncbi.nlm.nih.gov/{{ ref.pmid }}/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:{{ ref.pmid }}]</a> {{ ref.note }}{% if ref.source %} &mdash; <em>{{ ref.source }}</em>{% endif %}{% if not loop.last %}; {% endif %}
               {% endfor %}
             </div>
           </div>
@@ -1948,6 +1948,43 @@
       Reference: Relling MV, Klein TE. <em>CPIC: Clinical Pharmacogenetics Implementation Consortium.</em>
       Clin Pharmacol Ther. 2011;89(3):464-467. PMID: 21270786.
     </p>
+
+    <h3 style="color:var(--navy, #0F172A);margin-top:24px;">Abbreviations and Terminology</h3>
+    <table>
+      <thead>
+        <tr><th style="width:140px;">Abbreviation</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>AD</strong></td><td>Autosomal Dominant — one copy of the variant (from either parent) is sufficient to cause the condition</td></tr>
+        <tr><td><strong>AR</strong></td><td>Autosomal Recessive — two copies of the variant (one from each parent) are required to cause the condition</td></tr>
+        <tr><td><strong>XL</strong></td><td>X-Linked — variant is on the X chromosome; males are typically more severely affected</td></tr>
+        <tr><td><strong>AD/AR</strong></td><td>Both inheritance patterns possible depending on the specific condition</td></tr>
+        <tr><td><strong>LP</strong></td><td>Likely Pathogenic — strong but not definitive evidence that the variant causes disease</td></tr>
+        <tr><td><strong>VUS</strong></td><td>Variant of Uncertain Significance — insufficient evidence to classify as pathogenic or benign</td></tr>
+        <tr><td><strong>PGx</strong></td><td>Pharmacogenomics — study of how genetic variants affect drug response</td></tr>
+        <tr><td><strong>CPIC</strong></td><td>Clinical Pharmacogenetics Implementation Consortium — publishes evidence-based PGx guidelines</td></tr>
+        <tr><td><strong>HPO</strong></td><td>Human Phenotype Ontology — standardized vocabulary for describing clinical features</td></tr>
+        <tr><td><strong>OMIM</strong></td><td>Online Mendelian Inheritance in Man — catalog of human genes and genetic disorders</td></tr>
+        <tr><td><strong>HGVS</strong></td><td>Human Genome Variation Society nomenclature — standard notation for describing sequence variants (c. = coding DNA, p. = protein)</td></tr>
+        <tr><td><strong>KRGDB</strong></td><td>Korean Reference Genome Database — Korean population allele frequency resource</td></tr>
+        <tr><td><strong>gnomAD</strong></td><td>Genome Aggregation Database — large-scale population allele frequency database</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:var(--navy, #0F172A);margin-top:16px;">ClinGen Gene-Disease Validity Classifications</h3>
+    <table>
+      <thead>
+        <tr><th style="width:140px;">Classification</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Definitive</strong></td><td>Gene-disease relationship is supported by extensive, replicated evidence from multiple independent studies</td></tr>
+        <tr><td><strong>Strong</strong></td><td>Substantial evidence supports the relationship, approaching definitive level</td></tr>
+        <tr><td><strong>Moderate</strong></td><td>Reasonable evidence exists but additional studies are needed for confirmation</td></tr>
+        <tr><td><strong>Limited</strong></td><td>Preliminary evidence from a small number of studies or families</td></tr>
+        <tr><td><strong>Disputed</strong></td><td>Conflicting evidence — some studies support and others refute the relationship</td></tr>
+        <tr><td><strong>Refuted</strong></td><td>Previously claimed relationship has been disproven by subsequent evidence</td></tr>
+      </tbody>
+    </table>
 
   </div><!-- /page-body -->
 
