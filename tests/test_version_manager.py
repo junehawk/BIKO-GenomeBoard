@@ -40,6 +40,7 @@ def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
         "paths": {
             "clinvar_db": clinvar_db,
             "gnomad_db": gnomad_db,
+            "gnomad_vcf_dir": str(tmp_path / "empty_gnomad_vcf"),
             "krgdb": "data/krgdb_freq.tsv",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
@@ -102,6 +103,7 @@ def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
         "paths": {
             "clinvar_db": str(tmp_path / "nonexistent_clinvar.sqlite3"),
             "gnomad_db": str(tmp_path / "nonexistent_gnomad.sqlite3"),
+            "gnomad_vcf_dir": str(tmp_path / "nonexistent_gnomad_vcf"),
             "krgdb": str(tmp_path / "nonexistent_krgdb.tsv"),
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
@@ -155,6 +157,7 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
         "paths": {
             "clinvar_db": str(tmp_path / "nonexistent_clinvar.sqlite3"),
             "gnomad_db": str(tmp_path / "nonexistent_gnomad.sqlite3"),
+            "gnomad_vcf_dir": str(tmp_path / "nonexistent_gnomad_vcf"),
             "krgdb": str(tmp_path / "nonexistent_krgdb.tsv"),
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
@@ -320,6 +323,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
         "paths": {
             "clinvar_db": clinvar_db,
             "gnomad_db": gnomad_db,
+            "gnomad_vcf_dir": str(tmp_path / "empty_gnomad_vcf"),
             "krgdb": "data/krgdb_freq.tsv",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
@@ -396,6 +400,7 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
         "paths": {
             "clinvar_db": clinvar_db,
             "gnomad_db": gnomad_db,
+            "gnomad_vcf_dir": str(tmp_path / "empty_gnomad_vcf"),
             "krgdb": "data/krgdb_freq.tsv",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
