@@ -1264,7 +1264,7 @@
     {% for v in variants %}
       {% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
       {% set kf = kp.korean_flag | default('') %}
-      {% if kf and kf != 'No notable findings' and kf != 'Rare variant' and kf != 'Low frequency variant' and kf != 'Very common variant' and kf != 'Common variant' %}
+      {% if kf and kf != 'No notable findings' and kf != 'Rare variant' and kf != 'Low frequency variant' and kf != 'Very common variant' and kf != 'Common variant' and kf != 'No frequency data available' %}
         {% if korean_variants.append(v) %}{% endif %}
       {% endif %}
     {% endfor %}
