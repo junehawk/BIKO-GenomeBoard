@@ -219,7 +219,7 @@ def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
     assert result is not None
     assert "variants" in result
     # gnomAD local version should appear in db_versions
-    assert "gnomad_local" in result["db_versions"]
+    assert "gnomAD" in result["db_versions"]
 
     reset()
     qmod.close()

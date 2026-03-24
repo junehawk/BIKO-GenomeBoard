@@ -18,8 +18,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.clinical.query_clinvar import query_clinvar
-from scripts.db.query_local_clinvar import query_local_clinvar, get_db_version as get_clinvar_db_version
-from scripts.db.query_local_gnomad import query_local_gnomad, get_db_version as get_gnomad_db_version
+from scripts.db.query_local_clinvar import query_local_clinvar
+from scripts.db.query_local_gnomad import query_local_gnomad
+from scripts.db.version_manager import get_all_db_versions
 from scripts.clinical.hpo_matcher import resolve_hpo_terms, calculate_hpo_score, get_matching_hpo_terms
 from scripts.clinical.query_omim import query_omim
 from scripts.clinical.query_clingen import get_gene_validity
@@ -408,13 +409,7 @@ def run_pipeline(
             for p in pgx_hits
         ],
         "summary": summary,
-        "db_versions": {
-            "clinvar": str(date.today()),
-            "gnomad": "4.0",
-            "krgdb": "2026-03-01",
-            "clinvar_local": get_clinvar_db_version(),
-            "gnomad_local": get_gnomad_db_version(),
-        },
+        "db_versions": get_all_db_versions(skip_api=skip_api),
         "pipeline": {
             "skip_api": skip_api,
             "krgdb_path": str(krgdb_file),
@@ -600,13 +595,7 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
             for p in pgx_hits
         ],
         "summary": summary,
-        "db_versions": {
-            "clinvar": str(date.today()),
-            "gnomad": "4.0",
-            "krgdb": "2026-03-01",
-            "clinvar_local": get_clinvar_db_version(),
-            "gnomad_local": get_gnomad_db_version(),
-        },
+        "db_versions": get_all_db_versions(skip_api=False),
         "pipeline": {
             "skip_api": False,
             "krgdb_path": str(krgdb_path),

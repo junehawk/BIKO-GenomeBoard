@@ -1587,19 +1587,51 @@
 
     <!-- DB versions table -->
     {% if db_versions %}
-    <table class="db-table" style="width:auto;min-width:360px;margin-bottom:20px;">
+    <table class="db-table" style="width:auto;min-width:540px;margin-bottom:20px;">
       <thead>
         <tr>
-          <th>Database / Resource</th>
-          <th>Version / Date</th>
+          <th>Database</th>
+          <th>Source</th>
+          <th>Version / Release</th>
+          <th>Build Date</th>
         </tr>
       </thead>
       <tbody>
-        {% for db, version in db_versions.items() %}
+        {% for db_name, info in db_versions.items() %}
+        {% if not db_name.startswith('_') %}
         <tr>
-          <td>{{ db }}</td>
-          <td>{{ version }}</td>
+          <td><strong>{{ db_name }}</strong></td>
+          <td>
+            {% if info is mapping %}
+              {% if info.source == 'local_db' %}
+                <span style="color:#065F46;">Local DB</span>
+              {% elif info.source == 'api' %}
+                <span style="color:#1E40AF;">API</span>
+              {% elif info.source == 'local_file' %}
+                <span style="color:#065F46;">Local File</span>
+              {% else %}
+                {{ info.source | default('—') }}
+              {% endif %}
+            {% else %}
+              {{ info }}
+            {% endif %}
+          </td>
+          <td>
+            {% if info is mapping %}
+              {{ info.version | default(info.release | default(info.standard | default('—'))) }}
+            {% else %}
+              {{ info }}
+            {% endif %}
+          </td>
+          <td>
+            {% if info is mapping %}
+              {{ info.build_date | default(info.modified | default('—')) }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
         </tr>
+        {% endif %}
         {% endfor %}
       </tbody>
     </table>
