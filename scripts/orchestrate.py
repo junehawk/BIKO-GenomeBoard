@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.clinical.query_clinvar import query_clinvar
 from scripts.db.query_local_clinvar import query_local_clinvar, get_db_version as get_clinvar_db_version
+from scripts.db.query_local_gnomad import query_local_gnomad, get_db_version as get_gnomad_db_version
 from scripts.clinical.hpo_matcher import resolve_hpo_terms, calculate_hpo_score, get_matching_hpo_terms
 from scripts.clinical.query_omim import query_omim
 from scripts.clinical.query_clingen import get_gene_validity
@@ -51,11 +52,15 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
 
     if skip_api:
         # Still run KRGDB (local) and PGx (local)
-        # Also attempt local ClinVar DB regardless of annotation.source
+        # Also attempt local ClinVar and gnomAD DBs regardless of annotation.source
         try:
             clinvar_result = query_local_clinvar(variant)
         except Exception as e:
             logger.warning(f"Local ClinVar lookup failed for {variant.variant_id}: {e}")
+        try:
+            gnomad_result = query_local_gnomad(variant)
+        except Exception as e:
+            logger.warning(f"Local gnomAD lookup failed for {variant.variant_id}: {e}")
         try:
             krgdb_freq = query_krgdb(variant, krgdb_path)
         except Exception as e:
@@ -84,7 +89,16 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
 
         def _run_gnomad():
             try:
-                return query_gnomad(variant)
+                if annotation_source == "local":
+                    return query_local_gnomad(variant)
+                elif annotation_source == "api":
+                    return query_gnomad(variant)
+                else:  # auto: local first, API fallback
+                    result = query_local_gnomad(variant)
+                    if result["gnomad_all"] is None:
+                        logger.debug(f"Local gnomAD miss for {variant.variant_id}, falling back to API")
+                        result = query_gnomad(variant)
+                    return result
             except Exception as e:
                 logger.warning(f"gnomAD query failed for {variant.variant_id}: {e}")
                 return {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
@@ -377,6 +391,7 @@ def run_pipeline(
             "gnomad": "4.0",
             "krgdb": "2026-03-01",
             "clinvar_local": get_clinvar_db_version(),
+            "gnomad_local": get_gnomad_db_version(),
         },
         "pipeline": {
             "skip_api": skip_api,
