@@ -13,6 +13,7 @@ paths:
   templates: "templates"
   clinvar_db: "data/db/clinvar.sqlite3"
   gnomad_db: "data/db/gnomad.sqlite3"
+  gnomad_vcf_dir: "data/db/gnomad_vcf"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)

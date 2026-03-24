@@ -21,7 +21,7 @@ def _get_connection() -> Optional[sqlite3.Connection]:
         logger.warning(f"ClinVar local DB not found: {db_path}")
         return None
 
-    _conn = sqlite3.connect(db_path)
+    _conn = sqlite3.connect(db_path, check_same_thread=False)
     _conn.row_factory = sqlite3.Row
     return _conn
 

@@ -41,20 +41,30 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     elif "ClinVar" not in versions:
         versions["ClinVar"] = {"source": "not_available", "release": "N/A"}
 
-    # gnomAD local DB
+    # gnomAD tabix (VCF.bgz) — checked first, takes priority over SQLite
     try:
-        from scripts.db.query_local_gnomad import get_db_version as get_gnomad_version
-        gnomad_meta = get_gnomad_version()
-        if gnomad_meta.get("source") != "not available":
-            versions["gnomAD"] = {
-                "source": "local_db",
-                "version": gnomad_meta.get("gnomad_version", "unknown"),
-                "build_date": gnomad_meta.get("build_date", "unknown"),
-                "variant_count": gnomad_meta.get("variant_count", "unknown"),
-                "assembly": gnomad_meta.get("assembly", "GRCh38"),
-            }
+        from scripts.db.query_tabix_gnomad import get_db_version as get_tabix_version
+        tabix_meta = get_tabix_version()
+        if tabix_meta.get("source") != "not_available":
+            versions["gnomAD"] = tabix_meta
     except Exception:
         pass
+
+    # gnomAD local DB (SQLite fallback)
+    if "gnomAD" not in versions:
+        try:
+            from scripts.db.query_local_gnomad import get_db_version as get_gnomad_version
+            gnomad_meta = get_gnomad_version()
+            if gnomad_meta.get("source") != "not available":
+                versions["gnomAD"] = {
+                    "source": "local_db",
+                    "version": gnomad_meta.get("gnomad_version", "unknown"),
+                    "build_date": gnomad_meta.get("build_date", "unknown"),
+                    "variant_count": gnomad_meta.get("variant_count", "unknown"),
+                    "assembly": gnomad_meta.get("assembly", "GRCh38"),
+                }
+        except Exception:
+            pass
 
     if "gnomAD" not in versions and not skip_api:
         versions["gnomAD"] = {

@@ -19,3 +19,5 @@ input/
 output/*.html
 output/*.json
 output/*.pdf
+.DS_Store
+.omc/
