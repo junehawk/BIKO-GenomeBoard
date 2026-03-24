@@ -72,6 +72,15 @@ def parse_csq_value(csq_string: str, fields: List[str], gene: Optional[str] = No
             if i < len(fields):
                 entry[fields[i].lower()] = val
         # Map to standard keys
+        # Extract rsID from Existing_variation (e.g., "rs12345" or "rs12345&COSM67890")
+        existing_var = entry.get("existing_variation", "")
+        rsid = ""
+        if existing_var:
+            for var_id in existing_var.split("&"):
+                if var_id.startswith("rs"):
+                    rsid = var_id
+                    break
+
         mapped = {
             "gene": entry.get("symbol", ""),
             "consequence": entry.get("consequence", ""),
@@ -83,6 +92,9 @@ def parse_csq_value(csq_string: str, fields: List[str], gene: Optional[str] = No
             "polyphen": entry.get("polyphen", ""),
             "canonical": entry.get("canonical", ""),
             "mane_select": entry.get("mane_select", ""),
+            "rsid": rsid,
+            "clin_sig": entry.get("clin_sig", ""),
+            "gmaf": entry.get("gmaf", ""),
         }
         entries.append(mapped)
 

@@ -82,6 +82,9 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                     # Override gene from annotation if not in INFO
                     if not gene and annotation.get("gene"):
                         variant.gene = annotation["gene"]
+                    # Fill rsID from CSQ Existing_variation if VCF ID column was "."
+                    if not variant.rsid and annotation.get("rsid"):
+                        variant.rsid = annotation["rsid"]
 
                 variants.append(variant)
             except (ValueError, IndexError) as e:
