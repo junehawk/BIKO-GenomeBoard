@@ -5,6 +5,7 @@ from typing import Optional, Dict, List
 from scripts.common.models import Variant
 from scripts.common.api_utils import fetch_with_retry
 from scripts.common.config import get
+from scripts.common.cache import get_cached, set_cached
 
 CLINVAR_ESEARCH = get("api.clinvar_esearch", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi")
 CLINVAR_ESUMMARY = get("api.clinvar_esummary", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi")
@@ -89,6 +90,11 @@ def _derive_acmg_codes(clinvar_data: dict) -> List[str]:
 
 def query_clinvar(variant: Variant) -> Dict:
     """Query ClinVar for variant and return structured result."""
+    # Check cache first
+    cached = get_cached(variant.chrom, variant.pos, variant.ref, variant.alt, "clinvar")
+    if cached:
+        return cached
+
     clinvar_data = _search_clinvar_variant(variant)
 
     if clinvar_data is None:
@@ -107,7 +113,7 @@ def query_clinvar(variant: Variant) -> Dict:
     acmg_codes = _derive_acmg_codes(clinvar_data)
     accession = clinvar_data.get("accession", clinvar_data.get("variation_id"))
 
-    return {
+    result = {
         "agent": "clinical_geneticist",
         "variant": variant.variant_id,
         "gene": variant.gene or clinvar_data.get("gene", {}).get("symbol"),
@@ -117,6 +123,12 @@ def query_clinvar(variant: Variant) -> Dict:
         "acmg_codes": acmg_codes,
         "api_available": True,
     }
+
+    # Store in cache only if API returned data
+    if result["clinvar_significance"] != "Not Found":
+        set_cached(variant.chrom, variant.pos, variant.ref, variant.alt, "clinvar", result)
+
+    return result
 
 
 if __name__ == "__main__":

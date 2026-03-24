@@ -497,6 +497,12 @@ Examples:
         help="Comma-separated HPO IDs for rare disease mode (e.g., HP:0001250,HP:0001263)",
     )
     parser.add_argument(
+        "--clear-cache",
+        action="store_true",
+        dest="clear_cache",
+        help="Clear variant response cache before running",
+    )
+    parser.add_argument(
         "--verbose",
         "-v",
         action="store_true",
@@ -508,6 +514,11 @@ Examples:
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
+
+    if args.clear_cache:
+        from scripts.common.cache import clear_cache
+        count = clear_cache()
+        logger.info(f"Cache cleared: {count} entries removed")
 
     # Resolve JSON output path
     json_output = None

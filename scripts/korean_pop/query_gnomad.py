@@ -3,6 +3,7 @@ import requests
 from typing import Dict, Optional
 from scripts.common.models import Variant
 from scripts.common.config import get
+from scripts.common.cache import get_cached, set_cached
 
 GNOMAD_API = get("api.gnomad", "https://gnomad.broadinstitute.org/api")
 
@@ -65,6 +66,11 @@ def _extract_frequencies(variant_data: dict) -> Dict:
 
 
 def query_gnomad(variant: Variant) -> Dict:
+    # Check cache first
+    cached = get_cached(variant.chrom, variant.pos, variant.ref, variant.alt, "gnomad")
+    if cached:
+        return cached
+
     chrom_num = variant.chrom.replace("chr", "")
     variant_id = f"{chrom_num}-{variant.pos}-{variant.ref}-{variant.alt}"
 
@@ -82,6 +88,8 @@ def query_gnomad(variant: Variant) -> Dict:
         result = _extract_frequencies(data["data"]["variant"])
         if result["gnomad_all"] is not None:
             logger.info(f"gnomAD hit: {variant_id} in {dataset}, AF={result['gnomad_all']}")
+            # Store in cache only if API returned data
+            set_cached(variant.chrom, variant.pos, variant.ref, variant.alt, "gnomad", result)
             return result
 
     # No data found in any dataset
