@@ -1242,8 +1242,7 @@
 {% set clinical = v.agents.clinical if v.agents is defined and v.agents.clinical is defined else {} %}
 {% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
 
-{# Open a new page div on every odd-indexed variant (1st, 3rd, 5th…) #}
-{% if loop.index is odd %}
+{# Each variant gets its own page #}
 <div class="page variant-page">
   <div class="page-header-bar"></div>
   <div class="page-body">
@@ -1256,7 +1255,6 @@
         <strong style="color:var(--navy);">{{ sample_id }}</strong> &nbsp;|&nbsp; {{ date }}
       </div>
     </div>
-{% endif %}
 
     <!-- ── Variant block ── -->
     <div class="variant-block">
@@ -1469,8 +1467,6 @@
 
     </div><!-- /variant-block -->
 
-{# Close the page div after every even-indexed variant, or on the last variant if odd count #}
-{% if loop.index is even or loop.last %}
   </div><!-- /page-body -->
 
   <div class="page-footer">
@@ -1480,11 +1476,10 @@
     </div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ (loop.index / 2) | round(0, 'ceil') | int + 1 }}</div>
+      <div>Page {{ loop.index + 1 }}</div>
     </div>
   </div>
 </div><!-- /variant-page -->
-{% endif %}
 
 {% endfor %}
 
@@ -1692,7 +1687,7 @@
     </div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ variants | length + 2 }}</div>
+      <div>Page {{ (detailed_variants | default(variants)) | length + 2 }}</div>
     </div>
   </div>
 </div><!-- /pgx detail page -->
@@ -1826,7 +1821,7 @@
     </div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ variants | length + (3 if pgx_results else 2) }}</div>
+      <div>Page {{ (detailed_variants | default(variants)) | length + (3 if pgx_results else 2) }}</div>
     </div>
   </div>
 </div><!-- /methodology page -->
