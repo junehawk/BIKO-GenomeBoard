@@ -1,158 +1,222 @@
-# GenomeBoard 시스템 아키텍처
+# GenomeBoard Architecture
 
-## 시스템 개요
+## Design Principle
 
-GenomeBoard는 **Paperclip-native 멀티 에이전트 컨실리움(consilium)**이다. 각 에이전트는 특정 전문 분야를 담당하며, LLM은 오케스트레이션과 리포트 작성에만 사용된다. 모든 DB 쿼리와 ACMG 분류는 결정론적(deterministic) Python 스크립트로 처리한다.
+> All variant classification and database queries run as deterministic Python scripts. No LLM is involved in classification logic.
 
----
-
-## 핵심 설계 원칙
-
-> **LLM은 오케스트레이션과 리포트 작성에만 사용한다. 모든 DB 쿼리와 ACMG 분류는 결정론적 Python 스크립트가 담당한다.**
-
-이 원칙은 분석 재현성과 신뢰성을 보장한다. LLM이 변이 데이터를 직접 "판단"하거나 "추측"하지 않는다.
+This ensures reproducibility: the same VCF always produces the same ACMG codes, tier, and classification.
 
 ---
 
-## 조직도 (Org Chart)
+## Pipeline Overview
 
 ```
-Board (User)
-     │
-    CEO  ──────────────── Counselor
-     │                       │
-    CTO                   리포트 생성
-     │
-     ├── Intake Agent
-     ├── Clinical Geneticist
-     ├── Korean Pop Geneticist
-     └── Pharmacogenomicist (Pharma)
-```
-
-### 에이전트 어댑터
-
-| 에이전트 | 어댑터 | 모델 |
-|---------|--------|------|
-| CEO | claude-local | claude-sonnet-4 |
-| CTO | claude-local | claude-sonnet-4 |
-| Intake | process | — (Python 스크립트) |
-| Clinical | process | — (Python 스크립트) |
-| Korean Pop | process | — (Python 스크립트) |
-| Pharma | codex-local | OpenAI Codex |
-| Counselor | claude-local | claude-sonnet-4 |
-
----
-
-## 데이터 플로우
-
-```
-VCF 파일 / 텍스트 입력
-        │
-        ▼
-  [Intake Agent]
-  - VCF/텍스트 파싱
-  - 변이 정규화
-  - 변이별 티켓 생성
-        │
-        ▼
-      [CTO]
-  - 에이전트별 태스크 배정
-        │
-   ┌────┴────┬──────────────┐
-   ▼         ▼              ▼
-[Clinical]  [Korean Pop]  [Pharma]
- ClinVar     KRGDB         PharmGKB
- 조회         gnomAD EAS    CPIC
- ACMG codes  gnomAD ALL    PGx 등급
-   │         ACMG codes      │
-   └────┬────┘               │
-        ▼                    │
-      [CTO]  ◄───────────────┘
-  ACMG 코드 수집
-        │
-        ▼
-  [ACMG Engine]
-  결정론적 분류
-  (acmg_engine.py)
-        │
-        ▼
-    [Counselor]
-  결과 종합 + 한국인 특이 소견
-        │
-        ▼
-    PDF 리포트
+VCF Input
+    │
+    ▼
+[1] VCF Parser (parse_vcf.py)
+    - cyvcf2-based parsing
+    - CSQ/ANN field extraction (VEP/SnpEff pre-annotated VCFs)
+    - rsID extraction from Existing_variation
+    - HGVS, consequence, transcript, SIFT/PolyPhen parsing
+    │
+    ▼ (parallel per variant, ThreadPoolExecutor)
+[2] Database Queries
+    ├── ClinVar      → query_local_clinvar.py / query_clinvar.py (API fallback)
+    ├── gnomAD       → query_tabix_gnomad.py → query_local_gnomad.py → query_gnomad.py
+    ├── KRGDB        → query_krgdb.py (local TSV)
+    └── PGx          → korean_pgx.py (local lookup)
+    │
+    ▼
+[3] Frequency Comparison (compare_freq.py)
+    - KRGDB → gnomAD EAS → gnomAD ALL (3-tier Korean enrichment)
+    - Produces BA1, BS1, PM2_Supporting ACMG codes
+    │
+    ▼
+[4] ACMG Classification (acmg_engine.py)
+    - Aggregates codes from ClinVar + frequency comparison
+    - Applies ACMG/AMP 2015 rules from acmg_rules.json
+    - PGx genes → "Drug Response"; APOE → "Risk Factor"
+    - ClinVar conflict detection
+    - ClinVar override (expert panel / multi-submitter)
+    │
+    ▼
+[5] OncoKB Tiering (oncokb.py)
+    - Assigns Tier 1–4 to every variant
+    - Queries CIViC for treatment evidence (query_civic.py)
+    - Hotspot detection via CIViC variant coordinates
+    │
+    ▼ (rare-disease mode only)
+[5b] Rare Disease Enrichment
+    - HPO phenotype matching (hpo_matcher.py)
+    - OMIM gene-disease lookup (query_omim.py)
+    - ClinGen validity (query_clingen.py)
+    - Candidate ranking: classification rank, then HPO score
+    │
+    ▼
+[6] Report Generation (generate_pdf.py)
+    - Jinja2 templates → HTML
+    - Optional WeasyPrint PDF conversion
+    - VUS filtering when --hide-vus is set
 ```
 
 ---
 
-## 에이전트 런타임: Heartbeat 기반 폴링
+## OncoKB Tiering
 
-Paperclip은 **heartbeat 기반 폴링** 방식으로 에이전트를 실행한다.
+`scripts/clinical/oncokb.py` assigns a reporting tier to every variant:
 
-- CEO: `heartbeat_interval_seconds: 300` (5분)
-- CTO: `heartbeat_interval_seconds: 120` (2분)
-- 각 에이전트는 idle 상태에서 heartbeat마다 메시지 큐를 확인한다
-- `idle_timeout_seconds: 1800` — 30분 무활동 시 에이전트 종료
+| Tier | Criteria |
+|------|----------|
+| 1 | Pathogenic/LP on OncoKB Level 1–2 gene (proven therapeutic target); Drug Response; Risk Factor |
+| 2 | Pathogenic/LP on any cancer gene (OncoKB Level 3+); VUS at a known CIViC hotspot |
+| 3 | VUS on cancer gene (non-hotspot) — abbreviated table entry |
+| 4 | Everything else — count only, no detail page |
 
-> **중요**: LLM 에이전트 (CEO, CTO, Counselor)는 매 heartbeat마다 `/paperclip` 스킬을 invoke해야 한다. 이 스킬 없이는 Paperclip 메시지 큐를 폴링하거나 다른 에이전트에게 메시지를 전송할 수 없다.
-
-이 구조는 항상 켜진 서버 없이도 비동기 멀티 에이전트 협업을 가능하게 한다.
+The OncoKB cancer gene list is stored in `data/oncokb_cancer_genes.json` (gene name → `{type, level}`).
 
 ---
 
-## 파일 구조
+## CIViC Integration
+
+`scripts/db/query_civic.py` provides:
+
+- **`get_gene_summary(gene)`** — gene description and aliases from CIViC
+- **`get_variant_evidence(gene, variant_name)`** — treatment evidence items sorted by evidence level (A > B > C > D > E), with disease, drugs, clinical significance, and PMID citations
+- **`is_hotspot(gene, protein_position)`** — checks whether a protein position falls within any CIViC variant coordinate range for that gene
+
+The local SQLite database (`data/db/civic.sqlite3`) is built from CIViC's public TSV exports via `scripts/db/build_civic_db.py`. Tables: `genes`, `variants`, `evidence`.
+
+---
+
+## Hotspot Detection
+
+Hotspot detection uses CIViC variant coordinates:
+
+1. `extract_protein_position(hgvsp)` parses the amino-acid position from an HGVSp string (e.g., `p.Val600Glu` → `600`).
+2. `is_hotspot(gene, position)` queries the CIViC `variants` table for any record with `start <= position <= stop` for that gene.
+3. A VUS at a hotspot position is promoted to Tier 2 (`assign_tier` in `oncokb.py`).
+
+---
+
+## ClinVar Override Logic
+
+`apply_clinvar_override()` in `scripts/classification/acmg_engine.py` overrides the ACMG engine's classification when ClinVar provides high-confidence evidence:
+
+| ClinVar review status | Pathogenic | Likely Pathogenic | Benign | Likely Benign |
+|-----------------------|-----------|-------------------|--------|---------------|
+| Expert panel / practice guideline | → Pathogenic | → Likely Pathogenic | → Benign | → Likely Benign |
+| Multiple submitters, no conflicts | → Likely Pathogenic | → Likely Pathogenic | → Likely Benign | → Likely Benign |
+| Single submitter | no override | no override | no override | no override |
+| Conflicting submissions | no override | no override | no override | no override |
+
+When an override occurs, `classification.clinvar_override = True` and `original_engine_classification` is preserved for display in the report.
+
+`check_clinvar_conflict()` independently flags cases where the engine and ClinVar differ by 2+ steps on the 5-tier scale (e.g., engine says VUS, ClinVar says Pathogenic).
+
+---
+
+## ACMG Classification Engine
+
+`scripts/classification/acmg_engine.py` is a pure deterministic rule engine:
+
+1. Evidence codes from ClinVar and frequency comparison are collected as `AcmgEvidence` objects.
+2. `_count_by_strength()` buckets codes into PVS/PS/PM/PP/BA/BS/BP strength tiers. `_Supporting` suffixes downgrade by one tier.
+3. Rules from `data/acmg_rules.json` define minimum counts per strength tier for each classification (Pathogenic, Likely Pathogenic, VUS, Likely Benign, Benign).
+4. Conflicting evidence (both pathogenic and benign codes meeting their respective rules) → VUS with `conflict=True`.
+5. PGx genes and APOE bypass the rule engine and receive fixed classifications.
+
+---
+
+## Batch Pipeline Flow
 
 ```
-genomeboard/
-├── paperclip-config/          # Paperclip 에이전트 설정
-│   ├── paperclip.manifest.json  # 회사 목표, 예산, 에이전트 계층 구조
-│   └── agents/
-│       ├── ceo.json
-│       ├── cto.json
-│       ├── intake.json
-│       ├── clinical.json
-│       ├── korean-pop.json
-│       ├── pharma.json
-│       └── counselor.json
-│
-├── scripts/                   # 결정론적 Python 스크립트
-│   ├── common/
-│   │   ├── models.py          # 공유 데이터 모델 (Variant, AcmgEvidence, ...)
-│   │   ├── api_utils.py       # HTTP 유틸리티, rate limiting
-│   │   └── paperclip_client.py  # Paperclip API 클라이언트
-│   ├── intake/
-│   │   ├── parse_vcf.py       # VCF 파싱 (cyvcf2)
-│   │   └── parse_text.py      # 텍스트 변이 파싱
-│   ├── clinical/
-│   │   └── query_clinvar.py   # ClinVar E-utilities
-│   ├── korean_pop/
-│   │   ├── query_krgdb.py     # KRGDB 로컬 TSV 조회
-│   │   ├── query_gnomad.py    # gnomAD GraphQL API
-│   │   └── compare_freq.py    # 3단계 빈도 비교 + ACMG 코드 산출
-│   ├── pharma/
-│   │   ├── query_pharmgkb.py  # PharmGKB REST API
-│   │   └── korean_pgx.py      # 한국인 PGx 5대 유전자 패턴 매칭
+[1] Discover samples (directory glob or manifest CSV)
+        │
+        ▼
+[2] Parse all VCFs → collect unique variants
+    (variant key = chrom:pos:ref:alt)
+        │
+        ▼
+[3] Annotate unique variants in parallel (ThreadPoolExecutor, up to 10 workers)
+    Each unique variant annotated once regardless of how many samples share it
+        │
+        ▼
+[4] HPO resolution (rare-disease mode only)
+        │
+        ▼
+[5] Per-sample assembly (reuse cached annotations)
+    → ACMG classification
+    → OncoKB tiering
+    → Rare disease enrichment (if applicable)
+    → Build report_data dict
+        │
+        ▼
+[6] Parallel report generation (ProcessPoolExecutor)
+    One HTML report per sample
+```
+
+Variant deduplication is the key performance optimization: a cohort of 100 samples sharing common variants annotates each variant once rather than 100 times.
+
+---
+
+## Data Source Priority
+
+`annotation.source` in `config.yaml` controls the fallback chain:
+
+| Mode | ClinVar | gnomAD |
+|------|---------|--------|
+| `auto` | Local SQLite → ClinVar E-utilities API | tabix VCF → local SQLite → GraphQL API |
+| `local` | Local SQLite only | tabix VCF → local SQLite |
+| `api` | ClinVar E-utilities API | gnomAD GraphQL API |
+| `--skip-api` | Local SQLite only (forced) | tabix VCF → local SQLite (forced) |
+
+---
+
+## File Structure
+
+```
+gb/
+├── scripts/
+│   ├── orchestrate.py              # CLI + pipeline orchestration
 │   ├── classification/
-│   │   └── acmg_engine.py     # 결정론적 ACMG 분류 엔진
-│   └── counselor/
-│       └── generate_pdf.py    # WeasyPrint PDF 생성
-│
-├── templates/                 # Jinja2 PDF 템플릿
-├── data/                      # KRGDB TSV 등 로컬 데이터
-├── tests/                     # pytest 테스트 스위트
-├── docs/                      # 문서
-├── requirements.txt
-└── package.json
+│   │   └── acmg_engine.py          # ACMG/AMP 2015 rule engine
+│   ├── clinical/
+│   │   ├── oncokb.py               # OncoKB tiering, hotspot dispatch
+│   │   ├── query_clinvar.py        # ClinVar E-utilities API
+│   │   ├── hpo_matcher.py          # HPO phenotype scoring
+│   │   ├── query_omim.py           # OMIM gene-disease
+│   │   └── query_clingen.py        # ClinGen gene validity
+│   ├── db/
+│   │   ├── build_clinvar_db.py     # ClinVar SQLite builder
+│   │   ├── build_civic_db.py       # CIViC SQLite builder
+│   │   ├── build_gnomad_db.py      # gnomAD SQLite builder (legacy)
+│   │   ├── query_local_clinvar.py  # ClinVar SQLite queries
+│   │   ├── query_tabix_gnomad.py   # gnomAD tabix queries (primary)
+│   │   ├── query_local_gnomad.py   # gnomAD SQLite queries (fallback)
+│   │   ├── query_civic.py          # CIViC evidence + hotspot queries
+│   │   └── version_manager.py      # DB version metadata
+│   ├── korean_pop/
+│   │   ├── query_krgdb.py          # KRGDB local TSV
+│   │   ├── query_gnomad.py         # gnomAD GraphQL API
+│   │   └── compare_freq.py         # Frequency comparison + ACMG codes
+│   ├── pharma/
+│   │   └── korean_pgx.py           # PGx gene patterns + Korean prevalence
+│   ├── counselor/
+│   │   └── generate_pdf.py         # Jinja2 HTML + WeasyPrint PDF
+│   └── common/
+│       ├── models.py               # Variant, AcmgEvidence, FrequencyData
+│       ├── cache.py                # SQLite response cache
+│       └── config.py              # config.yaml loader
+├── data/
+│   ├── krgdb_freq.tsv              # Korean population frequencies
+│   ├── oncokb_cancer_genes.json    # OncoKB gene list
+│   ├── acmg_rules.json             # ACMG classification rules
+│   ├── gene_knowledge.json         # Gene metadata
+│   └── db/                         # Built databases (gitignored)
+├── templates/                      # Jinja2 report templates
+├── tests/                          # pytest suite
+├── config.yaml
+├── Dockerfile
+└── docker-compose.yml
 ```
-
----
-
-## ACMG 분류 엔진
-
-`scripts/classification/acmg_engine.py`는 순수 결정론적 로직으로 동작한다.
-
-- 입력: 각 에이전트가 산출한 `AcmgEvidence` 코드 목록
-- 처리: ACMG/AMP 2015 가이드라인 규칙 적용
-- 출력: `Pathogenic / Likely Pathogenic / VUS / Likely Benign / Benign`
-
-LLM은 이 분류 결과를 사후에 해석하고 설명하는 역할만 한다.

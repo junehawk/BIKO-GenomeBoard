@@ -1,204 +1,225 @@
-# GenomeBoard 설치 가이드
+# GenomeBoard Setup Guide
 
-## 사전 요구사항 (Prerequisites)
+## Prerequisites
 
-| 도구 | 최소 버전 | 비고 |
-|------|-----------|------|
-| Python | 3.10+ | 가상환경 권장 |
-| Node.js | 18+ | LTS 버전 권장 |
-| pnpm | 8+ | `npm install -g pnpm` |
-| bcftools | 1.17+ | VCF 전처리용 (선택) |
-
----
-
-## 1. 저장소 클론
-
-```bash
-git clone https://github.com/your-org/genomeboard.git
-cd genomeboard
-```
+| Tool | Version | Notes |
+|------|---------|-------|
+| Python | 3.10+ | Virtual environment recommended |
+| bcftools | 1.17+ | Optional, for VCF pre-filtering |
+| tabix | any | Required for gnomAD tabix queries |
 
 ---
 
-## 2. 환경 변수 설정
+## 1. Install Python dependencies
 
 ```bash
-cp .env.example .env
-```
-
-`.env` 파일을 열어 필요한 API 키를 입력한다. 각 키에 대한 설명은 [docs/API_KEYS.md](./API_KEYS.md)를 참조.
-
----
-
-## 3. Python 환경 설정
-
-```bash
-# 가상환경 생성 (권장)
 python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
+source .venv/bin/activate    # Windows: .venv\Scripts\activate
 
-# 의존성 설치
 pip install -r requirements.txt
 ```
 
-주요 Python 의존성:
-- `cyvcf2` — VCF 파일 파싱
-- `requests` — 외부 DB API 호출 (ClinVar, gnomAD, PharmGKB)
-- `WeasyPrint` — PDF 리포트 생성
-- `Jinja2` — PDF 템플릿 렌더링
+Key dependencies:
+- `cyvcf2` — VCF parsing
+- `pysam` — tabix queries for gnomAD
+- `WeasyPrint` + `Jinja2` — HTML/PDF report generation
+- `requests` — ClinVar/gnomAD API fallback
 
----
-
-## 4. Node.js 환경 설정 (Paperclip)
-
+**macOS build issues:**
 ```bash
-pnpm install
+# WeasyPrint
+brew install pango cairo gdk-pixbuf libffi
+pip install WeasyPrint
+
+# cyvcf2
+brew install htslib
+pip install cyvcf2
 ```
 
 ---
 
-## 5. VCF 파일 전처리
+## 2. Local Database Setup (Recommended)
 
-GenomeBoard는 PASS 필터 변이만 처리한다. 분석 전 bcftools로 필터링을 권장한다.
+Local databases eliminate API rate limits and enable fully offline operation. Build order: ClinVar → gnomAD → CIViC.
 
-### 기본 필터링
+### ClinVar SQLite (4.4M variants)
 
 ```bash
-# PASS 변이 + Gene 어노테이션이 있는 변이만 추출
-bcftools view -f PASS -i 'INFO/Gene!="."' input.vcf > filtered.vcf
+# Download variant summary from NCBI
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz
+
+# Build SQLite (takes ~2–5 min, produces ~1.5 GB)
+python scripts/db/build_clinvar_db.py data/db/variant_summary.txt.gz
+# Output: data/db/clinvar.sqlite3
 ```
 
-### 단일 유전자 필터링
+### gnomAD v4.1 Exomes (tabix)
+
+GenomeBoard queries gnomAD VCFs directly via tabix — no import step required.
+
+1. Download exomes v4.1 per-chromosome VCF + `.tbi` index files from:
+   https://gnomad.broadinstitute.org/downloads#v4
+
+2. Place files in `data/db/gnomad_vcf/`:
+   ```
+   data/db/gnomad_vcf/
+   ├── gnomad.exomes.v4.1.sites.chr1.vcf.bgz
+   ├── gnomad.exomes.v4.1.sites.chr1.vcf.bgz.tbi
+   ├── gnomad.exomes.v4.1.sites.chr2.vcf.bgz
+   ├── gnomad.exomes.v4.1.sites.chr2.vcf.bgz.tbi
+   └── ...
+   ```
+
+3. Verify tabix is available: `tabix --version`
+
+The pipeline auto-detects files in that directory via `paths.gnomad_vcf_dir` in `config.yaml`.
+
+**Partial downloads:** Downloading all chromosomes (~700 GB) is optional. Any missing chromosome falls back to the gnomAD GraphQL API automatically when `annotation.source` is `auto`.
+
+### CIViC (958 genes, 4812 evidence items)
 
 ```bash
-bcftools view -f PASS -i 'INFO/Gene="BRCA1"' input.vcf > brca1.vcf
+# Auto-downloads TSV files from civicdb.org and builds SQLite
+python scripts/db/build_civic_db.py
+# Output: data/db/civic.sqlite3
 ```
 
-### 다중 유전자 필터링
+---
 
-```bash
-bcftools view -f PASS -i 'INFO/Gene="CYP2D6" || INFO/Gene="CYP2C19"' input.vcf > pgx.vcf
+## 3. Configuration
+
+All settings are in `config.yaml` in the project root.
+
+```yaml
+annotation:
+  source: "auto"   # "local" | "api" | "auto" (local-first, API fallback)
+
+paths:
+  clinvar_db: "data/db/clinvar.sqlite3"
+  gnomad_vcf_dir: "data/db/gnomad_vcf"
+  civic_db: "data/db/civic.sqlite3"
+  krgdb: "data/krgdb_freq.tsv"
+
+thresholds:
+  ba1: 0.05     # Stand-alone benign (>5%)
+  bs1: 0.01     # Strong benign (>=1%)
+  pm2: 0.001    # PM2_Supporting (<=0.1%)
+
+cache:
+  enabled: true
+  ttl_seconds: 604800   # 7 days
 ```
 
-### BGZ 압축 및 인덱싱
+For Docker/on-premise, override paths with container mount points (see section 5).
+
+---
+
+## 4. Running the Pipeline
+
+### Single sample
 
 ```bash
+# Cancer mode (default), with API
+python scripts/orchestrate.py sample.vcf -o report.html
+
+# Fully offline (local DBs only)
+python scripts/orchestrate.py sample.vcf -o report.html --skip-api --hide-vus
+
+# Rare disease mode with HPO phenotypes
+python scripts/orchestrate.py patient.vcf --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 -o report.html
+
+# Also write JSON output
+python scripts/orchestrate.py sample.vcf -o report.html --json
+
+# PDF output
+python scripts/orchestrate.py sample.vcf -o report.pdf
+```
+
+### Batch processing
+
+Batch mode parses all VCFs, deduplicates variants across samples (annotating each unique variant only once), then generates per-sample reports in parallel.
+
+```bash
+# Directory of VCFs
+python scripts/orchestrate.py --batch vcf_dir/ --output-dir output/batch --workers 8
+
+# Manifest CSV (columns: sample_id,vcf_path)
+python scripts/orchestrate.py --batch manifest.csv --output-dir output/batch --hide-vus
+```
+
+Batch manifest format:
+```csv
+sample_id,vcf_path
+SAMPLE001,/data/vcfs/s001.vcf
+SAMPLE002,/data/vcfs/s002.vcf
+```
+
+### VCF pre-filtering (optional)
+
+GenomeBoard processes PASS-filter variants by default. Pre-filter with bcftools if needed:
+
+```bash
+# PASS only
+bcftools view -f PASS input.vcf > filtered.vcf
+
+# Compress and index (required for tabix gnomAD queries on input VCFs)
 bgzip filtered.vcf
 tabix -p vcf filtered.vcf.gz
 ```
 
-> **참고**: VCF는 GRCh38 기준을 권장한다. KRGDB 데이터가 GRCh38 좌표로 구축되어 있다.
+> GRCh38 is required. KRGDB and gnomAD v4.1 coordinates are GRCh38.
 
 ---
 
-## 6. 테스트 실행
-
-```bash
-# 전체 테스트 (verbose)
-pytest tests/ -v
-
-# 커버리지 포함
-pytest tests/ --cov=scripts --cov-report=html
-
-# 특정 모듈만
-pytest tests/test_acmg_logic.py -v
-pytest tests/test_korean_pgx.py -v
-```
-
----
-
-## 7. Paperclip 개발 서버 실행
-
-```bash
-pnpm dev
-```
-
-브라우저에서 Paperclip Board UI가 열리면 CEO 에이전트에게 메시지를 보내 분석을 시작할 수 있다.
-
----
-
-## 8. 분석 요청 예시
-
-Paperclip Board에서 CEO에게 다음과 같이 요청한다:
-
-```
-BRCA1 chr17:43057051 A>G 변이를 분석해주세요.
-```
-
-또는 VCF 파일 경로를 전달한다:
-
-```
-data/sample.vcf 파일의 변이를 분석해주세요.
-```
-
----
-
-## Paperclip 에이전트 CWD 설정
-
-paperclip-config/paperclip.manifest.json의 각 에이전트 adapterConfig.cwd를
-실제 프로젝트 경로로 설정해야 합니다:
-
-```bash
-# 현재 설정 (개발 환경)
-"cwd": "/Users/JL/Research/gb"
-
-# 다른 환경에서는 해당 경로로 변경
-"cwd": "/home/user/genomeboard"
-```
-
----
-
-## Docker
+## 5. Docker
 
 ### Build
+
 ```bash
 docker build -t genomeboard .
 ```
 
-### Single Sample
-```bash
-docker run -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output \
-  genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api
-```
+### Single sample
 
-### Batch Mode
-```bash
-docker run -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output \
-  genomeboard --batch /app/input/ --output-dir /app/output/batch
-```
-
-### With Local Databases (On-Premise)
 ```bash
 docker run \
-  -v $(pwd)/data/db:/app/data/db \
-  -v $(pwd)/input:/app/input \
-  -v $(pwd)/output:/app/output \
-  genomeboard /app/input/sample.vcf -o /app/output/report.html
+  -v ./data/db:/app/data/db \
+  -v ./input:/app/input \
+  -v ./output:/app/output \
+  genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api --hide-vus
 ```
 
-### Build Local Databases
+### Batch mode
+
 ```bash
-# Download and build ClinVar DB
-docker run -v $(pwd)/data/db:/app/data/db \
-  --entrypoint python genomeboard scripts/db/build_clinvar_db.py
-
-# Build gnomAD DB from your VCFs
-docker run -v $(pwd)/data/db:/app/data/db -v $(pwd)/gnomad_vcfs:/app/gnomad \
-  --entrypoint python genomeboard scripts/db/build_gnomad_db.py /app/gnomad/*.vcf.gz
+docker run \
+  -v ./data/db:/app/data/db \
+  -v ./input:/app/input \
+  -v ./output:/app/output \
+  genomeboard --batch /app/input/ --output-dir /app/output/batch --workers 4
 ```
+
+### docker-compose
+
+```bash
+docker-compose up
+```
+
+See `docker-compose.yml` for volume and environment configuration.
 
 ---
 
-## 문제 해결
+## 6. Testing
 
-**WeasyPrint 설치 실패 (macOS)**
 ```bash
-brew install pango cairo gdk-pixbuf libffi
-pip install WeasyPrint
+pip install -r requirements-dev.txt
+python -m pytest tests/ -v
+
+# Single module
+python -m pytest tests/test_oncokb.py -v
+python -m pytest tests/test_batch.py -v
+python -m pytest tests/test_rare_disease.py -v
 ```
 
-**cyvcf2 설치 실패**
-```bash
-brew install htslib
-pip install cyvcf2
-```
+372 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, and report generation.

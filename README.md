@@ -1,99 +1,215 @@
 # GenomeBoard
 
-**한국인 특화 유전체 변이 해석 AI 컨실리움** — Paperclip 멀티 에이전트 기반으로 VCF 입력부터 ACMG 분류, 약물유전체 스크리닝, 한국인 집단 빈도 분석까지 자동화된 PDF 리포트를 생성한다.
+Korean Population-Aware Genomic Variant Interpretation Platform
 
-> **Research Use Only** — 이 소프트웨어는 연구 목적으로만 사용한다. 임상 진단이나 의료적 의사결정에 사용해서는 안 된다.
-
----
-
-## 주요 기능
-
-- **ACMG/AMP 2015 분류** — 결정론적 규칙 엔진으로 Pathogenic/VUS/Benign 판정
-- **한국인 집단 빈도 분석** — KRGDB → gnomAD EAS → gnomAD ALL 3단계 비교
-- **약물유전체(PGx) 스크리닝** — CYP2D6, CYP2C19, CYP2C9, HLA-B, NUDT15 한국인 특화 패턴
-- **자동 PDF 리포트** — Genetic Counselor 에이전트가 한국어로 최종 리포트 생성
+> **Research Use Only** — Not for clinical diagnosis or medical decision-making.
 
 ---
 
-## 빠른 시작
+## Features
+
+- **Cancer Report (FoundationOne CDx style)**
+  - OncoKB-based variant tiering (Tier 1–4)
+  - CIViC curated treatment evidence with PMID citations
+  - Cancer hotspot detection (CIViC-derived)
+  - ClinVar direct classification override (expert panel / multi-submitter)
+  - VUS filtering (`--hide-vus`) for focused clinical reports
+
+- **Rare Disease Report**
+  - HPO phenotype-driven candidate gene ranking
+  - OMIM gene-disease associations
+  - ClinGen gene validity scores
+  - Inheritance pattern display (AD/AR/XL)
+
+- **Data Sources**
+  - ClinVar local SQLite DB (4.4M+ GRCh38 variants)
+  - gnomAD exomes v4.1 via tabix (direct VCF query)
+  - CIViC gene/variant knowledge (958 genes, 4812 evidence items)
+  - KRGDB Korean population frequencies
+  - 12 PGx genes with Korean vs Western prevalence comparison
+
+- **Pipeline**
+  - VEP/SnpEff pre-annotated VCF parsing (CSQ/ANN fields, rsID extraction)
+  - ACMG/AMP 2015 classification engine (deterministic rule engine)
+  - Batch processing with variant deduplication across samples
+  - SQLite response cache (7-day TTL)
+  - Docker packaging for on-premise deployment
+
+---
+
+## Quick Start
+
+### Single Sample
+```bash
+pip install -r requirements.txt
+python scripts/orchestrate.py sample.vcf -o report.html --json
+```
+
+### With Local Databases (Recommended)
+```bash
+# Build ClinVar DB (~4.4M variants)
+python scripts/db/build_clinvar_db.py data/db/variant_summary.txt.gz
+
+# Build CIViC DB (auto-downloads from civicdb.org)
+python scripts/db/build_civic_db.py
+
+# Run offline with local DBs and VUS filtering
+python scripts/orchestrate.py sample.vcf --skip-api --hide-vus -o report.html
+```
+
+### Rare Disease Mode
+```bash
+python scripts/orchestrate.py patient.vcf --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 -o report.html
+```
+
+### Batch Processing
+```bash
+python scripts/orchestrate.py --batch vcf_dir/ --output-dir output/batch --workers 8 --hide-vus
+```
+
+### Docker
+```bash
+docker build -t genomeboard .
+docker run -v ./data/db:/app/data/db -v ./input:/app/input -v ./output:/app/output \
+  genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api --hide-vus
+```
+
+---
+
+## Local Database Setup
+
+### ClinVar
+```bash
+# Download from NCBI
+curl -O https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz
+
+# Build SQLite DB
+python scripts/db/build_clinvar_db.py data/db/variant_summary.txt.gz
+```
+
+### gnomAD (tabix)
+Download exomes v4.1 VCF + `.tbi` index files from https://gnomad.broadinstitute.org/downloads#v4.
+Place in `data/db/gnomad_vcf/`. The pipeline queries them directly via tabix with no import step.
+
+### CIViC
+```bash
+# Auto-downloads TSVs from civicdb.org and builds SQLite
+python scripts/db/build_civic_db.py
+```
+
+---
+
+## Configuration
+
+All settings live in `config.yaml`. Key options:
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `annotation.source` | `auto` | `local` / `api` / `auto` (local-first with API fallback) |
+| `paths.clinvar_db` | `data/db/clinvar.sqlite3` | ClinVar SQLite path |
+| `paths.gnomad_vcf_dir` | `data/db/gnomad_vcf` | gnomAD tabix VCF directory |
+| `paths.civic_db` | `data/db/civic.sqlite3` | CIViC SQLite path |
+| `paths.krgdb` | `data/krgdb_freq.tsv` | KRGDB frequency table |
+| `thresholds.ba1` | `0.05` | Stand-alone benign allele frequency |
+| `thresholds.bs1` | `0.01` | Strong benign allele frequency |
+| `thresholds.pm2` | `0.001` | PM2_Supporting frequency cutoff |
+| `pgx.genes` | 12 genes | PGx gene list (CYP2D6, HLA-B, etc.) |
+| `cache.ttl_seconds` | `604800` | Variant response cache TTL (7 days) |
+
+---
+
+## Report Modes
+
+### Cancer (default)
+FoundationOne CDx-style tiered report:
+
+| Tier | Criteria | Display |
+|------|----------|---------|
+| Tier 1 | Pathogenic/LP on OncoKB Level 1–2 gene; Drug Response; Risk Factor | Full detail + treatment evidence |
+| Tier 2 | Pathogenic/LP on any cancer gene; Hotspot VUS | Full detail page |
+| Tier 3 | VUS on cancer gene (non-hotspot) | Abbreviated table |
+| Tier 4 | All other variants | Count only |
+
+### Rare Disease
+Germline variant report with phenotype matching:
+- HPO phenotype scoring against associated gene lists
+- Candidate gene ranking (Pathogenic first, then by HPO score)
+- OMIM/ClinGen annotations per gene
+- Inheritance patterns (AD/AR/XL)
+
+---
+
+## Project Structure
+
+```
+gb/
+├── scripts/
+│   ├── orchestrate.py          # Main CLI entry point
+│   ├── classification/
+│   │   └── acmg_engine.py      # Deterministic ACMG/AMP 2015 classifier
+│   ├── clinical/
+│   │   ├── oncokb.py           # OncoKB tiering + hotspot detection
+│   │   ├── query_clinvar.py    # ClinVar API
+│   │   ├── hpo_matcher.py      # HPO phenotype scoring
+│   │   ├── query_omim.py       # OMIM gene-disease lookup
+│   │   └── query_clingen.py    # ClinGen validity scores
+│   ├── db/
+│   │   ├── build_clinvar_db.py # ClinVar SQLite builder
+│   │   ├── build_civic_db.py   # CIViC SQLite builder
+│   │   ├── build_gnomad_db.py  # gnomAD SQLite builder
+│   │   ├── query_local_clinvar.py
+│   │   ├── query_tabix_gnomad.py
+│   │   └── query_civic.py      # CIViC evidence + hotspot queries
+│   ├── korean_pop/
+│   │   ├── query_krgdb.py      # KRGDB local TSV lookup
+│   │   ├── query_gnomad.py     # gnomAD GraphQL API
+│   │   └── compare_freq.py     # 3-tier frequency comparison + ACMG codes
+│   ├── pharma/
+│   │   └── korean_pgx.py       # 12-gene PGx with Korean prevalence
+│   ├── counselor/
+│   │   └── generate_pdf.py     # Jinja2 HTML/PDF report generator
+│   └── common/
+│       ├── models.py            # Shared data models
+│       ├── cache.py             # SQLite response cache
+│       └── config.py            # config.yaml loader
+├── templates/                   # Jinja2 report templates
+├── data/
+│   ├── krgdb_freq.tsv           # Korean population frequencies
+│   ├── oncokb_cancer_genes.json # OncoKB gene list
+│   ├── acmg_rules.json          # ACMG classification rules
+│   └── db/                      # Local database files (build separately)
+├── tests/                       # pytest suite (372 tests)
+├── config.yaml
+├── Dockerfile
+├── docker-compose.yml
+└── requirements.txt
+```
+
+---
+
+## Testing
 
 ```bash
-# 1. 의존성 설치
-pip install -r requirements.txt && pnpm install
-
-# 2. 환경 변수 설정
-cp .env.example .env  # ANTHROPIC_API_KEY, OPENAI_API_KEY 입력
-
-# 3. Paperclip 실행
-pnpm dev
+pip install -r requirements-dev.txt
+python -m pytest tests/ -v
 ```
 
-Paperclip Board가 열리면 CEO에게 메시지를 보내 분석을 시작한다.
-
-자세한 설치 방법은 [docs/SETUP.md](docs/SETUP.md)를 참조.
+372 tests covering ACMG classification, ClinVar override logic, CIViC integration, batch deduplication, HPO matching, OncoKB tiering, tabix gnomAD queries, and report generation.
 
 ---
 
-## 아키텍처 개요
+## Documentation
 
-GenomeBoard는 Paperclip 멀티 에이전트 프레임워크 위에서 동작한다. **LLM은 오케스트레이션과 리포트 작성만 담당하고, 모든 DB 쿼리와 ACMG 분류는 결정론적 Python 스크립트가 처리**한다.
-
-```
-Board (User) → CEO → CTO → [Intake | Clinical | Korean Pop | Pharma]
-                              ↓ ACMG codes 수집
-                         ACMG Engine (deterministic)
-                              ↓
-                         Counselor → PDF 리포트
-```
-
-상세 아키텍처는 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)를 참조.
+| Doc | Contents |
+|-----|----------|
+| [docs/SETUP.md](docs/SETUP.md) | Installation and database setup |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and data flow |
+| [docs/KOREAN_STRATEGY.md](docs/KOREAN_STRATEGY.md) | Korean population analysis strategy |
+| [docs/API_KEYS.md](docs/API_KEYS.md) | API key configuration |
 
 ---
 
-## 에이전트 설명
+## License
 
-| 에이전트 | 역할 | 어댑터 |
-|---------|------|--------|
-| **CEO** | 사용자 소통, 분석 요청 접수, 예산 관리 | Claude |
-| **CTO** | 분석 오케스트레이션, ACMG 코드 수집 및 판정 | Claude |
-| **Intake** | VCF/텍스트 파싱, 변이 정규화 | Bash (Python) |
-| **Clinical Geneticist** | ClinVar 조회, ACMG evidence 코드 산출 | Bash (Python) |
-| **Korean Pop Geneticist** | KRGDB + gnomAD 빈도 비교, 한국인 특이 변이 플래그 | Bash (Python) |
-| **Pharmacogenomicist** | PharmGKB/CPIC 조회, 한국인 PGx 5대 유전자 패턴 | Codex |
-| **Genetic Counselor** | 전체 결과 종합, 한국어 PDF 리포트 생성 | Claude |
-
----
-
-## 기술 스택
-
-| 구분 | 기술 |
-|------|------|
-| 에이전트 프레임워크 | [Paperclip](https://paperclipai.com) |
-| LLM | Claude Sonnet 4 (Anthropic), Codex (OpenAI) |
-| VCF 파싱 | cyvcf2 |
-| 변이 DB | ClinVar (E-utilities), gnomAD (GraphQL), KRGDB (로컬 TSV) |
-| PGx DB | PharmGKB REST API, CPIC 가이드라인 |
-| PDF 생성 | WeasyPrint + Jinja2 |
-| 테스트 | pytest |
-| 패키지 관리 | pip (Python), pnpm (Node.js) |
-
----
-
-## 문서
-
-| 문서 | 내용 |
-|------|------|
-| [docs/SETUP.md](docs/SETUP.md) | 설치 및 실행 가이드 |
-| [docs/API_KEYS.md](docs/API_KEYS.md) | API 키 설정 레퍼런스 |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 시스템 아키텍처 |
-| [docs/KOREAN_STRATEGY.md](docs/KOREAN_STRATEGY.md) | 한국인 특화 분석 전략 |
-
----
-
-## 라이선스
-
-MIT License — 자세한 내용은 [LICENSE](LICENSE) 파일 참조.
-
----
-
-> **Research Use Only**: GenomeBoard는 연구 및 교육 목적으로 개발된 소프트웨어다. 임상 진단, 치료 결정, 또는 의료적 의사결정에 사용해서는 안 된다. 모든 변이 해석은 반드시 자격을 갖춘 임상 유전학자 또는 의료 전문가의 검토를 거쳐야 한다.
+MIT — see [LICENSE](LICENSE).
