@@ -1,4 +1,10 @@
 # GenomeBoard Configuration
+
+# Docker paths (when running in container):
+# paths.krgdb: /app/data/krgdb_freq.tsv
+# paths.clinvar_db: /app/data/db/clinvar.sqlite3
+# paths.gnomad_db: /app/data/db/gnomad.sqlite3
+# cache.path: /app/data/cache/variant_cache.sqlite3
 paths:
   krgdb: "data/krgdb_freq.tsv"
   gene_knowledge: "data/gene_knowledge.json"

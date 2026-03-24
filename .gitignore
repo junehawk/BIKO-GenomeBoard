@@ -9,3 +9,8 @@ data/pglite/
 .pytest_cache/
 htmlcov/
 .ruff_cache/
+data/db/*.sqlite3
+!data/db/clinvar_test.sqlite3
+!data/db/gnomad_test.sqlite3
+data/cache/
+input/

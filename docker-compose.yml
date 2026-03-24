@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  genomeboard:
+    build: .
+    volumes:
+      - ./data/db:/app/data/db          # Local databases (ClinVar, gnomAD)
+      - ./data/cache:/app/data/cache    # Variant response cache
+      - ./output:/app/output            # Generated reports
+      - ./input:/app/input              # Input VCF files
+    environment:
+      - NCBI_API_KEY=${NCBI_API_KEY:-}
+      - GB_CONFIG_PATH=/app/config.yaml

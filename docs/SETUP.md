@@ -148,6 +148,47 @@ paperclip-config/paperclip.manifest.json의 각 에이전트 adapterConfig.cwd�
 
 ---
 
+## Docker
+
+### Build
+```bash
+docker build -t genomeboard .
+```
+
+### Single Sample
+```bash
+docker run -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output \
+  genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api
+```
+
+### Batch Mode
+```bash
+docker run -v $(pwd)/input:/app/input -v $(pwd)/output:/app/output \
+  genomeboard --batch /app/input/ --output-dir /app/output/batch
+```
+
+### With Local Databases (On-Premise)
+```bash
+docker run \
+  -v $(pwd)/data/db:/app/data/db \
+  -v $(pwd)/input:/app/input \
+  -v $(pwd)/output:/app/output \
+  genomeboard /app/input/sample.vcf -o /app/output/report.html
+```
+
+### Build Local Databases
+```bash
+# Download and build ClinVar DB
+docker run -v $(pwd)/data/db:/app/data/db \
+  --entrypoint python genomeboard scripts/db/build_clinvar_db.py
+
+# Build gnomAD DB from your VCFs
+docker run -v $(pwd)/data/db:/app/data/db -v $(pwd)/gnomad_vcfs:/app/gnomad \
+  --entrypoint python genomeboard scripts/db/build_gnomad_db.py /app/gnomad/*.vcf.gz
+```
+
+---
+
 ## 문제 해결
 
 **WeasyPrint 설치 실패 (macOS)**
