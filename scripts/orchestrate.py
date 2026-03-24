@@ -221,7 +221,7 @@ def _build_variant_records(variants, db_results, freq_results, classification_re
         gene = v_result.get("gene", "")
         cls = v_result.get("classification", "VUS")
         clinvar_sig = v_result.get("clinvar_significance", "")
-        tier = assign_tier(cls, gene, clinvar_sig)
+        tier = assign_tier(cls, gene, clinvar_sig, hgvsp=v_result.get("hgvsp", ""))
         v_result["tier"] = tier
         v_result["tier_label"] = get_tier_label(tier)
         cancer_info = get_cancer_gene_info(gene)

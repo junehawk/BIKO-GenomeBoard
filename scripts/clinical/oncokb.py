@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 from scripts.common.config import get
+from scripts.db.query_civic import is_hotspot, extract_protein_position
 
 logger = logging.getLogger(__name__)
 
@@ -46,11 +47,11 @@ def get_cancer_gene_info(gene: str) -> Optional[Dict]:
     return None
 
 
-def assign_tier(classification: str, gene: str, clinvar_significance: str = "") -> int:
+def assign_tier(classification: str, gene: str, clinvar_significance: str = "", hgvsp: str = "") -> int:
     """Assign reporting tier based on classification + OncoKB gene status.
 
     Tier 1: Pathogenic/LP with therapeutic implications (OncoKB Level 1-2)
-    Tier 2: Pathogenic/LP on any cancer gene (OncoKB Level 3+)
+    Tier 2: Pathogenic/LP on any cancer gene (OncoKB Level 3+); also VUS at a known hotspot
     Tier 3: VUS/Benign but on OncoKB cancer gene → abbreviated report
     Tier 4: VUS/Benign on non-cancer gene → count only, no report
 
@@ -69,9 +70,12 @@ def assign_tier(classification: str, gene: str, clinvar_significance: str = "") 
             return 1  # High-level therapeutic target
         return 2  # Pathogenic on any gene
 
-    # VUS on cancer gene
+    # VUS on cancer gene — check if hotspot
     if cls_lower == "vus" and gene_info:
-        return 3  # Cancer gene VUS → abbreviated report
+        protein_pos = extract_protein_position(hgvsp)
+        if protein_pos and is_hotspot(gene, protein_pos):
+            return 2  # Hotspot VUS → Tier 2 (Clinically Significant)
+        return 3  # Non-hotspot cancer gene VUS → abbreviated report
 
     # Benign on cancer gene (still worth noting)
     if "benign" in cls_lower and gene_info:

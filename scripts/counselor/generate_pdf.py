@@ -1,11 +1,34 @@
 # scripts/counselor/generate_pdf.py
 import os
+import re
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional
 from jinja2 import Environment, FileSystemLoader
 
 from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.config import get
+from scripts.db.query_civic import get_gene_summary, get_treatment_summary, get_variant_evidence
+
+
+_AA_MAP = {
+    "Ala": "A", "Arg": "R", "Asn": "N", "Asp": "D", "Cys": "C",
+    "Gln": "Q", "Glu": "E", "Gly": "G", "His": "H", "Ile": "I",
+    "Leu": "L", "Lys": "K", "Met": "M", "Phe": "F", "Pro": "P",
+    "Ser": "S", "Thr": "T", "Trp": "W", "Tyr": "Y", "Val": "V", "Ter": "*",
+}
+
+
+def _hgvsp_to_civic_variant(hgvsp: Optional[str]) -> Optional[str]:
+    """Convert HGVSp to CIViC variant name format. p.Gly12Asp -> G12D"""
+    if not hgvsp:
+        return None
+    m = re.match(r'p\.([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})', hgvsp)
+    if m:
+        aa1 = _AA_MAP.get(m.group(1), "?")
+        pos = m.group(2)
+        aa2 = _AA_MAP.get(m.group(3), "?")
+        return f"{aa1}{pos}{aa2}"
+    return None
 
 
 def _adjust_finding_summary(summary: str, classification: str) -> str:
@@ -78,6 +101,36 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                     v.setdefault("hgvs", info.get("hgvs", {}))
                     hgvs = info.get("hgvs", {})
                     v.setdefault("variant_effect", hgvs.get("variant_effect", ""))
+
+            # CIViC enrichment (takes priority over gene_knowledge for clinical content)
+            civic_gene = get_gene_summary(gene)
+            if civic_gene and civic_gene.get("description"):
+                v.setdefault("finding_summary", civic_gene["description"][:500])
+
+            # Treatment from CIViC
+            hgvsp = v.get("hgvsp", "")
+            civic_variant_name = _hgvsp_to_civic_variant(hgvsp)
+            civic_treatment = get_treatment_summary(gene, civic_variant_name)
+            if civic_treatment:
+                v.setdefault("treatment_strategies", civic_treatment)
+
+            # Evidence references from CIViC
+            civic_evidence = get_variant_evidence(gene, civic_variant_name) if civic_variant_name else []
+            if not civic_evidence:
+                civic_evidence = get_variant_evidence(gene)
+            if civic_evidence:
+                refs = [
+                    {
+                        "pmid": e["pmid"],
+                        "source": e["citation"],
+                        "note": f"{e['evidence_type']} — {e['significance']}",
+                    }
+                    for e in civic_evidence[:5]
+                    if e["pmid"]
+                ]
+                if refs:
+                    v.setdefault("references", refs)
+                    v.setdefault("content_status", "curated-civic")
 
         # Always apply classification-aware adjustment to finding_summary
         classification = v.get("classification", "VUS")
