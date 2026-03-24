@@ -754,15 +754,68 @@ def run_batch_pipeline(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="GenomeBoard Standalone Pipeline — VCF to Report",
+        description="GenomeBoard — Korean Population-Aware Genomic Variant Interpretation Pipeline",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  python scripts/orchestrate.py data/sample_vcf/demo_variants.vcf
-  python scripts/orchestrate.py data/sample_vcf/demo_variants.vcf -o output/report.pdf
-  python scripts/orchestrate.py data/sample_vcf/demo_variants.vcf --skip-api --json
-  python scripts/orchestrate.py --batch data/sample_vcf/batch_test/ --output-dir output/batch
-  python scripts/orchestrate.py --batch manifest.csv --workers 4 --output-dir output/batch
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REPORT MODES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  cancer (default)    FoundationOne CDx-style somatic variant report.
+                      Includes: ACMG classification, PGx (12 genes),
+                      Korean population comparison, therapeutic context.
+
+  rare-disease        Germline rare disease report with phenotype matching.
+                      Includes: HPO phenotype scoring, OMIM gene-disease
+                      associations, ClinGen validity, inheritance patterns,
+                      candidate gene ranking. Use with --hpo flag.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DATA SOURCES (config.yaml → annotation.source)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  auto (default)      Local SQLite DB first, API fallback if not found.
+  local               Local DB only (on-premise, no internet required).
+  api                 ClinVar/gnomAD API only (requires internet).
+
+  To use local databases, build them first:
+    python scripts/db/build_clinvar_db.py data/db/variant_summary.txt.gz
+    python scripts/db/build_gnomad_db.py data/db/gnomad_vcfs/*.vcf.bgz
+
+  Download sources:
+    ClinVar:  https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz
+    gnomAD:   https://gnomad.broadinstitute.org/downloads#v4 (exomes sites VCF)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EXAMPLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # Single sample (cancer mode, API)
+  python scripts/orchestrate.py sample.vcf -o report.html --json
+
+  # Single sample (offline, local DB only)
+  python scripts/orchestrate.py sample.vcf -o report.html --skip-api
+
+  # Rare disease mode with HPO phenotypes
+  python scripts/orchestrate.py patient.vcf --mode rare-disease \\
+    --hpo HP:0001250,HP:0001263 -o report.html
+
+  # PDF output
+  python scripts/orchestrate.py sample.vcf -o report.pdf
+
+  # Batch processing (directory of VCFs)
+  python scripts/orchestrate.py --batch vcf_dir/ --output-dir output/batch --workers 8
+
+  # Batch processing (manifest CSV: sample_id,vcf_path)
+  python scripts/orchestrate.py --batch manifest.csv --output-dir output/batch
+
+  # Build local databases for on-premise deployment
+  python scripts/db/build_clinvar_db.py data/db/variant_summary.txt.gz
+  python scripts/db/build_gnomad_db.py chr1.vcf.bgz chr2.vcf.bgz --version 4.1
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DOCKER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  docker build -t genomeboard .
+  docker run -v ./input:/app/input -v ./output:/app/output \\
+    genomeboard /app/input/sample.vcf -o /app/output/report.html
         """,
     )
     parser.add_argument(
@@ -801,19 +854,19 @@ Examples:
         "--skip-api",
         action="store_true",
         dest="skip_api",
-        help="Skip external API calls (ClinVar, gnomAD) for offline mode",
+        help="Skip external API calls (ClinVar, gnomAD). Uses local SQLite DBs if available. For on-premise deployment.",
     )
     parser.add_argument(
         "--mode",
         choices=["cancer", "rare-disease"],
         default=None,  # will use config default
-        help="Report mode: cancer (somatic) or rare-disease (germline)",
+        help="Report mode (default: cancer). 'cancer' = somatic variant report (FoundationOne style). 'rare-disease' = germline report with HPO/OMIM/ClinGen. See REPORT MODES below.",
     )
     parser.add_argument(
         "--hpo",
         type=str,
         default=None,
-        help="Comma-separated HPO IDs for rare disease mode (e.g., HP:0001250,HP:0001263)",
+        help="Comma-separated HPO IDs for rare disease mode. Enables phenotype-driven candidate gene ranking. (e.g., HP:0001250,HP:0001263)",
     )
     parser.add_argument(
         "--clear-cache",
