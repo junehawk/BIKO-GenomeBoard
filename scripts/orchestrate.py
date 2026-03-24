@@ -441,8 +441,9 @@ def run_pipeline(
     tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
 
     if hide_vus:
-        detailed_variants = [v for v in variant_records if v["classification"] not in _vus_classes]
-        omitted_variants = [v for v in variant_records if v["classification"] in _vus_classes]
+        # Tier 1 + Tier 2 always get full detail pages (even if VUS — e.g., hotspot VUS)
+        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2) or v["classification"] not in _vus_classes]
+        omitted_variants = [v for v in variant_records if v not in detailed_variants]
     else:
         detailed_variants = variant_records
         omitted_variants = []
@@ -648,8 +649,8 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
     tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
 
     if hide_vus:
-        detailed_variants = [v for v in variant_records if v["classification"] not in _vus_classes]
-        omitted_variants = [v for v in variant_records if v["classification"] in _vus_classes]
+        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2) or v["classification"] not in _vus_classes]
+        omitted_variants = [v for v in variant_records if v not in detailed_variants]
     else:
         detailed_variants = variant_records
         omitted_variants = []
