@@ -1263,16 +1263,17 @@
     {% set korean_variants = [] %}
     {% for v in variants %}
       {% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
-      {% if kp.korean_flag is defined and kp.korean_flag %}
+      {% set kf = kp.korean_flag | default('') %}
+      {% if kf and kf != 'No notable findings' and kf != 'Rare variant' and kf != 'Low frequency variant' and kf != 'Very common variant' and kf != 'Common variant' %}
         {% if korean_variants.append(v) %}{% endif %}
       {% endif %}
     {% endfor %}
 
-    {% if korean_variants %}
     <div class="section-header">
       <span class="section-badge badge-blue">Korean Population Findings</span>
       <div class="section-rule rule-blue"></div>
     </div>
+    {% if korean_variants %}
     <div class="korean-callout">
       <div class="korean-callout-title">Korean-Specific Annotations</div>
       <p>The following variants carry population-specific annotations relevant to the Korean genome cohort (KRGDB):</p>
@@ -1298,6 +1299,8 @@
         </tbody>
       </table>
     </div>
+    {% else %}
+    <p style="font-size:9pt;color:#64748b;">No Korean population-specific findings identified for this sample. KRGDB frequency data was not available for the variants in this sample.</p>
     {% endif %}
 
     <!-- PGx summary -->
@@ -1657,32 +1660,82 @@
   <div class="page-header-bar"></div>
   <div class="page-body">
     <div class="section-header">
-      <span class="section-badge">Additional Variants ({{ omitted_variants | length }})</span>
+      <span class="section-badge">Additional Variants — Statistical Summary</span>
     </div>
-    <p style="font-size:9pt;color:#64748b;margin-bottom:12px;">
-      The following {{ omitted_variants | length }} variants were classified as VUS or Benign
-      and are not shown in detail. Full data is available in the JSON output.
+
+    <p style="font-size:9pt;color:#64748b;margin-bottom:16px;">
+      {{ omitted_variants | length }} additional variants were identified but are not reported in detail.
+      Full variant data is available in the JSON output.
     </p>
-    <table>
-      <thead>
-        <tr>
-          <th>Gene</th>
-          <th>Variant</th>
-          <th>Classification</th>
-          <th>ClinVar</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for v in omitted_variants %}
-        <tr>
-          <td><strong>{{ v.gene | default('—') }}</strong></td>
-          <td style="font-family:monospace;font-size:8pt;">{{ v.variant }}</td>
-          <td>{{ v.classification }}</td>
-          <td>{{ v.clinvar_significance | default('—') }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+    <!-- Classification breakdown -->
+    <div style="display:flex;gap:24px;margin-bottom:16px;">
+      <div>
+        <strong style="font-size:9pt;">By Classification</strong>
+        <table style="width:auto;margin-top:4px;">
+          <tbody>
+          {% set cls_counts = {} %}
+          {% for v in omitted_variants %}
+            {% set cls = v.classification | default('VUS') %}
+            {% if cls_counts.update({cls: cls_counts.get(cls, 0) + 1}) %}{% endif %}
+          {% endfor %}
+          {% for cls, count in cls_counts.items() | sort(attribute='1', reverse=true) %}
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">{{ cls }}</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">{{ count }}</td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <strong style="font-size:9pt;">By Consequence Type</strong>
+        <table style="width:auto;margin-top:4px;">
+          <tbody>
+          {% set conseq_counts = {} %}
+          {% for v in omitted_variants %}
+            {% set conseq = v.consequence | default('Unknown') %}
+            {% if conseq_counts.update({conseq: conseq_counts.get(conseq, 0) + 1}) %}{% endif %}
+          {% endfor %}
+          {% for conseq, count in conseq_counts.items() | sort(attribute='1', reverse=true) %}
+          {% if loop.index <= 10 %}
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">{{ conseq }}</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">{{ count }}</td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <strong style="font-size:9pt;">Data Sources</strong>
+        <table style="width:auto;margin-top:4px;">
+          <tbody>
+          {% set ns = namespace(gnomad_count=0, clinvar_count=0) %}
+          {% for v in omitted_variants %}
+            {% if v.gnomad_all is defined and v.gnomad_all is not none %}{% set ns.gnomad_count = ns.gnomad_count + 1 %}{% endif %}
+            {% if v.clinvar_significance is defined and v.clinvar_significance != 'Not Found' and v.clinvar_significance %}{% set ns.clinvar_count = ns.clinvar_count + 1 %}{% endif %}
+          {% endfor %}
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">With gnomAD data</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">{{ ns.gnomad_count }} / {{ omitted_variants | length }}</td>
+          </tr>
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">With ClinVar data</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">{{ ns.clinvar_count }} / {{ omitted_variants | length }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  <div class="page-footer">
+    <div class="footer-disclaimer"><strong>Research Use Only — Not for clinical decision making.</strong></div>
+    <div class="footer-right"><div class="footer-brand-text">GenomeBoard</div></div>
   </div>
 </div>
 {% endif %}
