@@ -1347,7 +1347,7 @@
 
           {% if v.treatment_strategies is defined and v.treatment_strategies %}
             <div class="detail-label">Treatment Strategies</div>
-            <div class="detail-value">{{ v.treatment_strategies }}</div>
+            <div class="detail-value">{{ v.treatment_strategies | safe }}</div>
           {% endif %}
         </div>
 
@@ -1397,7 +1397,7 @@
           <div class="detail-col-title">Finding Summary</div>
 
           {% if v.finding_summary is defined and v.finding_summary %}
-            <p>{{ v.finding_summary }}</p>
+            <p>{{ v.finding_summary | safe }}</p>
           {% endif %}
 
           {% if kp.gene_description is defined and kp.gene_description %}

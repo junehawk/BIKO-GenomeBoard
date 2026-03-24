@@ -62,6 +62,16 @@ def _adjust_finding_summary(summary: str, classification: str) -> str:
     return summary
 
 
+def _linkify_pmids(text):
+    """Convert PMID references in text to PubMed links."""
+    if not text:
+        return text
+    def _replace_pmid(match):
+        pmid = match.group(1)
+        return f'<a href="https://pubmed.ncbi.nlm.nih.gov/{pmid}/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">PMID:{pmid}</a>'
+    return re.sub(r'PMID:\s*(\d+)', _replace_pmid, text)
+
+
 def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
     # Determine template directory based on mode
     templates_base = get("paths.templates") or str(Path(__file__).parent.parent.parent / "templates")
@@ -132,11 +142,36 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                     v.setdefault("references", refs)
                     v.setdefault("content_status", "curated-civic")
 
+        # Build frequency text from available data if frequency_prognosis is empty
+        if not v.get("frequency_prognosis"):
+            freq_parts = []
+            if v.get("gnomad_all") is not None:
+                freq_parts.append(f"gnomAD global AF: {v['gnomad_all']:.6f}")
+            if v.get("gnomad_eas") is not None:
+                freq_parts.append(f"gnomAD East Asian AF: {v['gnomad_eas']:.6f}")
+            kf = ""
+            if v.get("agents") and v["agents"].get("korean_pop"):
+                kf = v["agents"]["korean_pop"].get("korean_flag", "")
+            if kf and kf not in ("No notable findings", "No frequency data available"):
+                freq_parts.append(f"Korean: {kf}")
+            if v.get("krgdb_freq") is not None:
+                freq_parts.append(f"KRGDB Korean AF: {v['krgdb_freq']}")
+            if freq_parts:
+                v["frequency_prognosis"] = ". ".join(freq_parts) + "."
+            elif v.get("gnomad_all") is None:
+                v["frequency_prognosis"] = "Not observed in gnomAD population database (absent or extremely rare)."
+
         # Always apply classification-aware adjustment to finding_summary
         classification = v.get("classification", "VUS")
         raw_summary = v.get("finding_summary", "")
         if raw_summary:
             v["finding_summary"] = _adjust_finding_summary(raw_summary, classification)
+
+        # Convert PMID references to clickable HTML links (safe — we control this text)
+        if v.get("treatment_strategies"):
+            v["treatment_strategies"] = _linkify_pmids(v["treatment_strategies"])
+        if v.get("finding_summary"):
+            v["finding_summary"] = _linkify_pmids(v["finding_summary"])
 
     for pgx in report_data.get("pgx_results", []):
         gene = pgx.get("gene")
