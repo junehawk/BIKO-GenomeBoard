@@ -29,7 +29,7 @@ from scripts.korean_pop.query_gnomad import query_gnomad
 from scripts.korean_pop.query_krgdb import query_krgdb
 from scripts.korean_pop.compare_freq import compare_frequencies
 from scripts.pharma.korean_pgx import check_korean_pgx
-from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict
+from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict, apply_clinvar_override
 from scripts.counselor.generate_pdf import generate_report_html, generate_pdf
 from scripts.common.models import AcmgEvidence, FrequencyData
 from scripts.common.config import get
@@ -185,6 +185,8 @@ def _build_variant_records(variants, db_results, freq_results, classification_re
                 "classification": classification.classification,
                 "acmg_codes": classification.evidence_codes,
                 "conflict": classification.conflict,
+                "clinvar_override": getattr(classification, "clinvar_override", False),
+                "original_engine_classification": getattr(classification, "original_engine_classification", None),
                 "clinvar_significance": clinvar.get("clinvar_significance", "Not Found"),
                 "clinvar_id": clinvar.get("clinvar_id"),
                 "review_status": clinvar.get("review_status"),
@@ -285,8 +287,20 @@ def _classify_variants(variants, db_results, freq_results):
 
         classification = classify_variant(evidences, gene=variant.gene)
         clinvar_sig = db["clinvar"].get("clinvar_significance", "Not Found")
+        review_status = db["clinvar"].get("review_status", "")
         conflict = check_clinvar_conflict(classification.classification, clinvar_sig)
         classification.conflict = conflict
+
+        # Apply ClinVar override when evidence is high-confidence
+        original_classification = classification.classification
+        final_classification = apply_clinvar_override(original_classification, clinvar_sig, review_status)
+        if final_classification != original_classification:
+            classification.classification = final_classification
+            classification.clinvar_override = True
+            classification.original_engine_classification = original_classification
+        else:
+            classification.clinvar_override = False
+            classification.original_engine_classification = None
 
         classification_results[variant.variant_id] = classification
 
@@ -302,6 +316,7 @@ def run_pipeline(
     skip_api: bool = False,
     mode: str = None,
     hpo_ids: list = None,
+    hide_vus: bool = False,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -399,10 +414,22 @@ def run_pipeline(
     )
     summary = _build_summary(variant_records)
 
+    # Split variants for template rendering (VUS filtering)
+    _vus_classes = ("VUS", "Benign", "Likely Benign")
+    if hide_vus:
+        detailed_variants = [v for v in variant_records if v["classification"] not in _vus_classes]
+        omitted_variants = [v for v in variant_records if v["classification"] in _vus_classes]
+    else:
+        detailed_variants = variant_records
+        omitted_variants = []
+
     report_data = {
         "sample_id": sample_id,
         "date": str(date.today()),
         "variants": variant_records,
+        "detailed_variants": detailed_variants,
+        "omitted_variants": omitted_variants,
+        "hide_vus": hide_vus,
         "pgx_results": [
             {
                 "gene": p.gene,
@@ -545,7 +572,7 @@ def _bulk_annotate_variants(unique_variants: dict, krgdb_path: str, skip_api: bo
 
 
 def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
-                            mode, hpo_ids, hpo_results, krgdb_path):
+                            mode, hpo_ids, hpo_results, krgdb_path, hide_vus=False):
     """Build report_data dict for one sample using pre-computed annotations.
 
     Reuses the same ACMG classification and frequency-comparison logic as run_pipeline().
@@ -585,10 +612,22 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
     )
     summary = _build_summary(variant_records)
 
+    # Split variants for template rendering (VUS filtering)
+    _vus_classes = ("VUS", "Benign", "Likely Benign")
+    if hide_vus:
+        detailed_variants = [v for v in variant_records if v["classification"] not in _vus_classes]
+        omitted_variants = [v for v in variant_records if v["classification"] in _vus_classes]
+    else:
+        detailed_variants = variant_records
+        omitted_variants = []
+
     return {
         "sample_id": sample["sample_id"],
         "date": str(date.today()),
         "variants": variant_records,
+        "detailed_variants": detailed_variants,
+        "omitted_variants": omitted_variants,
+        "hide_vus": hide_vus,
         "pgx_results": [
             {
                 "gene": p.gene,
@@ -661,6 +700,7 @@ def run_batch_pipeline(
     skip_api: bool = False,
     krgdb_path: str = None,
     hpo_ids: list = None,
+    hide_vus: bool = False,
     _skip_reports: bool = False,
 ) -> dict:
     """Process multiple VCF files with variant deduplication.
@@ -730,6 +770,7 @@ def run_batch_pipeline(
                 hpo_ids,
                 hpo_results,
                 krgdb_file,
+                hide_vus=hide_vus,
             )
             sample_reports.append(report_data)
         except Exception as e:
@@ -909,6 +950,12 @@ DOCKER
         dest="output_dir",
         help="Output directory for batch reports (default: output/batch)",
     )
+    parser.add_argument(
+        "--hide-vus",
+        action="store_true",
+        dest="hide_vus",
+        help="Hide VUS and Benign variants from detailed report pages (shown in summary count only)",
+    )
 
     args = parser.parse_args()
 
@@ -937,6 +984,7 @@ DOCKER
             skip_api=args.skip_api,
             krgdb_path=args.krgdb,
             hpo_ids=hpo_ids,
+            hide_vus=args.hide_vus,
         )
 
         if args.json_flag is not None:
@@ -976,6 +1024,7 @@ DOCKER
             skip_api=args.skip_api,
             mode=mode,
             hpo_ids=hpo_ids,
+            hide_vus=args.hide_vus,
         )
 
         if result is None:

@@ -126,6 +126,58 @@ def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
     return abs(engine_rank - clinvar_rank) >= 2
 
 
+def apply_clinvar_override(engine_classification: str, clinvar_significance: str, review_status: str) -> str:
+    """Override ACMG engine classification when ClinVar has high-confidence evidence.
+
+    Rules:
+    - Expert panel / practice guideline: trust ClinVar completely
+    - Multiple submitters, no conflicts: trust for Pathogenic/Benign
+    - Single submitter: no override (insufficient confidence)
+    - Conflicting: no override
+
+    Returns the final classification (may be same as engine_classification).
+    """
+    if not clinvar_significance or not review_status:
+        return engine_classification
+
+    sig_lower = clinvar_significance.lower().strip()
+    review_lower = review_status.lower().strip()
+
+    # Skip non-classifiable ClinVar entries
+    skip_sigs = {"not found", "drug response", "risk factor", "other",
+                 "not provided", "no classification for the single variant", "-", ""}
+    if sig_lower in skip_sigs:
+        return engine_classification
+
+    # Determine ClinVar confidence level
+    is_expert = "expert panel" in review_lower or "practice guideline" in review_lower
+    is_multi = "multiple submitters" in review_lower and "conflicting" not in review_lower
+
+    if not is_expert and not is_multi:
+        return engine_classification  # Single submitter or conflicting — don't override
+
+    # Map ClinVar significance to classification
+    if "pathogenic" in sig_lower and "likely" not in sig_lower and "conflict" not in sig_lower:
+        if is_expert:
+            return "Pathogenic"
+        elif is_multi:
+            return "Likely Pathogenic"
+    elif "likely pathogenic" in sig_lower:
+        return "Likely Pathogenic"
+    elif "pathogenic/likely pathogenic" in sig_lower:
+        return "Likely Pathogenic"
+    elif "benign" in sig_lower and "likely" not in sig_lower and "conflict" not in sig_lower:
+        if is_expert:
+            return "Benign"
+        elif is_multi:
+            return "Likely Benign"
+    elif "likely benign" in sig_lower:
+        if is_expert or is_multi:
+            return "Likely Benign"
+
+    return engine_classification
+
+
 def classify_variant(evidences: List[AcmgEvidence], gene: str = None) -> ClassificationResult:
     """Classify variant by ACMG rules. If gene is a PGx gene, return 'Drug Response' instead."""
     if gene and gene in PGX_GENES:

@@ -1082,6 +1082,12 @@
           <span class="info-label">Benign / LB</span>
           <span class="info-value" style="color:#166534;font-weight:700;">{{ (summary.benign | default(0)) + (summary.likely_benign | default(0)) }}</span>
         </div>
+        {% if omitted_variants is defined and omitted_variants %}
+        <div class="info-row">
+          <span class="info-label">Omitted (VUS/Benign)</span>
+          <span class="info-value">{{ omitted_variants | length }}</span>
+        </div>
+        {% endif %}
       </div>
     </div>
 
@@ -1390,7 +1396,7 @@
 {# ══════════════════════════════════════════════════════════════
    PAGE 2+ — VARIANT DETAIL (compact, 2 per page)
 ══════════════════════════════════════════════════════════════ #}
-{% for v in variants %}
+{% for v in detailed_variants | default(variants) %}
 {% set cls = v.classification | lower %}
 {% set clinical = v.agents.clinical if v.agents is defined and v.agents.clinical is defined else {} %}
 {% set kp = v.agents.korean_pop if v.agents is defined and v.agents.korean_pop is defined else {} %}
@@ -1433,6 +1439,9 @@
           {% endif %}
           <div class="variant-badges">
             {{ class_badge(v.classification) }}
+            {% if v.clinvar_override is defined and v.clinvar_override %}
+              <span style="font-size:7pt;color:#0F766E;" title="Classification upgraded by ClinVar evidence">ClinVar&#8593;</span>
+            {% endif %}
             {% if v.acmg_codes %}
               {% for code in v.acmg_codes %}
                 <span class="acmg-code">{{ code }}</span>
@@ -1642,6 +1651,41 @@
 {% endif %}
 
 {% endfor %}
+
+{% if omitted_variants is defined and omitted_variants %}
+<div class="page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+    <div class="section-header">
+      <span class="section-badge">Additional Variants ({{ omitted_variants | length }})</span>
+    </div>
+    <p style="font-size:9pt;color:#64748b;margin-bottom:12px;">
+      The following {{ omitted_variants | length }} variants were classified as VUS or Benign
+      and are not shown in detail. Full data is available in the JSON output.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Gene</th>
+          <th>Variant</th>
+          <th>Classification</th>
+          <th>ClinVar</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in omitted_variants %}
+        <tr>
+          <td><strong>{{ v.gene | default('—') }}</strong></td>
+          <td style="font-family:monospace;font-size:8pt;">{{ v.variant }}</td>
+          <td>{{ v.classification }}</td>
+          <td>{{ v.clinvar_significance | default('—') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 
 {# ══════════════════════════════════════════════════════════════
