@@ -1002,71 +1002,96 @@
       <div class="section-rule"></div>
     </div>
 
-    {# Split variants into significant vs VUS/Benign #}
-    {% set sig_variants = [] %}
-    {% set other_variants = [] %}
-    {% for v in variants %}
-      {% set c = v.classification | lower %}
-      {% if "pathogenic" in c or "drug response" in c %}
-        {% if sig_variants.append(v) %}{% endif %}
-      {% else %}
-        {% if other_variants.append(v) %}{% endif %}
-      {% endif %}
-    {% endfor %}
-
-    <div class="findings-two-col">
-      <!-- Clinically Significant panel -->
-      <div class="findings-panel">
-        <div class="findings-panel-title title-path">Clinically Significant</div>
-        <div class="findings-panel-body">
-          {% if sig_variants %}
-            {% for v in sig_variants %}
-            <div class="finding-row">
-              <div>
-                <span class="finding-gene">{{ v.gene }}</span>
-                {% if v.conflict is defined and v.conflict %}
-                  <span class="conflict-flag">&#9888;</span>
-                {% endif %}
-                {% if v.variant_effect is defined and v.variant_effect %}
-                  <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
-                {% endif %}
-                <br><span class="finding-variant">{{ v.variant }}</span>
-              </div>
-              {{ class_badge(v.classification) }}
-            </div>
-            {% endfor %}
-          {% else %}
-            <div class="no-data" style="padding:8px 0;">No clinically significant variants identified.</div>
-          {% endif %}
+    <!-- Tier 1: Therapeutic Targets -->
+    {% if tier1_variants is defined and tier1_variants %}
+    <div class="section-header" style="margin-top:10px;">
+      <span class="section-badge" style="background:#991B1B;">Tier 1 — Therapeutic Targets</span>
+      <div class="section-rule" style="border-color:#991B1B;"></div>
+    </div>
+    <p style="font-size:9pt;color:#64748b;margin-bottom:6px;">Variants with FDA-approved or standard-of-care therapeutic implications (OncoKB Level 1-2).</p>
+    <div class="findings-panel" style="width:100%;max-width:100%;border-left:3px solid #991B1B;">
+      <div class="findings-panel-body">
+        {% for v in tier1_variants %}
+        <div class="finding-row">
+          <div>
+            <span class="finding-gene">{{ v.gene }}</span>
+            {% if v.cancer_gene_type %}<span style="display:inline-block;background:#fff1f2;color:#991B1B;border:1px solid #fecaca;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.cancer_gene_type }}</span>{% endif %}
+            {% if v.conflict is defined and v.conflict %}<span class="conflict-flag">&#9888;</span>{% endif %}
+            <br><span class="finding-variant">{{ v.variant }}</span>
+          </div>
+          {{ class_badge(v.classification) }}
         </div>
-      </div>
-
-      <!-- VUS / Benign panel -->
-      <div class="findings-panel">
-        <div class="findings-panel-title title-vus">VUS &amp; Benign</div>
-        <div class="findings-panel-body">
-          {% if other_variants %}
-            {% for v in other_variants %}
-            <div class="finding-row">
-              <div>
-                <span class="finding-gene">{{ v.gene }}</span>
-                {% if v.conflict is defined and v.conflict %}
-                  <span class="conflict-flag">&#9888;</span>
-                {% endif %}
-                {% if v.variant_effect is defined and v.variant_effect %}
-                  <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.variant_effect }}</span>
-                {% endif %}
-                <br><span class="finding-variant">{{ v.variant }}</span>
-              </div>
-              {{ class_badge(v.classification) }}
-            </div>
-            {% endfor %}
-          {% else %}
-            <div class="no-data" style="padding:8px 0;">No VUS or benign variants.</div>
-          {% endif %}
-        </div>
+        {% endfor %}
       </div>
     </div>
+    {% endif %}
+
+    <!-- Tier 2: Clinically Significant -->
+    {% if tier2_variants is defined and tier2_variants %}
+    <div class="section-header" style="margin-top:10px;">
+      <span class="section-badge" style="background:#92400E;">Tier 2 — Clinically Significant</span>
+      <div class="section-rule" style="border-color:#92400E;"></div>
+    </div>
+    <p style="font-size:9pt;color:#64748b;margin-bottom:6px;">Pathogenic/Likely Pathogenic variants with potential clinical significance.</p>
+    <div class="findings-panel" style="width:100%;max-width:100%;border-left:3px solid #92400E;">
+      <div class="findings-panel-body">
+        {% for v in tier2_variants %}
+        <div class="finding-row">
+          <div>
+            <span class="finding-gene">{{ v.gene }}</span>
+            {% if v.cancer_gene_type %}<span style="display:inline-block;background:#fffbeb;color:#92400E;border:1px solid #fde68a;border-radius:2px;padding:1px 6px;font-family:var(--font-sans);font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ v.cancer_gene_type }}</span>{% endif %}
+            {% if v.conflict is defined and v.conflict %}<span class="conflict-flag">&#9888;</span>{% endif %}
+            <br><span class="finding-variant">{{ v.variant }}</span>
+          </div>
+          {{ class_badge(v.classification) }}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    {% if (tier1_variants is not defined or not tier1_variants) and (tier2_variants is not defined or not tier2_variants) %}
+    <div class="no-data" style="padding:8px 0;">No clinically significant variants identified.</div>
+    {% endif %}
+
+    <!-- Tier 3: Cancer Gene VUS (abbreviated table) -->
+    {% if tier3_variants is defined and tier3_variants %}
+    <div class="section-header" style="margin-top:10px;">
+      <span class="section-badge" style="background:#475569;">Tier 3 — Cancer Gene Variants (VUS)</span>
+      <div class="section-rule" style="border-color:#475569;"></div>
+    </div>
+    <p style="font-size:9pt;color:#64748b;margin-bottom:6px;">Variants of uncertain significance in known cancer genes. No therapeutic action recommended at this time.</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Gene</th>
+          <th>Variant</th>
+          <th>Type</th>
+          <th>ClinVar</th>
+          <th>Consequence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in tier3_variants %}
+        <tr>
+          <td><strong>{{ v.gene }}</strong></td>
+          <td style="font-family:monospace;font-size:8pt;">{{ v.variant }}</td>
+          <td>{{ v.cancer_gene_type | default('—') }}</td>
+          <td>{{ v.clinvar_significance | default('—') }}</td>
+          <td>{{ v.consequence | default('—') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <!-- Tier 4: Count only -->
+    {% if tier4_count is defined and tier4_count > 0 %}
+    <p style="font-size:9pt;color:#94a3b8;margin-top:16px;">
+      {{ tier4_count }} additional variant{{ 's' if tier4_count != 1 else '' }} (VUS/Benign in non-cancer genes) identified but not reported.
+      Full variant data is available in the JSON output.
+    </p>
+    {% endif %}
 
     <!-- Korean Population Findings callout -->
     {% set korean_variants = [] %}
@@ -1157,7 +1182,8 @@
     </table>
     {% endif %}
 
-    <!-- Genomic findings with no reportable therapeutic options -->
+    {# Legacy "No Reportable" section — shown only when tier vars are not provided (backward compat) #}
+    {% if tier1_variants is not defined %}
     <div class="section-header">
       <span class="section-badge badge-navy">Genomic Findings — No Reportable Therapeutic Options</span>
       <div class="section-rule rule-navy"></div>
@@ -1184,6 +1210,8 @@
       <div class="no-data">All identified variants have reportable significance.</div>
       {% endif %}
     </div>
+    {% endif %}
+
 
   </div><!-- /page-body -->
 
@@ -1249,6 +1277,16 @@
           {% endif %}
           <div class="variant-badges">
             {{ class_badge(v.classification) }}
+            {% if v.tier is defined %}
+              {% if v.tier == 1 %}
+                <span style="display:inline-block;background:#991B1B;color:#fff;border-radius:2px;padding:1px 7px;font-size:7pt;font-weight:700;letter-spacing:0.4px;">{{ v.tier_label }}</span>
+              {% elif v.tier == 2 %}
+                <span style="display:inline-block;background:#92400E;color:#fff;border-radius:2px;padding:1px 7px;font-size:7pt;font-weight:700;letter-spacing:0.4px;">{{ v.tier_label }}</span>
+              {% endif %}
+            {% endif %}
+            {% if v.cancer_gene_type is defined and v.cancer_gene_type %}
+              <span style="display:inline-block;background:#f0f4fa;color:var(--navy);border:1px solid #c7d6eb;border-radius:2px;padding:1px 6px;font-size:7.5pt;font-weight:600;">[{{ v.cancer_gene_type }}]</span>
+            {% endif %}
             {% if v.clinvar_override is defined and v.clinvar_override %}
               <span style="font-size:7pt;color:#0F766E;" title="Classification upgraded by ClinVar evidence">ClinVar&#8593;</span>
             {% endif %}
@@ -1481,6 +1519,8 @@
   </div>
 </div>
 {% endif %}
+
+{# Cancer mode: no separate omitted page since tier3/tier4 are shown on summary page #}
 
 
 {# ══════════════════════════════════════════════════════════════

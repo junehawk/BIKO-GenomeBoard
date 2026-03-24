@@ -33,6 +33,7 @@ from scripts.classification.acmg_engine import classify_variant, check_clinvar_c
 from scripts.counselor.generate_pdf import generate_report_html, generate_pdf
 from scripts.common.models import AcmgEvidence, FrequencyData
 from scripts.common.config import get
+from scripts.clinical.oncokb import assign_tier, get_cancer_gene_info, get_tier_label
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("genomeboard")
@@ -214,6 +215,22 @@ def _build_variant_records(variants, db_results, freq_results, classification_re
                 },
             }
         )
+
+    # Assign OncoKB tiers to all variants
+    for v_result in variant_records:
+        gene = v_result.get("gene", "")
+        cls = v_result.get("classification", "VUS")
+        clinvar_sig = v_result.get("clinvar_significance", "")
+        tier = assign_tier(cls, gene, clinvar_sig)
+        v_result["tier"] = tier
+        v_result["tier_label"] = get_tier_label(tier)
+        cancer_info = get_cancer_gene_info(gene)
+        if cancer_info:
+            v_result["cancer_gene_type"] = cancer_info.get("type", "")
+            v_result["oncokb_level"] = cancer_info.get("level", "")
+        else:
+            v_result["cancer_gene_type"] = ""
+            v_result["oncokb_level"] = ""
 
     # For rare disease mode, add HPO score and OMIM/ClinGen data to each variant
     if mode == "rare-disease":
@@ -415,7 +432,14 @@ def run_pipeline(
     summary = _build_summary(variant_records)
 
     # Split variants for template rendering (VUS filtering)
+    # Tier lists are always populated for cancer mode (drive summary-page display).
+    # detailed_variants drives the per-variant detail pages and follows hide_vus logic.
     _vus_classes = ("VUS", "Benign", "Likely Benign")
+    tier1_variants = [v for v in variant_records if v.get("tier") == 1]
+    tier2_variants = [v for v in variant_records if v.get("tier") == 2]
+    tier3_variants = [v for v in variant_records if v.get("tier") == 3]
+    tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
+
     if hide_vus:
         detailed_variants = [v for v in variant_records if v["classification"] not in _vus_classes]
         omitted_variants = [v for v in variant_records if v["classification"] in _vus_classes]
@@ -430,6 +454,10 @@ def run_pipeline(
         "detailed_variants": detailed_variants,
         "omitted_variants": omitted_variants,
         "hide_vus": hide_vus,
+        "tier1_variants": tier1_variants,
+        "tier2_variants": tier2_variants,
+        "tier3_variants": tier3_variants,
+        "tier4_count": tier4_count,
         "pgx_results": [
             {
                 "gene": p.gene,
@@ -614,6 +642,11 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
 
     # Split variants for template rendering (VUS filtering)
     _vus_classes = ("VUS", "Benign", "Likely Benign")
+    tier1_variants = [v for v in variant_records if v.get("tier") == 1]
+    tier2_variants = [v for v in variant_records if v.get("tier") == 2]
+    tier3_variants = [v for v in variant_records if v.get("tier") == 3]
+    tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
+
     if hide_vus:
         detailed_variants = [v for v in variant_records if v["classification"] not in _vus_classes]
         omitted_variants = [v for v in variant_records if v["classification"] in _vus_classes]
@@ -628,6 +661,10 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
         "detailed_variants": detailed_variants,
         "omitted_variants": omitted_variants,
         "hide_vus": hide_vus,
+        "tier1_variants": tier1_variants,
+        "tier2_variants": tier2_variants,
+        "tier3_variants": tier3_variants,
+        "tier4_count": tier4_count,
         "pgx_results": [
             {
                 "gene": p.gene,
