@@ -5,6 +5,8 @@ paths:
   pgx_table: "data/korean_pgx_table.json"
   acmg_rules: "data/acmg_rules.json"
   templates: "templates"
+  clinvar_db: "data/db/clinvar.sqlite3"
+  gnomad_db: "data/db/gnomad.sqlite3"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)
@@ -22,6 +24,9 @@ api:
   max_retries: 3
   backoff_base: 1.0
   pharmgkb_rate_limit: 0.5
+
+annotation:
+  source: "auto"  # "local" (SQLite only), "api" (HTTP only), "auto" (local first, API fallback)
 
 report:
   default_mode: "cancer"
