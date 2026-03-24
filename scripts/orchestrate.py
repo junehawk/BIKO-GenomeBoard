@@ -2,11 +2,14 @@
 """GenomeBoard Standalone Pipeline — VCF → Report"""
 
 import argparse
+import csv
 import json
 import logging
+import os
 import sys
+import threading
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 
@@ -147,6 +150,139 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
     }
 
 
+def _build_variant_records(variants, db_results, freq_results, classification_results,
+                           mode, hpo_results):
+    """Build the variant_records list from per-variant results.
+
+    This is the shared logic used by both run_pipeline() and _assemble_sample_report()
+    to avoid duplication.
+    """
+    variant_records = []
+    for variant in variants:
+        db = db_results[variant.variant_id]
+        freq = freq_results[variant.variant_id]
+        classification = classification_results[variant.variant_id]
+        clinvar = db["clinvar"]
+
+        variant_records.append(
+            {
+                "variant": variant.variant_id,
+                "gene": variant.gene,
+                "chrom": variant.chrom,
+                "pos": variant.pos,
+                "ref": variant.ref,
+                "alt": variant.alt,
+                "classification": classification.classification,
+                "acmg_codes": classification.evidence_codes,
+                "conflict": classification.conflict,
+                "clinvar_significance": clinvar.get("clinvar_significance", "Not Found"),
+                "clinvar_id": clinvar.get("clinvar_id"),
+                "review_status": clinvar.get("review_status"),
+                "gnomad_all": db["gnomad"].get("gnomad_all"),
+                "gnomad_eas": db["gnomad"].get("gnomad_eas"),
+                "krgdb_freq": db["krgdb_freq"],
+                "korean_flag": freq.get("korean_flag", ""),
+                # Annotation fields (from pre-annotated VCF via VEP/SnpEff)
+                "hgvsc": variant.hgvsc or "",
+                "hgvsp": variant.hgvsp or "",
+                "consequence": variant.consequence or "",
+                "transcript": variant.transcript or "",
+                "impact": variant.impact or "",
+                "sift": variant.sift or "",
+                "polyphen": variant.polyphen or "",
+                "agents": {
+                    "clinical": clinvar,
+                    "korean_pop": {
+                        "gnomad_all": db["gnomad"].get("gnomad_all"),
+                        "gnomad_eas": db["gnomad"].get("gnomad_eas"),
+                        "krgdb_freq": db["krgdb_freq"],
+                        "korean_flag": freq.get("korean_flag", ""),
+                        "api_available": db["gnomad"].get("api_available", False),
+                    },
+                },
+            }
+        )
+
+    # For rare disease mode, add HPO score and OMIM/ClinGen data to each variant
+    if mode == "rare-disease":
+        for v_result in variant_records:
+            gene = v_result.get("gene", "")
+            # HPO phenotype matching
+            v_result["hpo_score"] = calculate_hpo_score(gene, hpo_results)
+            v_result["matching_hpo"] = get_matching_hpo_terms(gene, hpo_results)
+            # OMIM
+            omim = query_omim(gene)
+            if omim:
+                v_result["omim_mim"] = omim.get("mim", "")
+                v_result["omim_phenotypes"] = omim.get("phenotypes", [])
+                v_result["inheritance"] = omim.get("inheritance", "")
+            else:
+                v_result["omim_mim"] = ""
+                v_result["omim_phenotypes"] = []
+                v_result["inheritance"] = ""
+            # ClinGen
+            v_result["clingen_validity"] = get_gene_validity(gene) or ""
+
+        # Sort by: classification rank (Pathogenic first) then HPO score (descending)
+        cls_rank = {
+            "Pathogenic": 0,
+            "Likely Pathogenic": 1,
+            "VUS": 2,
+            "Drug Response": 3,
+            "Risk Factor": 4,
+            "Likely Benign": 5,
+            "Benign": 6,
+        }
+        variant_records.sort(
+            key=lambda v: (cls_rank.get(v.get("classification", "VUS"), 2), -v.get("hpo_score", 0))
+        )
+
+    return variant_records
+
+
+def _build_summary(variant_records):
+    """Build summary counts dict from variant records."""
+    total = len(variant_records)
+    return {
+        "total": total,
+        "pathogenic": sum(1 for r in variant_records if r["classification"] == "Pathogenic"),
+        "likely_pathogenic": sum(1 for r in variant_records if r["classification"] == "Likely Pathogenic"),
+        "drug_response": sum(1 for r in variant_records if r["classification"] == "Drug Response"),
+        "risk_factor": sum(1 for r in variant_records if r["classification"] == "Risk Factor"),
+        "vus": sum(1 for r in variant_records if r["classification"] == "VUS"),
+        "likely_benign": sum(1 for r in variant_records if r["classification"] == "Likely Benign"),
+        "benign": sum(1 for r in variant_records if r["classification"] == "Benign"),
+    }
+
+
+def _classify_variants(variants, db_results, freq_results):
+    """Run frequency comparison and ACMG classification for a list of variants.
+
+    Returns (freq_results, classification_results) dicts keyed by variant_id.
+    freq_results may be pre-populated; if provided, it is augmented in place
+    for any missing keys (batch reuse case).
+    """
+    classification_results = {}
+    for variant in variants:
+        db = db_results[variant.variant_id]
+        freq = freq_results[variant.variant_id]
+
+        evidences = []
+        for code in db["clinvar"].get("acmg_codes", []):
+            evidences.append(AcmgEvidence(code=code, source="clinvar", description=""))
+        for code in freq.get("acmg_codes", []):
+            evidences.append(AcmgEvidence(code=code, source="freq_comparison", description=""))
+
+        classification = classify_variant(evidences, gene=variant.gene)
+        clinvar_sig = db["clinvar"].get("clinvar_significance", "Not Found")
+        conflict = check_clinvar_conflict(classification.classification, clinvar_sig)
+        classification.conflict = conflict
+
+        classification_results[variant.variant_id] = classification
+
+    return classification_results
+
+
 def run_pipeline(
     vcf_path: str,
     output_path: str = "output/report.html",
@@ -240,123 +376,18 @@ def run_pipeline(
 
     # ── Step 5: ACMG classification ───────────────────────────────────────────
     _progress("[5/6] Running ACMG classification engine...")
-    classification_results = {}
+    classification_results = _classify_variants(variants, db_results, freq_results)
     for variant in variants:
-        db = db_results[variant.variant_id]
-        freq = freq_results[variant.variant_id]
-
-        evidences = []
-        for code in db["clinvar"].get("acmg_codes", []):
-            evidences.append(AcmgEvidence(code=code, source="clinvar", description=""))
-        for code in freq.get("acmg_codes", []):
-            evidences.append(AcmgEvidence(code=code, source="freq_comparison", description=""))
-
-        classification = classify_variant(evidences, gene=variant.gene)
-        clinvar_sig = db["clinvar"].get("clinvar_significance", "Not Found")
-        conflict = check_clinvar_conflict(classification.classification, clinvar_sig)
-        classification.conflict = conflict
-
-        classification_results[variant.variant_id] = classification
+        classification = classification_results[variant.variant_id]
         codes_str = "+".join(classification.evidence_codes) if classification.evidence_codes else "no codes"
         gene_label = variant.gene or variant.variant_id
         _progress(f"  → {gene_label}: {classification.classification} ({codes_str})")
 
     # ── Step 6: Assemble report data ──────────────────────────────────────────
-    variant_records = []
-    for variant in variants:
-        db = db_results[variant.variant_id]
-        freq = freq_results[variant.variant_id]
-        classification = classification_results[variant.variant_id]
-        clinvar = db["clinvar"]
-
-        freq_data_obj = FrequencyData(
-            krgdb=db["krgdb_freq"],
-            gnomad_eas=db["gnomad"].get("gnomad_eas"),
-            gnomad_all=db["gnomad"].get("gnomad_all"),
-        )
-
-        variant_records.append(
-            {
-                "variant": variant.variant_id,
-                "gene": variant.gene,
-                "chrom": variant.chrom,
-                "pos": variant.pos,
-                "ref": variant.ref,
-                "alt": variant.alt,
-                "classification": classification.classification,
-                "acmg_codes": classification.evidence_codes,
-                "conflict": classification.conflict,
-                "clinvar_significance": clinvar.get("clinvar_significance", "Not Found"),
-                "clinvar_id": clinvar.get("clinvar_id"),
-                "review_status": clinvar.get("review_status"),
-                "gnomad_all": db["gnomad"].get("gnomad_all"),
-                "gnomad_eas": db["gnomad"].get("gnomad_eas"),
-                "krgdb_freq": db["krgdb_freq"],
-                "korean_flag": freq.get("korean_flag", ""),
-                # Annotation fields (from pre-annotated VCF via VEP/SnpEff)
-                "hgvsc": variant.hgvsc or "",
-                "hgvsp": variant.hgvsp or "",
-                "consequence": variant.consequence or "",
-                "transcript": variant.transcript or "",
-                "impact": variant.impact or "",
-                "sift": variant.sift or "",
-                "polyphen": variant.polyphen or "",
-                "agents": {
-                    "clinical": clinvar,
-                    "korean_pop": {
-                        "gnomad_all": db["gnomad"].get("gnomad_all"),
-                        "gnomad_eas": db["gnomad"].get("gnomad_eas"),
-                        "krgdb_freq": db["krgdb_freq"],
-                        "korean_flag": freq.get("korean_flag", ""),
-                        "api_available": db["gnomad"].get("api_available", False),
-                    },
-                },
-            }
-        )
-
-    # For rare disease mode, add HPO score and OMIM/ClinGen data to each variant
-    if mode == "rare-disease":
-        for v_result in variant_records:
-            gene = v_result.get("gene", "")
-            # HPO phenotype matching
-            v_result["hpo_score"] = calculate_hpo_score(gene, hpo_results)
-            v_result["matching_hpo"] = get_matching_hpo_terms(gene, hpo_results)
-            # OMIM
-            omim = query_omim(gene)
-            if omim:
-                v_result["omim_mim"] = omim.get("mim", "")
-                v_result["omim_phenotypes"] = omim.get("phenotypes", [])
-                v_result["inheritance"] = omim.get("inheritance", "")
-            else:
-                v_result["omim_mim"] = ""
-                v_result["omim_phenotypes"] = []
-                v_result["inheritance"] = ""
-            # ClinGen
-            v_result["clingen_validity"] = get_gene_validity(gene) or ""
-
-        # Sort by: classification rank (Pathogenic first) then HPO score (descending)
-        cls_rank = {
-            "Pathogenic": 0,
-            "Likely Pathogenic": 1,
-            "VUS": 2,
-            "Drug Response": 3,
-            "Risk Factor": 4,
-            "Likely Benign": 5,
-            "Benign": 6,
-        }
-        variant_records.sort(
-            key=lambda v: (cls_rank.get(v.get("classification", "VUS"), 2), -v.get("hpo_score", 0))
-        )
-
-    # Build summary counts
-    total = len(variant_records)
-    pathogenic_count = sum(1 for r in variant_records if r["classification"] == "Pathogenic")
-    likely_path_count = sum(1 for r in variant_records if r["classification"] == "Likely Pathogenic")
-    drug_response_count = sum(1 for r in variant_records if r["classification"] == "Drug Response")
-    risk_factor_count = sum(1 for r in variant_records if r["classification"] == "Risk Factor")
-    vus_count = sum(1 for r in variant_records if r["classification"] == "VUS")
-    likely_benign_count = sum(1 for r in variant_records if r["classification"] == "Likely Benign")
-    benign_count = sum(1 for r in variant_records if r["classification"] == "Benign")
+    variant_records = _build_variant_records(
+        variants, db_results, freq_results, classification_results, mode, hpo_results
+    )
+    summary = _build_summary(variant_records)
 
     report_data = {
         "sample_id": sample_id,
@@ -376,16 +407,7 @@ def run_pipeline(
             }
             for p in pgx_hits
         ],
-        "summary": {
-            "total": total,
-            "pathogenic": pathogenic_count,
-            "likely_pathogenic": likely_path_count,
-            "drug_response": drug_response_count,
-            "risk_factor": risk_factor_count,
-            "vus": vus_count,
-            "likely_benign": likely_benign_count,
-            "benign": benign_count,
-        },
+        "summary": summary,
         "db_versions": {
             "clinvar": str(date.today()),
             "gnomad": "4.0",
@@ -428,16 +450,317 @@ def run_pipeline(
         _progress(f"  → JSON: {json_path}")
 
     elapsed = time.time() - start_time
-    _progress(f"\nDone! {total} variants analyzed in {elapsed:.1f}s")
+    _progress(f"\nDone! {summary['total']} variants analyzed in {elapsed:.1f}s")
     _progress(
-        f"  Pathogenic: {pathogenic_count} | "
-        f"Likely Pathogenic: {likely_path_count} | "
-        f"Drug Response: {drug_response_count} | "
-        f"VUS: {vus_count} | "
-        f"Benign: {benign_count + likely_benign_count}"
+        f"  Pathogenic: {summary['pathogenic']} | "
+        f"Likely Pathogenic: {summary['likely_pathogenic']} | "
+        f"Drug Response: {summary['drug_response']} | "
+        f"VUS: {summary['vus']} | "
+        f"Benign: {summary['benign'] + summary['likely_benign']}"
     )
 
     return report_data
+
+
+# ── Batch pipeline helpers ─────────────────────────────────────────────────────
+
+def _discover_samples(batch_path: str) -> list:
+    """Discover VCF files from directory or manifest CSV.
+
+    Returns: [{"sample_id": "S001", "vcf_path": "/path/to/s001.vcf"}, ...]
+    """
+    path = Path(batch_path)
+    if path.is_dir():
+        samples = []
+        vcf_files = sorted(path.glob("*.vcf")) + sorted(path.glob("*.vcf.gz"))
+        for vcf_file in vcf_files:
+            # Strip .vcf or .vcf.gz suffix to get sample_id
+            sample_id = vcf_file.name
+            if sample_id.endswith(".vcf.gz"):
+                sample_id = sample_id[:-7]
+            elif sample_id.endswith(".vcf"):
+                sample_id = sample_id[:-4]
+            samples.append({"sample_id": sample_id, "vcf_path": str(vcf_file)})
+        return samples
+    elif path.suffix == ".csv":
+        samples = []
+        with open(path) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                samples.append({"sample_id": row["sample_id"], "vcf_path": row["vcf_path"]})
+        return samples
+    else:
+        raise ValueError(f"Batch path must be a directory or CSV file: {batch_path}")
+
+
+def _collect_unique_variants(samples: list) -> tuple:
+    """Parse all VCFs, return (unique_variants_dict, sample_variant_map).
+
+    unique_variants: {variant_key: Variant}
+    sample_variant_map: {sample_id: [variant_key, ...]}
+    """
+    unique_variants = {}  # key -> Variant
+    sample_map = {}       # sample_id -> [keys]
+
+    for sample in samples:
+        variants = parse_vcf(sample["vcf_path"])
+        keys = []
+        for v in variants:
+            key = f"{v.chrom}:{v.pos}:{v.ref}:{v.alt}"
+            if key not in unique_variants:
+                unique_variants[key] = v
+            keys.append(key)
+        sample_map[sample["sample_id"]] = keys
+
+    return unique_variants, sample_map
+
+
+def _bulk_annotate_variants(unique_variants: dict, krgdb_path: str, skip_api: bool,
+                            max_workers: int = 8) -> dict:
+    """Annotate all unique variants. Returns {variant_key: annotation_dict}."""
+    annotations = {}
+    rate_limiter = threading.Semaphore(10)  # Max 10 concurrent API calls
+
+    def _annotate_one(key, variant):
+        with rate_limiter:
+            return key, _query_variant_databases(variant, krgdb_path, skip_api)
+
+    _progress(f"[2/5] Annotating {len(unique_variants):,} unique variants ({max_workers} workers)...")
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {executor.submit(_annotate_one, k, v): k for k, v in unique_variants.items()}
+        done = 0
+        for future in as_completed(futures):
+            key, result = future.result()
+            annotations[key] = result
+            done += 1
+            if done % 100 == 0:
+                _progress(f"  → {done:,}/{len(unique_variants):,} variants annotated")
+
+    return annotations
+
+
+def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
+                            mode, hpo_ids, hpo_results, krgdb_path):
+    """Build report_data dict for one sample using pre-computed annotations.
+
+    Reuses the same ACMG classification and frequency-comparison logic as run_pipeline().
+    """
+    # Reconstruct the variant list for this sample (in order)
+    variants = [unique_variants[k] for k in variant_keys]
+
+    # Build db_results from cached annotations (keyed by variant_id)
+    db_results = {}
+    for key, variant in zip(variant_keys, variants):
+        db_results[variant.variant_id] = annotations[key]
+
+    # Frequency comparison
+    freq_results = {}
+    for variant in variants:
+        db = db_results[variant.variant_id]
+        freq_data = FrequencyData(
+            krgdb=db["krgdb_freq"],
+            gnomad_eas=db["gnomad"].get("gnomad_eas"),
+            gnomad_all=db["gnomad"].get("gnomad_all"),
+        )
+        freq_results[variant.variant_id] = compare_frequencies(freq_data)
+
+    # PGx hits
+    pgx_hits = []
+    for variant in variants:
+        pgx = db_results[variant.variant_id]["pgx"]
+        if pgx:
+            pgx_hits.append(pgx)
+
+    # ACMG classification (shared logic)
+    classification_results = _classify_variants(variants, db_results, freq_results)
+
+    # Build variant records (shared logic, including rare-disease HPO enrichment)
+    variant_records = _build_variant_records(
+        variants, db_results, freq_results, classification_results, mode, hpo_results
+    )
+    summary = _build_summary(variant_records)
+
+    return {
+        "sample_id": sample["sample_id"],
+        "date": str(date.today()),
+        "variants": variant_records,
+        "pgx_results": [
+            {
+                "gene": p.gene,
+                "star_allele": p.star_allele,
+                "phenotype": p.phenotype,
+                "cpic_level": p.cpic_level,
+                "korean_prevalence": p.korean_prevalence,
+                "western_prevalence": p.western_prevalence,
+                "clinical_impact": p.clinical_impact,
+                "cpic_recommendation": p.cpic_recommendation,
+                "korean_flag": p.korean_flag,
+            }
+            for p in pgx_hits
+        ],
+        "summary": summary,
+        "db_versions": {
+            "clinvar": str(date.today()),
+            "gnomad": "4.0",
+            "krgdb": "2026-03-01",
+            "clinvar_local": get_clinvar_db_version(),
+            "gnomad_local": get_gnomad_db_version(),
+        },
+        "pipeline": {
+            "skip_api": False,
+            "krgdb_path": str(krgdb_path),
+        },
+        "mode": mode,
+        "hpo_results": hpo_results,
+    }
+
+
+def _generate_single_report(report_data: dict, output_path: str, mode: str) -> str:
+    """Generate a single HTML report (runs in subprocess for PDF parallelism)."""
+    # Re-import needed because this may run in a subprocess via ProcessPoolExecutor
+    import sys
+    from pathlib import Path as _Path
+    sys.path.insert(0, str(_Path(__file__).parent.parent))
+    from scripts.counselor.generate_pdf import generate_report_html as _gen_html
+
+    html = _gen_html(report_data, mode=mode)
+    _Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    _Path(output_path).write_text(html, encoding="utf-8")
+    return output_path
+
+
+def _generate_reports_parallel(sample_reports: list, output_dir: str, mode: str,
+                               workers: int) -> list:
+    """Generate HTML reports using ProcessPoolExecutor."""
+    _progress(f"[5/5] Generating {len(sample_reports):,} reports ({workers} workers)...")
+
+    results = []
+    with ProcessPoolExecutor(max_workers=workers) as executor:
+        futures = {}
+        for sample_data in sample_reports:
+            output_path = Path(output_dir) / f"{sample_data['sample_id']}_report.html"
+            futures[
+                executor.submit(_generate_single_report, sample_data, str(output_path), mode)
+            ] = sample_data["sample_id"]
+
+        for future in as_completed(futures):
+            sample_id = futures[future]
+            try:
+                path = future.result()
+                results.append(path)
+            except Exception as e:
+                logger.error(f"Report generation failed for {sample_id}: {e}")
+
+    return results
+
+
+def run_batch_pipeline(
+    batch_path: str,
+    output_dir: str = "output/batch",
+    mode: str = "cancer",
+    workers: int = None,
+    skip_api: bool = False,
+    krgdb_path: str = None,
+    hpo_ids: list = None,
+    _skip_reports: bool = False,
+) -> dict:
+    """Process multiple VCF files with variant deduplication.
+
+    Returns: {
+        "samples_processed": N,
+        "total_variants": N,
+        "unique_variants": N,
+        "cache_hits": N,
+        "reports_generated": ["path1.html", ...],
+        "errors": [{"sample": "...", "error": "..."}],
+        "elapsed_seconds": N
+    }
+    """
+    import time as time_mod
+
+    workers = workers or os.cpu_count() or 4
+    start = time_mod.time()
+
+    # Step 1: Discover samples
+    _progress(f"[1/5] Discovering samples from {batch_path}...")
+    samples = _discover_samples(batch_path)
+    _progress(f"  → Found {len(samples)} samples")
+
+    if not samples:
+        return {
+            "samples_processed": 0,
+            "total_variants": 0,
+            "unique_variants": 0,
+            "cache_hits": 0,
+            "reports_generated": [],
+            "errors": [],
+            "elapsed_seconds": time_mod.time() - start,
+        }
+
+    # Step 2: Collect unique variants across all samples
+    unique_variants, sample_map = _collect_unique_variants(samples)
+    total_variants = sum(len(keys) for keys in sample_map.values())
+    cache_hits = total_variants - len(unique_variants)
+    _progress(f"  → {total_variants:,} total variants, {len(unique_variants):,} unique "
+              f"({cache_hits:,} deduplicated)")
+
+    # Step 3: Bulk annotate unique variants
+    krgdb_file = krgdb_path or get("paths.krgdb", "data/krgdb_freq.tsv")
+    annotations = _bulk_annotate_variants(
+        unique_variants, krgdb_file, skip_api,
+        max_workers=min(workers, 10)
+    )
+
+    # Step 4: HPO (rare disease mode)
+    hpo_results = []
+    if mode == "rare-disease" and hpo_ids:
+        hpo_results = resolve_hpo_terms(hpo_ids)
+
+    # Step 5: Assemble per-sample reports
+    _progress(f"[3/5] Assembling {len(samples)} sample reports...")
+    sample_reports = []
+    errors = []
+    for sample in samples:
+        try:
+            report_data = _assemble_sample_report(
+                sample,
+                sample_map[sample["sample_id"]],
+                annotations,
+                unique_variants,
+                mode,
+                hpo_ids,
+                hpo_results,
+                krgdb_file,
+            )
+            sample_reports.append(report_data)
+        except Exception as e:
+            logger.error(f"Failed to assemble report for {sample['sample_id']}: {e}")
+            errors.append({"sample": sample["sample_id"], "error": str(e)})
+
+    _progress(f"[4/5] Assembled {len(sample_reports)} reports ({len(errors)} errors)")
+
+    # Step 6: Generate reports in parallel (skipped in test-only mode)
+    report_paths = []
+    if not _skip_reports and output_dir is not None:
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        report_paths = _generate_reports_parallel(sample_reports, output_dir, mode, workers)
+
+    elapsed = time_mod.time() - start
+    _progress(f"\nBatch complete! {len(report_paths)} reports in {elapsed:.1f}s")
+    _progress(f"  Unique variants: {len(unique_variants):,} / Total: {total_variants:,}")
+    if errors:
+        _progress(f"  Errors: {len(errors)}")
+
+    return {
+        "samples_processed": len(samples),
+        "total_variants": total_variants,
+        "unique_variants": len(unique_variants),
+        "cache_hits": cache_hits,
+        "reports_generated": report_paths,
+        "errors": errors,
+        "elapsed_seconds": elapsed,
+    }
 
 
 def main() -> None:
@@ -449,9 +772,16 @@ Examples:
   python scripts/orchestrate.py data/sample_vcf/demo_variants.vcf
   python scripts/orchestrate.py data/sample_vcf/demo_variants.vcf -o output/report.pdf
   python scripts/orchestrate.py data/sample_vcf/demo_variants.vcf --skip-api --json
+  python scripts/orchestrate.py --batch data/sample_vcf/batch_test/ --output-dir output/batch
+  python scripts/orchestrate.py --batch manifest.csv --workers 4 --output-dir output/batch
         """,
     )
-    parser.add_argument("vcf_path", help="Path to input VCF file")
+    parser.add_argument(
+        "vcf_path",
+        nargs="?",
+        default=None,
+        help="Path to input VCF file (omit when using --batch)",
+    )
     parser.add_argument(
         "--output",
         "-o",
@@ -508,6 +838,26 @@ Examples:
         action="store_true",
         help="Enable verbose (DEBUG) logging",
     )
+    # Batch mode arguments
+    parser.add_argument(
+        "--batch",
+        type=str,
+        default=None,
+        help="Batch mode: path to directory of VCFs or manifest CSV (columns: sample_id,vcf_path)",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="Number of parallel workers for batch report generation (default: CPU count)",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="output/batch",
+        dest="output_dir",
+        help="Output directory for batch reports (default: output/batch)",
+    )
 
     args = parser.parse_args()
 
@@ -520,31 +870,65 @@ Examples:
         count = clear_cache()
         logger.info(f"Cache cleared: {count} entries removed")
 
-    # Resolve JSON output path
-    json_output = None
-    if args.json_flag is not None:
-        if args.json_flag is True:
-            # --json with no path: replace extension with .json
-            json_output = str(Path(args.output).with_suffix(".json"))
-        else:
-            json_output = args.json_flag
-
     # Parse HPO IDs from comma-separated string
     hpo_ids = [h.strip() for h in args.hpo.split(",")] if args.hpo else None
 
-    result = run_pipeline(
-        vcf_path=args.vcf_path,
-        output_path=args.output,
-        krgdb_path=args.krgdb,
-        sample_id=args.sample_id,
-        json_output=json_output,
-        skip_api=args.skip_api,
-        mode=args.mode,
-        hpo_ids=hpo_ids,
-    )
+    # Resolve mode (shared between single and batch)
+    mode = args.mode or get("report.default_mode", "cancer")
 
-    if result is None:
-        sys.exit(1)
+    if args.batch:
+        # ── Batch mode ────────────────────────────────────────────────────────
+        result = run_batch_pipeline(
+            batch_path=args.batch,
+            output_dir=args.output_dir,
+            mode=mode,
+            workers=args.workers,
+            skip_api=args.skip_api,
+            krgdb_path=args.krgdb,
+            hpo_ids=hpo_ids,
+        )
+
+        if args.json_flag is not None:
+            if args.json_flag is True:
+                json_out = str(Path(args.output_dir) / "batch_summary.json")
+            else:
+                json_out = args.json_flag
+            Path(json_out).parent.mkdir(parents=True, exist_ok=True)
+            Path(json_out).write_text(
+                json.dumps(result, indent=2, default=str, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            _progress(f"  → Batch summary JSON: {json_out}")
+
+        if result["errors"]:
+            sys.exit(1)
+
+    else:
+        # ── Single-sample mode ────────────────────────────────────────────────
+        if not args.vcf_path:
+            parser.error("vcf_path is required when not using --batch")
+
+        # Resolve JSON output path
+        json_output = None
+        if args.json_flag is not None:
+            if args.json_flag is True:
+                json_output = str(Path(args.output).with_suffix(".json"))
+            else:
+                json_output = args.json_flag
+
+        result = run_pipeline(
+            vcf_path=args.vcf_path,
+            output_path=args.output,
+            krgdb_path=args.krgdb,
+            sample_id=args.sample_id,
+            json_output=json_output,
+            skip_api=args.skip_api,
+            mode=mode,
+            hpo_ids=hpo_ids,
+        )
+
+        if result is None:
+            sys.exit(1)
 
 
 if __name__ == "__main__":

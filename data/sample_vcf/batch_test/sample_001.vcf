@@ -1,0 +1,6 @@
+##fileformat=VCFv4.1
+##INFO=<ID=Gene,Number=1,Type=String,Description="Gene symbol">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr17	7577120	rs28934578	G	A	.	PASS	Gene=TP53
+chr13	32337326	rs80358981	C	T	.	PASS	Gene=BRCA2
+chr7	117559590	rs113993960	ATCT	A	.	PASS	Gene=CFTR

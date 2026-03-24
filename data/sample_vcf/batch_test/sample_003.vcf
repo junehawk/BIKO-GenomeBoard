@@ -1,0 +1,6 @@
+##fileformat=VCFv4.1
+##INFO=<ID=Gene,Number=1,Type=String,Description="Gene symbol">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+chr17	7577120	rs28934578	G	A	.	PASS	Gene=TP53
+chr16	23641240	rs137853130	G	A	.	PASS	Gene=PALB2
+chr12	112888163	rs121913527	T	C	.	PASS	Gene=PTPN11
