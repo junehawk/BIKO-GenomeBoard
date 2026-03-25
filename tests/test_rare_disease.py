@@ -50,6 +50,37 @@ def test_resolve_hpo_terms_api_unavailable():
     assert results[0]["genes"] == []
 
 
+def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
+    """API 실패 시 로컬 HPO DB로 fallback."""
+    from scripts.db.build_hpo_db import build_db
+    from scripts.clinical.hpo_matcher import resolve_hpo_terms
+
+    # Build local DB
+    tsv = tmp_path / "genes_to_phenotype.txt"
+    tsv.write_text(
+        "#header\n"
+        "7157\tTP53\tHP:0001250\tSeizure\t-\tOMIM:151623\n"
+        "672\tBRCA2\tHP:0001250\tSeizure\t-\tOMIM:612555\n"
+    )
+    db_path = str(tmp_path / "hpo.sqlite3")
+    build_db(str(tsv), db_path)
+
+    # Mock API to fail
+    monkeypatch.setattr(
+        "scripts.clinical.hpo_matcher.fetch_with_retry", lambda *a, **kw: None
+    )
+    # Patch config.get at both the source and the already-imported reference
+    _cfg = lambda key, default=None: db_path if key == "paths.hpo_db" else default
+    monkeypatch.setattr("scripts.common.config.get", _cfg)
+    monkeypatch.setattr("scripts.db.query_local_hpo.get", _cfg)
+
+    results = resolve_hpo_terms(["HP:0001250"])
+    assert len(results) == 1
+    assert results[0]["name"] == "Seizure"
+    assert "TP53" in results[0]["genes"]
+    assert "BRCA2" in results[0]["genes"]
+
+
 def test_calculate_hpo_score():
     """calculate_hpo_score returns count of HPO terms linked to the gene."""
     from scripts.clinical.hpo_matcher import calculate_hpo_score
