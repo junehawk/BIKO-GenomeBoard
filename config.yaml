@@ -16,6 +16,9 @@ paths:
   gnomad_vcf_dir: "data/db/gnomad_vcf"
   oncokb_genes: "data/oncokb_cancer_genes.json"
   civic_db: "data/db/civic.sqlite3"
+  hpo_db: "data/db/hpo.sqlite3"
+  hpo_annotation: "data/db/genes_to_phenotype.txt"
+  clingen_db: "data/db/clingen.sqlite3"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)
