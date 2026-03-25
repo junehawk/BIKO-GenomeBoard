@@ -38,16 +38,23 @@ def test_resolve_hpo_terms_skips_invalid():
 
 
 def test_resolve_hpo_terms_api_unavailable():
-    """resolve_hpo_terms returns id as name when API returns None."""
+    """resolve_hpo_terms falls back to local DB when API returns None."""
     from scripts.clinical.hpo_matcher import resolve_hpo_terms
+    import os
 
     with patch("scripts.clinical.hpo_matcher.fetch_with_retry", return_value=None):
         results = resolve_hpo_terms(["HP:0001263"])
 
     assert len(results) == 1
     assert results[0]["id"] == "HP:0001263"
-    assert results[0]["name"] == "HP:0001263"  # fallback to ID
-    assert results[0]["genes"] == []
+    # With local HPO DB available, name and genes are resolved from local data
+    # Without local DB, falls back to ID as name and empty genes
+    if os.path.exists("data/db/hpo.sqlite3"):
+        assert results[0]["name"] != ""
+        assert len(results[0]["genes"]) > 0
+    else:
+        assert results[0]["name"] == "HP:0001263"
+        assert results[0]["genes"] == []
 
 
 def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
@@ -246,8 +253,9 @@ def test_rare_disease_pipeline_with_hpo(tmp_path):
 
 
 def test_rare_disease_pipeline_offline_hpo(tmp_path):
-    """run_pipeline in skip_api mode stores HPO IDs without resolution."""
+    """run_pipeline in skip_api mode resolves HPO via local DB fallback."""
     from scripts.orchestrate import run_pipeline
+    import os
 
     result = run_pipeline(
         vcf_path=RARE_DISEASE_VCF,
@@ -260,8 +268,11 @@ def test_rare_disease_pipeline_offline_hpo(tmp_path):
     assert result is not None
     assert len(result["hpo_results"]) == 2
     assert result["hpo_results"][0]["id"] == "HP:0001250"
-    # In offline mode genes list is empty
-    assert result["hpo_results"][0]["genes"] == []
+    # With local HPO DB, genes are resolved from local data
+    if os.path.exists("data/db/hpo.sqlite3"):
+        assert len(result["hpo_results"][0]["genes"]) > 0
+    else:
+        assert result["hpo_results"][0]["genes"] == []
 
 
 def test_rare_disease_pipeline_sorts_by_classification_then_hpo(tmp_path):
