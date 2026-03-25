@@ -31,7 +31,7 @@ def build_db(tsv_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
     with open(tsv_path) as f:
         for line in f:
-            if line.startswith("#"):
+            if line.startswith("#") or line.startswith("ncbi_gene_id"):
                 continue
             parts = line.strip().split("\t")
             if len(parts) < 4:
