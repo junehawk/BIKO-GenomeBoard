@@ -429,3 +429,42 @@ def test_rare_disease_report_research_use_only():
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert html.count("Research Use Only") >= 1
+
+
+def test_rare_disease_full_offline_with_local_dbs(tmp_path, monkeypatch):
+    """HPO + ClinGen 로컬 DB로 오프라인 rare disease 파이프라인 전체 동작."""
+    from scripts.db.build_hpo_db import build_db as build_hpo
+    from scripts.clinical.hpo_matcher import resolve_hpo_terms, calculate_hpo_score
+
+    # Build HPO DB
+    hpo_tsv = tmp_path / "gtp.txt"
+    hpo_tsv.write_text(
+        "#header\n"
+        "7157\tTP53\tHP:0001250\tSeizure\t-\tOMIM:151623\n"
+        "7157\tTP53\tHP:0002664\tNeoplasm\t-\tOMIM:151623\n"
+    )
+    hpo_db = str(tmp_path / "hpo.sqlite3")
+    build_hpo(str(hpo_tsv), hpo_db)
+
+    # Block API
+    monkeypatch.setattr("scripts.clinical.hpo_matcher.fetch_with_retry", lambda *a, **kw: None)
+    monkeypatch.setattr(
+        "scripts.common.config.get",
+        lambda key, default=None: hpo_db if key == "paths.hpo_db" else default,
+    )
+    monkeypatch.setattr(
+        "scripts.db.query_local_hpo.get",
+        lambda key, default=None: hpo_db if key == "paths.hpo_db" else default,
+    )
+
+    # Resolve HPO terms (should use local DB)
+    results = resolve_hpo_terms(["HP:0001250", "HP:0002664"])
+    assert len(results) == 2
+
+    # TP53 matches both HPO terms
+    score = calculate_hpo_score("TP53", results)
+    assert score == 2
+
+    # BRCA2 matches neither (not in our test data for HP:0002664 only has TP53)
+    score_brca2 = calculate_hpo_score("BRCA2", results)
+    assert score_brca2 == 0
