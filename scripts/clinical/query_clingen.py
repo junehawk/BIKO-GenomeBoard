@@ -1,14 +1,11 @@
-"""ClinGen gene-disease validity lookup."""
+"""ClinGen gene-disease validity lookup — local DB with static fallback."""
 import logging
 from typing import Optional
-from scripts.common.api_utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)
 
-CLINGEN_API = "https://search.clinicalgenome.org/kb/gene-validity"
-
-# Static data for demo genes (ClinGen search API can be unreliable)
-CLINGEN_VALIDITY = {
+# Minimal static fallback (used only when local DB unavailable)
+_STATIC_FALLBACK = {
     "TP53": "Definitive",
     "BRCA2": "Definitive",
     "CFTR": "Definitive",
@@ -21,6 +18,14 @@ CLINGEN_VALIDITY = {
 
 def get_gene_validity(gene: str) -> Optional[str]:
     """Get ClinGen gene-disease validity classification.
-    Returns: Definitive, Strong, Moderate, Limited, Disputed, Refuted, or None
+    Strategy: local DB first → static fallback.
     """
-    return CLINGEN_VALIDITY.get(gene)
+    try:
+        from scripts.db.query_local_clingen import get_gene_validity_local
+        result = get_gene_validity_local(gene)
+        if result:
+            return result
+    except Exception as e:
+        logger.debug(f"ClinGen local DB not available: {e}")
+
+    return _STATIC_FALLBACK.get(gene)
