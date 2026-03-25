@@ -84,6 +84,33 @@ python scripts/db/build_civic_db.py
 # Output: data/db/civic.sqlite3
 ```
 
+### HPO Gene-Phenotype (Rare Disease mode)
+
+Required for offline rare disease candidate ranking. Without this DB, HPO-gene associations depend on the JAX API.
+
+```bash
+# Download annotation file (~5MB)
+curl -o data/db/genes_to_phenotype.txt \
+  https://hpo.jax.org/data/annotations/genes_to_phenotype.txt
+
+# Build SQLite
+python scripts/db/build_hpo_db.py data/db/genes_to_phenotype.txt
+# Output: data/db/hpo.sqlite3
+```
+
+### ClinGen Gene-Disease Validity (Rare Disease mode)
+
+Replaces the minimal built-in static data (7 genes) with the full ClinGen gene-validity dataset.
+
+1. Go to https://search.clinicalgenome.org/kb/gene-validity
+2. Click "Download" → CSV format
+3. Save to `data/db/clingen_gene_validity.csv`
+
+```bash
+python scripts/db/build_clingen_db.py data/db/clingen_gene_validity.csv
+# Output: data/db/clingen.sqlite3
+```
+
 ---
 
 ## 3. Configuration
@@ -98,6 +125,8 @@ paths:
   clinvar_db: "data/db/clinvar.sqlite3"
   gnomad_vcf_dir: "data/db/gnomad_vcf"
   civic_db: "data/db/civic.sqlite3"
+  hpo_db: "data/db/hpo.sqlite3"
+  clingen_db: "data/db/clingen.sqlite3"
   krgdb: "data/krgdb_freq.tsv"
 
 thresholds:
