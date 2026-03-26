@@ -153,9 +153,10 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
             v["finding_summary"] = _adjust_finding_summary(raw_summary, classification)
 
         # Convert PMID references to clickable HTML links (safe — we control this text)
-        if v.get("treatment_strategies"):
+        # Guard against double-linkifying if already processed (e.g. called twice on same dict)
+        if v.get("treatment_strategies") and '<a href=' not in v["treatment_strategies"]:
             v["treatment_strategies"] = _linkify_pmids(v["treatment_strategies"])
-        if v.get("finding_summary"):
+        if v.get("finding_summary") and '<a href=' not in v["finding_summary"]:
             v["finding_summary"] = _linkify_pmids(v["finding_summary"])
 
     for pgx in report_data.get("pgx_results", []):
