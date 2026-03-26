@@ -8,27 +8,7 @@ from jinja2 import Environment, FileSystemLoader
 from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.config import get
 from scripts.db.query_civic import get_gene_summary, get_treatment_summary, get_variant_evidence
-
-
-_AA_MAP = {
-    "Ala": "A", "Arg": "R", "Asn": "N", "Asp": "D", "Cys": "C",
-    "Gln": "Q", "Glu": "E", "Gly": "G", "His": "H", "Ile": "I",
-    "Leu": "L", "Lys": "K", "Met": "M", "Phe": "F", "Pro": "P",
-    "Ser": "S", "Thr": "T", "Trp": "W", "Tyr": "Y", "Val": "V", "Ter": "*",
-}
-
-
-def _hgvsp_to_civic_variant(hgvsp: Optional[str]) -> Optional[str]:
-    """Convert HGVSp to CIViC variant name format. p.Gly12Asp -> G12D"""
-    if not hgvsp:
-        return None
-    m = re.match(r'p\.([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})', hgvsp)
-    if m:
-        aa1 = _AA_MAP.get(m.group(1), "?")
-        pos = m.group(2)
-        aa2 = _AA_MAP.get(m.group(3), "?")
-        return f"{aa1}{pos}{aa2}"
-    return None
+from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant
 
 
 def _adjust_finding_summary(summary: str, classification: str) -> str:

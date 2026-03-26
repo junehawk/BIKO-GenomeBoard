@@ -150,6 +150,69 @@ def extract_protein_position(hgvsp: str) -> Optional[int]:
     return None
 
 
+def get_predictive_evidence_for_tier(
+    gene: str, hgvsp: str, db_path: Optional[str] = None
+) -> Dict:
+    """Get Predictive evidence for tier determination.
+    Returns: {"match_level": "variant"|"gene"|"none", "evidence": [...]}
+    Only Predictive evidence is returned. match_level distinguishes
+    variant-specific from gene-level matches.
+    """
+    conn = _get_connection()
+    if not conn:
+        return {"match_level": "none", "evidence": []}
+
+    from scripts.common.hgvs_utils import hgvsp_to_civic_variant
+    civic_name = hgvsp_to_civic_variant(hgvsp)
+
+    # Try variant-specific match first
+    if civic_name:
+        cursor = conn.execute(
+            "SELECT * FROM evidence WHERE gene = ? AND variant = ? "
+            "AND evidence_type = 'Predictive' ORDER BY evidence_level, rating DESC",
+            (gene, civic_name),
+        )
+        rows = cursor.fetchall()
+        if rows:
+            evidence = [
+                {
+                    "gene": r["gene"], "variant": r["variant"],
+                    "disease": r["disease"], "therapies": r["therapies"],
+                    "evidence_type": r["evidence_type"],
+                    "evidence_level": r["evidence_level"],
+                    "significance": r["significance"],
+                    "statement": r["evidence_statement"],
+                    "pmid": r["citation_id"], "citation": r["citation"],
+                }
+                for r in rows
+            ]
+            return {"match_level": "variant", "evidence": evidence}
+
+    # Gene-level fallback (for display only, not Tier I elevation)
+    cursor = conn.execute(
+        "SELECT * FROM evidence WHERE gene = ? "
+        "AND evidence_type = 'Predictive' ORDER BY evidence_level, rating DESC",
+        (gene,),
+    )
+    rows = cursor.fetchall()
+    if rows:
+        evidence = [
+            {
+                "gene": r["gene"], "variant": r["variant"],
+                "disease": r["disease"], "therapies": r["therapies"],
+                "evidence_type": r["evidence_type"],
+                "evidence_level": r["evidence_level"],
+                "significance": r["significance"],
+                "statement": r["evidence_statement"],
+                "pmid": r["citation_id"], "citation": r["citation"],
+            }
+            for r in rows
+        ]
+        return {"match_level": "gene", "evidence": evidence}
+
+    return {"match_level": "none", "evidence": []}
+
+
 def close():
     global _conn
     if _conn:
