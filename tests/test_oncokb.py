@@ -210,19 +210,19 @@ def test_assign_tier_case_insensitive():
 
 
 def test_get_tier_label_1():
-    assert get_tier_label(1) == "Tier 1 — Therapeutic Target"
+    assert get_tier_label(1) == "Tier I — Strong Clinical Significance"
 
 
 def test_get_tier_label_2():
-    assert get_tier_label(2) == "Tier 2 — Clinically Significant"
+    assert get_tier_label(2) == "Tier II — Potential Clinical Significance"
 
 
 def test_get_tier_label_3():
-    assert get_tier_label(3) == "Tier 3 — Cancer Gene (VUS)"
+    assert get_tier_label(3) == "Tier III — Unknown Clinical Significance"
 
 
 def test_get_tier_label_4():
-    assert get_tier_label(4) == "Tier 4 — No Clinical Significance"
+    assert get_tier_label(4) == "Tier IV — Benign or Likely Benign"
 
 
 def test_get_tier_label_unknown():

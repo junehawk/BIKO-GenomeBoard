@@ -216,14 +216,39 @@ def _build_variant_records(variants, db_results, freq_results, classification_re
             }
         )
 
-    # Assign OncoKB tiers to all variants
+    # Assign tiers (cancer mode uses AMP/ASCO/CAP 2017; rare disease skips CIViC tiering)
+    from scripts.somatic.amp_tiering import amp_assign_tier
+    from scripts.db.query_civic import get_predictive_evidence_for_tier
+
+    if mode == "cancer":
+        tiering_strategy = get("somatic.tiering_strategy", "B")
+    else:
+        tiering_strategy = "C"  # Rare disease: OncoKB-only, no CIViC lookup
+
     for v_result in variant_records:
         gene = v_result.get("gene", "")
         cls = v_result.get("classification", "VUS")
-        clinvar_sig = v_result.get("clinvar_significance", "")
-        tier = assign_tier(cls, gene, clinvar_sig, hgvsp=v_result.get("hgvsp", ""))
-        v_result["tier"] = tier
-        v_result["tier_label"] = get_tier_label(tier)
+        hgvsp = v_result.get("hgvsp", "")
+
+        # Fetch CIViC evidence only for cancer mode with strategy A or B
+        if tiering_strategy in ("A", "B"):
+            civic_evidence = get_predictive_evidence_for_tier(gene, hgvsp)
+        else:
+            civic_evidence = None
+
+        tier_result = amp_assign_tier(
+            classification=cls,
+            gene=gene,
+            hgvsp=hgvsp,
+            strategy=tiering_strategy,
+            civic_evidence=civic_evidence,
+        )
+        v_result["tier"] = tier_result.tier
+        v_result["tier_label"] = tier_result.tier_label
+        v_result["tier_evidence_source"] = tier_result.evidence_source
+        v_result["civic_match_level"] = tier_result.civic_match_level
+        v_result["civic_evidence"] = tier_result.civic_evidence
+
         cancer_info = get_cancer_gene_info(gene)
         if cancer_info:
             v_result["cancer_gene_type"] = cancer_info.get("type", "")
