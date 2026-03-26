@@ -128,3 +128,23 @@ def test_orchestrate_rare_disease_report_content(tmp_path):
     assert result is not None
     html = output_path.read_text()
     assert "Rare Disease" in html
+
+
+def test_rare_disease_mode_no_amp_tier(tmp_path):
+    """Rare disease mode는 AMP tier 필드 없이 기존 방식 유지."""
+    from scripts.orchestrate import run_pipeline
+    from pathlib import Path
+
+    rare_vcf = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "rare_disease_demo.vcf")
+    result = run_pipeline(
+        vcf_path=rare_vcf,
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True,
+        mode="rare-disease",
+        hpo_ids=["HP:0001250"],
+    )
+    assert result is not None
+    # Rare disease: classification is primary, hpo_score present
+    for v in result["variants"]:
+        assert "classification" in v
+        assert "hpo_score" in v

@@ -41,9 +41,11 @@ VCF Input
     - ClinVar override (expert panel / multi-submitter)
     │
     ▼
-[5] OncoKB Tiering (oncokb.py)
-    - Assigns Tier 1–4 to every variant
-    - Queries CIViC for treatment evidence (query_civic.py)
+[5] AMP/ASCO/CAP 2017 Tiering (amp_tiering.py)
+    - Assigns AMP Tier I–IV to every variant (cancer mode)
+    - Strategy A/B/C selectable via config.yaml somatic.tiering_strategy
+    - CIViC variant-level evidence (get_predictive_evidence_for_tier)
+    - OncoKB gene-level evidence (oncokb.py — gene data provider)
     - Hotspot detection via CIViC variant coordinates
     │
     ▼ (rare-disease mode only)
@@ -62,18 +64,46 @@ VCF Input
 
 ---
 
-## OncoKB Tiering
+## AMP/ASCO/CAP 2017 Somatic Tiering
 
-`scripts/clinical/oncokb.py` assigns a reporting tier to every variant:
+Cancer mode uses the AMP/ASCO/CAP 2017 guidelines (Li MM et al., *J Mol Diagn* 2017). See [docs/TIERING_PRINCIPLES.md](TIERING_PRINCIPLES.md) for full design rationale.
 
-| Tier | Criteria |
-|------|----------|
-| 1 | Pathogenic/LP on OncoKB Level 1–2 gene (proven therapeutic target); Drug Response; Risk Factor |
-| 2 | Pathogenic/LP on any cancer gene (OncoKB Level 3+); VUS at a known CIViC hotspot |
-| 3 | VUS on cancer gene (non-hotspot) — abbreviated table entry |
-| 4 | Everything else — count only, no detail page |
+`scripts/somatic/amp_tiering.py` is the tiering engine. It combines OncoKB gene-level evidence with CIViC variant-level evidence under **Modified Approach B** (default):
+
+| Tier | Label | Criteria |
+|------|-------|----------|
+| I | Strong Clinical Significance | FDA-approved therapy / professional guideline biomarker; Drug Response; Risk Factor |
+| II | Potential Clinical Significance | Clinical trial evidence; emerging clinical significance; VUS at known hotspot |
+| III | Unknown Clinical Significance | VUS on cancer gene (non-hotspot) |
+| IV | Benign or Likely Benign | Benign/Likely Benign; non-cancer gene VUS |
+
+### Tiering Strategy (config.yaml)
+
+```yaml
+somatic:
+  tiering_strategy: "B"  # "A" (CIViC priority), "B" (combined, default), "C" (OncoKB only)
+```
+
+| Strategy | Behaviour |
+|----------|-----------|
+| **A** | CIViC variant-level evidence takes priority; OncoKB as fallback |
+| **B** | OncoKB + CIViC combined — CIViC can elevate tier, never lower (default) |
+| **C** | OncoKB only — backward compatible with legacy `assign_tier()` |
+
+### Priority Order (Strategy B)
+
+1. CIViC variant-specific Level A + Pathogenic/LP → Tier I
+2. CIViC variant-specific Level B → Tier II
+3. OncoKB Level 1–2 + Pathogenic/LP → Tier I
+4. OncoKB Level 1–2 + VUS + hotspot → Tier II
+5. CIViC variant-specific Level C–D + Pathogenic/LP → Tier II
+6. Pathogenic/LP on any cancer gene → Tier II
+7. VUS on cancer gene → Tier III
+8. All other → Tier IV
 
 The OncoKB cancer gene list is stored in `data/oncokb_cancer_genes.json` (gene name → `{type, level}`).
+
+`scripts/clinical/oncokb.py::assign_tier()` is a **deprecated wrapper** that delegates to `amp_assign_tier(strategy="C")` for backward compatibility.
 
 ---
 
@@ -83,9 +113,12 @@ The OncoKB cancer gene list is stored in `data/oncokb_cancer_genes.json` (gene n
 
 - **`get_gene_summary(gene)`** — gene description and aliases from CIViC
 - **`get_variant_evidence(gene, variant_name)`** — treatment evidence items sorted by evidence level (A > B > C > D > E), with disease, drugs, clinical significance, and PMID citations
+- **`get_predictive_evidence_for_tier(gene, hgvsp)`** — returns `{match_level, evidence}` for tiering; tries variant-specific match first (using `scripts/common/hgvs_utils.py` for HGVSp→CIViC name conversion), falls back to gene-level. Only Predictive evidence type is returned.
 - **`is_hotspot(gene, protein_position)`** — checks whether a protein position falls within any CIViC variant coordinate range for that gene
 
 The local SQLite database (`data/db/civic.sqlite3`) is built from CIViC's public TSV exports via `scripts/db/build_civic_db.py`. Tables: `genes`, `variants`, `evidence`.
+
+HGVSp conversion utilities (e.g., `p.Val600Glu` → `V600E`) are shared via `scripts/common/hgvs_utils.py`.
 
 ---
 
@@ -95,7 +128,7 @@ Hotspot detection uses CIViC variant coordinates:
 
 1. `extract_protein_position(hgvsp)` parses the amino-acid position from an HGVSp string (e.g., `p.Val600Glu` → `600`).
 2. `is_hotspot(gene, position)` queries the CIViC `variants` table for any record with `start <= position <= stop` for that gene.
-3. A VUS at a hotspot position is promoted to Tier 2 (`assign_tier` in `oncokb.py`).
+3. A VUS at a hotspot position is promoted to Tier II (`amp_assign_tier` in `scripts/somatic/amp_tiering.py`).
 
 ---
 
@@ -181,8 +214,10 @@ gb/
 │   ├── orchestrate.py              # CLI + pipeline orchestration
 │   ├── classification/
 │   │   └── acmg_engine.py          # ACMG/AMP 2015 rule engine
+│   ├── somatic/
+│   │   └── amp_tiering.py          # AMP/ASCO/CAP 2017 tiering engine (TierResult, strategy A/B/C)
 │   ├── clinical/
-│   │   ├── oncokb.py               # OncoKB tiering, hotspot dispatch
+│   │   ├── oncokb.py               # OncoKB gene data provider; assign_tier() deprecated wrapper
 │   │   ├── query_clinvar.py        # ClinVar E-utilities API
 │   │   ├── hpo_matcher.py          # HPO phenotype scoring
 │   │   ├── query_omim.py           # OMIM gene-disease
@@ -207,7 +242,8 @@ gb/
 │   └── common/
 │       ├── models.py               # Variant, AcmgEvidence, FrequencyData
 │       ├── cache.py                # SQLite response cache
-│       └── config.py              # config.yaml loader
+│       ├── config.py              # config.yaml loader
+│       └── hgvs_utils.py          # HGVSp↔CIViC variant name conversion (shared)
 ├── data/
 │   ├── krgdb_freq.tsv              # Korean population frequencies
 │   ├── oncokb_cancer_genes.json    # OncoKB gene list

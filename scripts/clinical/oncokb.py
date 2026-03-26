@@ -48,49 +48,15 @@ def get_cancer_gene_info(gene: str) -> Optional[Dict]:
 
 
 def assign_tier(classification: str, gene: str, clinvar_significance: str = "", hgvsp: str = "") -> int:
-    """Assign reporting tier based on classification + OncoKB gene status.
-
-    Tier 1: Pathogenic/LP with therapeutic implications (OncoKB Level 1-2)
-    Tier 2: Pathogenic/LP on any cancer gene (OncoKB Level 3+); also VUS at a known hotspot
-    Tier 3: VUS/Benign but on OncoKB cancer gene → abbreviated report
-    Tier 4: VUS/Benign on non-cancer gene → count only, no report
-
-    Returns: 1, 2, 3, or 4
+    """DEPRECATED: Use scripts.somatic.amp_tiering.amp_assign_tier() instead.
+    Kept for backward compatibility — delegates to amp_assign_tier with strategy C.
     """
-    cls_lower = classification.lower()
-    gene_info = get_cancer_gene_info(gene) if gene else None
-
-    # Drug Response and Risk Factor always reported
-    if cls_lower in ("drug response", "risk factor"):
-        return 1
-
-    # Pathogenic / Likely Pathogenic
-    if "pathogenic" in cls_lower and "benign" not in cls_lower:
-        if gene_info and gene_info.get("level") in ("1", "2"):
-            return 1  # High-level therapeutic target
-        return 2  # Pathogenic on any gene
-
-    # VUS on cancer gene — check if hotspot
-    if cls_lower == "vus" and gene_info:
-        protein_pos = extract_protein_position(hgvsp)
-        if protein_pos and is_hotspot(gene, protein_pos):
-            return 2  # Hotspot VUS → Tier 2 (Clinically Significant)
-        return 3  # Non-hotspot cancer gene VUS → abbreviated report
-
-    # Benign on cancer gene (still worth noting)
-    if "benign" in cls_lower and gene_info:
-        return 4  # Cancer gene but benign → count only
-
-    # Everything else
-    return 4  # No report detail
+    from scripts.somatic.amp_tiering import amp_assign_tier
+    result = amp_assign_tier(classification, gene, hgvsp=hgvsp, strategy="C")
+    return result.tier
 
 
 def get_tier_label(tier: int) -> str:
-    """Human-readable tier label."""
-    labels = {
-        1: "Tier 1 — Therapeutic Target",
-        2: "Tier 2 — Clinically Significant",
-        3: "Tier 3 — Cancer Gene (VUS)",
-        4: "Tier 4 — No Clinical Significance",
-    }
-    return labels.get(tier, "Unknown")
+    """Human-readable tier label (AMP/ASCO/CAP 2017)."""
+    from scripts.somatic.amp_tiering import AMP_TIER_LABELS
+    return AMP_TIER_LABELS.get(tier, "Unknown")
