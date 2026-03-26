@@ -358,7 +358,7 @@ def run_pipeline(
     skip_api: bool = False,
     mode: str = None,
     hpo_ids: list = None,
-    hide_vus: bool = False,
+    hide_vus: bool = True,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -466,12 +466,17 @@ def run_pipeline(
     tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
 
     if hide_vus:
-        # Tier 1 + Tier 2 always get full detail pages (even if VUS — e.g., hotspot VUS)
-        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2) or v["classification"] not in _vus_classes]
-        omitted_variants = [v for v in variant_records if v not in detailed_variants]
+        # Tier I-II get full detail pages; Tier III/IV are omitted from detail
+        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2)]
+        omitted_variants = [v for v in variant_records if v.get("tier") not in (1, 2)]
     else:
         detailed_variants = variant_records
         omitted_variants = []
+
+    # Sort detail pages by tier (I → II), then by classification rank
+    _tier_sort = {1: 0, 2: 1, 3: 2, 4: 3}
+    _cls_sort = {"pathogenic": 0, "likely pathogenic": 1, "drug response": 2, "risk factor": 3, "vus": 4, "likely benign": 5, "benign": 6}
+    detailed_variants.sort(key=lambda v: (_tier_sort.get(v.get("tier", 4), 4), _cls_sort.get(v.get("classification", "VUS").lower(), 4)))
 
     report_data = {
         "sample_id": sample_id,
@@ -674,11 +679,16 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
     tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
 
     if hide_vus:
-        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2) or v["classification"] not in _vus_classes]
-        omitted_variants = [v for v in variant_records if v not in detailed_variants]
+        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2)]
+        omitted_variants = [v for v in variant_records if v.get("tier") not in (1, 2)]
     else:
         detailed_variants = variant_records
         omitted_variants = []
+
+    # Sort detail pages by tier (I → II), then by classification rank
+    _tier_sort = {1: 0, 2: 1, 3: 2, 4: 3}
+    _cls_sort = {"pathogenic": 0, "likely pathogenic": 1, "drug response": 2, "risk factor": 3, "vus": 4, "likely benign": 5, "benign": 6}
+    detailed_variants.sort(key=lambda v: (_tier_sort.get(v.get("tier", 4), 4), _cls_sort.get(v.get("classification", "VUS").lower(), 4)))
 
     return {
         "sample_id": sample["sample_id"],
@@ -763,7 +773,7 @@ def run_batch_pipeline(
     skip_api: bool = False,
     krgdb_path: str = None,
     hpo_ids: list = None,
-    hide_vus: bool = False,
+    hide_vus: bool = True,
     _skip_reports: bool = False,
 ) -> dict:
     """Process multiple VCF files with variant deduplication.
@@ -1017,7 +1027,13 @@ DOCKER
         "--hide-vus",
         action="store_true",
         dest="hide_vus",
-        help="Hide VUS and Benign variants from detailed report pages (shown in summary count only)",
+        help="(Default) Hide VUS/Benign from detail pages — Tier I-II only get full pages",
+    )
+    parser.add_argument(
+        "--show-all-variants",
+        action="store_true",
+        dest="show_all_variants",
+        help="Show ALL variants in detail pages (overrides default hide-vus behavior)",
     )
 
     args = parser.parse_args()
@@ -1037,6 +1053,9 @@ DOCKER
     # Resolve mode (shared between single and batch)
     mode = args.mode or get("report.default_mode", "cancer")
 
+    # hide_vus is True by default; --show-all-variants overrides to False
+    effective_hide_vus = not args.show_all_variants
+
     if args.batch:
         # ── Batch mode ────────────────────────────────────────────────────────
         result = run_batch_pipeline(
@@ -1047,7 +1066,7 @@ DOCKER
             skip_api=args.skip_api,
             krgdb_path=args.krgdb,
             hpo_ids=hpo_ids,
-            hide_vus=args.hide_vus,
+            hide_vus=effective_hide_vus,
         )
 
         if args.json_flag is not None:
@@ -1087,7 +1106,7 @@ DOCKER
             skip_api=args.skip_api,
             mode=mode,
             hpo_ids=hpo_ids,
-            hide_vus=args.hide_vus,
+            hide_vus=effective_hide_vus,
         )
 
         if result is None:

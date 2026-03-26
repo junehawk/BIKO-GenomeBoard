@@ -1068,9 +1068,12 @@
         <tr>
           <th>Gene</th>
           <th>Variant</th>
+          <th>HGVSp</th>
           <th>Type</th>
           <th>ClinVar</th>
           <th>Consequence</th>
+          <th>gnomAD AF</th>
+          <th>In Silico</th>
         </tr>
       </thead>
       <tbody>
@@ -1078,13 +1081,19 @@
         <tr>
           <td><strong>{{ v.gene }}</strong></td>
           <td style="font-family:monospace;font-size:8pt;">{{ v.variant }}</td>
+          <td style="font-family:monospace;font-size:7.5pt;">{{ v.hgvsp | default('—') }}</td>
           <td>{{ v.cancer_gene_type | default('—') }}</td>
           <td>{{ v.clinvar_significance | default('—') }}</td>
           <td>{{ v.consequence | default('—') }}</td>
+          <td style="font-size:8pt;">{% if v.gnomad_all is defined and v.gnomad_all is not none %}{{ "%.5f" | format(v.gnomad_all) }}{% else %}—{% endif %}</td>
+          <td style="font-size:7.5pt;">{% if v.sift %}S:{{ v.sift }}{% endif %}{% if v.sift and v.polyphen %} {% endif %}{% if v.polyphen %}P:{{ v.polyphen }}{% endif %}{% if not v.sift and not v.polyphen %}—{% endif %}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    <p style="font-size:7.5pt;color:#94a3b8;margin-top:4px;font-style:italic;">
+      Classified as VUS. Not actionable at this time. May be reclassified as new evidence accumulates.
+    </p>
     {% endif %}
 
     <!-- Tier 4: Count only -->
