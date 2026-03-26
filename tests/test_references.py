@@ -145,7 +145,10 @@ def test_gene_knowledge_has_content_status():
     """Every gene entry must have a 'content_status' field."""
     path = Path(__file__).parent.parent / "data" / "gene_knowledge.json"
     data = json.loads(path.read_text())
-    valid_statuses = {"ai-generated", "ai-generated-with-references", "verified"}
+    valid_statuses = {
+        "ai-generated", "ai-generated-with-references", "verified",
+        "curated-civic", "curated-ncbi", "curated-cpic", "curated-genreviews", "auto-minimal",
+    }
     for entry in data["genes"]:
         gene = entry["gene"]
         assert "content_status" in entry, f"{gene} missing 'content_status' field"
