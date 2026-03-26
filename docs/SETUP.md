@@ -251,4 +251,35 @@ python -m pytest tests/test_batch.py -v
 python -m pytest tests/test_rare_disease.py -v
 ```
 
-372 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, and report generation.
+419 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, and report generation.
+
+---
+
+## 7. Gene Knowledge Base (Curated Sources)
+
+Build the gene knowledge database from authoritative sources (NCBI Gene, CIViC, GeneReviews, CPIC):
+
+```bash
+# Build for specific genes
+python -m scripts.tools.build_gene_knowledge --genes TP53,BRCA2,KRAS,BRAF,EGFR
+
+# Build for OncoKB cancer genes (~300 genes, ~5 min)
+python -m scripts.tools.build_gene_knowledge --source oncokb
+
+# Build from VCF (extract gene list automatically)
+python -m scripts.tools.build_gene_knowledge --vcf input/sample.vcf
+
+# Build all (OncoKB + PGx genes)
+python -m scripts.tools.build_gene_knowledge --source all
+
+# Custom output path
+python -m scripts.tools.build_gene_knowledge --genes TP53,BRCA2 --output data/gene_knowledge.json
+```
+
+Output is written to `data/gene_knowledge.json`. Source priority per gene:
+1. **CPIC** (PGx genes: CYP2D6, CYP2C19, etc.) → `curated-cpic`
+2. **CIViC local DB** (cancer genes with descriptions) → `curated-civic`
+3. **NCBI Gene API** (universal fallback) → `curated-ncbi`
+4. **Minimal entry** (all sources failed) → `auto-minimal`
+
+Additional enrichment applied to all genes: GeneReviews PMID, ClinGen gene validity, CIViC treatment evidence.

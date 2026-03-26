@@ -1,1 +1,209 @@
-{"genes":[]}
+{
+  "genes": [
+    {
+      "gene": "TP53",
+      "full_name": "tumor protein p53",
+      "function_summary": "This gene encodes a tumor suppressor protein containing transcriptional activation, DNA binding, and oligomerization domains. The encoded protein responds to diverse cellular stresses to regulate expression of target genes, thereby inducing cell cycle arrest, apoptosis, senescence, DNA repair, or ch",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level B: Carboplatin,Cisplatin — Resistance in Ovarian Cancer (PMID: 11595686); Level B: Cisplatin,Etoposide,Mitomycin — Sensitivity/Response in Stomach Cancer (PMID: 14514923); Level B: Eprenetapopt,Azacitidine — Sensitivity/Response in Myelodysplastic Syndrome (PMID: 33449813); Level B: Doxorubicin — Sensitivity/Response in Breast Cancer (PMID: 9569050, 22698404); Level B: Chemotherapy — Sensitivity/Response in Esophageal Carcinoma, Gastric Adenocarcinoma (PMID: 23515910, 24740294)",
+      "frequency_prognosis": "",
+      "finding_summary": "TP53 mutations are universal across cancer types. The loss of a tumor suppressor is most often through large deleterious events, such as frameshift mutations, or premature stop codons. In TP53 however, many of the observed mutations in cancer are found to be single nucleotide missense variants. These variants are broadly distributed throughout the gene, but with the majority localizing in the DNA binding domain. There is no single hotspot in the DNA binding domain, but a majority of mutations oc",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "26837699",
+          "source": "Nadeu et al., 2016",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "20697090",
+          "source": "Zenz et al., 2010",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "24943832",
+          "source": "Baliakas et al., 2015",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "28453411",
+          "source": "Shepherd et al., 2017",
+          "note": "Prognostic — N/A"
+        },
+        {
+          "pmid": "28545823",
+          "source": "Schwalbe et al., 2017",
+          "note": "Prognostic — Poor Outcome"
+        }
+      ],
+      "content_status": "curated-civic"
+    },
+    {
+      "gene": "BRCA2",
+      "full_name": "BRCA2 DNA repair associated",
+      "function_summary": "Inherited mutations in BRCA1 and this gene, BRCA2, confer increased lifetime risk of developing breast or ovarian cancer. Both BRCA1 and BRCA2 are involved in maintenance of genome stability, specifically the homologous recombination pathway for double-strand DNA repair. The largest exon in both gen",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Olaparib — Sensitivity/Response in Prostate Cancer, Pancreatic Cancer, Cancer (PMID: 21862407, 28792849); Level A: Rucaparib — Sensitivity/Response in Ovarian Cancer (PMID: 28882436, 27908594); Level B: Talazoparib — Sensitivity/Response in Ovarian Cancer, Breast Cancer (PMID: 28242752); Level B: Platinum Compound — Sensitivity/Response in Pancreatic Cancer, Ovarian Carcinoma (PMID: 25072261, 24240112); Level B: Olaparib,Cediranib — Sensitivity/Response in Ovarian Cancer (PMID: 25218906)",
+      "frequency_prognosis": "",
+      "finding_summary": "BRCA2 mutations in the germline have become a hallmark for hereditary breast and ovarian cancers. Variants that have been demonstrated to reduce the function of the protein have been shown to increase the risk for these cancers, as well as prostate and pancreatic cancer. These findings have been the impetus for the increased popularity of genetic testing of healthy individuals to assess risk. Recent studies in ovarian cancer have also demonstrated that BRCA mutation status can predict treatment ",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "30345884",
+          "source": "Moore et al., 2018",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "31157963",
+          "source": "Golan et al., 2019",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "32343890",
+          "source": "de Bono et al., 2020",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "28882436",
+          "source": "Oza et al., 2017",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "28882436",
+          "source": "Oza et al., 2017",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "20301425",
+          "source": "GeneReviews",
+          "note": "BRCA1- and BRCA2-Associated Hereditary Breast and Ovarian Cancer."
+        }
+      ],
+      "content_status": "curated-civic"
+    },
+    {
+      "gene": "KRAS",
+      "full_name": "KRAS proto-oncogene, GTPase",
+      "function_summary": "This gene, a Kirsten ras oncogene homolog from the mammalian ras gene family, encodes a protein that is a member of the small GTPase superfamily. A single amino acid substitution is responsible for an activating mutation. The transforming protein that results is implicated in various malignancies, i",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Cetuximab — Resistance in Colorectal Cancer, Ovarian Cancer (PMID: 20619739, 22722830); Level A: Selumetinib,Docetaxel — Resistance in Lung Non-small Cell Carcinoma (PMID: 28492898); Level A: Panitumumab,Cetuximab — Resistance in Colorectal Cancer (PMID: 28275037, 19223544); Level A: Sotorasib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 34096690); Level A: Cetuximab,Adagrasib — Sensitivity/Response in Colorectal Cancer (PMID: 38587856)",
+      "frequency_prognosis": "",
+      "finding_summary": "Mutations in the RAS family of proteins are frequently observed across cancer types. The amino acid positions that account for the overwhelming majority of these mutations are G12, G13 and Q61. The different protein isoforms, despite their raw similarity, also behave very differently when expressed in non-native tissue types, likely due to differences in the C-terminal hyper-variable regions. Mis-regulation of isoform expression has been shown to be a driving event in cancer, as well as missense",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "18946061",
+          "source": "Karapetis et al., 2008",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "28492898",
+          "source": "Jänne et al., 2017",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "28275037",
+          "source": "Benson et al., 2017",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "34096690",
+          "source": "Skoulidis et al., 2021",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "38587856",
+          "source": "Yaeger et al., 2024",
+          "note": "Predictive — Sensitivity/Response"
+        }
+      ],
+      "content_status": "curated-civic"
+    },
+    {
+      "gene": "BRAF",
+      "full_name": "B-RAF1,BRAF1,NS7,RAFB1,B-raf,BRAF,BRAF-1",
+      "function_summary": "",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Vemurafenib — Sensitivity/Response in Cholangiocarcinoma, Laryngeal Squamous Cell Carcinoma, Papillary Thyroid Carcinoma (PMID: 25524464, 26490654); Level A: Trametinib,Dabrafenib — Sensitivity/Response in Intrahepatic Cholangiocarcinoma, Ganglioglioma, Low Grade Glioma (PMID: 25399551, 27283860); Level A: Cobimetinib,Vemurafenib — Sensitivity/Response in Melanoma (PMID: 27480103, 25265494); Level A: Encorafenib,Binimetinib — Sensitivity/Response in Melanoma (PMID: 29573941); Level A: Encorafenib,Cetuximab — Sensitivity/Response in Colorectal Cancer (PMID: 31566309)",
+      "frequency_prognosis": "",
+      "finding_summary": "BRAF mutations are found to be recurrent in many cancer types. Of these, the mutation of valine 600 to glutamic acid (V600E) is the most prevalent. V600E has been determined to be an activating mutation, and cells that harbor it, along with other V600 mutations are sensitive to the BRAF inhibitor dabrafenib. It is also common to use MEK inhibition as a substitute for BRAF inhibitors, and the MEK inhibitor trametinib has seen some success in BRAF mutant melanomas. BRAF mutations have also been co",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "21639808",
+          "source": "Chapman et al., 2011",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "25399551",
+          "source": "Robert et al., 2015",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "27480103",
+          "source": "Ascierto et al., 2016",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "29573941",
+          "source": "Dummer et al., 2018",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "31566309",
+          "source": "Kopetz et al., 2019",
+          "note": "Predictive — Sensitivity/Response"
+        }
+      ],
+      "content_status": "curated-civic"
+    },
+    {
+      "gene": "EGFR",
+      "full_name": "ERBB,ERBB1,HER1,NISBD2,PIG61,mENA,EGFR,ERRP,NNCIS",
+      "function_summary": "",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Erlotinib — Resistance in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma (PMID: 19147750, 22895145); Level A: Osimertinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma, Pancreatic Adenocarcinoma (PMID: 26720284, 26181354); Level A: Erlotinib — Sensitivity/Response in High Grade Glioma, Lung Small Cell Carcinoma, Lung Cancer (PMID: 21132006, 27211795); Level A: Afatinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Glioblastoma, Lung Adenocarcinoma (PMID: 22452895, 25589191); Level A: Dacomitinib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 18089823, 28958502)",
+      "frequency_prognosis": "",
+      "finding_summary": "EGFR is widely recognized for its importance in cancer. Amplification and mutations have been shown to be driving events in many cancer types. Its role in non-small cell lung cancer, glioblastoma and basal-like breast cancers has spurred many research and drug development efforts. Tyrosine kinase inhibitors have shown efficacy in EGFR amplfied tumors, most notably gefitinib and erlotinib. Mutations in EGFR have been shown to confer resistance to these drugs, particularly the variant T790M, which",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "25668228",
+          "source": "Denis et al., 2015",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "26729184",
+          "source": "Greig, 2016",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "27959700",
+          "source": "Mok et al., 2017",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "24868098",
+          "source": "Khozin et al., 2014",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "24868098",
+          "source": "Khozin et al., 2014",
+          "note": "Predictive — Sensitivity/Response"
+        }
+      ],
+      "content_status": "curated-civic"
+    }
+  ]
+}
