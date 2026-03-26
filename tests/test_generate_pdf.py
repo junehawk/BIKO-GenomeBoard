@@ -1,4 +1,5 @@
 # tests/test_generate_pdf.py
+import copy
 from scripts.counselor.generate_pdf import generate_report_html
 
 
@@ -419,3 +420,26 @@ def test_primary_colors_in_css():
     html = generate_report_html(MINIMAL_REPORT)
     # Check that some brand color exists (teal or navy)
     assert "color" in html.lower()
+
+
+# ── AMP 2017 tier label + evidence badge tests ────────────────────────────────
+
+
+def test_amp_tier_labels_in_report():
+    """AMP 2017 tier label이 리포트 헤더에 표시되어야 함."""
+    data = copy.deepcopy(MINIMAL_REPORT)
+    data["variants"][0]["tier"] = 1
+    data["variants"][0]["tier_label"] = "Tier I — Strong Clinical Significance"
+    data["variants"][0]["tier_evidence_source"] = "civic-variant-A"
+    data["tier1_variants"] = [data["variants"][0]]
+    html = generate_report_html(data)
+    assert "Strong Clinical Significance" in html
+
+
+def test_evidence_source_in_report():
+    """tier_evidence_source badge가 리포트 variant row에 표시되어야 함."""
+    data = copy.deepcopy(MINIMAL_REPORT)
+    data["variants"][0]["tier_evidence_source"] = "civic-variant-A"
+    data["tier1_variants"] = [data["variants"][0]]
+    html = generate_report_html(data)
+    assert "civic" in html.lower() or "CIViC" in html

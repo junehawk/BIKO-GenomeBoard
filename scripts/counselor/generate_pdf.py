@@ -141,6 +141,10 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
             elif v.get("gnomad_all") is None:
                 v["frequency_prognosis"] = "Not observed in gnomAD population database (absent or extremely rare)."
 
+        # Ensure AMP tier fields have defaults (set by orchestrate.py in cancer mode)
+        v.setdefault("tier_evidence_source", "")
+        v.setdefault("civic_match_level", "none")
+
         # Always apply classification-aware adjustment to finding_summary
         classification = v.get("classification", "VUS")
         raw_summary = v.get("finding_summary", "")
