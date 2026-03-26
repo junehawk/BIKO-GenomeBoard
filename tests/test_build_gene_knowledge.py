@@ -44,19 +44,9 @@ def test_fetch_cpic_gene_info(monkeypatch):
     assert any("CPIC" in r.get("source", "") for r in result["references"])
 
 def test_build_gene_knowledge_merges(tmp_path, monkeypatch):
-    """기존 gene_knowledge.json과 CPIC 데이터를 병합."""
+    """CYP2C19 (PGx 유전자)는 CPIC 우선으로 빌드됨."""
     from scripts.tools.build_gene_knowledge import build_knowledge
 
-    existing = {
-        "genes": [
-            {"gene": "TP53", "finding_summary": "existing", "content_status": "ai-generated"},
-            {"gene": "CYP2C19", "finding_summary": "old", "content_status": "ai-generated"},
-        ]
-    }
-    existing_path = tmp_path / "gene_knowledge.json"
-    existing_path.write_text(json.dumps(existing))
-
-    # Mock CPIC to return data for CYP2C19 only
     def mock_cpic(gene):
         if gene == "CYP2C19":
             return {
@@ -65,18 +55,24 @@ def test_build_gene_knowledge_merges(tmp_path, monkeypatch):
                 "finding_summary": "CPIC curated",
                 "content_status": "curated-cpic",
                 "references": [{"pmid": "34216116", "source": "CPIC 2022"}],
+                "treatment_strategies": "CPIC guidelines", "frequency_prognosis": "",
+                "function_summary": "", "clinical_significance": "",
+                "associated_conditions": [], "korean_specific_note": None, "hgvs": {},
             }
         return None
 
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_cpic_gene", mock_cpic)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_summary", lambda g: None)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_gene_summary", lambda g: None)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_genreviews_info", lambda g: None)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_validity_local", lambda g, **kw: None)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_treatment_summary", lambda g, v=None: "")
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_variant_evidence", lambda g, v=None: [])
 
     output_path = tmp_path / "output.json"
-    build_knowledge(str(existing_path), str(output_path), cpic_genes=["CYP2C19"])
+    build_knowledge(["CYP2C19"], str(output_path))
 
     result = json.loads(output_path.read_text())
     genes = {g["gene"]: g for g in result["genes"]}
-    # CYP2C19 updated to curated
     assert genes["CYP2C19"]["content_status"] == "curated-cpic"
     assert genes["CYP2C19"]["finding_summary"] == "CPIC curated"
-    # TP53 unchanged
-    assert genes["TP53"]["content_status"] == "ai-generated"
