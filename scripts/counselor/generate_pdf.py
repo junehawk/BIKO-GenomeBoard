@@ -92,35 +92,36 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                     hgvs = info.get("hgvs", {})
                     v.setdefault("variant_effect", hgvs.get("variant_effect", ""))
 
-            # CIViC enrichment (takes priority over gene_knowledge for clinical content)
-            civic_gene = get_gene_summary(gene)
-            if civic_gene and civic_gene.get("description"):
-                v.setdefault("finding_summary", civic_gene["description"][:500])
+            if mode == "cancer":
+                # CIViC enrichment (takes priority over gene_knowledge for clinical content)
+                civic_gene = get_gene_summary(gene)
+                if civic_gene and civic_gene.get("description"):
+                    v.setdefault("finding_summary", civic_gene["description"][:500])
 
-            # Treatment from CIViC
-            hgvsp = v.get("hgvsp", "")
-            civic_variant_name = _hgvsp_to_civic_variant(hgvsp)
-            civic_treatment = get_treatment_summary(gene, civic_variant_name)
-            if civic_treatment:
-                v.setdefault("treatment_strategies", civic_treatment)
+                # Treatment from CIViC
+                hgvsp = v.get("hgvsp", "")
+                civic_variant_name = _hgvsp_to_civic_variant(hgvsp)
+                civic_treatment = get_treatment_summary(gene, civic_variant_name)
+                if civic_treatment:
+                    v.setdefault("treatment_strategies", civic_treatment)
 
-            # Evidence references from CIViC
-            civic_evidence = get_variant_evidence(gene, civic_variant_name) if civic_variant_name else []
-            if not civic_evidence:
-                civic_evidence = get_variant_evidence(gene)
-            if civic_evidence:
-                refs = [
-                    {
-                        "pmid": e["pmid"],
-                        "source": e["citation"],
-                        "note": f"{e['evidence_type']} — {e['significance']}",
-                    }
-                    for e in civic_evidence[:5]
-                    if e["pmid"]
-                ]
-                if refs:
-                    v.setdefault("references", refs)
-                    v.setdefault("content_status", "curated-civic")
+                # Evidence references from CIViC
+                civic_evidence = get_variant_evidence(gene, civic_variant_name) if civic_variant_name else []
+                if not civic_evidence:
+                    civic_evidence = get_variant_evidence(gene)
+                if civic_evidence:
+                    refs = [
+                        {
+                            "pmid": e["pmid"],
+                            "source": e["citation"],
+                            "note": f"{e['evidence_type']} — {e['significance']}",
+                        }
+                        for e in civic_evidence[:5]
+                        if e["pmid"]
+                    ]
+                    if refs:
+                        v.setdefault("references", refs)
+                        v.setdefault("content_status", "curated-civic")
 
         # Build frequency text from available data if frequency_prognosis is empty
         if not v.get("frequency_prognosis"):
