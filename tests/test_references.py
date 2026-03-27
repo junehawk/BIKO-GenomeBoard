@@ -145,7 +145,10 @@ def test_gene_knowledge_has_content_status():
     """Every gene entry must have a 'content_status' field."""
     path = Path(__file__).parent.parent / "data" / "gene_knowledge.json"
     data = json.loads(path.read_text())
-    valid_statuses = {"ai-generated", "ai-generated-with-references", "verified"}
+    valid_statuses = {
+        "ai-generated", "ai-generated-with-references", "verified",
+        "curated-civic", "curated-ncbi", "curated-cpic", "curated-genreviews", "auto-minimal",
+    }
     for entry in data["genes"]:
         gene = entry["gene"]
         assert "content_status" in entry, f"{gene} missing 'content_status' field"
@@ -262,7 +265,7 @@ def test_no_watermark_when_content_status_absent():
 
 
 def test_generate_pdf_enriches_references_from_gene_knowledge():
-    """generate_report_html enriches variant with references from gene_knowledge when absent."""
+    """generate_report_html enriches variant with references from CIViC in cancer mode."""
     bare_variant = {
         "variant": "chr17:7577120:G>A",
         "gene": "TP53",
@@ -273,10 +276,9 @@ def test_generate_pdf_enriches_references_from_gene_knowledge():
             "clinical": {"clinvar_significance": "Pathogenic"},
             "korean_pop": {"korean_flag": ""},
         },
-        # No references / content_status — should be filled from gene_knowledge
+        # No references / content_status — filled from CIViC in cancer mode
     }
     report = {**MINIMAL_REPORT, "variants": [bare_variant]}
     html = generate_report_html(report, mode="cancer")
-    # TP53 has KNOWN_REFERENCES in gene_knowledge.json
+    # TP53 has CIViC evidence — references populated in cancer mode
     assert "PMID:" in html
-    assert "Referenced PMIDs provided for verification" in html

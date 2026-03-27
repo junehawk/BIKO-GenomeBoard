@@ -2,406 +2,208 @@
   "genes": [
     {
       "gene": "TP53",
-      "full_name": "Tumor Protein P53",
-      "function_summary": "TP53 is a tumor suppressor gene that plays a central role in cell cycle regulation, DNA damage repair, and apoptosis induction. The p53 protein, known as the 'guardian of the genome', acts as a transcription factor during cellular stress responses to suppress cell proliferation. Loss of p53 function due to mutation leads to unrestricted cancer cell proliferation and evasion of apoptosis.",
-      "clinical_significance": "TP53 germline variants are the causative basis of Li-Fraumeni syndrome, significantly increasing the risk of various early-onset cancers (breast cancer, sarcoma, brain tumors, adrenocortical carcinoma, etc.). Somatic TP53 variants are found in approximately 50% of all human cancers, making it the most frequently mutated cancer gene.",
-      "associated_conditions": [
-        "Li-Fraumeni Syndrome",
-        "Hereditary breast cancer",
-        "Soft tissue sarcoma",
-        "Osteosarcoma",
-        "Brain tumors",
-        "Adrenocortical carcinoma",
-        "Leukemia"
-      ],
-      "treatment_strategies": "When Li-Fraumeni syndrome is confirmed, a whole-body cancer surveillance protocol (Toronto protocol) is recommended, including annual whole-body MRI, breast MRI (for females), brain MRI, and abdominal ultrasound. Radiation exposure should be minimized, as radiation therapy carries a risk of secondary tumor induction and should be avoided when possible. Surgical resection is the primary treatment for cancer occurrence; responsiveness to platinum-based chemotherapy and immunotherapy (e.g., pembrolizumab) is evaluated individually. Cascade genetic testing of family members is essential, and preimplantation genetic testing (PGT) may be considered for germline variant carriers.",
-      "frequency_prognosis": "The population frequency of pathogenic TP53 germline variants is estimated at approximately 1/5,000 to 1/20,000. The cumulative cancer incidence by age 70 in Li-Fraumeni syndrome patients reaches approximately 73% in males and approximately 100% in females. Large-scale studies on the exact frequency of TP53 germline variants in the Korean population are limited; however, the variant frequency is very low in the Korean Reference Genome Database (KRGDB), classifying it as a rare variant. Early diagnosis and proactive surveillance programs enable early treatment and contribute to improved prognosis.",
-      "finding_summary": "A pathogenic variant in the TP53 gene was identified in this specimen, which is likely to result in loss of p53 protein function. This variant is associated with Li-Fraumeni syndrome and significantly increases the risk of multiple cancer development. Comprehensive clinical management through genetic counseling and family history evaluation is recommended, and enrollment in a regular whole-body cancer screening program should be considered.",
+      "full_name": "tumor protein p53",
+      "function_summary": "This gene encodes a tumor suppressor protein containing transcriptional activation, DNA binding, and oligomerization domains. The encoded protein responds to diverse cellular stresses to regulate expression of target genes, thereby inducing cell cycle arrest, apoptosis, senescence, DNA repair, or ch",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level B: Carboplatin,Cisplatin — Resistance in Ovarian Cancer (PMID: 11595686); Level B: Cisplatin,Etoposide,Mitomycin — Sensitivity/Response in Stomach Cancer (PMID: 14514923); Level B: Eprenetapopt,Azacitidine — Sensitivity/Response in Myelodysplastic Syndrome (PMID: 33449813); Level B: Doxorubicin — Sensitivity/Response in Breast Cancer (PMID: 9569050, 22698404); Level B: Chemotherapy — Sensitivity/Response in Esophageal Carcinoma, Gastric Adenocarcinoma (PMID: 23515910, 24740294)",
+      "frequency_prognosis": "",
+      "finding_summary": "TP53 mutations are universal across cancer types. The loss of a tumor suppressor is most often through large deleterious events, such as frameshift mutations, or premature stop codons. In TP53 however, many of the observed mutations in cancer are found to be single nucleotide missense variants. These variants are broadly distributed throughout the gene, but with the majority localizing in the DNA binding domain. There is no single hotspot in the DNA binding domain, but a majority of mutations oc",
       "korean_specific_note": null,
-      "hgvs": {"transcript": "NM_000546.6", "cdna": "c.524G>T", "protein": "p.Arg175Leu", "variant_effect": "Missense"},
+      "hgvs": {},
       "references": [
-        {"pmid": "25741868", "source": "Genet Med 2015", "note": "ACMG/AMP variant interpretation standards"},
-        {"pmid": "31006110", "source": "GeneReviews", "note": "Li-Fraumeni Syndrome"},
-        {"pmid": "22585170", "source": "Hum Mutat 2012", "note": "IARC TP53 mutation database"}
+        {
+          "pmid": "26837699",
+          "source": "Nadeu et al., 2016",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "20697090",
+          "source": "Zenz et al., 2010",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "24943832",
+          "source": "Baliakas et al., 2015",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "28453411",
+          "source": "Shepherd et al., 2017",
+          "note": "Prognostic — N/A"
+        },
+        {
+          "pmid": "28545823",
+          "source": "Schwalbe et al., 2017",
+          "note": "Prognostic — Poor Outcome"
+        }
       ],
-      "content_status": "ai-generated-with-references"
+      "content_status": "curated-civic"
     },
     {
       "gene": "BRCA2",
-      "full_name": "BRCA2 DNA Repair Associated",
-      "function_summary": "BRCA2 is a tumor suppressor gene essential for DNA double-strand break repair through homologous recombination (HR). The BRCA2 protein mediates accurate DNA repair by recruiting RAD51 recombinase to sites of DNA damage. Loss of BRCA2 function induces genomic instability, greatly increasing the risk of cancer development.",
-      "clinical_significance": "BRCA2 germline pathogenic variants are a major cause of Hereditary Breast and Ovarian Cancer syndrome (HBOC), increasing the lifetime risk of breast cancer in women to 45–85% and ovarian cancer risk to 11–27%. In males, the risks of breast cancer, prostate cancer, and pancreatic cancer are also elevated, making it a key gene in familial cancer syndrome.",
-      "associated_conditions": [
-        "Hereditary Breast and Ovarian Cancer Syndrome (HBOC)",
-        "Male breast cancer",
-        "Pancreatic cancer",
-        "Prostate cancer",
-        "Fanconi anemia (biallelic)"
-      ],
-      "treatment_strategies": "For BRCA2 pathogenic variant carriers, risk-reducing mastectomy or enhanced surveillance (annual breast MRI + mammography starting at age 25) is recommended. Risk-reducing salpingo-oophorectomy (RRSO) is strongly recommended for ovarian cancer prevention at ages 35–40 or after completion of childbearing. For BRCA2 variant-related cancers, PARP inhibitors (olaparib, niraparib, rucaparib) have received FDA approval, and sensitivity to platinum-based chemotherapy is high. For male carriers, prostate cancer screening (PSA + DRE) starting at age 40 and breast self-examination are recommended.",
-      "frequency_prognosis": "The general population frequency of BRCA2 pathogenic variants is estimated at approximately 1/400. BRCA2 variant frequency in Korean breast cancer patients is reported at approximately 3–5%, and Korean-specific founder mutations (e.g., c.7480C>T) are known. The lifetime breast cancer risk for Korean BRCA2 variant carriers has been reported at 49–57%, similar to that in Western populations. High response rates to PARP inhibitor therapy contribute to improved prognosis, and 5-year survival rates are significantly improved with early detection.",
-      "finding_summary": "A pathogenic variant in the BRCA2 gene was identified in this specimen, indicating impaired DNA double-strand break repair function. This corresponds to Hereditary Breast and Ovarian Cancer syndrome (HBOC), with increased risks of breast cancer, ovarian cancer, prostate cancer, and pancreatic cancer. Genetic counseling is essential for establishing a risk management strategy, and cascade testing of family members is recommended.",
-      "korean_specific_note": "BRCA2 founder mutations (e.g., c.7480C>T) have been reported in the Korean population, and the Korean Hereditary Breast Cancer (KOHBRA) study has demonstrated that the Korean-specific variant spectrum differs from that in Western populations. In accordance with Korean National Cancer Screening Guidelines, BRCA2 variant carriers are classified as high-risk and are eligible for an enhanced screening program. Korean population frequency is approximately 3–5% among hereditary breast cancer patients vs approximately 1–2% in Western hereditary cancer cohorts.",
-      "hgvs": {"transcript": "NM_000059.4", "cdna": "c.7878C>T", "protein": "p.Ala2626=", "variant_effect": "Synonymous"},
-      "references": [
-        {"pmid": "25741868", "source": "Genet Med 2015", "note": "ACMG/AMP standards"},
-        {"pmid": "29446198", "source": "GeneReviews", "note": "BRCA1/2 Hereditary Breast/Ovarian Cancer"},
-        {"pmid": "28536285", "source": "NEJM 2017", "note": "BRCA testing and management"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "CFTR",
-      "full_name": "Cystic Fibrosis Transmembrane Conductance Regulator",
-      "function_summary": "CFTR encodes a chloride channel on the surface of epithelial cells, regulating the movement of chloride ions and water across the cell membrane. Dysfunction of the CFTR protein increases the viscosity of mucosal secretions, affecting multiple organs including the lungs, pancreas, and gastrointestinal tract. It follows an autosomal recessive inheritance pattern; cystic fibrosis manifests only when both alleles carry variants.",
-      "clinical_significance": "CFTR biallelic pathogenic variants cause Cystic Fibrosis (CF), leading to chronic pulmonary infections, exocrine pancreatic insufficiency, and male infertility. Single-allele carriers are generally asymptomatic, but some may exhibit CFTR-related disorders (chronic sinusitis, congenital bilateral absence of the vas deferens, etc.).",
-      "associated_conditions": [
-        "Cystic Fibrosis",
-        "Congenital Bilateral Absence of Vas Deferens (CBAVD)",
-        "Chronic pancreatitis",
-        "Bronchiectasis"
-      ],
-      "treatment_strategies": "For cystic fibrosis, CFTR modulator therapy (ivacaftor, lumacaftor/ivacaftor, elexacaftor/tezacaftor/ivacaftor) is applied depending on the variant type. Trikafta (elexacaftor/tezacaftor/ivacaftor) demonstrates particularly high efficacy for F508del variants, significantly improving FEV1. Inhaled antibiotics for pulmonary infection management, airway clearance therapy, and pancreatic enzyme supplementation are included in standard care. When a carrier is identified, testing the partner for CFTR variant carrier status is recommended to assess the child's risk of CF.",
-      "frequency_prognosis": "Cystic fibrosis occurs at a frequency of approximately 1/2,500 in Caucasians, making it the most common autosomal recessive disease in that population, with a carrier frequency of approximately 1/25. In contrast, it is extremely rare in East Asians including Koreans, estimated at approximately 1/90,000 to 1/350,000, with a carrier frequency of only approximately 1/150 to 1/300. The spectrum of CFTR variants reported in Koreans differs from that in Western populations, and the frequency of the F508del variant is markedly lower. The introduction of CFTR modulator therapy has greatly improved the median survival age of CF patients to over 50 years. Korean population frequency is approximately 1/90,000 vs 1/2,500 in Western (Caucasian) populations — approximately 36-fold lower.",
-      "finding_summary": "A pathogenic variant in the CFTR gene was identified in this specimen. The clinical significance of this variant depends on zygosity; biallelic variants are consistent with a diagnosis of cystic fibrosis. Since CF is an extremely rare disease in Koreans, comprehensive evaluation including clinical symptoms and sweat chloride testing is required. If the individual is a carrier, testing the partner is recommended to assess the child's risk of disease.",
-      "korean_specific_note": "Cystic fibrosis is extremely rare in Koreans (approximately 1/90,000), approximately 36-fold lower in frequency than in Western populations. The spectrum of CFTR variants in Koreans includes many variants not covered by standard Western screening panels; therefore, whole-gene sequencing is recommended for diagnosis. Only a few dozen cases of CF have been reported in Korea, making delayed diagnosis common. Korean population frequency is approximately 1/90,000 vs 1/2,500 in Western populations.",
-      "hgvs": {"transcript": "NM_000492.4", "cdna": "c.1521_1523del", "protein": "p.Phe508del", "variant_effect": "In-frame deletion"},
-      "references": [
-        {"pmid": "31006110", "source": "GeneReviews", "note": "CFTR-Related Disorders"},
-        {"pmid": "17206810", "source": "J Med Genet 2007", "note": "CFTR mutation spectrum"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "CYP2C19",
-      "full_name": "Cytochrome P450 Family 2 Subfamily C Member 19",
-      "function_summary": "CYP2C19 belongs to the cytochrome P450 enzyme family and is a pharmacogene involved in hepatic metabolism of various drugs. This enzyme plays a key role in the activation or metabolism of clopidogrel (antiplatelet agent), proton pump inhibitors, certain antidepressants, and anticonvulsants. Genetic polymorphisms determine drug metabolism phenotypes ranging from poor metabolizer (PM) to ultrarapid metabolizer (UM).",
-      "clinical_significance": "CYP2C19 poor metabolizers (*2/*2 or *2/*3) have reduced conversion of clopidogrel to its active metabolite, significantly increasing the risk of thrombotic events following coronary artery stent procedures. Per CPIC Level A guidelines, alternative antiplatelet agents (prasugrel, ticagrelor) are recommended for CYP2C19 PMs.",
-      "associated_conditions": [
-        "Clopidogrel resistance",
-        "Altered proton pump inhibitor metabolism",
-        "Variable antidepressant response (escitalopram, sertraline)",
-        "Variable anticonvulsant metabolism (phenytoin)"
-      ],
-      "treatment_strategies": "When a CYP2C19 poor metabolizer is identified, antiplatelet therapy is switched from clopidogrel to prasugrel or ticagrelor; this is recommended at Level A evidence by CPIC and DPWG guidelines. When using proton pump inhibitors (PPIs), drug concentrations are elevated in PMs, so dose reduction of omeprazole or substitution with an alternative PPI (rabeprazole) is considered. When prescribing antidepressants (escitalopram, sertraline), the possibility of elevated blood concentrations in PMs warrants starting at a low dose and performing therapeutic drug monitoring (TDM). It is advisable to register pharmacogenomic results in the electronic medical record (EMR) so that automatic alerts are generated during future prescriptions.",
-      "frequency_prognosis": "The CYP2C19 *2 allele frequency in Koreans is approximately 25–29%, significantly higher than in Western populations (approximately 12–15%). The proportion of CYP2C19 poor metabolizers (PM) in Koreans is approximately 12–16%, roughly 5–6 times that of Western populations (approximately 2–5%). This results in a population-level significantly higher risk of clopidogrel hyporesponse in Korean patients; the Korean Society of Interventional Cardiology also recommended CYP2C19 testing in 2019. The CYP2C19 *3 allele is also present in Koreans at a frequency of approximately 5–10%, a loss-of-function variant specific to East Asians. Korean population frequency of poor metabolizers is 14% vs 2.5% in Western populations.",
-      "finding_summary": "A pharmacogenomic variant in the CYP2C19 gene was identified in this specimen. This variant directly affects the metabolism of numerous drugs including clopidogrel, and is a key determinant of drug responsiveness, particularly during antiplatelet therapy. The PM frequency in Koreans is approximately 5–6 times higher than in Western populations, making this clinically significant; genotype confirmation is recommended prior to prescribing these drugs.",
-      "korean_specific_note": "The Korean CYP2C19 poor metabolizer frequency (approximately 14%) is approximately 5.6 times that of Western populations (approximately 2.5%), making clopidogrel hyporesponse a critically important clinical issue in the Korean population. A 2019 Korean Society of Interventional Cardiology consensus statement recommended CYP2C19 genotype testing for patients undergoing percutaneous coronary intervention (PCI), and Korean National Health Insurance covers CYP2C19 genotype testing. Korean population frequency is 14% vs 2.5% in Western populations.",
-      "hgvs": {"transcript": "NM_000769.4", "cdna": "c.681G>A", "protein": "p.Pro227=", "star_allele": "*2", "variant_effect": "Synonymous / Splice variant"},
-      "references": [
-        {"pmid": "34216116", "source": "Clin Pharmacol Ther 2022", "note": "CPIC guideline for CYP2C19 and clopidogrel"},
-        {"pmid": "25741868", "source": "Genet Med 2015", "note": "ACMG/AMP standards"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "HLA-B",
-      "full_name": "Major Histocompatibility Complex, Class I, B",
-      "function_summary": "HLA-B belongs to the major histocompatibility complex (MHC) class I and mediates immune responses by presenting intracellular peptides to T cells on the cell surface. The high polymorphism of HLA-B determines individual differences in immune responses to various pathogens, and certain HLA alleles are strongly associated with adverse drug reactions. In particular, HLA-B*5701 is a major risk factor for abacavir hypersensitivity reactions, and HLA-B*5801 is associated with allopurinol-induced Stevens-Johnson syndrome (SJS) / toxic epidermal necrolysis (TEN).",
-      "clinical_significance": "HLA-B*5701 carriers are at high risk of abacavir hypersensitivity syndrome, and abacavir is absolutely contraindicated in confirmed carriers (FDA Black Box Warning). In HLA-B*5801 allele carriers, the risk of SJS/TEN upon allopurinol administration increases approximately 80–100-fold. HLA-B*1502 is strongly associated with carbamazepine-induced SJS/TEN. These HLA-drug associations are established as CPIC Level A guidelines.",
-      "associated_conditions": [
-        "Abacavir hypersensitivity (HLA-B*5701)",
-        "Allopurinol-induced SJS/TEN (HLA-B*5801)",
-        "Carbamazepine-induced SJS/TEN (HLA-B*1502)",
-        "Ankylosing spondylitis (HLA-B*27)"
-      ],
-      "treatment_strategies": "When HLA-B*5701 positive, abacavir is absolutely contraindicated; an alternative antiretroviral agent must be selected (FDA Black Box Warning). When HLA-B*5801 positive, allopurinol is absolutely contraindicated; febuxostat or benzbromarone is used as an alternative urate-lowering agent. Performing HLA-B*5801 genotype testing before prescribing urate-lowering agents in gout patients is recommended per CPIC and ACR (American College of Rheumatology) guidelines. In HLA-B*1502 positive individuals (Southeast Asian/East Asian ancestry), carbamazepine and related drugs (oxcarbazepine, phenytoin) are avoided.",
-      "frequency_prognosis": "The HLA-B*5701 allele frequency is approximately 5–8% across various populations. The HLA-B*5801 allele frequency in Koreans is approximately 12%, which is 6–12 times higher than in European Caucasians (approximately 1–2%). In Korea, HLA-B*5801 testing before allopurinol prescription has been covered by National Health Insurance since 2012, after which the incidence of allopurinol-related SJS/TEN has decreased. SJS/TEN is a severe adverse drug reaction with a mortality rate of 10–30%, and the cost-effectiveness of preventive genotype testing has been demonstrated. Korean population frequency of HLA-B*5801 is approximately 12% vs 1–2% in European populations.",
-      "finding_summary": "An HLA-B gene variant was identified in this specimen. The tag SNP rs2395029 is associated with HLA-B*5701 carrier status, which indicates abacavir hypersensitivity risk (FDA Black Box Warning). Abacavir must not be administered to confirmed HLA-B*5701 carriers. These variant results are for reference only; a separate confirmatory HLA typing test is recommended for clinical drug prescribing decisions.",
-      "korean_specific_note": "The Korean HLA-B*5801 carrier rate of approximately 12% is much higher than in Europeans (1–2%), making this a high-risk population for allopurinol-induced severe adverse drug reactions. The Korean College of Rheumatology mandatorily recommends HLA-B*5801 testing before allopurinol prescription in gout patients, and National Health Insurance coverage applies. For HLA-B*5701 (abacavir hypersensitivity), the tag SNP rs2395029 is used for screening; confirmatory HLA typing is required before clinical decisions. The HLA-B*1502 frequency in Koreans (approximately 1–6%) is also higher than in Europeans, requiring caution when prescribing carbamazepine.",
-      "hgvs": {"transcript": "N/A (HLA typing required)", "cdna": "tag SNP rs2395029", "protein": "N/A", "variant_effect": "Intergenic tag SNP"},
-      "references": [
-        {"pmid": "22378157", "source": "Clin Pharmacol Ther 2012", "note": "CPIC guideline for HLA-B*5701 and abacavir"},
-        {"pmid": "24561393", "source": "Clin Pharmacol Ther 2014", "note": "CPIC guideline for HLA-B*5801 and allopurinol"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "ATM",
-      "full_name": "ATM Serine/Threonine Kinase",
-      "function_summary": "ATM is the central kinase for DNA double-strand break detection and signaling, and an upstream regulator of the DNA damage response (DDR) pathway. ATM orchestrates cell cycle arrest, DNA repair, and apoptosis by phosphorylating numerous downstream substrates including p53, BRCA1, and CHK2. Loss of ATM function leads to DNA repair defects, genomic instability, and radiation hypersensitivity.",
-      "clinical_significance": "ATM biallelic pathogenic variants cause ataxia-telangiectasia (A-T), characterized by cerebellar ataxia, immune deficiency, radiation hypersensitivity, and cancer predisposition. ATM heterozygous carriers have an approximately 2–3-fold increased breast cancer risk compared to the general population, and are classified as a hereditary cancer risk gene in NCCN guidelines.",
-      "associated_conditions": [
-        "Ataxia-Telangiectasia",
-        "Hereditary breast cancer (moderate risk)",
-        "Pancreatic cancer predisposition",
-        "Prostate cancer predisposition",
-        "Mantle cell lymphoma (somatic)"
-      ],
-      "treatment_strategies": "For ATM heterozygous pathogenic variant carriers, annual breast MRI combined with mammography starting at age 40 is recommended for breast cancer risk management (NCCN guideline). The indication for risk-reducing mastectomy is determined based on individual family history and the functional impact of the variant. For cancers that arise, ATM-deficient tumors have been reported to have sensitivity to platinum-based chemotherapy and PARP inhibitors, though the level of evidence is lower than for BRCA1/2. Radiation therapy is contraindicated in ataxia-telangiectasia patients due to the risk of excessive toxicity, and radiological imaging should also be minimized.",
-      "frequency_prognosis": "The general population carrier frequency of ATM pathogenic variants is estimated at approximately 1/100 to 1/200. The lifetime breast cancer risk for ATM heterozygous carriers is reported at approximately 15–40%, corresponding to moderate penetrance. Large-scale studies on the exact frequency of ATM variants in the Korean population are limited; however, ATM pathogenic variants are occasionally reported in Korean hereditary cancer panel testing. The incidence of ataxia-telangiectasia is approximately 1/40,000 to 1/100,000.",
-      "finding_summary": "A likely pathogenic variant in the ATM gene was identified in this specimen, associated with impaired DNA damage repair function. ATM heterozygous variants moderately increase the risks of breast cancer, pancreatic cancer, and prostate cancer. Risk assessment through genetic counseling and establishment of an appropriate cancer surveillance program is recommended.",
+      "full_name": "BRCA2 DNA repair associated",
+      "function_summary": "Inherited mutations in BRCA1 and this gene, BRCA2, confer increased lifetime risk of developing breast or ovarian cancer. Both BRCA1 and BRCA2 are involved in maintenance of genome stability, specifically the homologous recombination pathway for double-strand DNA repair. The largest exon in both gen",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Olaparib — Sensitivity/Response in Prostate Cancer, Pancreatic Cancer, Cancer (PMID: 21862407, 28792849); Level A: Rucaparib — Sensitivity/Response in Ovarian Cancer (PMID: 28882436, 27908594); Level B: Talazoparib — Sensitivity/Response in Ovarian Cancer, Breast Cancer (PMID: 28242752); Level B: Platinum Compound — Sensitivity/Response in Pancreatic Cancer, Ovarian Carcinoma (PMID: 25072261, 24240112); Level B: Olaparib,Cediranib — Sensitivity/Response in Ovarian Cancer (PMID: 25218906)",
+      "frequency_prognosis": "",
+      "finding_summary": "BRCA2 mutations in the germline have become a hallmark for hereditary breast and ovarian cancers. Variants that have been demonstrated to reduce the function of the protein have been shown to increase the risk for these cancers, as well as prostate and pancreatic cancer. These findings have been the impetus for the increased popularity of genetic testing of healthy individuals to assess risk. Recent studies in ovarian cancer have also demonstrated that BRCA mutation status can predict treatment ",
       "korean_specific_note": null,
-      "hgvs": {"transcript": "NM_000051.4", "cdna": "varies", "protein": "varies"},
+      "hgvs": {},
       "references": [
-        {"pmid": "26017405", "source": "GeneReviews", "note": "ATM-Associated Cancer Risk"}
+        {
+          "pmid": "30345884",
+          "source": "Moore et al., 2018",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "31157963",
+          "source": "Golan et al., 2019",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "32343890",
+          "source": "de Bono et al., 2020",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "28882436",
+          "source": "Oza et al., 2017",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "28882436",
+          "source": "Oza et al., 2017",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "20301425",
+          "source": "GeneReviews",
+          "note": "BRCA1- and BRCA2-Associated Hereditary Breast and Ovarian Cancer."
+        }
       ],
-      "content_status": "ai-generated-with-references"
+      "content_status": "curated-civic"
     },
     {
-      "gene": "NUDT15",
-      "full_name": "Nudix Hydrolase 15",
-      "function_summary": "NUDT15 encodes a nucleotide diphosphatase involved in thiopurine metabolism. Loss-of-function variants cause accumulation of cytotoxic thioguanine nucleotides.",
-      "clinical_significance": "The p.Arg139Cys variant is the primary pharmacogenomic marker for thiopurine-induced myelosuppression, particularly prevalent in East Asian populations.",
-      "associated_conditions": [
-        "Thiopurine-induced myelosuppression",
-        "Azathioprine toxicity",
-        "6-mercaptopurine toxicity"
-      ],
-      "treatment_strategies": "CPIC Level A evidence supports preemptive genotyping before thiopurine therapy. Intermediate metabolizers require 30-80% dose reduction. Poor metabolizers should consider alternative immunosuppressants.",
-      "frequency_prognosis": "The p.R139C variant has a carrier frequency of 11.5% in Korean populations vs 1% in Western populations (11.5x enrichment). This makes preemptive NUDT15 genotyping particularly cost-effective in Korean clinical settings.",
-      "finding_summary": "A pharmacogenomic variant in the NUDT15 gene was identified. The p.Arg139Cys (c.415C>T) variant results in reduced NUDT15 enzyme activity, leading to impaired metabolism of thiopurine drugs. Carriers are at significantly increased risk of severe myelosuppression when treated with standard-dose azathioprine, 6-mercaptopurine, or thioguanine. CPIC Level A evidence supports preemptive genotyping and dose adjustment.",
-      "korean_specific_note": "Korean NHIS covers NUDT15 genotyping for patients initiating thiopurine therapy. The Korean Society of Gastroenterology recommends preemptive testing.",
-      "hgvs": {"transcript": "NM_018283.4", "cdna": "c.415C>T", "protein": "p.Arg139Cys", "variant_effect": "Missense"},
-      "references": [
-        {"pmid": "25270285", "source": "Nat Genet 2014", "note": "NUDT15 and thiopurine-induced leukopenia (Yang et al.)"},
-        {"pmid": "30447069", "source": "Clin Pharmacol Ther 2019", "note": "CPIC guideline for thiopurines and TPMT/NUDT15"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "MUTYH",
-      "full_name": "MutY DNA Glycosylase",
-      "function_summary": "MUTYH encodes a DNA glycosylase involved in the repair of oxidative DNA damage through the base excision repair (BER) pathway. In particular, it removes adenine incorrectly paired with 8-oxoguanine, preventing G:C to T:A transversion mutations. Loss of MUTYH function accumulates somatic variants in tumor suppressor genes such as APC, causing colorectal polyps and cancer.",
-      "clinical_significance": "MUTYH biallelic (homozygous or compound heterozygous) pathogenic variants cause MUTYH-associated polyposis (MAP), characterized by multiple colorectal adenomas (typically 10–100) and increased colorectal cancer risk. Monoallelic MUTYH variant carriers have a slightly increased colorectal cancer risk (approximately 1.5–2-fold) as reported.",
-      "associated_conditions": [
-        "MUTYH-Associated Polyposis (MAP)",
-        "Colorectal cancer",
-        "Duodenal adenomas",
-        "Gastric cancer (increased risk)"
-      ],
-      "treatment_strategies": "When MUTYH biallelic variants are confirmed (MAP), colonoscopic surveillance every 1–2 years starting at ages 18–20 is recommended; if adenomas are unmanageable, prophylactic colectomy is considered. Upper gastrointestinal surveillance by upper endoscopy every 3–5 years starting at ages 25–30 is recommended. For colorectal cancer, surgical resection is the primary treatment; since microsatellite stable (MSS) status predominates, standard chemotherapy regimens are applied. For monoallelic carriers, given a slightly elevated colorectal cancer risk compared to the general population, adherence to general colorectal cancer screening guidelines is recommended, with earlier screening considered based on family history.",
-      "frequency_prognosis": "The carrier (monoallelic) frequency of MUTYH pathogenic variants in Europeans is approximately 1–2%, with Y179C and G396D being the most common. The incidence of MAP (biallelic) is estimated at approximately 1/10,000 to 1/40,000. The frequency of MUTYH variants in Koreans has been reported to be lower than in Western populations, with a differing variant spectrum. The lifetime colorectal cancer risk in MAP patients is approximately 43–100%; appropriate surveillance and early intervention are critical for prognosis.",
-      "finding_summary": "A pathogenic variant in the MUTYH gene was identified in this specimen. The clinical significance differs greatly depending on zygosity (biallelic vs. monoallelic); biallelic variants require diagnosis of MUTYH-associated polyposis (MAP) and a colorectal cancer surveillance program. Detailed family history evaluation and additional testing to confirm the variant status of the second allele are recommended.",
-      "korean_specific_note": "Reports of MUTYH variants in Koreans are fewer than in Western populations, but some Korean-specific variants (e.g., p.Q400R) have been reported. Y179C and G396D variants, which are common in Western populations, are rare in Koreans, requiring attention to ethnicity-specific variant interpretation.",
-      "hgvs": {"transcript": "NM_001128425.2", "cdna": "c.1187G>A", "protein": "p.Gly396Asp", "variant_effect": "Missense"},
-      "references": [
-        {"pmid": "22703879", "source": "GeneReviews", "note": "MUTYH-Associated Polyposis"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "PALB2",
-      "full_name": "Partner and Localizer of BRCA2",
-      "function_summary": "PALB2 encodes a key partner protein that recruits the BRCA2 protein to sites of DNA damage to mediate homologous recombination repair. PALB2 serves as a bridge connecting BRCA1 and BRCA2, and is essential for the normal functioning of the HR repair pathway. Loss of PALB2 function leads to DNA repair defects and genomic instability similar to BRCA2.",
-      "clinical_significance": "PALB2 germline pathogenic variants increase the breast cancer risk approximately 3–5-fold above the general population (lifetime risk approximately 35–60%), and have been reclassified as a high-penetrance hereditary cancer gene in NCCN guidelines. Increased risks of ovarian cancer, pancreatic cancer, and male breast cancer have also been reported.",
-      "associated_conditions": [
-        "Hereditary breast cancer",
-        "Pancreatic cancer predisposition",
-        "Ovarian cancer (moderate risk)",
-        "Fanconi anemia subtype N (biallelic)"
-      ],
-      "treatment_strategies": "For PALB2 pathogenic variant carriers, annual breast MRI combined with mammography starting at age 30 is recommended (NCCN guideline), and risk-reducing mastectomy is also discussed individually. For PALB2 variant-related breast cancers, PARP inhibitors (olaparib) are effective in HR-deficient tumors; in 2023, olaparib FDA approval was expanded to PALB2 variant metastatic breast cancer. High sensitivity to platinum-based chemotherapy has been reported. Cascade genetic testing of family members is recommended.",
-      "frequency_prognosis": "The general population frequency of PALB2 pathogenic variants is estimated at approximately 1/1,000. The lifetime breast cancer risk for PALB2 variant carriers is approximately 35–60%, showing high penetrance comparable to BRCA2. PALB2 variants in Korean breast cancer patients are reported at a frequency of approximately 1–3%, and Korean-specific variants (e.g., c.2167_2168del) are known. Prognosis can be significantly improved through early detection and appropriate treatment.",
-      "finding_summary": "A pathogenic variant in the PALB2 gene was identified in this specimen, indicating impaired BRCA2-mediated DNA repair function. PALB2 is a key partner gene of BRCA2, significantly increasing the risks of breast cancer, pancreatic cancer, and ovarian cancer. An enhanced cancer surveillance program per NCCN guidelines and genetic counseling are recommended.",
-      "korean_specific_note": "In the Korean Hereditary Breast Cancer (KOHBRA) study, PALB2 was reported as the most important hereditary breast cancer gene after BRCA1/2, and a Korean-specific variant spectrum has been identified. Korean population frequency among hereditary breast cancer patients is approximately 1–3% vs approximately 0.6–1% in Western populations.",
-      "hgvs": {"transcript": "NM_024675.4", "cdna": "c.3113G>A", "protein": "p.Trp1038Ter", "variant_effect": "Nonsense / Stop gain"},
-      "references": [
-        {"pmid": "26017405", "source": "GeneReviews", "note": "PALB2 Hereditary Cancer"},
-        {"pmid": "25099575", "source": "NEJM 2014", "note": "PALB2 breast cancer risk"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "PTPN11",
-      "full_name": "Protein Tyrosine Phosphatase Non-Receptor Type 11",
-      "function_summary": "PTPN11 encodes SHP-2 tyrosine phosphatase, a key regulatory factor in the RAS-MAPK signaling pathway. SHP-2 is involved in cell proliferation, differentiation, and survival by mediating RAS activation in growth factor receptor signaling. Germline gain-of-function variants cause RASopathy, and somatic gain-of-function variants are associated with leukemia.",
-      "clinical_significance": "PTPN11 germline gain-of-function variants are the most common cause of Noonan syndrome (approximately 50%), manifesting as characteristic facial features, congenital heart defects (pulmonary stenosis), short stature, and bleeding tendency. Somatic PTPN11 variants are found in approximately 35% of juvenile myelomonocytic leukemia (JMML) cases and are also reported in acute myeloid leukemia (AML).",
-      "associated_conditions": [
-        "Noonan Syndrome",
-        "LEOPARD Syndrome (Noonan syndrome with multiple lentigines)",
-        "Juvenile Myelomonocytic Leukemia (JMML)",
-        "Acute Myeloid Leukemia",
-        "Neuroblastoma"
-      ],
-      "treatment_strategies": "Management of Noonan syndrome requires a multidisciplinary approach, including cardiac surgery or catheter procedures for congenital heart defects (pulmonary stenosis, etc.), growth hormone (GH) therapy (FDA approved), and hematological management for bleeding tendency. RAS-MAPK pathway inhibitors (MEK inhibitors: trametinib, selumetinib) are under investigation for Noonan syndrome-related hypertrophic cardiomyopathy and JMML, with significant efficacy reported in some patients. For JMML, hematopoietic stem cell transplantation (HSCT) is the only curative treatment, and MEK inhibitors are attempted for disease control prior to transplantation. Regular cardiac echocardiography, growth assessment, and developmental evaluation are required lifelong.",
-      "frequency_prognosis": "The incidence of Noonan syndrome is approximately 1/1,000 to 1/2,500, making it a relatively common genetic disease. PTPN11 germline variants account for approximately 50% of Noonan syndrome cases and most arise de novo. Noonan syndrome is also relatively frequently diagnosed in Korea, with PTPN11 variants accounting for the highest frequency. Prognosis is greatly influenced by the severity of cardiac disease, and with appropriate management, most patients can achieve a normal life expectancy.",
-      "finding_summary": "A likely pathogenic variant in the PTPN11 gene was identified in this specimen, which may result in gain-of-function of the SHP-2 protein leading to overactivation of the RAS-MAPK pathway. If germline, the association with Noonan syndrome should be evaluated; if somatic, the association with hematologic malignancies should be assessed. Genetic counseling incorporating clinical phenotype and family history is recommended.",
+      "gene": "KRAS",
+      "full_name": "KRAS proto-oncogene, GTPase",
+      "function_summary": "This gene, a Kirsten ras oncogene homolog from the mammalian ras gene family, encodes a protein that is a member of the small GTPase superfamily. A single amino acid substitution is responsible for an activating mutation. The transforming protein that results is implicated in various malignancies, i",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Cetuximab — Resistance in Colorectal Cancer, Ovarian Cancer (PMID: 20619739, 22722830); Level A: Selumetinib,Docetaxel — Resistance in Lung Non-small Cell Carcinoma (PMID: 28492898); Level A: Panitumumab,Cetuximab — Resistance in Colorectal Cancer (PMID: 28275037, 19223544); Level A: Sotorasib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 34096690); Level A: Cetuximab,Adagrasib — Sensitivity/Response in Colorectal Cancer (PMID: 38587856)",
+      "frequency_prognosis": "",
+      "finding_summary": "Mutations in the RAS family of proteins are frequently observed across cancer types. The amino acid positions that account for the overwhelming majority of these mutations are G12, G13 and Q61. The different protein isoforms, despite their raw similarity, also behave very differently when expressed in non-native tissue types, likely due to differences in the C-terminal hyper-variable regions. Mis-regulation of isoform expression has been shown to be a driving event in cancer, as well as missense",
       "korean_specific_note": null,
-      "hgvs": {"transcript": "NM_002834.5", "cdna": "c.182A>G", "protein": "p.Asp61Gly", "variant_effect": "Missense / Gain-of-function"},
+      "hgvs": {},
       "references": [
-        {"pmid": "20301655", "source": "GeneReviews", "note": "Noonan Syndrome"}
+        {
+          "pmid": "18946061",
+          "source": "Karapetis et al., 2008",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "28492898",
+          "source": "Jänne et al., 2017",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "28275037",
+          "source": "Benson et al., 2017",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "34096690",
+          "source": "Skoulidis et al., 2021",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "38587856",
+          "source": "Yaeger et al., 2024",
+          "note": "Predictive — Sensitivity/Response"
+        }
       ],
-      "content_status": "ai-generated-with-references"
+      "content_status": "curated-civic"
     },
     {
-      "gene": "APOE",
-      "full_name": "Apolipoprotein E",
-      "function_summary": "APOE encodes apolipoprotein E, which plays a central role in lipid metabolism, regulating the transport and metabolism of blood cholesterol and triglycerides. APOE has three major alleles (e2, e3, e4), each having different effects on lipid metabolism and neurodegenerative disease risk. APOE e4 is the strongest genetic risk factor for Alzheimer's disease, and APOE e2 is associated with type III hyperlipoproteinemia.",
-      "clinical_significance": "APOE e4/e4 homozygosity increases the risk of Alzheimer's disease approximately 8–12-fold above the general population, and e3/e4 heterozygosity also shows approximately 2–3-fold increased risk. APOE e4 also increases the risks of coronary artery disease and cerebrovascular disease, and affects outcomes following traumatic brain injury.",
-      "associated_conditions": [
-        "Alzheimer's Disease (risk factor)",
-        "Cardiovascular disease",
-        "Type III Hyperlipoproteinemia (APOE e2/e2)",
-        "Cerebral amyloid angiopathy",
-        "Age-related macular degeneration"
-      ],
-      "treatment_strategies": "Lifestyle interventions for Alzheimer's disease prevention are recommended in APOE e4 carriers (regular exercise, Mediterranean diet, cognitive stimulation activities, cardiovascular risk factor management). For cardiovascular risk management, regular lipid profile monitoring and statin therapy when necessary are considered, with observation of statin effects on cognitive function in APOE e4 carriers recommended. Anti-amyloid antibodies (lecanemab, donanemab) have been approved for early Alzheimer's disease treatment; however, APOE e4/e4 carriers have an elevated risk of ARIA (amyloid-related imaging abnormalities), requiring careful application. Type III hyperlipoproteinemia due to APOE e2/e2 is managed with dietary modification and fibrate-class medications.",
-      "frequency_prognosis": "The APOE e4 allele frequency in Koreans is approximately 8–11%, somewhat lower than in Europeans (approximately 14%). The proportion of Korean APOE e4 carriers (e3/e4 or e4/e4) is approximately 15–20%. The APOE e4 frequency in Korean Alzheimer's disease patients is approximately 40–50%, markedly higher than in the general population. The Alzheimer's disease risk-increasing effect of APOE e4 is consistently confirmed in Koreans as well, and the clinical importance of APOE genotype testing is growing in Korea's rapidly aging society. Korean population frequency of APOE e4 allele is approximately 8–11% vs approximately 14% in European populations.",
-      "finding_summary": "An APOE gene variant was identified in this specimen, which is a genetic factor related to lipid metabolism and Alzheimer's disease risk. Clinical significance is determined by APOE genotype (e2/e3/e4 combination); in particular, carrying the e4 allele requires management of increased Alzheimer's disease risk and cardiovascular disease risk. Individualized risk assessment and prevention strategy development through genetic counseling are recommended.",
-      "korean_specific_note": "The APOE e4 frequency in Koreans is somewhat lower than in Western populations, but the absolute number of Alzheimer's disease patients is rapidly increasing due to rapid population aging. Under the Korean National Dementia Responsibility Program, APOE genotype testing can be used as a reference for dementia risk assessment. Korean population frequency of APOE e4 allele is approximately 8–11% vs approximately 14% in European populations.",
-      "hgvs": {"transcript": "NM_000041.4", "cdna": "c.388T>C", "protein": "p.Cys130Arg", "allele": "ε4", "variant_effect": "Missense"},
+      "gene": "BRAF",
+      "full_name": "B-RAF1,BRAF1,NS7,RAFB1,B-raf,BRAF,BRAF-1",
+      "function_summary": "",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Vemurafenib — Sensitivity/Response in Cholangiocarcinoma, Laryngeal Squamous Cell Carcinoma, Papillary Thyroid Carcinoma (PMID: 25524464, 26490654); Level A: Trametinib,Dabrafenib — Sensitivity/Response in Intrahepatic Cholangiocarcinoma, Ganglioglioma, Low Grade Glioma (PMID: 25399551, 27283860); Level A: Cobimetinib,Vemurafenib — Sensitivity/Response in Melanoma (PMID: 27480103, 25265494); Level A: Encorafenib,Binimetinib — Sensitivity/Response in Melanoma (PMID: 29573941); Level A: Encorafenib,Cetuximab — Sensitivity/Response in Colorectal Cancer (PMID: 31566309)",
+      "frequency_prognosis": "",
+      "finding_summary": "BRAF mutations are found to be recurrent in many cancer types. Of these, the mutation of valine 600 to glutamic acid (V600E) is the most prevalent. V600E has been determined to be an activating mutation, and cells that harbor it, along with other V600 mutations are sensitive to the BRAF inhibitor dabrafenib. It is also common to use MEK inhibition as a substitute for BRAF inhibitors, and the MEK inhibitor trametinib has seen some success in BRAF mutant melanomas. BRAF mutations have also been co",
+      "korean_specific_note": null,
+      "hgvs": {},
       "references": [
-        {"pmid": "24401275", "source": "GeneReviews", "note": "Alzheimer Disease Overview"},
-        {"pmid": "23571587", "source": "Nat Rev Neurosci 2013", "note": "APOE and Alzheimer disease risk"}
+        {
+          "pmid": "21639808",
+          "source": "Chapman et al., 2011",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "25399551",
+          "source": "Robert et al., 2015",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "27480103",
+          "source": "Ascierto et al., 2016",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "29573941",
+          "source": "Dummer et al., 2018",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "31566309",
+          "source": "Kopetz et al., 2019",
+          "note": "Predictive — Sensitivity/Response"
+        }
       ],
-      "content_status": "ai-generated-with-references"
-    }
-    ,
-    {
-      "gene": "CYP3A5",
-      "full_name": "Cytochrome P450 Family 3 Subfamily A Member 5",
-      "function_summary": "CYP3A5 is a member of the cytochrome P450 3A subfamily and is the major hepatic and intestinal enzyme responsible for metabolizing tacrolimus, cyclosporine, and numerous other drugs. Unlike CYP3A4, CYP3A5 expression is highly polymorphic: the *1 allele confers active expression while *3 (rs776746) causes non-functional splicing, making individuals either expressors (*1 carriers) or non-expressors (*3/*3 homozygotes).",
-      "clinical_significance": "CYP3A5 expressors (*1 carriers) metabolize tacrolimus significantly faster than non-expressors, requiring substantially higher doses to achieve therapeutic blood concentrations. CPIC Level A guidelines recommend CYP3A5 genotype-guided tacrolimus dosing. In Korean and East Asian populations, the *3 allele frequency is approximately 75%, meaning ~25% are expressors — far more common than in Europeans (~15% expressors).",
-      "associated_conditions": [
-        "Tacrolimus pharmacokinetics",
-        "Transplant rejection risk",
-        "Cyclosporine metabolism",
-        "Midazolam metabolism"
-      ],
-      "treatment_strategies": "CYP3A5 expressors (*1 carriers) require 1.5–2x higher tacrolimus starting doses compared to non-expressors per CPIC 2022 guidelines. Therapeutic drug monitoring (TDM) with whole-blood tacrolimus trough levels should guide subsequent dose adjustments. For cyclosporine and other CYP3A substrates, increased monitoring is recommended in expressors. Genotype results should be incorporated into the electronic medical record for all future CYP3A-metabolized immunosuppressants.",
-      "frequency_prognosis": "The CYP3A5 *3 allele frequency in Koreans is approximately 75%, meaning approximately 25% of Koreans are CYP3A5 expressors (*1 carriers). In contrast, approximately 85% of Europeans carry *3/*3, leaving only ~15% as expressors. The higher expressor rate in Koreans means that standard tacrolimus dosing regimens developed in Western populations may result in subtherapeutic levels and increased rejection risk in Korean transplant recipients. Korean population expressor frequency ~25% vs ~15% in Western populations.",
-      "finding_summary": "A CYP3A5 pharmacogenomic variant was identified. CYP3A5 expressor status (*1 carrier) indicates faster tacrolimus metabolism and the need for higher initial doses to achieve therapeutic blood concentrations. CPIC Level A evidence supports genotype-guided dosing for tacrolimus.",
-      "korean_specific_note": "Korean CYP3A5 expressor frequency (~25%) is approximately 1.7x higher than in European populations (~15%), making genotype-guided tacrolimus dosing particularly relevant in Korean transplant medicine. Korean Society of Transplantation guidelines support preemptive CYP3A5 genotyping. Korean population *3 allele frequency ~75% vs ~85% in Western populations.",
-      "hgvs": {"transcript": "NM_000777.4", "cdna": "c.6986A>G (intron 3)", "protein": "N/A (splicing variant)", "star_allele": "*3", "variant_effect": "Splice variant — loss of function"},
-      "references": [
-        {"pmid": "35390170", "source": "Clin Pharmacol Ther 2022", "note": "CPIC guideline for tacrolimus and CYP3A5"},
-        {"pmid": "21270786", "source": "Pharmacogenet Genomics 2011", "note": "CYP3A5 *3 and tacrolimus dose requirements"}
-      ],
-      "content_status": "ai-generated-with-references"
+      "content_status": "curated-civic"
     },
     {
-      "gene": "UGT1A1",
-      "full_name": "UDP Glucuronosyltransferase Family 1 Member A1",
-      "function_summary": "UGT1A1 encodes a UDP-glucuronosyltransferase enzyme responsible for glucuronidation of bilirubin and the active metabolite of irinotecan (SN-38). Loss-of-function variants reduce glucuronidation capacity, leading to elevated SN-38 exposure and bilirubin accumulation. The *28 allele (TA repeat) is common in Western populations while the *6 allele (rs4148323, p.Gly71Arg) is an East Asian-specific loss-of-function variant.",
-      "clinical_significance": "UGT1A1*6 carriers have significantly reduced UGT1A1 activity and are at markedly increased risk of irinotecan-induced severe neutropenia and diarrhea. CPIC Level A guidelines recommend dose reduction for UGT1A1 poor metabolizers receiving irinotecan. The *6 allele is essentially absent in European populations but has a ~13% allele frequency in Koreans, making it a clinically critical East Asian-specific pharmacogenomic marker.",
-      "associated_conditions": [
-        "Irinotecan toxicity (neutropenia, diarrhea)",
-        "Gilbert syndrome (UGT1A1*28 or *6)",
-        "Bilirubin metabolism",
-        "Atazanavir-induced hyperbilirubinemia"
-      ],
-      "treatment_strategies": "UGT1A1 poor metabolizers (*6/*6 or *6/*28 compound heterozygotes) should receive reduced irinotecan starting doses (typically 25–30% reduction). Intermediate metabolizers (heterozygous *6 carriers) warrant close monitoring for toxicity. G-CSF prophylaxis should be considered. CPIC Level A guidelines apply. For atazanavir use, UGT1A1 genotyping predicts hyperbilirubinemia risk.",
-      "frequency_prognosis": "UGT1A1 *6 allele frequency in Koreans is ~13% vs ~1% in Western populations (~13x enrichment). This makes UGT1A1*6 the dominant irinotecan toxicity marker in Korean oncology settings, whereas Western guidelines focus on *28. The Korean Ministry of Food and Drug Safety labeling for irinotecan recommends UGT1A1 genotyping. Korean *6 allele frequency ~13% vs ~1% in Western populations.",
-      "finding_summary": "A UGT1A1 pharmacogenomic variant was identified. UGT1A1*6 carrier status indicates reduced glucuronidation capacity and significantly elevated risk of irinotecan-induced severe toxicity. CPIC Level A evidence supports dose reduction for poor metabolizers receiving irinotecan-based chemotherapy.",
-      "korean_specific_note": "UGT1A1*6 (p.Gly71Arg) is an East Asian-specific variant with ~13% allele frequency in Koreans vs ~1% in Western populations. Korean oncology guidelines specifically address *6 testing in addition to the Western-focused *28 allele. Korean NHIS covers UGT1A1 genotyping for patients receiving irinotecan-based chemotherapy. Korean population *6 allele frequency ~13% vs ~1% in European populations (~13x enrichment).",
-      "hgvs": {"transcript": "NM_000463.3", "cdna": "c.211G>A", "protein": "p.Gly71Arg", "star_allele": "*6", "variant_effect": "Missense — loss of function"},
+      "gene": "EGFR",
+      "full_name": "ERBB,ERBB1,HER1,NISBD2,PIG61,mENA,EGFR,ERRP,NNCIS",
+      "function_summary": "",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "Level A: Erlotinib — Resistance in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma (PMID: 19147750, 22895145); Level A: Osimertinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma, Pancreatic Adenocarcinoma (PMID: 26720284, 26181354); Level A: Erlotinib — Sensitivity/Response in High Grade Glioma, Lung Small Cell Carcinoma, Lung Cancer (PMID: 21132006, 27211795); Level A: Afatinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Glioblastoma, Lung Adenocarcinoma (PMID: 22452895, 25589191); Level A: Dacomitinib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 18089823, 28958502)",
+      "frequency_prognosis": "",
+      "finding_summary": "EGFR is widely recognized for its importance in cancer. Amplification and mutations have been shown to be driving events in many cancer types. Its role in non-small cell lung cancer, glioblastoma and basal-like breast cancers has spurred many research and drug development efforts. Tyrosine kinase inhibitors have shown efficacy in EGFR amplfied tumors, most notably gefitinib and erlotinib. Mutations in EGFR have been shown to confer resistance to these drugs, particularly the variant T790M, which",
+      "korean_specific_note": null,
+      "hgvs": {},
       "references": [
-        {"pmid": "32189324", "source": "Clin Pharmacol Ther 2020", "note": "CPIC guideline for irinotecan and UGT1A1"},
-        {"pmid": "19680225", "source": "J Clin Oncol 2009", "note": "UGT1A1*6 and irinotecan toxicity in East Asians"}
+        {
+          "pmid": "25668228",
+          "source": "Denis et al., 2015",
+          "note": "Predictive — Resistance"
+        },
+        {
+          "pmid": "26729184",
+          "source": "Greig, 2016",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "27959700",
+          "source": "Mok et al., 2017",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "24868098",
+          "source": "Khozin et al., 2014",
+          "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "24868098",
+          "source": "Khozin et al., 2014",
+          "note": "Predictive — Sensitivity/Response"
+        }
       ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "SLCO1B1",
-      "full_name": "Solute Carrier Organic Anion Transporter Family Member 1B1",
-      "function_summary": "SLCO1B1 encodes the organic anion transporting polypeptide 1B1 (OATP1B1), a hepatic uptake transporter responsible for the liver uptake of statins, particularly simvastatin acid. The *15 haplotype (rs4149056, c.521T>C, p.Val174Ala) reduces OATP1B1 transport activity, leading to increased plasma statin concentrations and elevated myopathy risk.",
-      "clinical_significance": "SLCO1B1 *15 carriers have 2–4x higher simvastatin plasma exposure, substantially increasing the risk of statin-induced myopathy (SIAM) and rhabdomyolysis. CPIC Level A guidelines recommend simvastatin dose caps or switching to an alternative statin for *15 carriers. The *15 allele frequency is similar across Korean (~16%) and Western (~15%) populations, making this a broadly relevant pharmacogenomic marker.",
-      "associated_conditions": [
-        "Statin-induced myopathy",
-        "Rhabdomyolysis",
-        "Simvastatin pharmacokinetics",
-        "Rosuvastatin pharmacokinetics"
-      ],
-      "treatment_strategies": "For SLCO1B1 *15 carriers on simvastatin: CPIC recommends a maximum dose of 20 mg/day or switching to an alternative statin with lower SLCO1B1 dependence (pravastatin, rosuvastatin, fluvastatin). Creatine kinase (CK) monitoring is recommended if statin continuation is necessary. For rosuvastatin and other statins, the impact of *15 is smaller but monitoring is still advisable.",
-      "frequency_prognosis": "The SLCO1B1 *15 allele frequency in Koreans is ~16%, comparable to Western populations (~15%). Unlike most pharmacogenomic markers, SLCO1B1 *15 does not show significant Korean enrichment, but its clinical relevance is equally high given the widespread use of statins. Given the high prevalence of statin use in Korean cardiovascular patients, preemptive SLCO1B1 genotyping has significant population health value. Korean population *15 allele frequency ~16% vs ~15% in Western populations.",
-      "finding_summary": "An SLCO1B1 pharmacogenomic variant was identified. SLCO1B1 *15 carrier status indicates reduced hepatic statin uptake and elevated plasma simvastatin exposure, significantly increasing the risk of statin-induced myopathy. CPIC Level A evidence supports dose limitation or statin switching.",
-      "korean_specific_note": "SLCO1B1 *15 allele frequency in Koreans (~16%) is similar to Western populations (~15%), making this one of the few pharmacogenomic markers without significant Korean enrichment. However, the high prevalence of cardiovascular disease and statin use in Korea means the absolute number of at-risk patients is substantial. Korean population *15 frequency ~16% vs ~15% in Western populations (no significant enrichment).",
-      "hgvs": {"transcript": "NM_006446.5", "cdna": "c.521T>C", "protein": "p.Val174Ala", "star_allele": "*15", "variant_effect": "Missense — reduced function"},
-      "references": [
-        {"pmid": "24918167", "source": "Clin Pharmacol Ther 2014", "note": "CPIC guideline for simvastatin and SLCO1B1"},
-        {"pmid": "18650507", "source": "NEJM 2008", "note": "SLCO1B1 and simvastatin-induced myopathy (SEARCH study)"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "VKORC1",
-      "full_name": "Vitamin K Epoxide Reductase Complex Subunit 1",
-      "function_summary": "VKORC1 encodes the vitamin K epoxide reductase enzyme, the pharmacological target of warfarin. The -1639G>A promoter variant (rs9923231) reduces VKORC1 transcription, resulting in decreased enzyme activity and consequently requiring lower warfarin doses to achieve anticoagulation. VKORC1 genotype, together with CYP2C9 genotype and clinical factors, forms the basis of pharmacogenomics-guided warfarin dosing algorithms.",
-      "clinical_significance": "The VKORC1 -1639A allele is found in ~90% of Koreans vs ~37% of Europeans, making most Koreans sensitive to warfarin and at risk of over-anticoagulation with standard doses. CPIC Level A guidelines recommend genotype-guided warfarin dosing. The high -1639A allele frequency in Koreans is a primary reason why Korean patients typically require 30–50% lower warfarin doses than Western patients.",
-      "associated_conditions": [
-        "Warfarin sensitivity",
-        "Bleeding risk with standard warfarin doses",
-        "Atrial fibrillation anticoagulation",
-        "Deep vein thrombosis / pulmonary embolism treatment"
-      ],
-      "treatment_strategies": "VKORC1 -1639A/A homozygotes require substantially reduced warfarin doses (typically 2–4 mg/day vs 5–7 mg/day in GG individuals). Combined VKORC1 + CYP2C9 + CYP4F2 genotyping with clinical algorithms (e.g., IWPC, EU-PACT) is recommended for initial warfarin dose estimation. More frequent INR monitoring during initiation is advised for sensitive genotypes. Direct oral anticoagulants (DOACs) may be preferred to avoid complex warfarin dosing in high-sensitivity patients.",
-      "frequency_prognosis": "VKORC1 -1639A allele frequency in Koreans is ~90% vs ~37% in Europeans, a ~2.4x enrichment. Nearly all Koreans (81% AA homozygotes, 18% GA heterozygotes) carry at least one -1639A allele. This population-level difference is a major contributor to the well-documented lower warfarin dose requirements in East Asian populations. Korean population -1639A allele frequency ~90% vs ~37% in Western populations (~2.4x enrichment).",
-      "finding_summary": "A VKORC1 pharmacogenomic variant was identified. The -1639G>A variant indicates warfarin sensitivity — carriers require lower doses to achieve therapeutic INR. CPIC Level A evidence supports genotype-guided warfarin dosing using combined VKORC1, CYP2C9, and clinical algorithms.",
-      "korean_specific_note": "The VKORC1 -1639A allele frequency in Koreans (~90%) is dramatically higher than in Europeans (~37%), making warfarin sensitivity the norm rather than the exception in Korean patients. Korean anticoagulation guidelines specifically account for this population difference. Korean NHIS covers VKORC1 and CYP2C9 genotyping for warfarin initiation in covered indications. Korean population -1639A allele frequency ~90% vs ~37% in Western populations (~2.4x enrichment).",
-      "hgvs": {"transcript": "NM_024006.6", "cdna": "c.-1639G>A (promoter)", "protein": "N/A (promoter variant)", "star_allele": "N/A", "variant_effect": "Promoter — reduced transcription"},
-      "references": [
-        {"pmid": "28198005", "source": "Clin Pharmacol Ther 2017", "note": "CPIC guideline for warfarin and CYP2C9/VKORC1/CYP4F2"},
-        {"pmid": "18305455", "source": "NEJM 2008", "note": "Estimation of warfarin dose — pharmacogenomics"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "CYP1A2",
-      "full_name": "Cytochrome P450 Family 1 Subfamily A Member 2",
-      "function_summary": "CYP1A2 is a major hepatic drug-metabolizing enzyme responsible for the metabolism of caffeine, clozapine, theophylline, tacrine, and several other drugs. The *1C allele (rs2069514, -3860G>A) is associated with decreased inducibility and lower baseline CYP1A2 activity. CYP1A2 activity is strongly induced by smoking and certain foods (cruciferous vegetables), adding environmental complexity to genotype-based predictions.",
-      "clinical_significance": "CYP1A2 decreased-function variants such as *1C increase plasma concentrations of substrates like clozapine and theophylline, potentially increasing toxicity risk. CPIC has assigned CYP1A2 a lower evidence level (C) for most drug interactions, as environmental inducers often outweigh genotype effects. The *1C allele is more common in East Asians (~23% in Koreans) compared to Europeans (~5%), potentially contributing to population differences in clozapine dose requirements.",
-      "associated_conditions": [
-        "Clozapine metabolism",
-        "Caffeine metabolism",
-        "Theophylline metabolism",
-        "Tacrine metabolism"
-      ],
-      "treatment_strategies": "For clozapine: CYP1A2 *1C carriers (decreased metabolizers) may require lower doses; smoking status must also be considered as a major inducer. For theophylline: increased plasma levels are possible in decreased metabolizers; TDM is advisable. Given the CPIC Level C evidence, routine genotype-guided dosing is not yet standard but awareness of CYP1A2 status is useful in clinical decision-making for narrow-therapeutic-index substrates.",
-      "frequency_prognosis": "The CYP1A2 *1C allele frequency in Koreans is ~23% vs ~5% in Western populations (~4.6x enrichment). This higher frequency may contribute to population differences in caffeine metabolism and clozapine pharmacokinetics. However, due to the strong influence of smoking and dietary inducers on CYP1A2 activity, genotype alone provides limited predictive power. Korean population *1C allele frequency ~23% vs ~5% in Western populations.",
-      "finding_summary": "A CYP1A2 pharmacogenomic variant was identified. CYP1A2 *1C carrier status indicates reduced CYP1A2 inducibility and potentially lower drug metabolism for substrates including clozapine and caffeine. Clinical significance is CPIC Level C; genotype should be interpreted alongside smoking status and other environmental factors.",
-      "korean_specific_note": "CYP1A2 *1C allele frequency in Koreans (~23%) is approximately 4.6x higher than in European populations (~5%). This may contribute to population differences in clozapine dose requirements and caffeine metabolism observed between Korean and Western patients. Korean population *1C allele frequency ~23% vs ~5% in Western populations (~4.6x enrichment).",
-      "hgvs": {"transcript": "NM_000761.4", "cdna": "c.-3860G>A (promoter region)", "protein": "N/A (regulatory variant)", "star_allele": "*1C", "variant_effect": "Regulatory — reduced inducibility"},
-      "references": [
-        {"pmid": "11668218", "source": "Pharmacogenetics 2001", "note": "CYP1A2 *1C allele and enzyme inducibility"},
-        {"pmid": "21270786", "source": "Pharmacogenet Genomics 2011", "note": "CYP1A2 genetic variation and clinical impact"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "G6PD",
-      "full_name": "Glucose-6-Phosphate Dehydrogenase",
-      "function_summary": "G6PD encodes glucose-6-phosphate dehydrogenase, the rate-limiting enzyme in the pentose phosphate pathway. G6PD is essential for protecting red blood cells from oxidative damage by maintaining adequate levels of NADPH and glutathione. G6PD deficiency is the most common enzyme deficiency worldwide, with X-linked inheritance. Affected individuals are susceptible to hemolytic anemia when exposed to oxidative stressors including certain drugs.",
-      "clinical_significance": "G6PD-deficient patients face risk of life-threatening hemolytic anemia when exposed to rasburicase, primaquine, dapsone, and other oxidative drugs. Rasburicase is absolutely contraindicated in G6PD-deficient patients per FDA and CPIC Level A guidelines. G6PD deficiency carrier frequency is ~3.5% in Korean males vs ~0.5% in Western males, with multiple distinct causative variants in the Korean population.",
-      "associated_conditions": [
-        "Drug-induced hemolytic anemia",
-        "Neonatal jaundice",
-        "Rasburicase contraindication",
-        "Primaquine / dapsone sensitivity",
-        "Favism (fava bean-induced hemolysis)"
-      ],
-      "treatment_strategies": "G6PD-deficient patients must avoid rasburicase (absolutely contraindicated — FDA Black Box Warning), primaquine, dapsone, and other oxidative drugs. For hyperuricemia in G6PD-deficient patients, febuxostat or allopurinol (with caution) are alternatives. For malaria in endemic regions, alternative regimens not requiring primaquine should be used. Neonatal G6PD screening is recommended in high-prevalence populations to prevent kernicterus.",
-      "frequency_prognosis": "G6PD deficiency carrier frequency in Korean males is ~3.5% vs ~0.5% in Western males (~7x enrichment). G6PD deficiency is more prevalent in East Asia than commonly recognized. The variant spectrum in Koreans differs from the African and Mediterranean variants most common in Western populations; Korean variants include Canton (G6PD*44), Kaiping (G6PD*43), and Viangchan. Korean population carrier frequency ~3.5% vs ~0.5% in Western populations (~7x enrichment).",
-      "finding_summary": "A G6PD pharmacogenomic variant was identified. G6PD deficiency status contraindicates use of rasburicase and other oxidative drugs due to risk of life-threatening hemolytic anemia. CPIC Level A evidence supports preemptive genotyping before rasburicase administration.",
-      "korean_specific_note": "G6PD deficiency carrier frequency in Korean males (~3.5%) is approximately 7x higher than in Western males (~0.5%). Korean G6PD variants include Canton, Kaiping, and Viangchan — distinct from the African A- variant most common in Western populations — requiring ethnicity-appropriate variant panels. Korean population carrier frequency ~3.5% vs ~0.5% in Western populations (~7x enrichment).",
-      "hgvs": {"transcript": "NM_001360016.2", "cdna": "c.1376G>T (Canton)", "protein": "p.Arg459Leu", "variant_effect": "Missense — loss of function (multiple causative variants)"},
-      "references": [
-        {"pmid": "24787449", "source": "Clin Pharmacol Ther 2014", "note": "CPIC guideline for rasburicase and G6PD"},
-        {"pmid": "22992668", "source": "Pharmacogenet Genomics 2012", "note": "G6PD variants in East Asian populations"}
-      ],
-      "content_status": "ai-generated-with-references"
-    },
-    {
-      "gene": "IFNL3",
-      "full_name": "Interferon Lambda 3 (IL28B)",
-      "function_summary": "IFNL3 (also known as IL28B) encodes interferon lambda-3, a type III interferon with antiviral activity. The rs12979860 C>T polymorphism in the promoter region of IFNL3 is a major determinant of response to pegylated interferon-alpha (PEG-IFN) plus ribavirin therapy for chronic hepatitis C virus (HCV) infection. The CC genotype is associated with superior innate antiviral immune response and higher treatment response rates.",
-      "clinical_significance": "IFNL3 rs12979860 CC genotype carriers achieve 2–3x higher sustained virologic response (SVR) rates with PEG-IFN/ribavirin compared to TT carriers. CPIC Level A guidelines support IFNL3 genotyping for HCV treatment selection. The CC genotype is far more common in Koreans (~85%) than in Europeans (~37%), meaning most Koreans are favorable responders — a significant pharmacogenomic advantage for HCV treatment.",
-      "associated_conditions": [
-        "Hepatitis C virus treatment response",
-        "PEG-IFN/ribavirin efficacy",
-        "Spontaneous HCV clearance",
-        "Interferon-based HCV therapy"
-      ],
-      "treatment_strategies": "IFNL3 CC genotype carriers with HCV infection are favorable candidates for PEG-IFN/ribavirin-based regimens when direct-acting antivirals (DAAs) are unavailable or contraindicated. CPIC Level A evidence supports IFNL3 genotype-informed HCV treatment selection. In the era of DAAs (sofosbuvir, ledipasvir, etc.), IFNL3 genotyping is less routinely used but remains informative for resource-limited settings or interferon-based regimens.",
-      "frequency_prognosis": "IFNL3 rs12979860 CC genotype frequency in Koreans is ~85% vs ~37% in Europeans, a ~2.3x enrichment. This population difference largely explains why Korean HCV patients historically showed higher response rates to interferon-based therapy. SVR rates with PEG-IFN/ribavirin for CC vs TT genotype: ~80% vs ~30% for genotype 1 HCV. Korean population CC genotype frequency ~85% vs ~37% in Western populations (~2.3x enrichment).",
-      "finding_summary": "An IFNL3 pharmacogenomic variant was identified. The rs12979860 CC genotype indicates favorable interferon lambda response and superior predicted efficacy of PEG-IFN/ribavirin-based HCV treatment. CPIC Level A evidence supports IFNL3 genotype-guided HCV treatment selection.",
-      "korean_specific_note": "IFNL3 CC genotype frequency in Koreans (~85%) is approximately 2.3x higher than in Europeans (~37%), making Korean HCV patients predominantly favorable responders to interferon-based therapy. This population-level advantage has been a factor in historically higher HCV cure rates in Korea with older regimens. Korean population CC genotype frequency ~85% vs ~37% in Western populations (~2.3x enrichment).",
-      "hgvs": {"transcript": "NM_172140.2", "cdna": "c.-368C>T (promoter, rs12979860)", "protein": "N/A (promoter variant)", "star_allele": "N/A", "variant_effect": "Promoter — regulatory"},
-      "references": [
-        {"pmid": "24561393", "source": "Clin Pharmacol Ther 2014", "note": "CPIC guideline for PEG-IFN/ribavirin and IFNL3"},
-        {"pmid": "19749758", "source": "Nature 2009", "note": "IL28B and treatment-induced clearance of HCV"}
-      ],
-      "content_status": "ai-generated-with-references"
+      "content_status": "curated-civic"
     }
   ]
 }

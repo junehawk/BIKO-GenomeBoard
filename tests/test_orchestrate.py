@@ -190,3 +190,22 @@ def test_cancer_pipeline_produces_amp_tier_fields(tmp_path):
         assert "tier_evidence_source" in v
         assert v["tier"] in (1, 2, 3, 4)
         assert "Tier" in v["tier_label"]
+
+
+def test_pipeline_works_with_empty_gene_knowledge(tmp_path):
+    """gene_knowledge.json이 비어있어도 파이프라인 정상 동작."""
+    from scripts.orchestrate import run_pipeline
+
+    annotated_vcf = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants_grch38_annotated.vcf")
+    result = run_pipeline(
+        vcf_path=annotated_vcf,
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True,
+        mode="cancer",
+    )
+    assert result is not None
+    assert len(result["variants"]) > 0
+    # CIViC enrichment still works at runtime for cancer
+    for v in result["variants"]:
+        assert "classification" in v
+        assert "tier" in v
