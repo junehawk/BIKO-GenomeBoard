@@ -1,0 +1,82 @@
+{# ══════════════════════════════════════════════════════════════
+   STRUCTURAL VARIANTS / COPY NUMBER ALTERATIONS
+══════════════════════════════════════════════════════════════ #}
+{% if sv_class45 or sv_class3_display or sv_benign_count %}
+<div class="section-header" style="margin-top:18px;">
+  <span class="section-badge" style="background:#4C1D95;">Structural Variants / Copy Number Alterations</span>
+  <div class="section-rule" style="border-color:#4C1D95;"></div>
+</div>
+
+{# Class 4-5: Pathogenic / Likely Pathogenic #}
+{% if sv_class45 %}
+<div class="findings-panel" style="width:100%;max-width:100%;border-left:3px solid #991B1B;">
+  <div class="findings-panel-body">
+    {% for sv in sv_class45 %}
+    <div class="finding-row">
+      <div>
+        <span class="finding-gene">{{ sv.gene_name }}</span>
+        <span style="display:inline-block;background:{% if sv.sv_type == 'DEL' %}#FEE2E2;color:#991B1B;border:1px solid #FECACA{% elif sv.sv_type == 'DUP' %}#DBEAFE;color:#1E40AF;border:1px solid #BFDBFE{% elif sv.sv_type == 'INV' %}#F1F5F9;color:#475569;border:1px solid #CBD5E1{% else %}#FFF7ED;color:#92400E;border:1px solid #FED7AA{% endif %};border-radius:2px;padding:1px 6px;font-size:7.5pt;font-weight:600;margin-left:6px;vertical-align:middle;">{{ sv.sv_type }}</span>
+        <span style="font-size:8pt;color:#64748b;margin-left:6px;">{{ sv.cytoband }} · {{ sv.size_display }}</span>
+        {% if sv.phenotypes %}<br><span style="font-size:8pt;color:#475569;">{{ sv.phenotypes }}</span>{% endif %}
+      </div>
+      <span style="display:inline-block;background:{% if sv.acmg_class == 5 %}#991B1B{% else %}#92400E{% endif %};color:#fff;border-radius:2px;padding:1px 7px;font-size:7pt;font-weight:700;">ACMG Class {{ sv.acmg_class }} — {{ sv.acmg_label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Class 3: VUS — dosage-sensitive only #}
+{% if sv_class3_display %}
+<div class="section-header" style="margin-top:10px;">
+  <span class="section-badge" style="background:#475569;">SV/CNV — Uncertain Significance (Dosage Sensitive)</span>
+  <div class="section-rule" style="border-color:#475569;"></div>
+</div>
+<table style="table-layout:fixed;width:100%;font-size:8pt;">
+  <colgroup>
+    <col style="width:12%;"><col style="width:18%;"><col style="width:8%;">
+    <col style="width:11%;"><col style="width:10%;"><col style="width:10%;">
+    <col style="width:8%;"><col style="width:10%;"><col style="width:13%;">
+  </colgroup>
+  <thead>
+    <tr>
+      <th>Cytoband</th><th>Gene(s)</th><th>Type</th>
+      <th>Size</th><th>CDS%</th><th>HI/TS</th>
+      <th>pLI</th><th>OMIM</th><th>Flag</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sv in sv_class3_display %}
+    <tr>
+      <td>{{ sv.cytoband }}</td>
+      <td><strong>{{ sv.gene_name }}</strong></td>
+      <td><span style="color:{% if sv.sv_type == 'DEL' %}#991B1B{% elif sv.sv_type == 'DUP' %}#1E40AF{% else %}#475569{% endif %};font-weight:600;">{{ sv.sv_type }}</span></td>
+      <td>{{ sv.size_display }}</td>
+      <td>{% if sv.gene_details %}{{ sv.gene_details[0].cds_percent | default('—') }}%{% else %}—{% endif %}</td>
+      <td>{% if sv.gene_details %}{{ sv.gene_details[0].hi | default(0) }}/{{ sv.gene_details[0].ts | default(0) }}{% else %}—{% endif %}</td>
+      <td>{% if sv.gene_details %}{{ "%.2f" | format(sv.gene_details[0].pli | default(0)) }}{% else %}—{% endif %}</td>
+      <td>{% if sv.omim_morbid %}yes{% else %}—{% endif %}</td>
+      <td><span style="background:#FFF7ED;color:#92400E;border:1px solid #FED7AA;border-radius:2px;padding:1px 5px;font-size:7pt;font-weight:600;">⚠ DS</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p style="font-size:7.5pt;color:#94a3b8;margin-top:4px;font-style:italic;">
+  Classified as VUS per ACMG/ClinGen CNV criteria. Not actionable at this time.
+  {% if sv_class3_hidden %} {{ sv_class3_hidden }} additional VUS structural variant{{ 's' if sv_class3_hidden != 1 else '' }} not shown.{% endif %}
+</p>
+{% elif sv_class3_hidden is defined and sv_class3_hidden > 0 %}
+<p style="font-size:8pt;color:#94a3b8;margin-top:8px;">
+  {{ sv_class3_hidden }} VUS structural variant{{ 's' if sv_class3_hidden != 1 else '' }} of uncertain significance identified but not reported.
+</p>
+{% endif %}
+
+{# Class 1-2: Benign — count only #}
+{% if sv_benign_count is defined and sv_benign_count > 0 %}
+<p style="font-size:8pt;color:#94a3b8;margin-top:4px;">
+  {{ sv_benign_count }} benign/likely benign structural variant{{ 's' if sv_benign_count != 1 else '' }} identified but not reported.
+  Full data available in JSON output.
+</p>
+{% endif %}
+
+{% endif %}
