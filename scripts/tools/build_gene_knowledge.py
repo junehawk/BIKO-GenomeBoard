@@ -24,6 +24,9 @@ from scripts.db.query_civic import (
 )
 from scripts.tools.sources.ncbi_gene import fetch_gene_summary
 from scripts.tools.sources.genreviews import fetch_genreviews_info
+from scripts.db.query_orphanet import get_prevalence_text
+from scripts.db.query_genreviews import get_genreviews_for_gene as get_genreviews_for_gene_local
+from scripts.db.query_omim_mapping import get_mim_for_gene
 
 logger = logging.getLogger(__name__)
 
@@ -123,6 +126,22 @@ def _build_gene_entry(gene: str) -> Dict:
         refs.append({"pmid": genreviews["pmid"], "source": "GeneReviews",
                       "note": genreviews.get("title", "")})
 
+    # 8. Orphanet prevalence → frequency_prognosis
+    orphanet_text = get_prevalence_text(gene)
+
+    # 9. GeneReviews local DB (replaces API call when available)
+    genreviews_local = get_genreviews_for_gene_local(gene)
+    if genreviews_local and not genreviews:
+        genreviews = genreviews_local
+        refs.append({"pmid": genreviews_local["pmid"], "source": "GeneReviews",
+                      "note": genreviews_local.get("title", "")})
+
+    # 10. OMIM MIM mapping
+    omim = get_mim_for_gene(gene)
+    if omim:
+        refs.append({"pmid": "", "source": f"OMIM #{omim['mim_number']}",
+                      "note": omim.get("url", "")})
+
     # Compose finding_summary
     if civic_description:
         finding_summary = civic_description[:500]
@@ -158,7 +177,7 @@ def _build_gene_entry(gene: str) -> Dict:
         "clinical_significance": "",
         "associated_conditions": [],
         "treatment_strategies": treatment or "",
-        "frequency_prognosis": "",
+        "frequency_prognosis": orphanet_text or "",
         "finding_summary": finding_summary,
         "korean_specific_note": None,
         "hgvs": {},
