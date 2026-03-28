@@ -138,9 +138,18 @@ def _build_gene_entry(gene: str) -> Dict:
 
     # 10. OMIM MIM mapping
     omim = get_mim_for_gene(gene)
-    if omim:
-        refs.append({"source": f"OMIM #{omim['mim_number']}",
-                      "note": omim.get("url", "")})
+
+    # 11. Associated conditions from CIViC evidence diseases + Orphanet
+    associated_conditions = []
+    if civic_evidence:
+        diseases = list(dict.fromkeys(e.get("disease", "") for e in civic_evidence if e.get("disease")))
+        associated_conditions = diseases[:5]
+    if not associated_conditions:
+        try:
+            from scripts.db.query_orphanet import get_disease_names
+            associated_conditions = get_disease_names(gene)
+        except Exception:
+            pass
 
     # Compose finding_summary
     if civic_description:
@@ -175,9 +184,10 @@ def _build_gene_entry(gene: str) -> Dict:
         "full_name": full_name,
         "function_summary": ncbi.get("summary", "")[:300] if ncbi else "",
         "clinical_significance": "",
-        "associated_conditions": [],
+        "associated_conditions": associated_conditions,
         "treatment_strategies": treatment or "",
         "frequency_prognosis": orphanet_text or "",
+        "omim_url": omim.get("url", "") if omim else "",
         "finding_summary": finding_summary,
         "korean_specific_note": None,
         "hgvs": {},

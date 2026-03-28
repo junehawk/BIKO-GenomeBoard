@@ -33,17 +33,35 @@ def get_prevalence_by_gene(gene: str, db_path: Optional[str] = None) -> List[Dic
 
 
 def get_prevalence_text(gene: str, db_path: Optional[str] = None) -> str:
-    """Build a human-readable prevalence summary for a gene."""
+    """Build a human-readable prevalence summary for a gene.
+    Shows one entry per disease (most specific prevalence class), max 3 diseases.
+    """
     entries = get_prevalence_by_gene(gene, db_path)
     if not entries:
         return ""
-    parts = []
-    seen = set()
+    # Group by disease, keep best (most specific) prevalence per disease
+    best = {}
     for e in entries:
-        key = (e["disease_name"], e["prevalence_class"])
-        if key in seen:
-            continue
-        seen.add(key)
-        geo = f" ({e['geographic']})" if e["geographic"] else ""
-        parts.append(f"{e['disease_name']}: {e['prevalence_class']}{geo}")
-    return "; ".join(parts[:3])
+        name = e["disease_name"]
+        if name not in best or (e["val_moy"] and (not best[name]["val_moy"] or e["val_moy"] > best[name]["val_moy"])):
+            best[name] = e
+    parts = []
+    for name, e in list(best.items())[:3]:
+        cls = e["prevalence_class"]
+        if cls:
+            parts.append(f"{name} (prevalence: {cls})")
+        else:
+            parts.append(name)
+    return ". ".join(parts) + "." if parts else ""
+
+
+def get_disease_names(gene: str, db_path: Optional[str] = None) -> List[str]:
+    """Get unique disease names associated with a gene from Orphanet."""
+    entries = get_prevalence_by_gene(gene, db_path)
+    seen = set()
+    names = []
+    for e in entries:
+        if e["disease_name"] not in seen:
+            seen.add(e["disease_name"])
+            names.append(e["disease_name"])
+    return names[:5]

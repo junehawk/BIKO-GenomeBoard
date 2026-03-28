@@ -95,5 +95,5 @@ def test_omim_mim_in_references(tmp_path, monkeypatch):
 
     data = json.loads((tmp_path / "knowledge.json").read_text())
     tp53 = {g["gene"]: g for g in data["genes"]}["TP53"]
-    sources = [r.get("source") for r in tp53.get("references", [])]
-    assert any("OMIM" in s for s in sources)
+    # OMIM is now provided as omim_url field, not in references
+    assert tp53.get("omim_url") == "https://omim.org/entry/191170"
