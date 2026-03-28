@@ -19,6 +19,9 @@ paths:
   hpo_db: "data/db/hpo.sqlite3"
   hpo_annotation: "data/db/genes_to_phenotype.txt"
   clingen_db: "data/db/clingen.sqlite3"
+  orphanet_db: "data/db/orphanet.sqlite3"
+  genreviews_db: "data/db/genreviews.sqlite3"
+  omim_mapping_db: "data/db/omim_mapping.sqlite3"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)
