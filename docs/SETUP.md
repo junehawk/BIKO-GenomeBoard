@@ -111,6 +111,51 @@ python scripts/db/build_clingen_db.py data/db/clingen_gene_validity.csv
 # Output: data/db/clingen.sqlite3
 ```
 
+### Orphanet Disease Prevalence (Rare Disease mode)
+
+Provides disease prevalence data per gene from Orphanet Product 9 (~15 MB XML).
+
+```bash
+# Download Orphanet Product 9 prevalence XML
+curl -o data/db/en_product9_prev.xml \
+  https://www.orphadata.com/data/xml/en_product9_prev.xml
+
+# Build SQLite (~few seconds)
+python scripts/db/build_orphanet_db.py data/db/en_product9_prev.xml
+# Output: data/db/orphanet.sqlite3
+```
+
+### GeneReviews Gene→NBK Mapping (Rare Disease mode)
+
+Maps gene symbols to GeneReviews book chapters (NBK IDs) and PMIDs for offline reference lookup.
+
+```bash
+# Download GeneReviews identifier files from NCBI FTP
+curl -o data/db/GRshortname_NBKid_genesymbol_dzname.txt \
+  ftp://ftp.ncbi.nlm.nih.gov/pub/GeneReviews/GRshortname_NBKid_genesymbol_dzname.txt
+curl -o data/db/GRtitle_shortname_NBKid.txt \
+  ftp://ftp.ncbi.nlm.nih.gov/pub/GeneReviews/GRtitle_shortname_NBKid.txt
+
+# Build SQLite
+python scripts/db/build_genreviews_db.py \
+  --genes data/db/GRshortname_NBKid_genesymbol_dzname.txt \
+  --titles data/db/GRtitle_shortname_NBKid.txt
+# Output: data/db/genreviews.sqlite3
+```
+
+### OMIM Gene→MIM Mapping
+
+Maps gene symbols to OMIM MIM numbers for cross-reference links.
+
+```bash
+# Download mim2gene.txt (free, no login required)
+curl -o data/db/mim2gene.txt https://omim.org/static/omim/data/mim2gene.txt
+
+# Build SQLite
+python scripts/db/build_omim_mapping.py data/db/mim2gene.txt
+# Output: data/db/omim_mapping.sqlite3
+```
+
 ---
 
 ## 3. Configuration
@@ -251,7 +296,7 @@ python -m pytest tests/test_batch.py -v
 python -m pytest tests/test_rare_disease.py -v
 ```
 
-419 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, and report generation.
+434 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, Orphanet prevalence, GeneReviews mapping, OMIM mapping, and report generation.
 
 ---
 
@@ -282,4 +327,4 @@ Output is written to `data/gene_knowledge.json`. Source priority per gene:
 3. **NCBI Gene API** (universal fallback) → `curated-ncbi`
 4. **Minimal entry** (all sources failed) → `auto-minimal`
 
-Additional enrichment applied to all genes: GeneReviews PMID, ClinGen gene validity, CIViC treatment evidence.
+Additional enrichment applied to all genes: GeneReviews PMID (local DB or API), ClinGen gene validity, CIViC treatment evidence, Orphanet disease prevalence, OMIM MIM cross-reference.
