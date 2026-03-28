@@ -349,6 +349,27 @@ def _classify_variants(variants, db_results, freq_results):
     return classification_results
 
 
+def _sv_to_dict(sv) -> dict:
+    """Convert StructuralVariant to template-friendly dict."""
+    return {
+        "annotsv_id": sv.annotsv_id,
+        "chrom": sv.chrom, "start": sv.start, "end": sv.end,
+        "length": sv.length, "sv_type": sv.sv_type,
+        "sample_id": sv.sample_id,
+        "acmg_class": sv.acmg_class, "acmg_label": sv.acmg_label,
+        "ranking_score": sv.ranking_score,
+        "cytoband": sv.cytoband, "gene_name": sv.gene_name,
+        "gene_count": sv.gene_count, "gene_details": sv.gene_details,
+        "size_display": sv.size_display,
+        "phenotypes": sv.phenotypes, "evidence_source": sv.evidence_source,
+        "p_gain_phen": sv.p_gain_phen, "p_loss_phen": sv.p_loss_phen,
+        "p_gain_hpo": sv.p_gain_hpo, "p_loss_hpo": sv.p_loss_hpo,
+        "b_gain_af_max": sv.b_gain_af_max, "b_loss_af_max": sv.b_loss_af_max,
+        "omim_morbid": sv.omim_morbid,
+        "is_pathogenic": sv.is_pathogenic,
+    }
+
+
 def run_pipeline(
     vcf_path: str,
     output_path: str = "output/report.html",
@@ -359,6 +380,7 @@ def run_pipeline(
     mode: str = None,
     hpo_ids: list = None,
     hide_vus: bool = True,
+    sv_path: str = None,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -512,6 +534,25 @@ def run_pipeline(
         "mode": mode,
         "hpo_results": hpo_results,
     }
+
+    # Parse structural variants if provided
+    sv_variants = []
+    if sv_path:
+        from scripts.intake.parse_annotsv import parse_annotsv
+        sv_variants = parse_annotsv(sv_path)
+        logger.info(f"[SV] Parsed {len(sv_variants)} structural variants")
+
+    sv_class45 = [sv for sv in sv_variants if sv.acmg_class in (4, 5)]
+    sv_class3_all = [sv for sv in sv_variants if sv.acmg_class == 3]
+    sv_class3_display = [sv for sv in sv_class3_all if sv.is_dosage_sensitive(mode)]
+    sv_class3_hidden = len(sv_class3_all) - len(sv_class3_display)
+    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_class in (1, 2))
+
+    report_data["sv_variants"] = [_sv_to_dict(sv) for sv in sv_variants]
+    report_data["sv_class45"] = [_sv_to_dict(sv) for sv in sv_class45]
+    report_data["sv_class3_display"] = [_sv_to_dict(sv) for sv in sv_class3_display]
+    report_data["sv_class3_hidden"] = sv_class3_hidden
+    report_data["sv_benign_count"] = sv_benign_count
 
     # ── Step 6: Generate report ────────────────────────────────────────────────
     _progress("[6/6] Generating report...")
@@ -1035,6 +1076,11 @@ DOCKER
         dest="show_all_variants",
         help="Show ALL variants in detail pages (overrides default hide-vus behavior)",
     )
+    parser.add_argument(
+        "--sv",
+        dest="sv_path",
+        help="AnnotSV TSV file for CNV/SV integration",
+    )
 
     args = parser.parse_args()
 
@@ -1107,6 +1153,7 @@ DOCKER
             mode=mode,
             hpo_ids=hpo_ids,
             hide_vus=effective_hide_vus,
+            sv_path=args.sv_path,
         )
 
         if result is None:
