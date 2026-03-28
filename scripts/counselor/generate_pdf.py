@@ -169,7 +169,7 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
 
     # Add shared templates directory to loader
     shared_dir = os.path.join(templates_base, "shared")
-    loader = FileSystemLoader([template_dir, shared_dir])
+    loader = FileSystemLoader([template_dir, templates_base, shared_dir])
 
     # Ensure SV fields have defaults
     report_data.setdefault("sv_class45", [])
