@@ -1858,6 +1858,95 @@
 </div><!-- /pgx detail page -->
 {% endif %}
 
+{# ══════════════════════════════════════════════════════════════
+   SV DETAIL PAGES (Class 4-5 only)
+══════════════════════════════════════════════════════════════ #}
+{% for sv in sv_class45 | default([]) %}
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+    <div class="section-header" style="margin-top:0;margin-bottom:6px;">
+      <span class="section-badge" style="background:#4C1D95;">Structural Variant Detail</span>
+      <span style="float:right;font-size:8pt;color:#64748b;">{{ sample_id | default('') }}</span>
+    </div>
+
+    <div style="display:flex;gap:12px;margin-bottom:10px;">
+      <!-- SV summary card -->
+      <div style="flex:1;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:10px;">
+        <div style="font-size:13pt;font-weight:700;color:#0F172A;margin-bottom:4px;">
+          {{ sv.gene_name }}
+          <span style="display:inline-block;background:{% if sv.sv_type == 'DEL' %}#FEE2E2;color:#991B1B{% elif sv.sv_type == 'DUP' %}#DBEAFE;color:#1E40AF{% elif sv.sv_type == 'INV' %}#F1F5F9;color:#475569{% else %}#FFF7ED;color:#92400E{% endif %};border-radius:3px;padding:2px 8px;font-size:9pt;margin-left:8px;">{{ sv.sv_type }}</span>
+        </div>
+        <div style="font-size:8.5pt;color:#475569;">
+          {{ sv.chrom }}:{{ "{:,}".format(sv.start) }}-{{ "{:,}".format(sv.end) }} · {{ sv.size_display }} · {{ sv.cytoband }}
+        </div>
+        <div style="margin-top:6px;">
+          <span style="display:inline-block;background:{% if sv.acmg_class == 5 %}#991B1B{% elif sv.acmg_class == 4 %}#92400E{% else %}#475569{% endif %};color:#fff;border-radius:3px;padding:2px 10px;font-size:8pt;font-weight:700;">
+            ACMG Class {{ sv.acmg_class }} — {{ sv.acmg_label }}
+          </span>
+          <span style="font-size:8pt;color:#94a3b8;margin-left:8px;">Score: {{ sv.ranking_score }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gene overlap table -->
+    {% if sv.gene_details %}
+    <div style="margin-bottom:10px;">
+      <div style="font-size:9pt;font-weight:600;color:#334155;margin-bottom:4px;">Gene Overlap</div>
+      <table style="width:100%;font-size:8pt;">
+        <thead>
+          <tr><th>Gene</th><th>Transcript</th><th>CDS%</th><th>Frameshift</th><th>Location</th><th>HI</th><th>TS</th><th>pLI</th></tr>
+        </thead>
+        <tbody>
+          {% for gd in sv.gene_details %}
+          <tr>
+            <td><strong>{{ gd.gene }}</strong></td>
+            <td style="font-family:monospace;font-size:7.5pt;">{{ gd.transcript | default('—') }}</td>
+            <td>{{ gd.cds_percent | default('—') }}%</td>
+            <td>{{ gd.frameshift | default('—') }}</td>
+            <td style="font-size:7.5pt;">{{ gd.location | default('—') }}</td>
+            <td>{{ gd.hi | default(0) }}</td>
+            <td>{{ gd.ts | default(0) }}</td>
+            <td>{{ "%.2f" | format(gd.pli | default(0)) }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+    <!-- Phenotypes & Evidence -->
+    <div style="display:flex;gap:12px;">
+      {% if sv.phenotypes %}
+      <div style="flex:1;">
+        <div style="font-size:9pt;font-weight:600;color:#334155;margin-bottom:4px;">Associated Phenotypes</div>
+        <div style="font-size:8.5pt;color:#475569;">{{ sv.phenotypes }}</div>
+        {% if sv.sv_type == 'DUP' and sv.p_gain_hpo %}
+        <div style="font-size:8pt;color:#94a3b8;margin-top:2px;">HPO: {{ sv.p_gain_hpo }}</div>
+        {% elif sv.p_loss_hpo %}
+        <div style="font-size:8pt;color:#94a3b8;margin-top:2px;">HPO: {{ sv.p_loss_hpo }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if sv.evidence_source %}
+      <div style="flex:1;">
+        <div style="font-size:9pt;font-weight:600;color:#334155;margin-bottom:4px;">Evidence Sources</div>
+        <div style="font-size:8.5pt;color:#475569;">{{ sv.evidence_source }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /page-body -->
+  <div class="page-footer">
+    <div class="footer-disclaimer"><strong>Research Use Only — Not for clinical decision making.</strong></div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page {{ ns_pages.next_page }}</div>
+      {% set ns_pages.next_page = ns_pages.next_page + 1 %}
+    </div>
+  </div>
+</div><!-- /sv detail page -->
+{% endfor %}
 
 {# ══════════════════════════════════════════════════════════════
    METHODOLOGY & DATABASE VERSIONS (last page)
