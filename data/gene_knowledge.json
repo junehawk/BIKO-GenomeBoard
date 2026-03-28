@@ -6,8 +6,8 @@
       "function_summary": "This gene encodes a tumor suppressor protein containing transcriptional activation, DNA binding, and oligomerization domains. The encoded protein responds to diverse cellular stresses to regulate expression of target genes, thereby inducing cell cycle arrest, apoptosis, senescence, DNA repair, or ch",
       "clinical_significance": "",
       "associated_conditions": [],
-      "treatment_strategies": "Level B: Carboplatin,Cisplatin — Resistance in Ovarian Cancer (PMID: 11595686); Level B: Cisplatin,Etoposide,Mitomycin — Sensitivity/Response in Stomach Cancer (PMID: 14514923); Level B: Eprenetapopt,Azacitidine — Sensitivity/Response in Myelodysplastic Syndrome (PMID: 33449813); Level B: Doxorubicin — Sensitivity/Response in Breast Cancer (PMID: 9569050, 22698404); Level B: Chemotherapy — Sensitivity/Response in Esophageal Carcinoma, Gastric Adenocarcinoma (PMID: 23515910, 24740294)",
-      "frequency_prognosis": "",
+      "treatment_strategies": "Level B: Carboplatin,Cisplatin — Resistance in Ovarian Cancer (PMID: 11595686); Level B: Cisplatin,Etoposide,Mitomycin — Sensitivity/Response in Stomach Cancer (PMID: 14514923); Level B: Eprenetapopt,Azacitidine — Sensitivity/Response in Myelodysplastic Syndrome (PMID: 33449813); Level B: Doxorubicin — Sensitivity/Response in Breast Cancer (PMID: 9569050, 22698404); Level B: Chemotherapy — Sensitivity/Response in Gastric Adenocarcinoma, Esophageal Carcinoma (PMID: 23515910, 24740294)",
+      "frequency_prognosis": "Adrenocortical carcinoma: 1-9 / 1 000 000 (Europe); Adrenocortical carcinoma: <1 / 1 000 000 (Europe); Adult hepatocellular carcinoma: 1-9 / 100 000 (Europe)",
       "finding_summary": "TP53 mutations are universal across cancer types. The loss of a tumor suppressor is most often through large deleterious events, such as frameshift mutations, or premature stop codons. In TP53 however, many of the observed mutations in cancer are found to be single nucleotide missense variants. These variants are broadly distributed throughout the gene, but with the majority localizing in the DNA binding domain. There is no single hotspot in the DNA binding domain, but a majority of mutations oc",
       "korean_specific_note": null,
       "hgvs": {},
@@ -36,6 +36,15 @@
           "pmid": "28545823",
           "source": "Schwalbe et al., 2017",
           "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "20301488",
+          "source": "GeneReviews",
+          "note": "Li-Fraumeni Syndrome"
+        },
+        {
+          "source": "OMIM #191170",
+          "note": "https://omim.org/entry/191170"
         }
       ],
       "content_status": "curated-civic"
@@ -46,8 +55,8 @@
       "function_summary": "Inherited mutations in BRCA1 and this gene, BRCA2, confer increased lifetime risk of developing breast or ovarian cancer. Both BRCA1 and BRCA2 are involved in maintenance of genome stability, specifically the homologous recombination pathway for double-strand DNA repair. The largest exon in both gen",
       "clinical_significance": "",
       "associated_conditions": [],
-      "treatment_strategies": "Level A: Olaparib — Sensitivity/Response in Prostate Cancer, Pancreatic Cancer, Cancer (PMID: 21862407, 28792849); Level A: Rucaparib — Sensitivity/Response in Ovarian Cancer (PMID: 28882436, 27908594); Level B: Talazoparib — Sensitivity/Response in Ovarian Cancer, Breast Cancer (PMID: 28242752); Level B: Platinum Compound — Sensitivity/Response in Pancreatic Cancer, Ovarian Carcinoma (PMID: 25072261, 24240112); Level B: Olaparib,Cediranib — Sensitivity/Response in Ovarian Cancer (PMID: 25218906)",
-      "frequency_prognosis": "",
+      "treatment_strategies": "Level A: Olaparib — Sensitivity/Response in Triple-receptor Negative Breast Cancer, Prostate Cancer, Breast Cancer (PMID: 25366685, 23346317); Level A: Rucaparib — Sensitivity/Response in Ovarian Cancer (PMID: 28882436, 27908594); Level B: Talazoparib — Sensitivity/Response in Breast Cancer, Ovarian Cancer (PMID: 28242752); Level B: Platinum Compound — Sensitivity/Response in Ovarian Carcinoma, Pancreatic Cancer (PMID: 25072261, 24240112); Level B: Olaparib,Cediranib — Sensitivity/Response in Ovarian Cancer (PMID: 25218906)",
+      "frequency_prognosis": "Cholangiocarcinoma: 1-9 / 100 000 (Worldwide); Cholangiocarcinoma: >1 / 1000 (Thailand); Cholangiocarcinoma: 1-9 / 1 000 000 (Australia)",
       "finding_summary": "BRCA2 mutations in the germline have become a hallmark for hereditary breast and ovarian cancers. Variants that have been demonstrated to reduce the function of the protein have been shown to increase the risk for these cancers, as well as prostate and pancreatic cancer. These findings have been the impetus for the increased popularity of genetic testing of healthy individuals to assess risk. Recent studies in ovarian cancer have also demonstrated that BRCA mutation status can predict treatment ",
       "korean_specific_note": null,
       "hgvs": {},
@@ -81,6 +90,10 @@
           "pmid": "20301425",
           "source": "GeneReviews",
           "note": "BRCA1- and BRCA2-Associated Hereditary Breast and Ovarian Cancer."
+        },
+        {
+          "source": "OMIM #600185",
+          "note": "https://omim.org/entry/600185"
         }
       ],
       "content_status": "curated-civic"
@@ -91,8 +104,8 @@
       "function_summary": "This gene, a Kirsten ras oncogene homolog from the mammalian ras gene family, encodes a protein that is a member of the small GTPase superfamily. A single amino acid substitution is responsible for an activating mutation. The transforming protein that results is implicated in various malignancies, i",
       "clinical_significance": "",
       "associated_conditions": [],
-      "treatment_strategies": "Level A: Cetuximab — Resistance in Colorectal Cancer, Ovarian Cancer (PMID: 20619739, 22722830); Level A: Selumetinib,Docetaxel — Resistance in Lung Non-small Cell Carcinoma (PMID: 28492898); Level A: Panitumumab,Cetuximab — Resistance in Colorectal Cancer (PMID: 28275037, 19223544); Level A: Sotorasib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 34096690); Level A: Cetuximab,Adagrasib — Sensitivity/Response in Colorectal Cancer (PMID: 38587856)",
-      "frequency_prognosis": "",
+      "treatment_strategies": "Level A: Cetuximab — Resistance in Ovarian Cancer, Colorectal Cancer (PMID: 20570890, 26371285); Level A: Selumetinib,Docetaxel — Resistance in Lung Non-small Cell Carcinoma (PMID: 28492898); Level A: Panitumumab,Cetuximab — Resistance in Colorectal Cancer (PMID: 19223544, 28275037); Level A: Sotorasib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 34096690); Level A: Cetuximab,Adagrasib — Sensitivity/Response in Colorectal Cancer (PMID: 38587856)",
+      "frequency_prognosis": "Cardiofaciocutaneous syndrome: 1-9 / 1 000 000 (Japan); Cardiofaciocutaneous syndrome:  (Worldwide); Cardiofaciocutaneous syndrome: <1 / 1 000 000 (Worldwide)",
       "finding_summary": "Mutations in the RAS family of proteins are frequently observed across cancer types. The amino acid positions that account for the overwhelming majority of these mutations are G12, G13 and Q61. The different protein isoforms, despite their raw similarity, also behave very differently when expressed in non-native tissue types, likely due to differences in the C-terminal hyper-variable regions. Mis-regulation of isoform expression has been shown to be a driving event in cancer, as well as missense",
       "korean_specific_note": null,
       "hgvs": {},
@@ -121,18 +134,27 @@
           "pmid": "38587856",
           "source": "Yaeger et al., 2024",
           "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "20301365",
+          "source": "GeneReviews",
+          "note": "Cardiofaciocutaneous Syndrome"
+        },
+        {
+          "source": "OMIM #190070",
+          "note": "https://omim.org/entry/190070"
         }
       ],
       "content_status": "curated-civic"
     },
     {
       "gene": "BRAF",
-      "full_name": "B-RAF1,BRAF1,NS7,RAFB1,B-raf,BRAF,BRAF-1",
-      "function_summary": "",
+      "full_name": "B-Raf proto-oncogene, serine/threonine kinase",
+      "function_summary": "This gene encodes a protein belonging to the RAF family of serine/threonine protein kinases. This protein plays a role in regulating the MAP kinase/ERK signaling pathway, which affects cell division, differentiation, and secretion. Mutations in this gene, most commonly the V600E mutation, are the mo",
       "clinical_significance": "",
       "associated_conditions": [],
-      "treatment_strategies": "Level A: Vemurafenib — Sensitivity/Response in Cholangiocarcinoma, Laryngeal Squamous Cell Carcinoma, Papillary Thyroid Carcinoma (PMID: 25524464, 26490654); Level A: Trametinib,Dabrafenib — Sensitivity/Response in Intrahepatic Cholangiocarcinoma, Ganglioglioma, Low Grade Glioma (PMID: 25399551, 27283860); Level A: Cobimetinib,Vemurafenib — Sensitivity/Response in Melanoma (PMID: 27480103, 25265494); Level A: Encorafenib,Binimetinib — Sensitivity/Response in Melanoma (PMID: 29573941); Level A: Encorafenib,Cetuximab — Sensitivity/Response in Colorectal Cancer (PMID: 31566309)",
-      "frequency_prognosis": "",
+      "treatment_strategies": "Level A: Vemurafenib — Sensitivity/Response in Skin Melanoma, Low Grade Glioma, Hairy Cell Leukemia (PMID: 25524464, 24987354); Level A: Trametinib,Dabrafenib — Sensitivity/Response in Skin Melanoma, Low Grade Glioma, Colorectal Cancer (PMID: 33637608, 25265492); Level A: Cobimetinib,Vemurafenib — Sensitivity/Response in Melanoma (PMID: 27480103, 25265494); Level A: Encorafenib,Binimetinib — Sensitivity/Response in Melanoma (PMID: 29573941); Level A: Encorafenib,Cetuximab — Sensitivity/Response in Colorectal Cancer (PMID: 31566309)",
+      "frequency_prognosis": "Cardiofaciocutaneous syndrome: 1-9 / 1 000 000 (Japan); Cardiofaciocutaneous syndrome:  (Worldwide); Cardiofaciocutaneous syndrome: <1 / 1 000 000 (Worldwide)",
       "finding_summary": "BRAF mutations are found to be recurrent in many cancer types. Of these, the mutation of valine 600 to glutamic acid (V600E) is the most prevalent. V600E has been determined to be an activating mutation, and cells that harbor it, along with other V600 mutations are sensitive to the BRAF inhibitor dabrafenib. It is also common to use MEK inhibition as a substitute for BRAF inhibitors, and the MEK inhibitor trametinib has seen some success in BRAF mutant melanomas. BRAF mutations have also been co",
       "korean_specific_note": null,
       "hgvs": {},
@@ -161,18 +183,27 @@
           "pmid": "31566309",
           "source": "Kopetz et al., 2019",
           "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "pmid": "20301365",
+          "source": "GeneReviews",
+          "note": "Cardiofaciocutaneous Syndrome"
+        },
+        {
+          "source": "OMIM #164757",
+          "note": "https://omim.org/entry/164757"
         }
       ],
       "content_status": "curated-civic"
     },
     {
       "gene": "EGFR",
-      "full_name": "ERBB,ERBB1,HER1,NISBD2,PIG61,mENA,EGFR,ERRP,NNCIS",
-      "function_summary": "",
+      "full_name": "epidermal growth factor receptor",
+      "function_summary": "The protein encoded by this gene is a transmembrane glycoprotein that is a member of the protein kinase superfamily. This protein is a receptor for members of the epidermal growth factor family. EGFR is a cell surface protein that binds to epidermal growth factor, thus inducing receptor dimerization",
       "clinical_significance": "",
       "associated_conditions": [],
-      "treatment_strategies": "Level A: Erlotinib — Resistance in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma (PMID: 19147750, 22895145); Level A: Osimertinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma, Pancreatic Adenocarcinoma (PMID: 26720284, 26181354); Level A: Erlotinib — Sensitivity/Response in High Grade Glioma, Lung Small Cell Carcinoma, Lung Cancer (PMID: 21132006, 27211795); Level A: Afatinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Glioblastoma, Lung Adenocarcinoma (PMID: 22452895, 25589191); Level A: Dacomitinib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 18089823, 28958502)",
-      "frequency_prognosis": "",
+      "treatment_strategies": "Level A: Erlotinib — Resistance in Lung Non-small Cell Carcinoma, Lung Adenocarcinoma (PMID: 23371856, 22895145); Level A: Osimertinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Pancreatic Adenocarcinoma, Lung Adenocarcinoma (PMID: 28874593, 25923549); Level A: Erlotinib — Sensitivity/Response in Colon Adenocarcinoma, High Grade Glioma, Lung Cancer (PMID: 24868098, 28874593); Level A: Afatinib — Sensitivity/Response in Lung Non-small Cell Carcinoma, Glioblastoma, Lung Adenocarcinoma (PMID: 24439929, 23816960); Level A: Dacomitinib — Sensitivity/Response in Lung Non-small Cell Carcinoma (PMID: 26768165, 28958502)",
+      "frequency_prognosis": "Giant cell glioblastoma: <1 / 1 000 000 (Europe); Gliosarcoma: <1 / 1 000 000 (Europe)",
       "finding_summary": "EGFR is widely recognized for its importance in cancer. Amplification and mutations have been shown to be driving events in many cancer types. Its role in non-small cell lung cancer, glioblastoma and basal-like breast cancers has spurred many research and drug development efforts. Tyrosine kinase inhibitors have shown efficacy in EGFR amplfied tumors, most notably gefitinib and erlotinib. Mutations in EGFR have been shown to confer resistance to these drugs, particularly the variant T790M, which",
       "korean_specific_note": null,
       "hgvs": {},
@@ -201,9 +232,66 @@
           "pmid": "24868098",
           "source": "Khozin et al., 2014",
           "note": "Predictive — Sensitivity/Response"
+        },
+        {
+          "source": "OMIM #131550",
+          "note": "https://omim.org/entry/131550"
         }
       ],
       "content_status": "curated-civic"
+    },
+    {
+      "gene": "CFTR",
+      "full_name": "CF transmembrane conductance regulator",
+      "function_summary": "This gene encodes a member of the ATP-binding cassette (ABC) transporter superfamily. The encoded protein functions as a chloride channel, making it unique among members of this protein family, and controls ion and water secretion and absorption in epithelial tissues. Channel activation is mediated ",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "",
+      "frequency_prognosis": "Aquagenic palmoplantar keratoderma: Unknown (Worldwide); Congenital bilateral absence of vas deferens: 1-5 / 10 000 (Europe); Cystic fibrosis: 1-5 / 10 000 (Europe)",
+      "finding_summary": "This gene encodes a member of the ATP-binding cassette (ABC) transporter superfamily. The encoded protein functions as a chloride channel, making it unique among members of this protein family, and controls ion and water secretion and absorption in epithelial tissues. Channel activation is mediated by cycles of regulatory domain phosphorylation, ATP-binding by the nucleotide-binding domains, and ATP hydrolysis. Mutations in this gene cause cystic fibrosis, the most common lethal genetic disorder",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "20301428",
+          "source": "GeneReviews",
+          "note": "Cystic Fibrosis"
+        },
+        {
+          "source": "OMIM #602421",
+          "note": "https://omim.org/entry/602421"
+        }
+      ],
+      "content_status": "curated-ncbi"
+    },
+    {
+      "gene": "PTPN11",
+      "full_name": "protein tyrosine phosphatase non-receptor type 11",
+      "function_summary": "The protein encoded by this gene is a member of the protein tyrosine phosphatase (PTP) family. PTPs are known to be signaling molecules that regulate a variety of cellular processes including cell growth, differentiation, mitotic cycle, and oncogenic transformation. This PTP contains two tandem Src ",
+      "clinical_significance": "",
+      "associated_conditions": [],
+      "treatment_strategies": "",
+      "frequency_prognosis": "Juvenile myelomonocytic leukemia: 1-9 / 1 000 000 (Europe); Metachondromatosis:  (Worldwide); Metachondromatosis: <1 / 1 000 000 (Worldwide)",
+      "finding_summary": "The protein encoded by this gene is a member of the protein tyrosine phosphatase (PTP) family. PTPs are known to be signaling molecules that regulate a variety of cellular processes including cell growth, differentiation, mitotic cycle, and oncogenic transformation. This PTP contains two tandem Src homology-2 domains, which function as phospho-tyrosine binding domains and mediate the interaction of this PTP with its substrates. This PTP is widely expressed in most tissues and plays a regulatory ",
+      "korean_specific_note": null,
+      "hgvs": {},
+      "references": [
+        {
+          "pmid": "24297342",
+          "source": "Gu et al., 2014",
+          "note": "Prognostic — Poor Outcome"
+        },
+        {
+          "pmid": "20301303",
+          "source": "GeneReviews",
+          "note": "Noonan Syndrome"
+        },
+        {
+          "source": "OMIM #176876",
+          "note": "https://omim.org/entry/176876"
+        }
+      ],
+      "content_status": "curated-ncbi"
     }
   ]
 }

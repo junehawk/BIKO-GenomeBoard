@@ -5,15 +5,14 @@ from pathlib import Path
 
 
 def _create_sample_genreviews_tsv(path):
-    """Minimal GeneReviews identifier TSV."""
-    # Format: GR_shortname\tNBK_id\tgene_symbol\tdisease_name
+    """Minimal GeneReviews identifier file (pipe-delimited, real NCBI format)."""
+    # Real format: GR_shortname|NBK_id|gene_symbol|disease_name (no header)
     Path(path).write_text(
-        "#GR_shortname\tNBK_id\tgene_symbol\tdisease_name\n"
-        "li-fraumeni\tNBK1311\tTP53\tLi-Fraumeni Syndrome\n"
-        "brca1-2\tNBK1247\tBRCA2\tHereditary Breast and Ovarian Cancer\n"
-        "brca1-2\tNBK1247\tBRCA1\tHereditary Breast and Ovarian Cancer\n"
-        "cftr\tNBK1250\tCFTR\tCFTR-Related Disorders\n"
-        "noonan\tNBK1124\tPTPN11\tNoonan Syndrome\n"
+        "li-fraumeni|NBK1311|TP53|Li-Fraumeni Syndrome\n"
+        "brca1-2|NBK1247|BRCA2|Hereditary Breast and Ovarian Cancer\n"
+        "brca1-2|NBK1247|BRCA1|Hereditary Breast and Ovarian Cancer\n"
+        "cftr|NBK1250|CFTR|CFTR-Related Disorders\n"
+        "noonan|NBK1124|PTPN11|Noonan Syndrome\n"
     )
 
 

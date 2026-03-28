@@ -26,7 +26,7 @@ def build_db(genes_path: str, titles_path: str, db_path: str = DEFAULT_DB_PATH) 
 
     # Load titles (shortname → title + PMID)
     titles = {}
-    with open(titles_path) as f:
+    with open(titles_path, encoding="latin-1") as f:
         for line in f:
             if line.startswith("#"):
                 continue
@@ -35,11 +35,12 @@ def build_db(genes_path: str, titles_path: str, db_path: str = DEFAULT_DB_PATH) 
                 titles[parts[0]] = {"title": parts[1], "nbk_id": parts[2], "pmid": parts[3]}
 
     # Load gene-disease mappings
-    with open(genes_path) as f:
+    with open(genes_path, encoding="latin-1") as f:
         for line in f:
             if line.startswith("#"):
                 continue
-            parts = line.strip().split("\t")
+            # Genes file uses pipe delimiter; titles file uses tab
+            parts = line.strip().split("|")
             if len(parts) < 4:
                 continue
             shortname, nbk_id, gene, disease = parts[0], parts[1], parts[2], parts[3]

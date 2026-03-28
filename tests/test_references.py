@@ -167,8 +167,8 @@ def test_gene_knowledge_known_genes_have_pmids():
         if gene in entries_by_gene:
             refs = entries_by_gene[gene].get("references", [])
             assert len(refs) > 0, f"{gene} has KNOWN_REFERENCES but empty references in JSON"
-            pmids = [r.get("pmid") for r in refs]
-            assert all(pmids), f"{gene} has a reference entry missing a 'pmid'"
+            pmids = [r.get("pmid") for r in refs if r.get("pmid")]
+            assert len(pmids) > 0, f"{gene} has KNOWN_REFERENCES but no entry with a 'pmid'"
 
 
 # ── test_report_shows_pmid ────────────────────────────────────────────────────

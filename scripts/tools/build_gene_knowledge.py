@@ -139,7 +139,7 @@ def _build_gene_entry(gene: str) -> Dict:
     # 10. OMIM MIM mapping
     omim = get_mim_for_gene(gene)
     if omim:
-        refs.append({"pmid": "", "source": f"OMIM #{omim['mim_number']}",
+        refs.append({"source": f"OMIM #{omim['mim_number']}",
                       "note": omim.get("url", "")})
 
     # Compose finding_summary
