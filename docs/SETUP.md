@@ -210,6 +210,32 @@ python scripts/orchestrate.py sample.vcf -o report.html --json
 python scripts/orchestrate.py sample.vcf -o report.pdf
 ```
 
+### Structural Variant / CNV Integration
+
+GenomeBoard supports CNV/SV analysis from AnnotSV output:
+
+```bash
+# Run with SNV + SV
+python scripts/orchestrate.py sample.vcf -o report.html \
+  --sv annotsv_output.tsv --mode cancer
+
+# SV display rules:
+# ACMG Class 4-5: Full detail pages
+# ACMG Class 3: Dosage-sensitive VUS in summary table
+# ACMG Class 1-2: Count only
+```
+
+AnnotSV must be run separately before GenomeBoard. The `--sv` argument accepts the AnnotSV TSV output file (full annotation rows only; `SV_type=full` rows are automatically selected).
+
+```bash
+# Rare disease mode with HPO + SV
+python scripts/orchestrate.py patient.vcf --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 \
+  --sv annotsv_rare.tsv -o report.html
+```
+
+---
+
 ### Batch processing
 
 Batch mode parses all VCFs, deduplicates variants across samples (annotating each unique variant only once), then generates per-sample reports in parallel.
@@ -296,7 +322,7 @@ python -m pytest tests/test_batch.py -v
 python -m pytest tests/test_rare_disease.py -v
 ```
 
-434 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, Orphanet prevalence, GeneReviews mapping, OMIM mapping, and report generation.
+449 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, Orphanet prevalence, GeneReviews mapping, OMIM mapping, report generation, AnnotSV CNV/SV parsing, and SV report integration.
 
 ---
 
