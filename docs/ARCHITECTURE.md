@@ -11,7 +11,25 @@ This ensures reproducibility: the same VCF always produces the same ACMG codes, 
 ## Pipeline Overview
 
 ```
-VCF Input
+VCF Input          AnnotSV TSV (optional --sv)
+    │                      │
+    ▼                      ▼
+[1] VCF Parser         [1b] AnnotSV Parser (parse_annotsv.py)
+    (parse_vcf.py)          - Parses AnnotSV full annotation rows
+    - cyvcf2-based          - ACMG Class 1-5 from Annotation_mode
+    parsing                 - StructuralVariant dataclass output
+    - CSQ/ANN field         - Dosage sensitivity: HI/TS scores,
+    extraction (VEP)          pLI, OMIM morbid gene flags
+    - ...                   │
+    │                       ▼
+    │              [1c] SV Report Assembly (orchestrate.py)
+    │                   - sv_class45: Class 4-5 (Pathogenic/LP)
+    │                   - sv_class3_display: dosage-sensitive VUS
+    │                   - sv_class3_hidden: filtered VUS count
+    │                   - sv_benign_count: Class 1-2 count
+    │                   - sv_variants: all SVs (JSON output)
+    │                      │
+    └──────────────────────┘
     │
     ▼
 [1] VCF Parser (parse_vcf.py)
@@ -61,6 +79,51 @@ VCF Input
     - Optional WeasyPrint PDF conversion
     - VUS filtering when --hide-vus is set
 ```
+
+---
+
+## CNV/SV Pipeline
+
+GenomeBoard integrates AnnotSV-annotated structural variant calls via the `--sv` CLI option.
+
+### AnnotSV Parser (`scripts/intake/parse_annotsv.py`)
+
+- Reads AnnotSV TSV output; selects `Annotation_mode == "full"` rows only (one per SV)
+- Maps `AnnotSV_ranking_score` → `acmg_class` (Class 1-5)
+- Extracts gene overlap details per SV (CDS%, frameshift, location, HI/TS scores, pLI)
+- Returns `List[StructuralVariant]` (defined in `scripts/common/models.py`)
+
+### ACMG CNV Classification Display Rules
+
+| ACMG Class | Label | Display |
+|------------|-------|---------|
+| 4-5 | Pathogenic / Likely Pathogenic | Full findings panel + detail page |
+| 3 | VUS | Dosage-sensitive table (filtered) |
+| 1-2 | Benign / Likely Benign | Count only |
+
+### Dosage Sensitivity Filter (Class 3 VUS)
+
+`StructuralVariant.is_dosage_sensitive(mode)` returns `True` when the SV meets either:
+- **Cancer mode**: HI ≥ 2 OR TS ≥ 2, OR pLI ≥ 0.9 and size > 500 kb, OR OMIM morbid gene
+- **Rare-disease mode**: HI ≥ 1 OR TS ≥ 1, OR pLI ≥ 0.5 and size > 100 kb, OR OMIM morbid gene
+
+### SV Report Fields
+
+`orchestrate.py` injects these keys into `report_data`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sv_class45` | `list[dict]` | Class 4-5 SVs for findings panel + detail pages |
+| `sv_class3_display` | `list[dict]` | Dosage-sensitive Class 3 VUS for summary table |
+| `sv_class3_hidden` | `int` | Count of Class 3 VUS not shown |
+| `sv_benign_count` | `int` | Count of Class 1-2 benign SVs |
+| `sv_variants` | `list[dict]` | All SVs serialized for JSON output |
+
+### Templates
+
+- `templates/shared/sv_section.html` — shared CNV/SV summary section (included in both cancer and rare-disease reports)
+- Cancer/rare-disease `report.html` include it via `{% include "shared/sv_section.html" ignore missing %}`
+- Class 4-5 SV detail pages loop after the SNV detail pages, using the same `ns_pages` namespace for sequential page numbering
 
 ---
 
@@ -211,7 +274,9 @@ Variant deduplication is the key performance optimization: a cohort of 100 sampl
 ```
 gb/
 ├── scripts/
-│   ├── orchestrate.py              # CLI + pipeline orchestration
+│   ├── orchestrate.py              # CLI + pipeline orchestration (--sv option)
+│   ├── intake/
+│   │   └── parse_annotsv.py        # AnnotSV TSV → List[StructuralVariant]
 │   ├── classification/
 │   │   └── acmg_engine.py          # ACMG/AMP 2015 rule engine
 │   ├── somatic/
@@ -240,7 +305,7 @@ gb/
 │   ├── counselor/
 │   │   └── generate_pdf.py         # Jinja2 HTML + WeasyPrint PDF
 │   └── common/
-│       ├── models.py               # Variant, AcmgEvidence, FrequencyData
+│       ├── models.py               # Variant, AcmgEvidence, FrequencyData, StructuralVariant
 │       ├── cache.py                # SQLite response cache
 │       ├── config.py              # config.yaml loader
 │       └── hgvs_utils.py          # HGVSp↔CIViC variant name conversion (shared)
@@ -249,9 +314,16 @@ gb/
 │   ├── oncokb_cancer_genes.json    # OncoKB gene list
 │   ├── acmg_rules.json             # ACMG classification rules
 │   ├── gene_knowledge.json         # Gene metadata
+│   ├── sample_sv/                  # AnnotSV test data
+│   │   ├── cancer_somatic_annotsv.tsv
+│   │   └── rare_disease_annotsv.tsv
 │   └── db/                         # Built databases (gitignored)
-├── templates/                      # Jinja2 report templates
-├── tests/                          # pytest suite
+├── templates/
+│   ├── cancer/report.html          # Cancer somatic report template
+│   ├── rare-disease/report.html    # Rare disease report template
+│   └── shared/
+│       └── sv_section.html         # CNV/SV summary section (shared)
+├── tests/                          # pytest suite (449 tests)
 ├── config.yaml
 ├── Dockerfile
 └── docker-compose.yml

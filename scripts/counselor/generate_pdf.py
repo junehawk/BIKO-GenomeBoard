@@ -167,7 +167,18 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                 pgx.setdefault("hgvs", info.get("hgvs", {}))
                 pgx.setdefault("variant_effect", info.get("hgvs", {}).get("variant_effect", ""))
 
-    env = Environment(loader=FileSystemLoader(template_dir), autoescape=True)
+    # Add shared templates directory to loader
+    shared_dir = os.path.join(templates_base, "shared")
+    loader = FileSystemLoader([template_dir, templates_base, shared_dir])
+
+    # Ensure SV fields have defaults
+    report_data.setdefault("sv_class45", [])
+    report_data.setdefault("sv_class3_display", [])
+    report_data.setdefault("sv_class3_hidden", 0)
+    report_data.setdefault("sv_benign_count", 0)
+    report_data.setdefault("sv_variants", [])
+
+    env = Environment(loader=loader, autoescape=True)
     template = env.get_template("report.html")
     return template.render(**report_data)
 
