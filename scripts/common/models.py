@@ -1,7 +1,7 @@
 # scripts/common/models.py
 from __future__ import annotations
-from dataclasses import dataclass
-from typing import Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 import re
 
 STRENGTH_MAP = {
@@ -97,3 +97,95 @@ class PgxResult:
         if self.western_prevalence > 0:
             return (self.korean_prevalence / self.western_prevalence) >= 2.0
         return self.korean_prevalence > 0
+
+
+@dataclass
+class StructuralVariant:
+    annotsv_id: str
+    chrom: str
+    start: int
+    end: int
+    length: int
+    sv_type: str              # DEL, DUP, INV, BND, INS
+    sample_id: str
+    acmg_class: int           # 1-5
+    ranking_score: float
+    cytoband: str
+    gene_name: str            # "ERBB2" or "TBX1;COMT;HIRA"
+    gene_count: int
+    # Gene detail (populated from split rows)
+    gene_details: List[Dict] = field(default_factory=list)
+    # Pathogenic evidence
+    p_gain_phen: str = ""
+    p_gain_hpo: str = ""
+    p_gain_source: str = ""
+    p_loss_phen: str = ""
+    p_loss_hpo: str = ""
+    p_loss_source: str = ""
+    # Benign evidence
+    b_gain_af_max: Optional[float] = None
+    b_loss_af_max: Optional[float] = None
+    # OMIM
+    omim_morbid: bool = False
+
+    @property
+    def is_pathogenic(self) -> bool:
+        return self.acmg_class in (4, 5)
+
+    @property
+    def is_vus(self) -> bool:
+        return self.acmg_class == 3
+
+    @property
+    def is_benign(self) -> bool:
+        return self.acmg_class in (1, 2)
+
+    @property
+    def acmg_label(self) -> str:
+        labels = {5: "Pathogenic", 4: "Likely Pathogenic", 3: "VUS", 2: "Likely Benign", 1: "Benign"}
+        return labels.get(self.acmg_class, "Unknown")
+
+    @property
+    def size_display(self) -> str:
+        if abs(self.length) >= 1_000_000:
+            return f"{abs(self.length) / 1_000_000:.1f} Mb"
+        elif abs(self.length) >= 1000:
+            return f"{abs(self.length) / 1000:.1f} kb"
+        return f"{abs(self.length)} bp"
+
+    @property
+    def phenotypes(self) -> str:
+        if self.sv_type == "DUP" and self.p_gain_phen:
+            return self.p_gain_phen
+        if self.sv_type == "DEL" and self.p_loss_phen:
+            return self.p_loss_phen
+        return self.p_gain_phen or self.p_loss_phen or ""
+
+    @property
+    def evidence_source(self) -> str:
+        if self.sv_type == "DUP" and self.p_gain_source:
+            return self.p_gain_source
+        if self.sv_type == "DEL" and self.p_loss_source:
+            return self.p_loss_source
+        return self.p_gain_source or self.p_loss_source or ""
+
+    def is_dosage_sensitive(self, mode: str = "cancer") -> bool:
+        """Check if this Class 3 VUS is dosage-sensitive enough to display."""
+        if self.acmg_class != 3:
+            return False
+        hi_thresh = 1 if mode == "rare-disease" else 2
+        pli_thresh = 0.8 if mode == "rare-disease" else 0.9
+        for gd in self.gene_details:
+            hi = gd.get("hi") or 0
+            ts = gd.get("ts") or 0
+            pli = gd.get("pli") or 0.0
+            if self.sv_type == "DEL" and hi >= hi_thresh:
+                return True
+            if self.sv_type == "DUP" and ts >= hi_thresh:
+                return True
+            if pli >= pli_thresh:
+                return True
+        # Large VUS with multiple OMIM genes
+        if abs(self.length) > 1_000_000 and self.gene_count >= 3 and self.omim_morbid:
+            return True
+        return False
