@@ -305,7 +305,7 @@ gb/
 │   ├── counselor/
 │   │   └── generate_pdf.py         # Jinja2 HTML + WeasyPrint PDF
 │   └── common/
-│       ├── models.py               # Variant, AcmgEvidence, FrequencyData
+│       ├── models.py               # Variant, AcmgEvidence, FrequencyData, StructuralVariant
 │       ├── cache.py                # SQLite response cache
 │       ├── config.py              # config.yaml loader
 │       └── hgvs_utils.py          # HGVSp↔CIViC variant name conversion (shared)
@@ -314,9 +314,16 @@ gb/
 │   ├── oncokb_cancer_genes.json    # OncoKB gene list
 │   ├── acmg_rules.json             # ACMG classification rules
 │   ├── gene_knowledge.json         # Gene metadata
+│   ├── sample_sv/                  # AnnotSV test data
+│   │   ├── cancer_somatic_annotsv.tsv
+│   │   └── rare_disease_annotsv.tsv
 │   └── db/                         # Built databases (gitignored)
-├── templates/                      # Jinja2 report templates
-├── tests/                          # pytest suite
+├── templates/
+│   ├── cancer/report.html          # Cancer somatic report template
+│   ├── rare-disease/report.html    # Rare disease report template
+│   └── shared/
+│       └── sv_section.html         # CNV/SV summary section (shared)
+├── tests/                          # pytest suite (449 tests)
 ├── config.yaml
 ├── Dockerfile
 └── docker-compose.yml
