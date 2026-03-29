@@ -58,12 +58,44 @@ def calculate_tmb(
     int_thresh = intermediate_threshold or float(get("somatic.tmb_intermediate_threshold", DEFAULT_INTERMEDIATE_THRESHOLD) or DEFAULT_INTERMEDIATE_THRESHOLD)
     consequences = counted_consequences or get("somatic.tmb_counted_consequences") or DEFAULT_COUNTED_CONSEQUENCES
 
+    # Build normalized lookup set (lowercase) for matching both
+    # VEP raw (missense_variant) and formatted (Missense) consequence names
+    _FORMATTED_TO_RAW = {
+        "missense": "missense_variant",
+        "nonsense": "stop_gained",
+        "nonsense / stop gain": "stop_gained",
+        "stop gain": "stop_gained",
+        "frameshift": "frameshift_variant",
+        "splice donor": "splice_donor_variant",
+        "splice acceptor": "splice_acceptor_variant",
+        "inframe deletion": "inframe_deletion",
+        "inframe insertion": "inframe_insertion",
+        "splice region variant": "splice_region_variant",
+    }
+    csq_set = set(consequences)
+    csq_lower_set = {c.lower() for c in csq_set}
+
     total = len(variants)
     counted = 0
     for v in variants:
         csq = getattr(v, "consequence", None) or ""
-        if csq in consequences:
+        # Direct match (VEP raw format)
+        if csq in csq_set:
             counted += 1
+            continue
+        # Normalized match (formatted consequence)
+        csq_lower = csq.lower()
+        if csq_lower in csq_lower_set:
+            counted += 1
+            continue
+        # Check formatted → raw mapping (e.g., "Missense" → "missense_variant")
+        # Also handle compound consequences like "Missense / Splice Region Variant"
+        for part in csq_lower.split(" / "):
+            part = part.strip()
+            raw = _FORMATTED_TO_RAW.get(part, "")
+            if raw in csq_set:
+                counted += 1
+                break
 
     score = round(counted / panel_size, 1) if panel_size > 0 else 0.0
 
