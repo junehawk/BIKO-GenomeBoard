@@ -54,6 +54,17 @@ pgx:
 
 somatic:
   tiering_strategy: "B"  # "A" (CIViC priority), "B" (combined), "C" (OncoKB only)
+  tmb_high_threshold: 10
+  tmb_intermediate_threshold: 6
+  tmb_default_panel_size_mb: 33.0
+  tmb_counted_consequences:
+    - missense_variant
+    - stop_gained
+    - frameshift_variant
+    - splice_donor_variant
+    - splice_acceptor_variant
+    - inframe_deletion
+    - inframe_insertion
 
 cache:
   enabled: true
