@@ -1002,6 +1002,24 @@
       <div class="section-rule"></div>
     </div>
 
+    {# TMB Badge #}
+    {% if tmb %}
+    <div style="display:flex;align-items:center;gap:12px;margin:10px 0;padding:10px 14px;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;">
+      <div style="font-size:9pt;font-weight:600;color:#334155;">Tumor Mutational Burden</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14pt;font-weight:700;color:{% if tmb.level == 'High' %}#991B1B{% elif tmb.level == 'Intermediate' %}#92400E{% else %}#166534{% endif %};">
+          {{ tmb.score }} mut/Mb
+        </span>
+        <span style="display:inline-block;background:{% if tmb.level == 'High' %}#991B1B{% elif tmb.level == 'Intermediate' %}#92400E{% else %}#166534{% endif %};color:#fff;border-radius:3px;padding:2px 8px;font-size:8pt;font-weight:700;">
+          TMB-{{ tmb.level }}
+        </span>
+      </div>
+      <div style="font-size:7.5pt;color:#94a3b8;">
+        {{ tmb.variant_count }} nonsynonymous / {{ tmb.panel_size_mb }} Mb
+      </div>
+    </div>
+    {% endif %}
+
     <!-- Tier 1: Therapeutic Targets -->
     {% if tier1_variants is defined and tier1_variants %}
     <div class="section-header" style="margin-top:10px;">
@@ -1840,6 +1858,19 @@
       <span class="section-badge badge-navy">Methodology &amp; Database Versions</span>
       <div class="section-rule rule-navy"></div>
     </div>
+
+    {% if tmb %}
+    <h3 style="color:var(--navy);margin-top:16px;">Tumor Mutational Burden (TMB)</h3>
+    <p style="font-size:8.5pt;line-height:1.5;">
+      TMB was calculated as the number of nonsynonymous coding variants
+      ({{ tmb.counted_consequences | join(', ') }})
+      per megabase of coding region. Coding region size: {{ tmb.panel_size_mb }} Mb.
+      TMB-High threshold: &ge;10 mutations/Mb, consistent with the FDA-approved
+      FoundationOne CDx companion diagnostic methodology.
+      Result: <strong>{{ tmb.score }} mut/Mb ({{ tmb.level }})</strong> —
+      {{ tmb.variant_count }} counted from {{ tmb.total_variants }} total variants.
+    </p>
+    {% endif %}
 
     <!-- DB versions table -->
     {% if db_versions %}

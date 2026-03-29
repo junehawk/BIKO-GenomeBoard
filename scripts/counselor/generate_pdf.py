@@ -178,6 +178,9 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
     report_data.setdefault("sv_benign_count", 0)
     report_data.setdefault("sv_variants", [])
 
+    # TMB default
+    report_data.setdefault("tmb", None)
+
     env = Environment(loader=loader, autoescape=True)
     template = env.get_template("report.html")
     return template.render(**report_data)

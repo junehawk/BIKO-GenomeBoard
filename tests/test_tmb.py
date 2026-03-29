@@ -107,3 +107,60 @@ def test_tmb_bed_file(tmp_path):
     bed.write_text("chr1\t100\t1100\nchr1\t2000\t3000\nchr2\t500\t1500\n")
     size = calculate_panel_size_from_bed(str(bed))
     assert size == pytest.approx(0.003, abs=0.0001)
+
+
+# ── Integration tests ──
+
+
+def test_cancer_pipeline_tmb(tmp_path):
+    """Cancer pipeline에서 TMB 자동 계산."""
+    from scripts.orchestrate import run_pipeline
+    result = run_pipeline(
+        vcf_path="data/sample_vcf/demo_variants_grch38_annotated.vcf",
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True, mode="cancer",
+    )
+    assert result is not None
+    assert result["tmb"] is not None
+    assert result["tmb"]["score"] >= 0
+    assert result["tmb"]["level"] in ("High", "Intermediate", "Low")
+    assert result["tmb"]["panel_size_mb"] == 33.0
+
+
+def test_rare_disease_no_tmb(tmp_path):
+    """Rare disease에서는 TMB 미계산."""
+    from scripts.orchestrate import run_pipeline
+    result = run_pipeline(
+        vcf_path="data/sample_vcf/rare_disease_demo.vcf",
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True, mode="rare-disease",
+        hpo_ids=["HP:0001250"],
+    )
+    assert result is not None
+    assert result.get("tmb") is None
+
+
+def test_tmb_in_html_report(tmp_path):
+    """HTML 리포트에 TMB 뱃지가 표시됨."""
+    from scripts.orchestrate import run_pipeline
+    run_pipeline(
+        vcf_path="data/sample_vcf/codegen-Tumor_WB.mutect.passed.vep.vcf",
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True, mode="cancer",
+    )
+    html = (tmp_path / "report.html").read_text()
+    assert "Tumor Mutational Burden" in html
+    assert "mut/Mb" in html
+
+
+def test_tmb_in_methodology(tmp_path):
+    """Methodology 섹션에 TMB 계산 방법이 기록됨."""
+    from scripts.orchestrate import run_pipeline
+    run_pipeline(
+        vcf_path="data/sample_vcf/demo_variants_grch38_annotated.vcf",
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True, mode="cancer",
+    )
+    html = (tmp_path / "report.html").read_text()
+    assert "nonsynonymous coding variants" in html
+    assert "coding region" in html
