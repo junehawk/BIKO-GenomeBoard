@@ -381,6 +381,8 @@ def run_pipeline(
     hpo_ids: list = None,
     hide_vus: bool = True,
     sv_path: str = None,
+    panel_size_mb: float = None,
+    bed_path: str = None,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -553,6 +555,27 @@ def run_pipeline(
     report_data["sv_class3_display"] = [_sv_to_dict(sv) for sv in sv_class3_display]
     report_data["sv_class3_hidden"] = sv_class3_hidden
     report_data["sv_benign_count"] = sv_benign_count
+
+    # Calculate TMB (cancer mode only)
+    if mode == "cancer":
+        from scripts.somatic.tmb import calculate_tmb, calculate_panel_size_from_bed
+        tmb_panel = panel_size_mb
+        if bed_path:
+            tmb_panel = calculate_panel_size_from_bed(bed_path)
+        tmb_result = calculate_tmb(variants, panel_size_mb=tmb_panel)
+        report_data["tmb"] = {
+            "score": tmb_result.score,
+            "level": tmb_result.level,
+            "variant_count": tmb_result.variant_count,
+            "total_variants": tmb_result.total_variants,
+            "panel_size_mb": tmb_result.panel_size_mb,
+            "counted_consequences": tmb_result.counted_consequences,
+        }
+        logger.info(f"[TMB] {tmb_result.score} mut/Mb ({tmb_result.level}) — "
+                     f"{tmb_result.variant_count}/{tmb_result.total_variants} variants, "
+                     f"{tmb_result.panel_size_mb} Mb panel")
+    else:
+        report_data["tmb"] = None
 
     # ── Step 6: Generate report ────────────────────────────────────────────────
     _progress("[6/6] Generating report...")
@@ -1081,6 +1104,17 @@ DOCKER
         dest="sv_path",
         help="AnnotSV TSV file for CNV/SV integration",
     )
+    parser.add_argument(
+        "--panel-size",
+        type=float,
+        dest="panel_size",
+        help="Panel size in Mb for TMB calculation (default: 33.0 for WGS exome)",
+    )
+    parser.add_argument(
+        "--bed",
+        dest="bed_path",
+        help="BED file for automatic panel size calculation (overrides --panel-size)",
+    )
 
     args = parser.parse_args()
 
@@ -1154,6 +1188,8 @@ DOCKER
             hpo_ids=hpo_ids,
             hide_vus=effective_hide_vus,
             sv_path=args.sv_path,
+            panel_size_mb=args.panel_size,
+            bed_path=args.bed_path,
         )
 
         if result is None:
