@@ -228,6 +228,8 @@ def _build_variant_records(variants, db_results, freq_results, classification_re
                 "gnomad_all": db["gnomad"].get("gnomad_all"),
                 "gnomad_eas": db["gnomad"].get("gnomad_eas"),
                 "krgdb_freq": db["krgdb_freq"],
+                "korea4k_freq": db.get("korea4k_freq"),
+                "nard2_freq": db.get("nard2_freq"),
                 "korean_flag": freq.get("korean_flag", ""),
                 # Annotation fields (from pre-annotated VCF via VEP/SnpEff)
                 "hgvsc": variant.hgvsc or "",
@@ -237,12 +239,16 @@ def _build_variant_records(variants, db_results, freq_results, classification_re
                 "impact": variant.impact or "",
                 "sift": variant.sift or "",
                 "polyphen": variant.polyphen or "",
+                # In silico prediction scores
+                "in_silico": variant.in_silico or {},
                 "agents": {
                     "clinical": clinvar,
                     "korean_pop": {
                         "gnomad_all": db["gnomad"].get("gnomad_all"),
                         "gnomad_eas": db["gnomad"].get("gnomad_eas"),
                         "krgdb_freq": db["krgdb_freq"],
+                        "korea4k_freq": db.get("korea4k_freq"),
+                        "nard2_freq": db.get("nard2_freq"),
                         "korean_flag": freq.get("korean_flag", ""),
                         "api_available": db["gnomad"].get("api_available", False),
                     },

@@ -1387,6 +1387,17 @@
             <div class="detail-value">{{ clinical.inheritance }}</div>
           {% endif %}
 
+          {% if v.in_silico is defined and v.in_silico %}
+            <div class="detail-label">In Silico Predictions</div>
+            <div class="detail-value" style="font-size:8pt;">
+              {% if v.in_silico.revel_score is defined and v.in_silico.revel_score %}<span style="margin-right:8px;"><strong>REVEL:</strong> {{ v.in_silico.revel_score }}</span>{% endif %}
+              {% if v.in_silico.cadd_phred is defined and v.in_silico.cadd_phred %}<span style="margin-right:8px;"><strong>CADD:</strong> {{ v.in_silico.cadd_phred }}</span>{% endif %}
+              {% if v.in_silico.am_class is defined and v.in_silico.am_class %}<span style="margin-right:8px;"><strong>AlphaMissense:</strong> {{ v.in_silico.am_class }}{% if v.in_silico.am_pathogenicity is defined and v.in_silico.am_pathogenicity %} ({{ v.in_silico.am_pathogenicity }}){% endif %}</span>{% endif %}
+              {% set splice_max = [v.in_silico.get('spliceai_pred_ds_ag', '')|float, v.in_silico.get('spliceai_pred_ds_al', '')|float, v.in_silico.get('spliceai_pred_ds_dg', '')|float, v.in_silico.get('spliceai_pred_ds_dl', '')|float] %}
+              {% if splice_max|max > 0 %}<span><strong>SpliceAI:</strong> {{ "%.2f"|format(splice_max|max) }}</span>{% endif %}
+            </div>
+          {% endif %}
+
           {% if v.treatment_strategies is defined and v.treatment_strategies %}
             <div class="detail-label">Treatment Strategies</div>
             <div class="detail-value">{{ v.treatment_strategies | safe }}</div>
@@ -1415,6 +1426,20 @@
             <div class="freq-stat">
               <div class="freq-num">{{ kp.krgdb_freq }}</div>
               <div class="freq-label">KRGDB Korean AF</div>
+            </div>
+          {% endif %}
+
+          {% if kp.korea4k_freq is defined and kp.korea4k_freq %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ kp.korea4k_freq }}</div>
+              <div class="freq-label">Korea4K AF</div>
+            </div>
+          {% endif %}
+
+          {% if kp.nard2_freq is defined and kp.nard2_freq %}
+            <div class="freq-stat">
+              <div class="freq-num">{{ kp.nard2_freq }}</div>
+              <div class="freq-label">NARD2 AF</div>
             </div>
           {% endif %}
 
@@ -1936,17 +1961,19 @@
       <p>
         The GenomeBoard Consilium pipeline performs multi-agent variant interpretation
         integrating ACMG/AMP 2015 classification criteria with Korean population-specific
-        frequency data from the Korea Reference Genome Database (KRGDB v3.0). Each variant
-        undergoes parallel evaluation by three AI-assisted consilium agents:
+        frequency data from KRGDB, Korea4K, and NARD2. Each variant undergoes parallel
+        evaluation across multiple evidence sources:
       </p>
       <ul>
-        <li><strong>Clinical Agent</strong> — queries ClinVar for significance calls, associated conditions, and review star ratings</li>
-        <li><strong>Korean Population Agent</strong> — compares allele frequencies between KRGDB and gnomAD (EAS/global), flags variants with &ge;2x enrichment in Korean cohorts</li>
-        <li><strong>Pharmacogenomics Agent</strong> — cross-references CPIC and PharmGKB guidelines with Korean-specific prevalence adjustments</li>
+        <li><strong>Clinical Evidence</strong> — queries ClinVar for significance calls, associated conditions, and review star ratings</li>
+        <li><strong>Korean Population Frequency</strong> — compares allele frequencies across KRGDB, Korea4K, NARD2, and gnomAD (EAS/global); highest Korean frequency used for BA1/BS1/PM2 assessment</li>
+        <li><strong>In Silico Predictions</strong> — REVEL, CADD, AlphaMissense, SpliceAI scores from VEP annotations; PP3/BP4 evidence generated per ClinGen SVI 2022 recommendations</li>
+        <li><strong>ACMG Evidence Collection</strong> — automated PVS1 (null variant + LOF intolerance), PM1 (functional domain), PM4 (in-frame indel), PP2 (constrained gene), BP7 (synonymous)</li>
+        <li><strong>Pharmacogenomics</strong> — cross-references CPIC and PharmGKB guidelines with Korean-specific prevalence adjustments</li>
       </ul>
       <p>
         Final classification follows ACMG/AMP 2015 criteria with ClinGen SVI updates.
-        Korean enrichment ratio is calculated as KRGDB frequency / gnomAD global frequency.
+        Korean enrichment ratio is calculated as max(KRGDB, Korea4K, NARD2) / gnomAD global frequency.
       </p>
     </div>
 
