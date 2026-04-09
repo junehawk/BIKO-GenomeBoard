@@ -584,9 +584,12 @@ def run_pipeline(
     tier4_count = sum(1 for v in variant_records if v.get("tier") == 4)
 
     if hide_vus:
-        # Tier I-II get full detail pages; Tier III/IV are omitted from detail
-        detailed_variants = [v for v in variant_records if v.get("tier") in (1, 2)]
-        omitted_variants = [v for v in variant_records if v.get("tier") not in (1, 2)]
+        # Tier I-II get full detail pages; Pathogenic/LP also get detail pages regardless of tier
+        # (e.g., incidental germline pathogenic findings in cancer mode may be Tier IV)
+        _significant = {"pathogenic", "likely pathogenic", "drug response", "risk factor"}
+        detailed_variants = [v for v in variant_records
+                             if v.get("tier") in (1, 2) or v.get("classification", "").lower() in _significant]
+        omitted_variants = [v for v in variant_records if v not in detailed_variants]
     else:
         detailed_variants = variant_records
         omitted_variants = []

@@ -79,9 +79,13 @@ def amp_assign_tier(
     evidence_items = civic_evidence.get("evidence", [])
     best_level = _best_civic_level(evidence_items)
 
-    # === Always: Drug Response / Risk Factor → Tier I ===
-    if cls_lower in ("drug response", "risk factor"):
+    # === Drug Response → Tier I (PGx finding, clinically actionable) ===
+    if cls_lower == "drug response":
         return _make_result(1, "pharmacogenomic", match_level, evidence_items)
+
+    # === Risk Factor → Tier IV in cancer context (not a cancer biomarker) ===
+    if cls_lower == "risk factor":
+        return _make_result(4, "risk-factor", match_level, evidence_items)
 
     # === Always: Benign/Likely Benign → Tier IV (CIViC cannot override) ===
     if "benign" in cls_lower:
@@ -123,9 +127,9 @@ def amp_assign_tier(
     if is_pathogenic and gene_info:
         return _make_result(2, f"oncokb-gene-L{oncokb_level}", match_level, evidence_items)
 
-    # Pathogenic/LP on non-cancer gene → Tier II (still clinically significant)
+    # Pathogenic/LP on non-cancer gene → Tier IV (incidental germline finding, not cancer-relevant)
     if is_pathogenic:
-        return _make_result(2, "pathogenic-non-cancer", match_level, evidence_items)
+        return _make_result(4, "pathogenic-non-cancer", match_level, evidence_items)
 
     # VUS on cancer gene — check hotspot
     if is_vus and gene_info:

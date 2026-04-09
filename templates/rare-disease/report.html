@@ -1579,7 +1579,7 @@
             <div class="detail-value">{{ v.frequency_prognosis }}</div>
           {% endif %}
 
-          {% if not (v.gnomad_all is defined and v.gnomad_all is not none) and not (kp.krgdb_freq is defined and kp.krgdb_freq) and not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
+          {% if not (v.gnomad_all is defined and v.gnomad_all is not none) and not (kp.krgdb_freq is defined and kp.krgdb_freq) and not (kp.korea4k_freq is defined and kp.korea4k_freq) and not (kp.nard2_freq is defined and kp.nard2_freq) and not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
             <p class="no-data">No population frequency data available.</p>
           {% endif %}
         </div>
@@ -1651,7 +1651,11 @@
       {% if has_notes %}
       <div class="variant-notes-bar">
         {% if v.conflict is defined and v.conflict %}
+          {% if v.clinvar_override is defined and v.clinvar_override and v.original_engine_classification is defined %}
+          <span class="conflict-flag">&#9888; ClinVar Override: Engine={{ v.original_engine_classification }} &rarr; {{ v.classification }} (based on ClinVar {{ v.clinvar_significance | default('') }})</span>
+          {% else %}
           <span class="conflict-flag">&#9888; Conflict: Engine={{ v.classification }} vs ClinVar={{ v.clinvar_significance | default(v.agents.clinical.clinvar_significance | default('N/A')) }}</span>
+          {% endif %}
         {% endif %}
         {% if v.korean_specific_note is defined and v.korean_specific_note %}
           <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; {{ v.korean_specific_note }}</span>

@@ -148,8 +148,8 @@ def test_assign_tier_pathogenic_level4():
 
 
 def test_assign_tier_pathogenic_non_cancer_gene():
-    """Pathogenic on a non-cancer gene → Tier 2."""
-    assert assign_tier("Pathogenic", "NOTAREALGENE") == 2
+    """Pathogenic on a non-cancer gene → Tier 4 (incidental germline finding)."""
+    assert assign_tier("Pathogenic", "NOTAREALGENE") == 4
 
 
 def test_assign_tier_vus_cancer_gene():
@@ -179,9 +179,9 @@ def test_assign_tier_drug_response():
 
 
 def test_assign_tier_risk_factor():
-    """Risk Factor always → Tier 1."""
-    assert assign_tier("Risk Factor", "") == 1
-    assert assign_tier("Risk Factor", "APOE") == 1
+    """Risk Factor → Tier 4 in cancer context (not a cancer biomarker)."""
+    assert assign_tier("Risk Factor", "") == 4
+    assert assign_tier("Risk Factor", "APOE") == 4
 
 
 def test_assign_tier_benign_cancer_gene():
