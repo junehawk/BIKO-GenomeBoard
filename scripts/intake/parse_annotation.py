@@ -95,6 +95,16 @@ def parse_csq_value(csq_string: str, fields: List[str], gene: Optional[str] = No
             "rsid": rsid,
             "clin_sig": entry.get("clin_sig", ""),
             "gmaf": entry.get("gmaf", ""),
+            # In silico prediction scores (from VEP dbNSFP plugin)
+            "revel_score": entry.get("revel_score", ""),
+            "cadd_phred": entry.get("cadd_phred", ""),
+            "am_class": entry.get("am_class", ""),
+            "am_pathogenicity": entry.get("am_pathogenicity", ""),
+            "spliceai_pred_ds_ag": entry.get("spliceai_pred_ds_ag", ""),
+            "spliceai_pred_ds_al": entry.get("spliceai_pred_ds_al", ""),
+            "spliceai_pred_ds_dg": entry.get("spliceai_pred_ds_dg", ""),
+            "spliceai_pred_ds_dl": entry.get("spliceai_pred_ds_dl", ""),
+            "domains": entry.get("domains", ""),
         }
         entries.append(mapped)
 

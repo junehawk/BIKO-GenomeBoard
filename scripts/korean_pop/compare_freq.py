@@ -11,9 +11,10 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     acmg_codes: List[str] = []
     flags: List[str] = []
 
+    all_freqs = [freq.krgdb, freq.korea4k, freq.nard2, freq.gnomad_eas, freq.gnomad_all]
     max_freq = (
-        max(f for f in [freq.krgdb, freq.gnomad_eas, freq.gnomad_all] if f is not None)
-        if any(f is not None for f in [freq.krgdb, freq.gnomad_eas, freq.gnomad_all])
+        max(f for f in all_freqs if f is not None)
+        if any(f is not None for f in all_freqs)
         else None
     )
 
@@ -42,14 +43,22 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
         flags.append("Low frequency variant")
 
     # Korean-specific flags
-    if freq.krgdb is not None and freq.gnomad_all is not None and freq.gnomad_all > 0:
-        ratio = freq.krgdb / freq.gnomad_all
+    korean_max = freq.korean_max
+    if korean_max is not None and freq.gnomad_all is not None and freq.gnomad_all > 0:
+        ratio = korean_max / freq.gnomad_all
         if ratio >= 5:
             flags.append("Korean frequency 5x+ higher than global")
         elif ratio <= 0.2:
             flags.append("Korean frequency much lower than global")
-    elif freq.krgdb is not None and freq.gnomad_eas is None and freq.gnomad_all is None:
-        flags.append("Korean-specific variant (KRGDB only)")
+    elif korean_max is not None and freq.gnomad_eas is None and freq.gnomad_all is None:
+        korean_sources = []
+        if freq.krgdb is not None:
+            korean_sources.append("KRGDB")
+        if freq.korea4k is not None:
+            korean_sources.append("Korea4K")
+        if freq.nard2 is not None:
+            korean_sources.append("NARD2")
+        flags.append(f"Korean-specific variant ({'/'.join(korean_sources)} only)")
 
     return {
         "acmg_codes": acmg_codes,
@@ -67,5 +76,5 @@ if __name__ == "__main__":
     gnomad_all = float(sys.argv[3]) if len(sys.argv) > 3 else None
     freq = FrequencyData(krgdb=krgdb, gnomad_eas=eas, gnomad_all=gnomad_all)
     result = compare_frequencies(freq)
-    result["frequencies"] = {"krgdb": freq.krgdb, "gnomad_eas": freq.gnomad_eas, "gnomad_all": freq.gnomad_all}
+    result["frequencies"] = {"krgdb": freq.krgdb, "korea4k": freq.korea4k, "nard2": freq.nard2, "gnomad_eas": freq.gnomad_eas, "gnomad_all": freq.gnomad_all}
     print(json.dumps(result, indent=2, ensure_ascii=False))

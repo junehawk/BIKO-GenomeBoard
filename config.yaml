@@ -22,6 +22,9 @@ paths:
   orphanet_db: "data/db/orphanet.sqlite3"
   genreviews_db: "data/db/genreviews.sqlite3"
   omim_mapping_db: "data/db/omim_mapping.sqlite3"
+  omim_genemap_db: "data/db/omim_genemap.sqlite3"
+  korea4k_freq: "data/korea4k_freq.tsv"
+  nard2_freq: "data/nard2_freq.tsv"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)
@@ -65,6 +68,17 @@ somatic:
     - splice_acceptor_variant
     - inframe_deletion
     - inframe_insertion
+
+in_silico:
+  pp3:
+    revel_moderate: 0.644
+    revel_strong: 0.932
+    spliceai_moderate: 0.2
+    spliceai_strong: 0.5
+  bp4:
+    revel_moderate: 0.183
+    revel_strong: 0.016
+    spliceai_benign: 0.1
 
 cache:
   enabled: true

@@ -1,0 +1,16 @@
+#Chr	Start	End	Ref	Alt	Func.refGene	Gene.refGene	ExonicFunc.refGene	AAChange.refGene	InterVar: InterVar and target	PVS1	PS1	PS2	PS3	PS4	PM1	PM2	PM3	PM4	PM5	PM6	PP1	PP2	PP3	PP4	PP5	BA1	BS1	BS2	BS3	BS4	BP1	BP2	BP3	BP4	BP5	BP6	BP7
+chr17	7675088	7675088	C	A	exonic	TP53	nonsynonymous SNV	TP53:NM_000546:exon7:c.743G>T:p.R248L	Likely pathogenic	0	0	0	0	0	1	1	0	0	1	0	0	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr17	43093449	43093449	C	T	exonic	BRCA1	stopgain	BRCA1:NM_007294:exon10:c.1687C>T:p.Q563X	Pathogenic	1	1	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr13	32340300	32340300	G	A	exonic	BRCA2	nonsynonymous SNV	BRCA2:NM_000059:exon11:c.5207G>A:p.R1736H	Uncertain significance	0	0	0	0	0	0	1	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr7	140753336	140753336	A	T	exonic	BRAF	nonsynonymous SNV	BRAF:NM_004333:exon15:c.1799T>A:p.V600E	Pathogenic	0	1	0	1	1	1	0	0	0	0	0	0	1	1	0	1	0	0	0	0	0	0	0	0	0	0	0	0
+chr2	215645464	215645464	C	G	exonic	BARD1	nonsynonymous SNV	BARD1:NM_000465:exon4:c.509C>G:p.S170C	Benign	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0
+chr12	25245347	25245347	C	A	exonic	KRAS	nonsynonymous SNV	KRAS:NM_004985:exon2:c.35G>T:p.G12V	Pathogenic	0	1	0	1	1	1	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr3	179218303	179218303	G	A	exonic	PIK3CA	nonsynonymous SNV	PIK3CA:NM_006218:exon21:c.3140A>G:p.H1047R	Likely pathogenic	0	1	0	0	1	1	0	0	0	0	0	0	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr11	108236086	108236086	G	A	exonic	ATM	nonsynonymous SNV	ATM:NM_000051:exon36:c.5557G>A:p.D1853N	Likely benign	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	1	0	0	0	0	0	0	1	0	0	0
+chr5	112175770	112175770	G	A	exonic	APC	stopgain	APC:NM_000038:exon16:c.3920G>A:p.W1307X	Pathogenic	1	0	0	1	1	0	1	0	0	0	0	1	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr10	87933147	87933147	C	T	exonic	PTEN	nonsynonymous SNV	PTEN:NM_000314:exon5:c.388C>T:p.R130X	Pathogenic	1	1	0	0	1	1	1	0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr1	115256529	115256529	T	C	exonic	NRAS	nonsynonymous SNV	NRAS:NM_002524:exon3:c.181C>A:p.Q61K	Likely pathogenic	0	0	0	0	1	1	1	0	0	0	0	0	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr9	21971120	21971120	G	A	exonic	CDKN2A	nonsynonymous SNV	CDKN2A:NM_000077:exon2:c.238C>T:p.R80X	Pathogenic	1	0	0	0	1	0	1	0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0
+chr16	68842399	68842399	G	A	exonic	CDH1	synonymous SNV	CDH1:NM_004360:exon9:c.1275G>A:p.T425T	Likely benign	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	1
+chr17	7674220	7674220	C	T	exonic	TP53	nonsynonymous SNV	TP53:NM_000546:exon8:c.818G>A:p.R273H	Pathogenic	0	1	0	1	1	1	1	0	0	1	0	0	1	1	0	1	0	0	0	0	0	0	0	0	0	0	0	0
+chr4	55599321	55599321	A	T	exonic	KIT	nonsynonymous SNV	KIT:NM_000222:exon11:c.1676A>T:p.D559V	Uncertain significance	0	0	0	0	0	1	1	0	0	0	0	0	0	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0

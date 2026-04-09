@@ -31,6 +31,7 @@ class Variant:
     impact: Optional[str] = None  # HIGH, MODERATE, LOW, MODIFIER
     sift: Optional[str] = None  # e.g., deleterious(0.01)
     polyphen: Optional[str] = None  # e.g., probably_damaging(0.998)
+    in_silico: Optional[Dict] = None  # REVEL, CADD, AlphaMissense, SpliceAI scores
 
     @classmethod
     def from_string(cls, s: str) -> Variant:
@@ -74,10 +75,19 @@ class FrequencyData:
     krgdb: Optional[float] = None
     gnomad_eas: Optional[float] = None
     gnomad_all: Optional[float] = None
+    korea4k: Optional[float] = None
+    nard2: Optional[float] = None
+
+    @property
+    def korean_max(self) -> Optional[float]:
+        """Maximum frequency across all Korean population sources."""
+        korean_freqs = [f for f in [self.krgdb, self.korea4k, self.nard2] if f is not None]
+        return max(korean_freqs) if korean_freqs else None
 
     def korean_vs_global_ratio(self) -> Optional[float]:
-        if self.krgdb is not None and self.gnomad_all and self.gnomad_all > 0:
-            return self.krgdb / self.gnomad_all
+        kr = self.korean_max
+        if kr is not None and self.gnomad_all and self.gnomad_all > 0:
+            return kr / self.gnomad_all
         return None
 
 

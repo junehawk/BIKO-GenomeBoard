@@ -27,6 +27,8 @@ from scripts.clinical.query_omim import query_omim
 from scripts.clinical.query_clingen import get_gene_validity
 from scripts.korean_pop.query_gnomad import query_gnomad
 from scripts.korean_pop.query_krgdb import query_krgdb
+from scripts.korean_pop.query_korea4k import query_korea4k
+from scripts.korean_pop.query_nard2 import query_nard2
 from scripts.korean_pop.compare_freq import compare_frequencies
 from scripts.pharma.korean_pgx import check_korean_pgx
 from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict, apply_clinvar_override
@@ -45,13 +47,15 @@ def _progress(msg: str) -> None:
 
 
 def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
-    """Run ClinVar, gnomAD, KRGDB, and PGx queries for a single variant.
+    """Run ClinVar, gnomAD, KRGDB, Korea4K, NARD2, and PGx queries for a single variant.
     ClinVar and gnomAD are run in parallel (unless skip_api is True).
     Respects annotation.source config: "local", "api", or "auto" (local-first with API fallback).
     """
     clinvar_result = {"clinvar_significance": "Not Found", "acmg_codes": [], "api_available": False}
     gnomad_result = {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
     krgdb_freq = None
+    korea4k_freq = None
+    nard2_freq = None
     pgx_result = None
 
     annotation_source = get("annotation.source", "auto")
@@ -73,6 +77,14 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
             krgdb_freq = query_krgdb(variant, krgdb_path)
         except Exception as e:
             logger.warning(f"KRGDB lookup failed for {variant.variant_id}: {e}")
+        try:
+            korea4k_freq = query_korea4k(variant)
+        except Exception as e:
+            logger.warning(f"Korea4K lookup failed for {variant.variant_id}: {e}")
+        try:
+            nard2_freq = query_nard2(variant)
+        except Exception as e:
+            logger.warning(f"NARD2 lookup failed for {variant.variant_id}: {e}")
         try:
             pgx_result = check_korean_pgx(variant)
         except Exception as e:
@@ -131,11 +143,27 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
                 logger.warning(f"PGx check failed for {variant.variant_id}: {e}")
                 return None
 
-        with ThreadPoolExecutor(max_workers=4) as executor:
+        def _run_korea4k():
+            try:
+                return query_korea4k(variant)
+            except Exception as e:
+                logger.warning(f"Korea4K lookup failed for {variant.variant_id}: {e}")
+                return None
+
+        def _run_nard2():
+            try:
+                return query_nard2(variant)
+            except Exception as e:
+                logger.warning(f"NARD2 lookup failed for {variant.variant_id}: {e}")
+                return None
+
+        with ThreadPoolExecutor(max_workers=6) as executor:
             futures = {
                 executor.submit(_run_clinvar): "clinvar",
                 executor.submit(_run_gnomad): "gnomad",
                 executor.submit(_run_krgdb): "krgdb",
+                executor.submit(_run_korea4k): "korea4k",
+                executor.submit(_run_nard2): "nard2",
                 executor.submit(_run_pgx): "pgx",
             }
             for future in as_completed(futures):
@@ -148,6 +176,10 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
                         gnomad_result = result
                     elif key == "krgdb":
                         krgdb_freq = result
+                    elif key == "korea4k":
+                        korea4k_freq = result
+                    elif key == "nard2":
+                        nard2_freq = result
                     elif key == "pgx":
                         pgx_result = result
                 except Exception as e:
@@ -157,6 +189,8 @@ def _query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
         "clinvar": clinvar_result,
         "gnomad": gnomad_result,
         "krgdb_freq": krgdb_freq,
+        "korea4k_freq": korea4k_freq,
+        "nard2_freq": nard2_freq,
         "pgx": pgx_result,
     }
 
@@ -309,13 +343,30 @@ def _build_summary(variant_records):
     }
 
 
-def _classify_variants(variants, db_results, freq_results):
+def _classify_variants(variants, db_results, freq_results, intervar_data=None):
     """Run frequency comparison and ACMG classification for a list of variants.
 
-    Returns (freq_results, classification_results) dicts keyed by variant_id.
+    Returns classification_results dict keyed by variant_id.
     freq_results may be pre-populated; if provided, it is augmented in place
     for any missing keys (batch reuse case).
     """
+    # Lazy imports for optional modules
+    try:
+        from scripts.classification.in_silico import parse_in_silico_from_csq, generate_pp3_bp4
+        _has_in_silico = True
+    except ImportError:
+        _has_in_silico = False
+    try:
+        from scripts.classification.evidence_collector import collect_additional_evidence
+        _has_evidence_collector = True
+    except ImportError:
+        _has_evidence_collector = False
+    try:
+        from scripts.intake.parse_intervar import get_intervar_evidence
+        _has_intervar = True
+    except ImportError:
+        _has_intervar = False
+
     classification_results = {}
     for variant in variants:
         db = db_results[variant.variant_id]
@@ -326,6 +377,29 @@ def _classify_variants(variants, db_results, freq_results):
             evidences.append(AcmgEvidence(code=code, source="clinvar", description=""))
         for code in freq.get("acmg_codes", []):
             evidences.append(AcmgEvidence(code=code, source="freq_comparison", description=""))
+
+        # In silico PP3/BP4 evidence
+        if _has_in_silico and variant.in_silico:
+            pp3_bp4_codes = generate_pp3_bp4(
+                parse_in_silico_from_csq(variant.in_silico)
+            )
+            for code in pp3_bp4_codes:
+                evidences.append(AcmgEvidence(code=code, source="in_silico", description=""))
+
+        # Additional evidence from variant annotations (PVS1, PM1, PM4, PP2, BP7, etc.)
+        if _has_evidence_collector:
+            extra_codes = collect_additional_evidence(variant)
+            for code in extra_codes:
+                evidences.append(AcmgEvidence(code=code, source="evidence_collector", description=""))
+
+        # InterVar evidence (if provided)
+        if _has_intervar and intervar_data:
+            intervar_codes = get_intervar_evidence(variant, intervar_data)
+            for code in intervar_codes:
+                # Avoid duplicates — InterVar may overlap with self-collected evidence
+                existing_codes = {e.code for e in evidences}
+                if code not in existing_codes:
+                    evidences.append(AcmgEvidence(code=code, source="intervar", description=""))
 
         classification = classify_variant(evidences, gene=variant.gene)
         clinvar_sig = db["clinvar"].get("clinvar_significance", "Not Found")
@@ -383,6 +457,7 @@ def run_pipeline(
     sv_path: str = None,
     panel_size_mb: float = None,
     bed_path: str = None,
+    intervar_path: str = None,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -452,6 +527,8 @@ def run_pipeline(
             krgdb=db["krgdb_freq"],
             gnomad_eas=db["gnomad"].get("gnomad_eas"),
             gnomad_all=db["gnomad"].get("gnomad_all"),
+            korea4k=db.get("korea4k_freq"),
+            nard2=db.get("nard2_freq"),
         )
         freq_results[variant.variant_id] = compare_frequencies(freq_data)
 
@@ -467,7 +544,18 @@ def run_pipeline(
 
     # ── Step 5: ACMG classification ───────────────────────────────────────────
     _progress("[5/6] Running ACMG classification engine...")
-    classification_results = _classify_variants(variants, db_results, freq_results)
+
+    # Parse InterVar results if provided
+    intervar_data = None
+    if intervar_path:
+        try:
+            from scripts.intake.parse_intervar import parse_intervar
+            intervar_data = parse_intervar(intervar_path)
+            _progress(f"  [InterVar] Loaded evidence for {len(intervar_data)} variants")
+        except Exception as e:
+            logger.warning(f"InterVar parsing failed: {e}")
+
+    classification_results = _classify_variants(variants, db_results, freq_results, intervar_data=intervar_data)
     for variant in variants:
         classification = classification_results[variant.variant_id]
         codes_str = "+".join(classification.evidence_codes) if classification.evidence_codes else "no codes"
@@ -716,6 +804,8 @@ def _assemble_sample_report(sample, variant_keys, annotations, unique_variants,
             krgdb=db["krgdb_freq"],
             gnomad_eas=db["gnomad"].get("gnomad_eas"),
             gnomad_all=db["gnomad"].get("gnomad_all"),
+            korea4k=db.get("korea4k_freq"),
+            nard2=db.get("nard2_freq"),
         )
         freq_results[variant.variant_id] = compare_frequencies(freq_data)
 
@@ -1115,6 +1205,11 @@ DOCKER
         dest="bed_path",
         help="BED file for automatic panel size calculation (overrides --panel-size)",
     )
+    parser.add_argument(
+        "--intervar",
+        dest="intervar_path",
+        help="InterVar output TSV for additional ACMG evidence codes",
+    )
 
     args = parser.parse_args()
 
@@ -1190,6 +1285,7 @@ DOCKER
             sv_path=args.sv_path,
             panel_size_mb=args.panel_size,
             bed_path=args.bed_path,
+            intervar_path=getattr(args, "intervar_path", None),
         )
 
         if result is None:

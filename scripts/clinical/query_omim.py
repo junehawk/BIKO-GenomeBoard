@@ -1,13 +1,15 @@
-"""OMIM gene-disease association lookup."""
+"""OMIM gene-disease association lookup.
+
+Uses genemap2.txt SQLite DB when available, falls back to static dict.
+"""
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
 
-# Static OMIM data for common rare disease genes (avoid API key requirement)
-# This will be expanded when OMIM API key is configured
-OMIM_DATA = {
+# Static OMIM data fallback for common genes (used when genemap DB not available)
+_STATIC_OMIM = {
     "TP53": {"mim": "191170", "phenotypes": ["Li-Fraumeni syndrome"], "inheritance": "AD"},
     "BRCA2": {"mim": "600185", "phenotypes": ["Hereditary breast-ovarian cancer syndrome", "Fanconi anemia D1"], "inheritance": "AD/AR"},
     "CFTR": {"mim": "602421", "phenotypes": ["Cystic fibrosis", "CBAVD"], "inheritance": "AR"},
@@ -23,5 +25,26 @@ OMIM_DATA = {
 
 
 def query_omim(gene: str) -> Optional[Dict]:
-    """Get OMIM data for a gene. Returns dict with mim, phenotypes, inheritance."""
-    return OMIM_DATA.get(gene)
+    """Get OMIM data for a gene. Uses genemap DB first, then static fallback."""
+    # Try genemap2 DB first
+    try:
+        from scripts.db.query_omim_genemap import get_gene_phenotypes, get_inheritance_patterns
+        phenotypes_data = get_gene_phenotypes(gene)
+        if phenotypes_data:
+            inheritance_list = get_inheritance_patterns(gene) or []
+            return {
+                "mim": phenotypes_data[0].get("mim_number", ""),
+                "phenotypes": [p["phenotype"] for p in phenotypes_data if p.get("phenotype")],
+                "inheritance": "/".join(inheritance_list) if inheritance_list else "",
+                "source": "genemap2",
+            }
+    except ImportError:
+        pass
+    except Exception as e:
+        logger.debug(f"genemap DB lookup failed for {gene}: {e}")
+
+    # Fallback to static dict
+    result = _STATIC_OMIM.get(gene)
+    if result:
+        return {**result, "source": "static"}
+    return None
