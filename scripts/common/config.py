@@ -1,9 +1,12 @@
 """Centralized configuration loader for GenomeBoard."""
 
+import logging
 import os
 import threading
 from pathlib import Path
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 _config = None
 _config_lock = threading.Lock()
@@ -91,6 +94,23 @@ def load_config(config_path: Optional[str] = None) -> dict:
         for key, val in config.get("paths", {}).items():
             if not os.path.isabs(val):
                 config["paths"][key] = str(project_root / val)
+
+        # Validate config schema
+        from scripts.common.config_schema import validate_config
+
+        messages = validate_config(config)
+        errors = []
+        for msg in messages:
+            if msg.startswith("ERROR:"):
+                errors.append(msg)
+                logger.error(msg)
+            else:
+                logger.warning(msg)
+
+        if errors:
+            raise ValueError(
+                "Config validation failed:\n" + "\n".join(errors)
+            )
 
         if config_path is None:
             _config = config
