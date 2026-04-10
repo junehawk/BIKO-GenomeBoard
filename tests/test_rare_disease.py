@@ -293,14 +293,15 @@ def test_rare_disease_pipeline_sorts_by_classification_then_hpo(tmp_path):
         )
 
     assert result is not None
-    variants = result["variants"]
+    # detailed_variants is the sorted list used for report rendering
+    variants = result["detailed_variants"]
     # Check sort is stable: no Pathogenic/LP after VUS/Benign (if any Pathogenic exist)
     cls_rank = {
         "Pathogenic": 0, "Likely Pathogenic": 1, "VUS": 2,
         "Drug Response": 3, "Risk Factor": 4, "Likely Benign": 5, "Benign": 6,
     }
     ranks = [cls_rank.get(v["classification"], 2) for v in variants]
-    assert ranks == sorted(ranks), "Variants not sorted by classification rank"
+    assert ranks == sorted(ranks), "detailed_variants not sorted by classification rank"
 
 
 # ── Report Template Tests ────────────────────────────────────────────────────
