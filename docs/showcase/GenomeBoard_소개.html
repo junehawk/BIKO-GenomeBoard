@@ -175,14 +175,18 @@
   </p>
 
   <div class="highlight">
-    <h4>LLM/AI 미사용 — 100% 결정적(Deterministic) 분류</h4>
+    <h4>분류는 결정적(Deterministic) — 진단 종합은 AI Board</h4>
     <p style="font-size:13.5px;color:#475569;">
-      GenomeBoard의 모든 변이 분류와 임상 해석은 <strong>LLM(대규모 언어 모델)이나 AI 생성 콘텐츠를 사용하지 않습니다.</strong>
+      GenomeBoard의 <strong>변이 분류(ACMG/AMP)</strong>는 LLM을 사용하지 않는 100% <strong>결정적 Python 규칙 엔진</strong>으로 동작합니다.
       ACMG/AMP evidence code 조합, AMP tiering 우선순위, In silico threshold 판정 등
-      모든 분류 경로는 국제 가이드라인에 기반한 <strong>결정적(deterministic) Python 규칙 엔진</strong>으로 동작합니다.
-      유전자 임상 정보(Gene Knowledge)도 CIViC, NCBI Gene, GeneReviews, CPIC 등
-      <strong>공인 출처에서 직접 큐레이션</strong>하며, LLM 생성 콘텐츠는 완전히 폐기되었습니다.
-      이를 통해 분류 결과의 <strong>재현성, 추적 가능성, 임상 신뢰성</strong>을 보장합니다.
+      모든 분류 경로는 국제 가이드라인에 기반하며, 실행할 때마다 동일한 결과를 보장합니다.
+    </p>
+    <p style="font-size:13.5px;color:#475569;margin-top:8px;">
+      이 분류 결과 위에, <strong>AI Clinical Board</strong>(로컬 LLM 기반 다전문가 시스템)가
+      감별진단, 권고사항, 문헌 근거 등 <strong>종합 진단 추론</strong>을 제공합니다.
+      AI Board는 분류 결과를 <strong>입력으로만 사용</strong>하며 변경하지 않고,
+      모든 출력에 <strong>[AI-Generated]</strong> 태그를 표시합니다.
+      환자 데이터는 <strong>로컬 LLM(Ollama)</strong>으로 처리되어 외부로 전송되지 않습니다.
     </p>
   </div>
 
