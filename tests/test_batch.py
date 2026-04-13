@@ -117,11 +117,11 @@ def test_batch_pipeline_end_to_end(tmp_path):
     assert len(result["reports_generated"]) == 3
     assert result["errors"] == []
 
-    # All reports must actually exist and contain GenomeBoard HTML
+    # All reports must actually exist and contain BIKO GenomeBoard HTML
     for report_path in result["reports_generated"]:
         p = Path(report_path)
         assert p.exists(), f"Report not found: {report_path}"
-        assert "GenomeBoard" in p.read_text(encoding="utf-8")
+        assert "BIKO GenomeBoard" in p.read_text(encoding="utf-8")
 
 
 def test_batch_output_dir_created(tmp_path):

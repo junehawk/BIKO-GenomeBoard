@@ -756,7 +756,7 @@ After the SNV detail page `{% endfor %}` loop and before omitted variants, add:
   <div class="page-footer">
     <div class="footer-disclaimer"><strong>Research Use Only — Not for clinical decision making.</strong></div>
     <div class="footer-right">
-      <div class="footer-brand-text">GenomeBoard</div>
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
       <div>Page {{ ns_pages.next_page }}</div>
       {% set ns_pages.next_page = ns_pages.next_page + 1 %}
     </div>
@@ -902,7 +902,7 @@ git commit -m "test: CNV/SV integration tests for cancer and rare disease pipeli
 ```markdown
 ### Structural Variant / CNV Integration
 
-GenomeBoard supports CNV/SV analysis from AnnotSV output:
+BIKO GenomeBoard supports CNV/SV analysis from AnnotSV output:
 
 \`\`\`bash
 # Run with SNV + SV

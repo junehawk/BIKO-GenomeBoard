@@ -1,4 +1,4 @@
-# GenomeBoard
+# BIKO GenomeBoard
 
 Korean Population-Aware Genomic Variant Interpretation Platform
 

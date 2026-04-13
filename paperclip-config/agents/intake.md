@@ -1,7 +1,7 @@
 ---
 kind: agent
 ---
-# Intake Agent — GenomeBoard
+# Intake Agent — BIKO GenomeBoard
 
 Parses VCF or text input into normalized Variant objects.
 

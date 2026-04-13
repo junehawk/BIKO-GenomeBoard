@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""GenomeBoard Standalone Pipeline — VCF → Report
+"""BIKO GenomeBoard Standalone Pipeline — VCF → Report
 
 Entry point for single-sample and batch variant analysis.
 Core logic is in scripts/pipeline/ modules:
@@ -72,7 +72,7 @@ def run_pipeline(
     clinical_board: bool = False,
     board_lang: str = None,
 ) -> dict:
-    """Run the full GenomeBoard analysis pipeline.
+    """Run the full BIKO GenomeBoard analysis pipeline.
 
     Returns the assembled report data dict (or None on fatal error).
     """
@@ -315,7 +315,7 @@ def run_pipeline(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="GenomeBoard — Korean Population-Aware Genomic Variant Interpretation Pipeline",
+        description="BIKO GenomeBoard — Korean Population-Aware Genomic Variant Interpretation Pipeline",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

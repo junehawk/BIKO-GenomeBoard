@@ -1,4 +1,4 @@
-# GenomeBoard Configuration
+# BIKO GenomeBoard Configuration
 
 # Docker paths (when running in container):
 # paths.krgdb: /app/data/krgdb_freq.tsv

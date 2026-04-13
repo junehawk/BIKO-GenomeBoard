@@ -1,6 +1,6 @@
 # DB Integration Pattern — 상세 예시
 
-GenomeBoard에 새 데이터 소스를 통합할 때 따르는 표준 패턴의 상세 예시.
+BIKO GenomeBoard에 새 데이터 소스를 통합할 때 따르는 표준 패턴의 상세 예시.
 
 ## 목차
 

@@ -1,11 +1,11 @@
 ---
 name: genomeboard-orchestrate
-description: "GenomeBoard 기능 개발 오케스트레이터. 새 기능 추가, 데이터 소스 통합, 파이프라인 수정, 리포트 개선, 리팩토링 등 모든 GenomeBoard 개발 작업을 에이전트 팀으로 조율. '구현', '통합', '추가', '개선', '개발', '만들어', '수정', 'implement', 'integrate', 'add', 'improve', 'develop', 'fix', 'refactor' 등 개발 작업 요청 시 반드시 이 스킬을 사용. GenomeBoard 프로젝트의 개발 계획을 수립하거나 현재 상태를 파악할 때도 사용."
+description: "BIKO GenomeBoard 기능 개발 오케스트레이터. 새 기능 추가, 데이터 소스 통합, 파이프라인 수정, 리포트 개선, 리팩토링 등 모든 BIKO GenomeBoard 개발 작업을 에이전트 팀으로 조율. '구현', '통합', '추가', '개선', '개발', '만들어', '수정', 'implement', 'integrate', 'add', 'improve', 'develop', 'fix', 'refactor' 등 개발 작업 요청 시 반드시 이 스킬을 사용. BIKO GenomeBoard 프로젝트의 개발 계획을 수립하거나 현재 상태를 파악할 때도 사용."
 ---
 
-# GenomeBoard Orchestrator
+# BIKO GenomeBoard Orchestrator
 
-GenomeBoard 프로젝트의 모든 개발 작업을 에이전트 팀으로 조율하는 오케스트레이터.
+BIKO GenomeBoard 프로젝트의 모든 개발 작업을 에이전트 팀으로 조율하는 오케스트레이터.
 
 ## 실행 모드: Agent Team
 

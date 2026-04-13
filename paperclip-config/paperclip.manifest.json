@@ -8,7 +8,7 @@
   },
   "company": {
     "path": "company.md",
-    "name": "GenomeBoard",
+    "name": "BIKO GenomeBoard",
     "description": "한국인 특화 유전체 변이 해석 AI 컨실리움",
     "brandColor": "#2563EB",
     "requireBoardApprovalForNewAgents": false

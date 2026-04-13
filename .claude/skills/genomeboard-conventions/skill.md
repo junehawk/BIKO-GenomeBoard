@@ -1,11 +1,11 @@
 ---
 name: genomeboard-conventions
-description: "GenomeBoard 프로젝트의 코드 컨벤션, 모듈 구조, 파일 명명 규칙, 테스트 패턴, config 구조, DB 통합 패턴을 정의하는 공유 참조 스킬. 에이전트가 GenomeBoard 코드를 작성하거나 수정하기 전에 반드시 이 스킬을 참조. 코딩, 구현, 개발, 테스트 작성 시 자동 로드."
+description: "BIKO GenomeBoard 프로젝트의 코드 컨벤션, 모듈 구조, 파일 명명 규칙, 테스트 패턴, config 구조, DB 통합 패턴을 정의하는 공유 참조 스킬. 에이전트가 BIKO GenomeBoard 코드를 작성하거나 수정하기 전에 반드시 이 스킬을 참조. 코딩, 구현, 개발, 테스트 작성 시 자동 로드."
 ---
 
-# GenomeBoard Conventions
+# BIKO GenomeBoard Conventions
 
-GenomeBoard 프로젝트의 코드 작성 표준. 모든 개발 에이전트는 코드 작성 전 이 문서를 참조한다.
+BIKO GenomeBoard 프로젝트의 코드 작성 표준. 모든 개발 에이전트는 코드 작성 전 이 문서를 참조한다.
 
 ## 프로젝트 구조
 

@@ -98,6 +98,6 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
         "db_versions": {"clinvar": "2026-03-15", "gnomad": "4.0", "krgdb": "2026-03-01"},
     }
     html = generate_report_html(report_data)
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
     assert "TP53" in html
     assert "Research Use Only" in html

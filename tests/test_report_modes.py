@@ -37,7 +37,7 @@ MINIMAL_REPORT = {
 def test_cancer_mode_default():
     """generate_report_html(data) works with no mode arg — backward compatible."""
     html = generate_report_html(MINIMAL_REPORT)
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
     assert "TP53" in html
     assert "Research Use Only" in html
 
@@ -53,7 +53,7 @@ def test_rare_disease_mode():
     """generate_report_html(data, mode='rare-disease') produces HTML with 'Rare Disease' in it."""
     html = generate_report_html(MINIMAL_REPORT, mode="rare-disease")
     assert "Rare Disease" in html
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
 
 
 def test_rare_disease_has_variant_table():
@@ -68,7 +68,7 @@ def test_unknown_mode_falls_back_to_cancer():
     """generate_report_html(data, mode='nonexistent') falls back to cancer template."""
     html = generate_report_html(MINIMAL_REPORT, mode="nonexistent")
     # Should render cancer template content (not raise an error)
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
     assert "TP53" in html
     assert "Research Use Only" in html
 

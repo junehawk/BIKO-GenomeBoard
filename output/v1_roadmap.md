@@ -1,4 +1,4 @@
-# GenomeBoard v1.0 Roadmap
+# BIKO GenomeBoard v1.0 Roadmap
 
 **Date:** 2026-03-23
 **Scope:** v0.3 (current) to v1.0 (production-ready)
@@ -8,7 +8,7 @@
 
 ## Current State Assessment
 
-GenomeBoard is a Korean population-aware genomic variant interpretation system. The standalone CLI pipeline (`scripts/orchestrate.py`) parses VCF files, queries ClinVar/gnomAD/KRGDB, runs ACMG classification with PGx bypass and Risk Factor bypass, and produces a FoundationOne-style HTML/PDF report with Pretendard font.
+BIKO GenomeBoard is a Korean population-aware genomic variant interpretation system. The standalone CLI pipeline (`scripts/orchestrate.py`) parses VCF files, queries ClinVar/gnomAD/KRGDB, runs ACMG classification with PGx bypass and Risk Factor bypass, and produces a FoundationOne-style HTML/PDF report with Pretendard font.
 
 **What works today:**
 - 10-variant demo VCF end-to-end (cancer somatic style)
@@ -337,7 +337,7 @@ Web UI, Docker packaging, and polish.
 
 ### 3.2 Docker Packaging
 
-**Description:** Single Dockerfile that packages the entire GenomeBoard stack: Python runtime, WeasyPrint system dependencies (cairo, pango, gdk-pixbuf), Pretendard font, and all data files. One `docker run` for both CLI and Web UI.
+**Description:** Single Dockerfile that packages the entire BIKO GenomeBoard stack: Python runtime, WeasyPrint system dependencies (cairo, pango, gdk-pixbuf), Pretendard font, and all data files. One `docker run` for both CLI and Web UI.
 
 **Effort:** M
 **Priority:** Must-have
@@ -375,7 +375,7 @@ Web UI, Docker packaging, and polish.
 **Technical approach:**
 - Fix WeasyPrint page-break issues: add `page-break-inside: avoid` to variant detail blocks, ensure tables don't split across pages mid-row
 - Add print-optimized CSS media query (`@media print`) for browser-based printing
-- Cover page with GenomeBoard logo, patient info summary, date, report ID
+- Cover page with BIKO GenomeBoard logo, patient info summary, date, report ID
 - Table of contents with page numbers (WeasyPrint supports `target-counter()`)
 - Configurable report header/footer text (institution name, lab director) via config.yaml
 - Korean language option for report text (`--lang ko` flag; template conditional blocks)
@@ -448,7 +448,7 @@ Stress testing, validation, performance, and documentation for production deploy
 - Add `--max-concurrent-api` CLI flag (default 4) to control ThreadPoolExecutor workers
 
 **D. Classification accuracy validation:**
-- Compare GenomeBoard ACMG classification against ClinVar expert panel classification for 100+ variants
+- Compare BIKO GenomeBoard ACMG classification against ClinVar expert panel classification for 100+ variants
 - Compute concordance rate (target: > 90% agreement within 1 tier)
 - Document all discordant cases with explanation
 

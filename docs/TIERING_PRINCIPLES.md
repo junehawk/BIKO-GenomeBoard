@@ -1,8 +1,8 @@
-# GenomeBoard Variant Tiering Principles
+# BIKO GenomeBoard Variant Tiering Principles
 
 ## 개요
 
-GenomeBoard는 두 가지 분석 모드에 따라 서로 다른 분류 체계를 사용한다.
+BIKO GenomeBoard는 두 가지 분석 모드에 따라 서로 다른 분류 체계를 사용한다.
 
 | 모드 | 가이드라인 | 분류 체계 | 목적 |
 |------|-----------|----------|------|

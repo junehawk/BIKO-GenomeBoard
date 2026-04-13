@@ -8,7 +8,7 @@
 
 ## Overview
 
-GenomeBoard의 희귀질환 및 일반인 유전체 분석 역량을 강화하는 4가지 기능 구현.
+BIKO GenomeBoard의 희귀질환 및 일반인 유전체 분석 역량을 강화하는 4가지 기능 구현.
 현재 상태: SNV+CNV/SV+TMB 파이프라인 완성, 463 tests, main branch.
 
 ---

@@ -1,4 +1,4 @@
-# GenomeBoard Architecture
+# BIKO GenomeBoard Architecture
 
 ## Design Principle
 
@@ -84,7 +84,7 @@ VCF Input          AnnotSV TSV (optional --sv)
 
 ## CNV/SV Pipeline
 
-GenomeBoard integrates AnnotSV-annotated structural variant calls via the `--sv` CLI option.
+BIKO GenomeBoard integrates AnnotSV-annotated structural variant calls via the `--sv` CLI option.
 
 ### AnnotSV Parser (`scripts/intake/parse_annotsv.py`)
 

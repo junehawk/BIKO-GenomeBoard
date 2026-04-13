@@ -1,5 +1,5 @@
 #!/bin/bash
-# GenomeBoard Docker convenience commands
+# BIKO GenomeBoard Docker convenience commands
 
 case "$1" in
   single)

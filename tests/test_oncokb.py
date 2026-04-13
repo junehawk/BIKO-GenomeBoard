@@ -297,7 +297,7 @@ def test_report_shows_tier_sections(tmp_path):
 
     assert result is not None
     html = output_path.read_text()
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
     # At least the Genomic Findings header should be present
     assert "Genomic Findings" in html
     # Tier sections appear when variants exist

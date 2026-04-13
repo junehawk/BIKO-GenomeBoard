@@ -1,4 +1,4 @@
-# GenomeBoard Improvement Roadmap
+# BIKO GenomeBoard Improvement Roadmap
 
 **기준일: 2026-04-09** | **현재 상태: v1.0 — 463 tests, main branch**
 
@@ -154,7 +154,7 @@
 
 ## 사용자 파이프라인 정보
 
-실제 사용 환경의 업스트림 파이프라인 구성 (GenomeBoard 입력 데이터 생성):
+실제 사용 환경의 업스트림 파이프라인 구성 (BIKO GenomeBoard 입력 데이터 생성):
 
 - **시퀀싱:** WGS 기반
 - **Variant Callers:** SNV/Indel (Mutect2 등) + Canvas (CNV) + Manta (SV)

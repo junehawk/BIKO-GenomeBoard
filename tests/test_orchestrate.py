@@ -20,7 +20,7 @@ def test_orchestrate_demo_vcf(mocker, tmp_path):
 
     assert result is not None
     assert output_path.exists()
-    assert "GenomeBoard" in output_path.read_text()
+    assert "BIKO GenomeBoard" in output_path.read_text()
 
 
 def test_orchestrate_skip_api(tmp_path):
@@ -36,7 +36,7 @@ def test_orchestrate_skip_api(tmp_path):
 
     assert result is not None
     assert output_path.exists()
-    assert "GenomeBoard" in output_path.read_text()
+    assert "BIKO GenomeBoard" in output_path.read_text()
 
 
 def test_orchestrate_json_output(mocker, tmp_path):

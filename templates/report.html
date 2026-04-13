@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GenomeBoard Consilium Report — {{ sample_id }}</title>
+  <title>BIKO GenomeBoard Consilium Report — {{ sample_id }}</title>
   <style>
     @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
@@ -935,7 +935,7 @@
         </div>
         <div class="info-row">
           <span class="info-label">Pipeline</span>
-          <span class="info-value">GenomeBoard v1.0</span>
+          <span class="info-value">BIKO GenomeBoard v1.0</span>
         </div>
       </div>
       <div class="info-block">
@@ -1190,7 +1190,7 @@
       independent clinical confirmation.
     </div>
     <div class="footer-right">
-      <div class="footer-brand-text">GenomeBoard</div>
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
       <div>Page 1</div>
     </div>
   </div>
@@ -1409,7 +1409,7 @@
       This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
     </div>
     <div class="footer-right">
-      <div class="footer-brand-text">GenomeBoard</div>
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
       <div>Page {{ (loop.index / 2) | round(0, 'ceil') | int + 1 }}</div>
     </div>
   </div>
@@ -1534,7 +1534,7 @@
       This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
     </div>
     <div class="footer-right">
-      <div class="footer-brand-text">GenomeBoard</div>
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
       <div>Page {{ variants | length + 2 }}</div>
     </div>
   </div>
@@ -1595,7 +1595,7 @@
 
     <div class="method-block">
       <p>
-        The GenomeBoard Consilium pipeline performs multi-agent variant interpretation
+        The BIKO GenomeBoard Consilium pipeline performs multi-agent variant interpretation
         integrating ACMG/AMP 2015 classification criteria with Korean population-specific
         frequency data from the Korea Reference Genome Database (KRGDB v3.0). Each variant
         undergoes parallel evaluation by three AI-assisted consilium agents:
@@ -1636,7 +1636,7 @@
       This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
     </div>
     <div class="footer-right">
-      <div class="footer-brand-text">GenomeBoard</div>
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
       <div>Page {{ variants | length + (3 if pgx_results else 2) }}</div>
     </div>
   </div>
@@ -1760,7 +1760,7 @@
       This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
     </div>
     <div class="footer-right">
-      <div class="footer-brand-text">GenomeBoard</div>
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
       <div>Appendix</div>
     </div>
   </div>

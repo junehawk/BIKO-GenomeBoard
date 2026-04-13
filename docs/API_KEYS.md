@@ -1,6 +1,6 @@
 # API 키 레퍼런스
 
-GenomeBoard가 사용하는 외부 서비스 및 API 키 정보를 정리한다.
+BIKO GenomeBoard가 사용하는 외부 서비스 및 API 키 정보를 정리한다.
 
 ---
 

@@ -15,7 +15,7 @@ def _get_session() -> requests.Session:
     with _session_lock:
         if _session is None:
             _session = requests.Session()
-            _session.headers.update({"User-Agent": "GenomeBoard/0.9"})
+            _session.headers.update({"User-Agent": "BIKO GenomeBoard/0.9"})
         return _session
 
 

@@ -47,7 +47,7 @@ def _normalise_chrom(chrom: str) -> str:
 
 
 def _build_variant_key(chrom: str, pos: str, ref: str, alt: str) -> str:
-    """Build GenomeBoard-style variant key: chr17:7675088:C>A"""
+    """Build BIKO GenomeBoard-style variant key: chr17:7675088:C>A"""
     return f"{_normalise_chrom(chrom)}:{pos.strip()}:{ref.strip()}>{alt.strip()}"
 
 

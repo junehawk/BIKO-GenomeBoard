@@ -1,4 +1,4 @@
-# GenomeBoard Scalability Analysis
+# BIKO GenomeBoard Scalability Analysis
 
 **Date:** 2026-03-24
 **Purpose:** Throughput and scalability analysis for mass report generation (1K-10K+ samples)
@@ -20,7 +20,7 @@
 
 ### Root Cause
 
-GenomeBoard was designed as a single-sample clinical tool. The architecture at `orchestrate.py:174` processes variants sequentially with per-request HTTP connections (no session reuse), no response caching, and hard NCBI rate limits (3 req/s without key, 10/s with key).
+BIKO GenomeBoard was designed as a single-sample clinical tool. The architecture at `orchestrate.py:174` processes variants sequentially with per-request HTTP connections (no session reuse), no response caching, and hard NCBI rate limits (3 req/s without key, 10/s with key).
 
 ---
 

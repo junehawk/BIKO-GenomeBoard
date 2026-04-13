@@ -1,7 +1,7 @@
 ---
 kind: agent
 ---
-# Clinical Geneticist — GenomeBoard
+# Clinical Geneticist — BIKO GenomeBoard
 
 Queries ClinVar E-utilities for clinical significance and derives ACMG evidence codes.
 

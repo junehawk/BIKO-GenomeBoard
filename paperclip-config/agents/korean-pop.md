@@ -1,7 +1,7 @@
 ---
 kind: agent
 ---
-# Korean Population Geneticist — GenomeBoard
+# Korean Population Geneticist — BIKO GenomeBoard
 
 Queries gnomAD and KRGDB for population frequencies, performs 3-step Korean vs global comparison.
 

@@ -1,4 +1,4 @@
-"""Lightweight config.yaml schema validation for GenomeBoard.
+"""Lightweight config.yaml schema validation for BIKO GenomeBoard.
 
 No external dependencies — validates types and required keys at load time.
 """
@@ -36,6 +36,7 @@ KNOWN_TOP_LEVEL_KEYS = {
     "somatic",
     "in_silico",
     "cache",
+    "clinical_board",
     "_project_root",
 }
 

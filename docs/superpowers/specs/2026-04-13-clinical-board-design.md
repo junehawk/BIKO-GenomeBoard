@@ -8,7 +8,7 @@
 
 ## Overview
 
-GenomeBoard의 결정적(deterministic) 분류 엔진 위에, Local LLM(MedGemma 27B + Gemma4 31B)을 활용한 다전문가 Clinical Board를 구축한다. 4명의 도메인 전문 Agent가 독립 분석 후, Board Chair가 종합하여 진단 의견서를 생성한다.
+BIKO GenomeBoard의 결정적(deterministic) 분류 엔진 위에, Local LLM(MedGemma 27B + Gemma4 31B)을 활용한 다전문가 Clinical Board를 구축한다. 4명의 도메인 전문 Agent가 독립 분석 후, Board Chair가 종합하여 진단 의견서를 생성한다.
 
 **핵심 원칙:**
 - 변이 분류(ACMG/AMP)는 기존 결정적 엔진이 수행 — 변경 없음

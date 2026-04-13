@@ -92,7 +92,7 @@ FULL_REPORT = {
 def test_generate_html_minimal():
     """Template renders without error for minimal data."""
     html = generate_report_html(MINIMAL_REPORT)
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
     assert "TP53" in html
     assert "Pathogenic" in html
     assert "Research Use Only" in html
@@ -381,7 +381,7 @@ def test_empty_variants_list():
     }
     html = generate_report_html(data)
     assert "EMPTY_001" in html
-    assert "GenomeBoard" in html
+    assert "BIKO GenomeBoard" in html
 
 
 def test_conflict_flag_rendered():

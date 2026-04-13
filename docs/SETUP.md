@@ -1,4 +1,4 @@
-# GenomeBoard Setup Guide
+# BIKO GenomeBoard Setup Guide
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ python scripts/db/build_clinvar_db.py data/db/variant_summary.txt.gz
 
 ### gnomAD v4.1 Exomes (tabix)
 
-GenomeBoard queries gnomAD VCFs directly via tabix — no import step required.
+BIKO GenomeBoard queries gnomAD VCFs directly via tabix — no import step required.
 
 1. Download exomes v4.1 per-chromosome VCF + `.tbi` index files from:
    https://gnomad.broadinstitute.org/downloads#v4
@@ -212,7 +212,7 @@ python scripts/orchestrate.py sample.vcf -o report.pdf
 
 ### Structural Variant / CNV Integration
 
-GenomeBoard supports CNV/SV analysis from AnnotSV output:
+BIKO GenomeBoard supports CNV/SV analysis from AnnotSV output:
 
 ```bash
 # Run with SNV + SV
@@ -225,7 +225,7 @@ python scripts/orchestrate.py sample.vcf -o report.html \
 # ACMG Class 1-2: Count only
 ```
 
-AnnotSV must be run separately before GenomeBoard. The `--sv` argument accepts the AnnotSV TSV output file (full annotation rows only; `SV_type=full` rows are automatically selected).
+AnnotSV must be run separately before BIKO GenomeBoard. The `--sv` argument accepts the AnnotSV TSV output file (full annotation rows only; `SV_type=full` rows are automatically selected).
 
 ```bash
 # Rare disease mode with HPO + SV
@@ -257,7 +257,7 @@ SAMPLE002,/data/vcfs/s002.vcf
 
 ### VCF pre-filtering (optional)
 
-GenomeBoard processes PASS-filter variants by default. Pre-filter with bcftools if needed:
+BIKO GenomeBoard processes PASS-filter variants by default. Pre-filter with bcftools if needed:
 
 ```bash
 # PASS only

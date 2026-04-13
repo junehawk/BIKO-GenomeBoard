@@ -1,4 +1,4 @@
-"""Centralized configuration loader for GenomeBoard."""
+"""Centralized configuration loader for BIKO GenomeBoard."""
 
 import logging
 import os
