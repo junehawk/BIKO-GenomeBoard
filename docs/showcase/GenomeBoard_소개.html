@@ -187,6 +187,8 @@
       AI Board는 분류 결과를 <strong>입력으로만 사용</strong>하며 변경하지 않고,
       모든 출력에 <strong>[AI-Generated]</strong> 태그를 표시합니다.
       환자 데이터는 <strong>로컬 LLM(Ollama)</strong>으로 처리되어 외부로 전송되지 않습니다.
+      AI Board는 <strong>Google MedGemma</strong> 모델을 사용하며, MedGemma는 임상 등급(clinical-grade)이 아닙니다.
+      AI Board 출력은 진단 목적이 아닌 <strong>연구 보조 자료</strong>로만 활용되어야 합니다.
     </p>
   </div>
 
@@ -376,7 +378,7 @@
     <div class="card" style="border:2px solid #99F6E4;background:linear-gradient(135deg,#F0FDFA,#F8FAFC);">
       <div class="card-icon">&#x1F9E0;</div>
       <h3>AI Clinical Board</h3>
-      <p>로컬 LLM(MedGemma 27B) 기반 <strong>다전문가 임상 Board 시스템</strong>. 4명의 도메인 전문 Agent(변이 병리, 질환 유전학, 약물유전체, 문헌 분석)가 독립 분석 후, Board Chair가 종합 진단 의견을 도출. 감별진단 목록, 권고사항, 추적 계획 포함. 결정적 분류 엔진 결과를 변경하지 않으며, 모든 출력에 AI-Generated 태그 표시.</p>
+      <p><strong>Google MedGemma 27B</strong> 기반 다전문가 임상 Board 시스템. 4명의 도메인 전문 Agent(변이 병리, 질환 유전학, 약물유전체, 문헌 분석)가 독립 분석 후, Board Chair가 종합 진단 의견을 도출. 감별진단 목록, 권고사항, 추적 계획 포함. 결정적 분류 엔진 결과를 변경하지 않으며, 모든 출력에 AI-Generated 태그 표시. MedGemma는 임상 등급이 아니며, 연구 보조 목적으로만 사용됩니다.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
       <span class="tag" style="background:#F0FDFA;color:#0D9488;margin-left:4px;">Ollama (온프레미스)</span>
     </div>
