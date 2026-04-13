@@ -192,6 +192,7 @@
     <div class="stat"><div class="stat-num">100%</div><div class="stat-label">오프라인 분석 지원</div></div>
     <div class="stat"><div class="stat-num">4</div><div class="stat-label">In Silico 예측 도구</div></div>
     <div class="stat"><div class="stat-num">12</div><div class="stat-label">약물유전체 유전자</div></div>
+    <div class="stat"><div class="stat-num">5</div><div class="stat-label">AI Board 전문의</div></div>
   </div>
 </div>
 
@@ -368,6 +369,14 @@
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
+    <div class="card" style="border:2px solid #99F6E4;background:linear-gradient(135deg,#F0FDFA,#F8FAFC);">
+      <div class="card-icon">&#x1F9E0;</div>
+      <h3>AI Clinical Board</h3>
+      <p>로컬 LLM(MedGemma 27B) 기반 <strong>다전문가 임상 Board 시스템</strong>. 4명의 도메인 전문 Agent(변이 병리, 질환 유전학, 약물유전체, 문헌 분석)가 독립 분석 후, Board Chair가 종합 진단 의견을 도출. 감별진단 목록, 권고사항, 추적 계획 포함. 결정적 분류 엔진 결과를 변경하지 않으며, 모든 출력에 AI-Generated 태그 표시.</p>
+      <span class="tag tag-both">Cancer + Rare Disease</span>
+      <span class="tag" style="background:#F0FDFA;color:#0D9488;margin-left:4px;">Ollama (온프레미스)</span>
+    </div>
+
   </div>
 </div>
 
@@ -487,6 +496,9 @@
     <span style="color:#94A3B8;"># 구조변이 + InterVar 통합</span><br>
     python scripts/orchestrate.py sample.vcf -o report.html \<br>
     &nbsp;&nbsp;--sv annotsv_output.tsv --intervar intervar_output.tsv<br><br>
+    <span style="color:#94A3B8;"># AI Clinical Board 진단 종합 (Ollama 필요)</span><br>
+    python scripts/orchestrate.py sample.vcf -o report.html \<br>
+    &nbsp;&nbsp;--clinical-board --board-lang en<br><br>
     <span style="color:#94A3B8;"># 배치 처리 (8 workers)</span><br>
     python scripts/orchestrate.py --batch vcf_dir/ --output-dir output/ --workers 8<br><br>
     <span style="color:#94A3B8;"># Docker</span><br>
@@ -505,6 +517,8 @@
     │&nbsp;&nbsp; ├── query.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— DB 쿼리 오케스트레이션</span><br>
     │&nbsp;&nbsp; ├── classify.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ACMG 분류 + variant 조립</span><br>
     │&nbsp;&nbsp; └── batch.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 배치 처리 (변이 중복제거)</span><br>
+    ├── clinical_board/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— AI Clinical Board (Ollama LLM 연동)</span><br>
+    │&nbsp;&nbsp; └── agents/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 4 전문의 + Board Chair</span><br>
     ├── intake/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— VCF, AnnotSV, InterVar 파싱</span><br>
     ├── classification/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ACMG 엔진, In Silico, Evidence Collector</span><br>
     ├── somatic/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— AMP Tiering, TMB</span><br>
