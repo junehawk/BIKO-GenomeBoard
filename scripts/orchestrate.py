@@ -264,7 +264,7 @@ def run_pipeline(
             board_opinion = run_clinical_board(report_data, mode, language=board_lang)
             if board_opinion:
                 report_data["clinical_board"] = board_opinion
-                report_data["clinical_board_html"] = render_board_opinion_html(board_opinion)
+                report_data["clinical_board_html"] = render_board_opinion_html(board_opinion, language=board_lang or get("clinical_board.language", "en"))
                 _progress(f"  → Primary diagnosis: {board_opinion.primary_diagnosis} "
                          f"({board_opinion.confidence} confidence)")
             else:
