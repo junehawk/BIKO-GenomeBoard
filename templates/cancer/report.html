@@ -1277,6 +1277,10 @@
 </div><!-- /page-summary -->
 
 
+{% if clinical_board_html is defined and clinical_board_html %}
+{{ clinical_board_html|safe }}
+{% endif %}
+
 {# ══════════════════════════════════════════════════════════════
    PAGE 2+ — GENOMIC FINDINGS DETAIL (two variants per A4 page)
 ══════════════════════════════════════════════════════════════ #}
@@ -1886,10 +1890,6 @@
         <div><strong>Report Date:</strong> {{ date }}</div>
       </div>
     </div>
-
-    {% if clinical_board_html is defined and clinical_board_html %}
-    {{ clinical_board_html|safe }}
-    {% endif %}
 
     <div class="section-header">
       <span class="section-badge badge-navy">Methodology &amp; Database Versions</span>

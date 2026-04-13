@@ -13,23 +13,23 @@ from scripts.common.config import get
 logger = logging.getLogger(__name__)
 
 
-def _load_agents(client: OllamaClient, model: str):
+def _load_agents(client: OllamaClient, model: str, language: str):
     """Lazy-load domain agents to avoid import errors if not installed."""
     from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
     from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist as PgxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
     return [
-        VariantPathologist(client=client, model=model),
-        DiseaseGeneticist(client=client, model=model),
-        PgxSpecialist(client=client, model=model),
-        LiteratureAnalyst(client=client, model=model),
+        VariantPathologist(client=client, model=model, language=language),
+        DiseaseGeneticist(client=client, model=model, language=language),
+        PgxSpecialist(client=client, model=model, language=language),
+        LiteratureAnalyst(client=client, model=model, language=language),
     ]
 
 
-def _load_chair(client: OllamaClient, model: str):
+def _load_chair(client: OllamaClient, model: str, language: str):
     from scripts.clinical_board.agents.board_chair import BoardChair
-    return BoardChair(client=client, model=model)
+    return BoardChair(client=client, model=model, language=language)
 
 
 def run_clinical_board(
@@ -38,6 +38,7 @@ def run_clinical_board(
     ollama_url: str = None,
     agent_model: str = None,
     chair_model: str = None,
+    language: str = None,
 ) -> Optional[BoardOpinion]:
     """Run the full Clinical Board analysis.
 
@@ -53,7 +54,8 @@ def run_clinical_board(
     """
     start = time.time()
     agent_model = agent_model or get("clinical_board.agent_model", "medgemma:27b")
-    chair_model = chair_model or get("clinical_board.chair_model", "gemma4:31b")
+    chair_model = chair_model or get("clinical_board.chair_model", "alibayram/medgemma:27b")
+    language = language or get("clinical_board.language", "en")
 
     # Initialize client
     client = OllamaClient(base_url=ollama_url)
@@ -74,7 +76,7 @@ def run_clinical_board(
 
     # Step 2: Run domain agents in parallel
     logger.info("[Clinical Board] Running domain agents...")
-    agents = _load_agents(client, agent_model)
+    agents = _load_agents(client, agent_model, language)
     opinions: list[AgentOpinion] = []
 
     # Run agents sequentially on single GPU to avoid resource contention
@@ -95,7 +97,7 @@ def run_clinical_board(
 
     # Step 3: Board Chair synthesis
     logger.info("[Clinical Board] Board Chair synthesizing opinions...")
-    chair = _load_chair(client, chair_model)
+    chair = _load_chair(client, chair_model, language)
     board_opinion = chair.synthesize(briefing, opinions)
     board_opinion.agent_opinions = opinions
 

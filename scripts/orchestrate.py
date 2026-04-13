@@ -70,6 +70,7 @@ def run_pipeline(
     bed_path: str = None,
     intervar_path: str = None,
     clinical_board: bool = False,
+    board_lang: str = None,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -260,7 +261,7 @@ def run_pipeline(
             from scripts.clinical_board.runner import run_clinical_board
             from scripts.clinical_board.render import render_board_opinion_html
             _progress("[Board] Running Clinical Board diagnostic synthesis...")
-            board_opinion = run_clinical_board(report_data, mode)
+            board_opinion = run_clinical_board(report_data, mode, language=board_lang)
             if board_opinion:
                 report_data["clinical_board"] = board_opinion
                 report_data["clinical_board_html"] = render_board_opinion_html(board_opinion)
@@ -365,6 +366,7 @@ EXAMPLES
     parser.add_argument("--bed", dest="bed_path", help="BED file for panel size calculation (overrides --panel-size)")
     parser.add_argument("--intervar", dest="intervar_path", help="InterVar output TSV for ACMG evidence codes")
     parser.add_argument("--clinical-board", action="store_true", dest="clinical_board", help="Enable Clinical Board diagnostic synthesis (requires Ollama)")
+    parser.add_argument("--board-lang", default=None, dest="board_lang", choices=["en", "ko"], help="Clinical Board output language (default: en)")
 
     args = parser.parse_args()
 
@@ -411,6 +413,7 @@ EXAMPLES
             sv_path=args.sv_path, panel_size_mb=args.panel_size, bed_path=args.bed_path,
             intervar_path=getattr(args, "intervar_path", None),
             clinical_board=getattr(args, "clinical_board", False),
+            board_lang=getattr(args, "board_lang", None),
         )
 
         if result is None:

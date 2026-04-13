@@ -14,9 +14,10 @@ logger = logging.getLogger(__name__)
 class BaseAgent(ABC):
     """Abstract base for domain-specific clinical agents."""
 
-    def __init__(self, client: OllamaClient = None, model: str = None):
+    def __init__(self, client: OllamaClient = None, model: str = None, language: str = None):
         self.client = client or OllamaClient()
         self.model = model or get("clinical_board.agent_model", "medgemma:27b")
+        self.language = language or get("clinical_board.language", "en")
 
     @property
     @abstractmethod
@@ -60,13 +61,14 @@ class BaseAgent(ABC):
 
     def _build_prompt(self, case_briefing: str) -> str:
         """Build the analysis prompt with case briefing and output format instructions."""
-        return f"""다음 환자의 유전체 분석 결과를 검토하고, 당신의 전문 분야 관점에서 소견을 제시하세요.
+        if self.language == "ko":
+            return f"""다음 환자의 유전체 분석 결과를 검토하고, 당신의 전문 분야 관점에서 소견을 제시하세요.
 
 ## 케이스 정보
 {case_briefing}
 
 ## 응답 형식 (JSON)
-다음 JSON 형식으로 응답하세요:
+반드시 한국어로 응답하세요. 다음 JSON 형식으로 응답하세요:
 {{
   "findings": [
     {{"finding": "소견 내용", "evidence": "근거", "confidence": "high/moderate/low"}}
@@ -74,6 +76,23 @@ class BaseAgent(ABC):
   "recommendations": ["권고사항 1", "권고사항 2"],
   "concerns": ["우려사항 (있을 경우)"],
   "references": ["PMID:xxxxx 등 참고문헌"],
+  "confidence": "high/moderate/low"
+}}"""
+        else:
+            return f"""Review the following genomic analysis results and provide your expert opinion from your domain perspective.
+
+## Case Information
+{case_briefing}
+
+## Response Format (JSON)
+Respond in English. Use the following JSON format:
+{{
+  "findings": [
+    {{"finding": "finding description", "evidence": "supporting evidence", "confidence": "high/moderate/low"}}
+  ],
+  "recommendations": ["recommendation 1", "recommendation 2"],
+  "concerns": ["concerns if any"],
+  "references": ["PMID:xxxxx etc."],
   "confidence": "high/moderate/low"
 }}"""
 

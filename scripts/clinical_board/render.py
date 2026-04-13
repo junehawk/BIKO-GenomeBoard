@@ -14,7 +14,7 @@ def render_board_opinion_html(opinion: BoardOpinion) -> str:
     html_parts.append("""
     <div style="page-break-before:always;"></div>
     <div class="section-header">
-      <span class="section-badge" style="background:#4338CA;">Clinical Board Opinion</span>
+      <span class="section-badge" style="background:#4338CA;">AI Clinical Board</span>
       <div class="section-rule" style="background:linear-gradient(90deg,#4338CA,#7C3AED);"></div>
     </div>
 

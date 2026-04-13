@@ -107,9 +107,10 @@ def _format_agent_opinion(opinion: AgentOpinion) -> str:
 class BoardChair:
     """Synthesizes all agent opinions into a unified board opinion."""
 
-    def __init__(self, client: OllamaClient = None, model: str = None):
+    def __init__(self, client: OllamaClient = None, model: str = None, language: str = None):
         self.client = client or OllamaClient()
-        self.model = model or get("clinical_board.chair_model", "gemma4:31b")
+        self.model = model or get("clinical_board.chair_model", "alibayram/medgemma:27b")
+        self.language = language or get("clinical_board.language", "en")
 
     def synthesize(
         self, case_briefing: str, agent_opinions: List[AgentOpinion]
@@ -146,8 +147,10 @@ class BoardChair:
             _format_agent_opinion(op) for op in agent_opinions
         )
 
-        return f"""다음은 임상유전학 사례 회의 자료입니다.
+        if self.language == "ko":
+            return f"""다음은 임상유전학 사례 회의 자료입니다.
 케이스 정보와 4명의 전문의 소견을 종합하여 최종 진단 의견을 제시하세요.
+반드시 한국어로 응답하세요.
 
 ## 케이스 정보
 {case_briefing}
@@ -158,6 +161,20 @@ class BoardChair:
 
 ## 요청
 위 케이스 정보와 전문의 소견을 종합하여, 지정된 JSON 형식으로 최종 진단 의견을 제시하세요."""
+        else:
+            return f"""The following is a clinical genetics case conference.
+Synthesize the case information and 4 domain specialists' opinions into a final diagnostic opinion.
+Respond in English.
+
+## Case Information
+{case_briefing}
+
+## Specialist Opinions
+
+{opinions_text}
+
+## Request
+Synthesize the case information and specialist opinions above into a final diagnostic opinion in the specified JSON format."""
 
     def _parse_response(
         self, response, agent_opinions: List[AgentOpinion]

@@ -92,4 +92,5 @@ clinical_board:
   chair_model: "alibayram/medgemma:27b"
   timeout: 300
   max_retries: 1
+  language: "en"         # en or ko
   include_in_report: true
