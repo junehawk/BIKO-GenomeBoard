@@ -90,6 +90,6 @@ clinical_board:
   ollama_url: "http://localhost:11434"
   agent_model: "alibayram/medgemma:27b"
   chair_model: "gemma4:31b"
-  timeout: 120
-  max_retries: 2
+  timeout: 300
+  max_retries: 1
   include_in_report: true

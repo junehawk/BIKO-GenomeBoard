@@ -17,7 +17,7 @@ def _load_agents(client: OllamaClient, model: str):
     """Lazy-load domain agents to avoid import errors if not installed."""
     from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
-    from scripts.clinical_board.agents.pgx_specialist import PgxSpecialist
+    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist as PgxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
     return [
         VariantPathologist(client=client, model=model),
@@ -77,22 +77,21 @@ def run_clinical_board(
     agents = _load_agents(client, agent_model)
     opinions: list[AgentOpinion] = []
 
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = {executor.submit(agent.analyze, briefing): agent.agent_name for agent in agents}
-        for future in as_completed(futures):
-            name = futures[future]
-            try:
-                opinion = future.result()
-                opinions.append(opinion)
-                logger.info(f"  [Board] {name}: {opinion.confidence} confidence, "
-                           f"{len(opinion.findings)} findings")
-            except Exception as e:
-                logger.error(f"  [Board] {name} failed: {e}")
-                opinions.append(AgentOpinion(
-                    agent_name=name, domain="error",
-                    findings=[{"finding": f"Agent failed: {e}", "evidence": "", "confidence": "low"}],
-                    confidence="low",
-                ))
+    # Run agents sequentially on single GPU to avoid resource contention
+    # (parallel execution causes timeouts when agents compete for GPU)
+    for agent in agents:
+        try:
+            opinion = agent.analyze(briefing)
+            opinions.append(opinion)
+            logger.info(f"  [Board] {agent.agent_name}: {opinion.confidence} confidence, "
+                       f"{len(opinion.findings)} findings")
+        except Exception as e:
+            logger.error(f"  [Board] {agent.agent_name} failed: {e}")
+            opinions.append(AgentOpinion(
+                agent_name=agent.agent_name, domain="error",
+                findings=[{"finding": f"Agent failed: {e}", "evidence": "", "confidence": "low"}],
+                confidence="low",
+            ))
 
     # Step 3: Board Chair synthesis
     logger.info("[Clinical Board] Board Chair synthesizing opinions...")
