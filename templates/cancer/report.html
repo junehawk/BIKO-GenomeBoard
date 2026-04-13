@@ -1278,7 +1278,22 @@
 
 
 {% if clinical_board_html is defined and clinical_board_html %}
-{{ clinical_board_html|safe }}
+<div class="page" id="page-ai-board">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+    {{ clinical_board_html|safe }}
+  </div>
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong><br>
+      AI-generated diagnostic synthesis. Requires clinician review.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">GenomeBoard</div>
+      <div>Page 2</div>
+    </div>
+  </div>
+</div>
 {% endif %}
 
 {# ══════════════════════════════════════════════════════════════

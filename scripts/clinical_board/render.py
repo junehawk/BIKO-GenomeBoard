@@ -15,10 +15,8 @@ def render_board_opinion_html(opinion: BoardOpinion, language: str = "en") -> st
 
     html_parts = []
 
-    # Page break + section start (constrained to A4 content width)
+    # Section content (page wrapper handled by template)
     html_parts.append(f"""
-    <div style="page-break-before:always;padding-top:24px;max-width:720px;margin:0 auto;">
-
     <!-- AI Clinical Board Header -->
     <div class="section-header">
       <span class="section-badge" style="background:#4338CA;">AI Clinical Board</span>
@@ -135,6 +133,6 @@ def render_board_opinion_html(opinion: BoardOpinion, language: str = "en") -> st
             """)
         html_parts.append('</div>')
 
-    html_parts.append('</div>')  # close page div
+    # No closing page div — template handles page wrapper
 
     return "\n".join(html_parts)
