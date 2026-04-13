@@ -15,12 +15,20 @@ def render_board_opinion_html(opinion: BoardOpinion, language: str = "en") -> st
 
     html_parts = []
 
+    # Collapsible arrow rotation CSS
+    html_parts.append("""
+    <style>
+      details[open] > summary .board-arrow { transform: rotate(90deg); display: inline-block; transition: transform 0.2s; }
+      .board-arrow { display: inline-block; transition: transform 0.2s; }
+    </style>
+    """)
+
     # Section content (page wrapper handled by template)
     html_parts.append(f"""
     <!-- AI Clinical Board Header -->
     <div class="section-header">
-      <span class="section-badge" style="background:#4338CA;">AI Clinical Board</span>
-      <div class="section-rule" style="background:linear-gradient(90deg,#4338CA,#7C3AED);height:2px;"></div>
+      <span class="section-badge" style="background:#115E59;">AI Clinical Board</span>
+      <div class="section-rule" style="background:linear-gradient(90deg,#115E59,#0D9488);height:2px;"></div>
     </div>
 
     <!-- AI Disclaimer -->
@@ -32,13 +40,13 @@ def render_board_opinion_html(opinion: BoardOpinion, language: str = "en") -> st
     # Primary Diagnosis card
     confidence_color = '#059669' if opinion.confidence == 'high' else '#D97706' if opinion.confidence == 'moderate' else '#DC2626'
     html_parts.append(f"""
-    <div style="background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;padding:16px;margin-bottom:16px;">
-      <div style="font-size:9px;font-weight:700;color:#6366F1;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Primary Diagnosis</div>
+    <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;color:#115E59;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Primary Diagnosis</div>
       <div style="font-size:15px;font-weight:700;color:#1E1B4B;margin-bottom:4px;">{opinion.primary_diagnosis or 'Not determined'}</div>
-      <div style="font-size:11px;color:#4338CA;line-height:1.5;">{opinion.primary_diagnosis_evidence or ''}</div>
+      <div style="font-size:11px;color:#0F766E;line-height:1.5;">{opinion.primary_diagnosis_evidence or ''}</div>
       <div style="margin-top:8px;">
         <span style="display:inline-block;background:{confidence_color};color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: {opinion.confidence.upper()}</span>
-        <span style="display:inline-block;background:#6366F1;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: {opinion.agent_consensus}</span>
+        <span style="display:inline-block;background:#0D9488;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: {opinion.agent_consensus}</span>
       </div>
     </div>
     """)
@@ -122,7 +130,7 @@ def render_board_opinion_html(opinion: BoardOpinion, language: str = "en") -> st
             html_parts.append(f"""
             <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
               <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
-                <span style="color:#6366F1;margin-right:4px;">&#9654;</span> {agent_op.agent_name}
+                <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> {agent_op.agent_name}
                 <span style="float:right;color:{c_color};font-size:9px;font-weight:600;">{agent_op.confidence.upper()} &middot; {len(agent_op.findings)} findings</span>
               </summary>
               <div style="padding:8px 10px;font-size:10px;color:#475569;">

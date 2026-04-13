@@ -116,6 +116,12 @@ def _build_overview(data: dict, mode: str) -> str:
         f"Analysis Mode: {mode_label}",
         f"Date: {analysis_date}",
         f"Total Variants Analyzed: {total}",
+        "",
+        "IMPORTANT NOTES:",
+        "- Zygosity (heterozygous/homozygous) is NOT available in this data.",
+        "  For autosomal recessive (AR) conditions, do NOT assume affected status",
+        "  from a single pathogenic variant — it may represent carrier status only.",
+        "  Two pathogenic alleles are required for AR disease diagnosis.",
     ]
     return "\n".join(lines)
 
@@ -279,6 +285,11 @@ def _build_hpo_section(data: dict) -> Optional[str]:
         lines.append(f"    Associated genes: {gene_str}")
         if len(genes) > 10:
             lines.append(f"    (+{len(genes) - 10} more genes)")
+        # Warn about non-specific broad HPO terms
+        if len(genes) > 500:
+            lines.append(f"    ⚠ WARNING: This HPO term is extremely broad ({len(genes)} genes).")
+            lines.append(f"      HPO matches for this term have LOW specificity.")
+            lines.append(f"      Do NOT use this match alone to support gene-disease correlation.")
     lines.append("")
     return "\n".join(lines)
 

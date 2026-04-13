@@ -184,7 +184,7 @@
     }
 
     .summary-card .label {
-      font-size: 6.5pt;
+      font-size: 7.5pt;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.8px;
@@ -314,6 +314,7 @@
     .badge-drug-response     { background: #EFF6FF; color: #1E40AF; border: 1px solid #bfdbfe; }
     .badge-risk-factor       { background: #F5F3FF; color: #5B21B6; border: 1px solid #ddd6fe; }
     .badge-unknown           { background: #F3F4F6; color: #6b7280; border: 1px solid #e5e7eb; }
+    .badge-cpic-a            { background: #F0FDFA; color: #0D9488; border: 1px solid #99F6E4; }
 
     /* ── ACMG code pills ── */
     .acmg-code {
@@ -458,7 +459,7 @@
 
     .detail-col .detail-label {
       font-family: var(--font-sans);
-      font-size: 6.5pt;
+      font-size: 7.5pt;
       font-weight: 700;
       color: var(--muted);
       text-transform: uppercase;
@@ -498,7 +499,7 @@
     }
 
     .freq-stat .freq-label {
-      font-size: 6.5pt;
+      font-size: 7.5pt;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.6px;
@@ -724,7 +725,7 @@
     .pgx-comparison-box.box-western .box-pct { color: #5B21B6; }
 
     .pgx-comparison-box .box-lbl {
-      font-size: 6.5pt;
+      font-size: 7.5pt;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -1126,7 +1127,7 @@
           <td>
             {% set level = pgx.cpic_level | upper %}
             {% if level == "A" %}
-              <span class="badge badge-pathogenic">Level A</span>
+              <span class="badge badge-cpic-a">Level A</span>
             {% elif level == "B" %}
               <span class="badge badge-likely-pathogenic">Level B</span>
             {% elif level == "C" %}
@@ -1449,7 +1450,7 @@
         <div style="display:flex;align-items:center;gap:8px;">
           {% set level = pgx.cpic_level | upper %}
           {% if level == "A" %}
-            <span class="badge badge-pathogenic">CPIC Level A</span>
+            <span class="badge badge-cpic-a">CPIC Level A</span>
           {% elif level == "B" %}
             <span class="badge badge-likely-pathogenic">CPIC Level B</span>
           {% elif level == "C" %}
@@ -1723,7 +1724,7 @@
       </thead>
       <tbody>
         <tr>
-          <td><span class="badge badge-pathogenic">Level A</span></td>
+          <td><span class="badge badge-cpic-a">Level A</span></td>
           <td>Strong evidence</td>
           <td>Prescribing action recommended. Strong evidence linking the gene-drug pair to a clinical outcome, with a published CPIC guideline providing specific dosing or drug selection recommendations.</td>
         </tr>
