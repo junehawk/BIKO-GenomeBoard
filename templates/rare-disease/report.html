@@ -1609,7 +1609,7 @@
           <div class="detail-col-title">Finding Summary</div>
 
           {% if v.finding_summary is defined and v.finding_summary %}
-            <p>{{ v.finding_summary }}</p>
+            <p style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;">{{ v.finding_summary }}</p>
           {% endif %}
 
           {% if kp.gene_description is defined and kp.gene_description %}
@@ -2042,6 +2042,8 @@
               {% elif info.source == 'api' %}
                 <span style="color:#1E40AF;">API</span>
               {% elif info.source == 'local_file' %}
+                <span style="color:#065F46;">Local File</span>
+              {% elif info.source is defined and '/' in (info.source | default('')) %}
                 <span style="color:#065F46;">Local File</span>
               {% else %}
                 {{ info.source | default('—') }}

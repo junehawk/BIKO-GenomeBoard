@@ -1949,6 +1949,8 @@
                 <span style="color:#1E40AF;">API</span>
               {% elif info.source == 'local_file' %}
                 <span style="color:#065F46;">Local File</span>
+              {% elif info.source is defined and '/' in (info.source | default('')) %}
+                <span style="color:#065F46;">Local File</span>
               {% else %}
                 {{ info.source | default('—') }}
               {% endif %}
