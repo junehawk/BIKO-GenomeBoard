@@ -84,3 +84,12 @@ cache:
   enabled: true
   path: "data/cache/variant_cache.sqlite3"
   ttl_seconds: 604800  # 7 days
+
+clinical_board:
+  enabled: false
+  ollama_url: "http://localhost:11434"
+  agent_model: "alibayram/medgemma:27b"
+  chair_model: "gemma4:31b"
+  timeout: 120
+  max_retries: 2
+  include_in_report: true

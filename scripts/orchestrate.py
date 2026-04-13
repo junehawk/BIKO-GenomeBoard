@@ -69,6 +69,7 @@ def run_pipeline(
     panel_size_mb: float = None,
     bed_path: str = None,
     intervar_path: str = None,
+    clinical_board: bool = False,
 ) -> dict:
     """Run the full GenomeBoard analysis pipeline.
 
@@ -253,6 +254,24 @@ def run_pipeline(
     else:
         report_data["tmb"] = None
 
+    # ── Clinical Board (optional LLM diagnostic synthesis) ────────────────────
+    if clinical_board:
+        try:
+            from scripts.clinical_board.runner import run_clinical_board
+            from scripts.clinical_board.render import render_board_opinion_html
+            _progress("[Board] Running Clinical Board diagnostic synthesis...")
+            board_opinion = run_clinical_board(report_data, mode)
+            if board_opinion:
+                report_data["clinical_board"] = board_opinion
+                report_data["clinical_board_html"] = render_board_opinion_html(board_opinion)
+                _progress(f"  → Primary diagnosis: {board_opinion.primary_diagnosis} "
+                         f"({board_opinion.confidence} confidence)")
+            else:
+                _progress("  → Clinical Board skipped (Ollama not available)")
+        except Exception as e:
+            logger.warning(f"Clinical Board failed: {e}")
+            _progress(f"  → Clinical Board error: {e}")
+
     # ── Generate report ───────────────────────────────────────────────────────
     _progress("[6/6] Generating report...")
     output_str = str(output_path)
@@ -345,6 +364,7 @@ EXAMPLES
     parser.add_argument("--panel-size", type=float, dest="panel_size", help="Panel size in Mb for TMB calculation")
     parser.add_argument("--bed", dest="bed_path", help="BED file for panel size calculation (overrides --panel-size)")
     parser.add_argument("--intervar", dest="intervar_path", help="InterVar output TSV for ACMG evidence codes")
+    parser.add_argument("--clinical-board", action="store_true", dest="clinical_board", help="Enable Clinical Board diagnostic synthesis (requires Ollama)")
 
     args = parser.parse_args()
 
@@ -390,6 +410,7 @@ EXAMPLES
             mode=mode, hpo_ids=hpo_ids, hide_vus=effective_hide_vus,
             sv_path=args.sv_path, panel_size_mb=args.panel_size, bed_path=args.bed_path,
             intervar_path=getattr(args, "intervar_path", None),
+            clinical_board=getattr(args, "clinical_board", False),
         )
 
         if result is None:
