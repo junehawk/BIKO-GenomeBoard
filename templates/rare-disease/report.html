@@ -1697,7 +1697,7 @@
     </div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ (loop.index / 2) | round(0, 'ceil') | int + 1 }}</div>
+      <div>Page {{ (loop.index / 2) | round(0, 'ceil') | int + 1 + (1 if clinical_board_html is defined and clinical_board_html else 0) }}</div>
     </div>
   </div>
 </div><!-- /variant-page -->
@@ -1706,7 +1706,7 @@
 {% endfor %}
 
 {# Track page count: page 1 (summary) + detail pages (2 variants per page) #}
-{% set ns_pages = namespace(next_page = ((detailed_variants | default(variants)) | length / 2) | round(0, 'ceil') | int + 2) %}
+{% set ns_pages = namespace(next_page = ((detailed_variants | default(variants)) | length / 2) | round(0, 'ceil') | int + 2 + (1 if clinical_board_html is defined and clinical_board_html else 0)) %}
 
 {% if omitted_variants is defined and omitted_variants %}
 <div class="page">

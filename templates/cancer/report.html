@@ -1572,7 +1572,7 @@
     </div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ loop.index + 1 }}</div>
+      <div>Page {{ loop.index + 1 + (1 if clinical_board_html is defined and clinical_board_html else 0) }}</div>
     </div>
   </div>
 </div><!-- /variant-page -->
@@ -1661,14 +1661,14 @@
     <div class="footer-disclaimer"><strong>Research Use Only — Not for clinical decision making.</strong></div>
     <div class="footer-right">
       <div class="footer-brand-text">GenomeBoard</div>
-      <div>Page {{ (detailed_variants | default(variants)) | length + 2 }}</div>
+      <div>Page {{ (detailed_variants | default(variants)) | length + 2 + (1 if clinical_board_html is defined and clinical_board_html else 0) }}</div>
     </div>
   </div>
 </div>
 {% endif %}
 
 {# Track extra pages: summary(1) + detail pages + additional variants page (if present) #}
-{% set ns_pages = namespace(next_page = (detailed_variants | default(variants)) | length + 2) %}
+{% set ns_pages = namespace(next_page = (detailed_variants | default(variants)) | length + 2 + (1 if clinical_board_html is defined and clinical_board_html else 0)) %}
 {% if omitted_variants is defined and omitted_variants %}
   {% set ns_pages.next_page = ns_pages.next_page + 1 %}
 {% endif %}
