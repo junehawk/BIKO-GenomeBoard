@@ -10,13 +10,77 @@ prediction) — that is handled by the separate in_silico module.
 """
 from __future__ import annotations
 
+import json
 import logging
+import os
 import re
-from typing import Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set
 
+from scripts.common.hgvs_utils import extract_protein_position
 from scripts.common.models import Variant
 
 logger = logging.getLogger(__name__)
+
+# ── PM1 hotspot domain table (A3-core) ────────────────────────────────────────
+# Lazy-loaded snapshot of data/pm1_hotspot_domains.json. The table lets PM1
+# fire on known functional hotspots (ClinGen TP53 VCEP, AMP/ASCO/CAP KRAS 12/13,
+# etc.) even when VEP left the CSQ DOMAINS field empty.
+
+_PM1_HOTSPOT_TABLE: Optional[Dict[str, List[Dict[str, Any]]]] = None
+_PM1_HOTSPOT_PATH_DEFAULT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "data",
+    "pm1_hotspot_domains.json",
+)
+
+
+def _load_pm1_hotspots() -> Dict[str, List[Dict[str, Any]]]:
+    """Return the hotspot table, loading it once per process."""
+    global _PM1_HOTSPOT_TABLE
+    if _PM1_HOTSPOT_TABLE is not None:
+        return _PM1_HOTSPOT_TABLE
+    path = _PM1_HOTSPOT_PATH_DEFAULT
+    if not os.path.exists(path):
+        logger.debug("[evidence_collector] PM1 hotspot table not found at %s", path)
+        _PM1_HOTSPOT_TABLE = {}
+        return _PM1_HOTSPOT_TABLE
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        _PM1_HOTSPOT_TABLE = data.get("genes", {}) or {}
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("[evidence_collector] PM1 hotspot table load failed: %s", e)
+        _PM1_HOTSPOT_TABLE = {}
+    return _PM1_HOTSPOT_TABLE
+
+
+def _pm1_hotspot_match(gene: Optional[str], protein_position: Optional[int]) -> Optional[str]:
+    """Return ``'moderate'``, ``'supporting'``, or ``None`` for ``(gene, pos)``.
+
+    The first range containing ``protein_position`` wins. ``moderate`` ranks
+    above ``supporting`` when both would match (moderate is listed first in
+    the JSON per curator convention, but we still scan all entries and
+    promote moderate explicitly so ordering is not load-bearing).
+    """
+    if not gene or protein_position is None:
+        return None
+    table = _load_pm1_hotspots()
+    entries = table.get(gene)
+    if not entries:
+        return None
+    best: Optional[str] = None
+    for entry in entries:
+        rng = entry.get("range") or []
+        if len(rng) != 2:
+            continue
+        lo, hi = rng[0], rng[1]
+        if lo <= protein_position <= hi:
+            strength = (entry.get("strength") or "").lower()
+            if strength == "moderate":
+                return "moderate"
+            if strength == "supporting" and best is None:
+                best = "supporting"
+    return best
 
 # ── Consequence groups ────────────────────────────────────────────────────────
 
@@ -190,8 +254,20 @@ def collect_additional_evidence(
             codes.append("PVS1_Strong")
 
     # ── PM1 — Missense in established functional domain ──────────────────
-    if _is_missense(consequence) and _has_domain(variant):
-        codes.append("PM1")
+    # Two independent paths:
+    #   (a) VEP CSQ DOMAINS field is populated — legacy path.
+    #   (b) variant hits the curated PM1 hotspot table (ClinGen TP53 VCEP,
+    #       AMP KRAS 12/13/61, etc.) — promotes the variant even when the
+    #       upstream annotator dropped DOMAINS.
+    if _is_missense(consequence):
+        domain_hit = _has_domain(variant)
+        table_hit = _pm1_hotspot_match(
+            variant.gene, extract_protein_position(variant.hgvsp)
+        )
+        if domain_hit or table_hit == "moderate":
+            codes.append("PM1")
+        elif table_hit == "supporting":
+            codes.append("PM1_Supporting")
 
     # ── PM4 — Protein length change (in-frame indel) ────────────────────
     if _is_inframe(consequence):
