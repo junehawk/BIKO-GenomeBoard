@@ -130,6 +130,58 @@ The rollback checkpoint for the entire v2.2 Phase A + B stack is git
 tag **`pre-v2.2-phaseA`**. `git checkout pre-v2.2-phaseA` returns the
 repo to the last v2.1 state.
 
+## Pre-push checklist — run these BEFORE `git push`
+
+GitHub Actions CI (`.github/workflows/ci.yml`) enforces **ruff
+`0.15.10`** for lint and format, plus `pytest tests/ -k "not
+integration"` across Python 3.10 / 3.11 / 3.12. New or edited files
+that pass pytest locally can still fail CI on a single missed
+`ruff format` pass — this has happened twice in the v2.2 release
+history. Run the full sequence locally before every push:
+
+```bash
+# 1. Lint — autofix what ruff can, review the rest
+ruff check --fix scripts/ tests/
+
+# 2. Format — must match CI's `ruff format --check` exactly
+ruff format scripts/ tests/
+
+# 3. Verify both gates are green (what CI actually runs)
+ruff check scripts/ tests/          # must say "All checks passed!"
+ruff format --check scripts/ tests/  # must say "N files already formatted"
+
+# 4. Full test suite (CI runs without the integration marker)
+python -m pytest tests/ -q
+```
+
+Every edit that touches `scripts/` or `tests/` — including a small
+one-line assertion change, a new regression test, or a generated
+file — goes through this sequence. Committing a file without running
+`ruff format` on it is the single most common cause of CI red on
+this repo: unit tests pass locally, `ruff check` passes locally, but
+`ruff format --check` fails on CI because the editor-saved formatting
+differs from ruff's canonical output. The four-step sequence above
+eliminates that failure mode.
+
+Special notes:
+
+- **Tests that depend on optional local DBs** (`civic.sqlite3`,
+  `hpo.sqlite3`, etc.) must guard on actual query results, not on
+  `os.path.exists`. CI runners do not provision these DBs and an
+  empty/stub file can trip `os.path.exists` while queries return
+  nothing — see the v2.2 fix in `tests/test_rare_disease.py` and
+  `tests/test_case_briefing.py` for the pattern.
+- **Consequence-form normalization** — the real pipeline stores
+  `variant.consequence` as a BIKO-formatted short label
+  (`"Missense"`, not `"missense_variant"`) via
+  `scripts/intake/parse_annotation.py::format_consequence`. Any new
+  code that filters on VEP SO terms must either call the
+  `_canonicalize_so_term` / `_canonical_consequence` helpers or
+  include both forms in its frozenset, or it will be silent dead
+  code on real data while still passing unit tests that use raw SO
+  terms in fixtures. This bit us in v2.2 A3/B1; see commit
+  `564f5da`.
+
 ## Things to never do
 
 - Do **not** put the classification or tiering engine behind an LLM
@@ -146,3 +198,7 @@ repo to the last v2.1 state.
   B4 lands.
 - Do **not** use `--no-verify` on commits or push directly to
   `origin/main` from agent workflows.
+- Do **not** `git push` without running the Pre-push checklist
+  (above) first. `ruff format` missed on a single edited file is
+  the #1 cause of CI red on this repo — cheaper to run the local
+  commands than to chase a CI failure notification.
