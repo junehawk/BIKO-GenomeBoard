@@ -97,6 +97,24 @@ clinical_board:
   temperature: 0.1
   clinical_note_max_chars: 1500
 
+  # Variant selector — see scripts/clinical_board/variant_selector.py and
+  # _workspace/variant-selector/00_clinical_review.md for the clinical rationale.
+  variant_selection:
+    max_cancer_board_variants: 30          # soft cap — MUST items never truncated
+    max_cancer_may_include: 10             # per-class cap on Tier III VUS admissions
+    max_rare_disease_board_variants: 20    # soft cap — P/LP never truncated
+    max_rare_disease_may_include: 10       # per-class cap on HPO-matched VUS
+    # When true, Tier III VUS must satisfy hotspot / OncoKB-oncogenic-in-CGC /
+    # TSG-LoF / indel-hotspot. Per AMP 2017 + clinical review this is the
+    # only supported mode; the "protein-impacting alone" arm is rejected.
+    cancer_vus_requires_driver_gene: true
+    rare_disease_vus_max_gnomad_af: 0.01
+    # Legacy knob — the top-3 fallback is REJECTED by clinical review
+    # (PMID 27993330, 25741868). "No reportable findings" is a legitimate
+    # clinical outcome; the selector always emits an empty list with an
+    # explicit empty_reason instead of fabricating a top-K.
+    fallback_when_empty: false
+
 knowledge_base:
   enabled: true
   path: "data/knowledge_base"

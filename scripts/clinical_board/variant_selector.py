@@ -192,13 +192,13 @@ def _select_cancer(
     max_total = int(
         overrides.get(
             "max_cancer_board_variants",
-            get("clinical_board.selector.max_cancer_board_variants", 30),
+            get("clinical_board.variant_selection.max_cancer_board_variants", 30),
         )
     )
     max_may = int(
         overrides.get(
             "max_cancer_may_include",
-            get("clinical_board.selector.max_cancer_may_include", 10),
+            get("clinical_board.variant_selection.max_cancer_may_include", 10),
         )
     )
 
@@ -312,19 +312,19 @@ def _select_rare_disease(
     max_total = int(
         overrides.get(
             "max_rare_disease_board_variants",
-            get("clinical_board.selector.max_rare_disease_board_variants", 20),
+            get("clinical_board.variant_selection.max_rare_disease_board_variants", 20),
         )
     )
     max_may = int(
         overrides.get(
             "max_rare_disease_may_include",
-            get("clinical_board.selector.max_rare_disease_may_include", 10),
+            get("clinical_board.variant_selection.max_rare_disease_may_include", 10),
         )
     )
     max_af = float(
         overrides.get(
             "rare_disease_vus_max_gnomad_af",
-            get("clinical_board.selector.rare_disease_vus_max_gnomad_af", 0.01),
+            get("clinical_board.variant_selection.rare_disease_vus_max_gnomad_af", 0.01),
         )
     )
 

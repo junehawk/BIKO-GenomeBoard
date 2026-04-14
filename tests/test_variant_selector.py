@@ -558,6 +558,43 @@ def test_config_overrides():
     assert meta["n_dropped"] == 3
 
 
+def test_reads_config_overrides(monkeypatch):
+    """Config keys under clinical_board.variant_selection propagate to the selector."""
+    from scripts.clinical_board import variant_selector as vs
+
+    calls: list[tuple] = []
+
+    def _fake_get(key, default=None):
+        calls.append((key, default))
+        if key == "clinical_board.variant_selection.max_cancer_may_include":
+            return 3
+        if key == "clinical_board.variant_selection.max_cancer_board_variants":
+            return 30
+        return default
+
+    monkeypatch.setattr(vs, "get", _fake_get)
+
+    variants = [
+        _mk_snv(
+            f"GENE{i}",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp=f"p.Arg{100+i}Lys",
+        )
+        for i in range(8)
+    ]
+    hotspots = {(f"GENE{i}", 100 + i) for i in range(8)}
+    with _patch_clinical(hotspot_positions=hotspots):
+        selected, meta = vs.select_board_variants(variants, mode="cancer")
+
+    may = [v for v in selected if v["selection_reason"] == "VUS_hotspot"]
+    assert len(may) == 3  # cap from fake config
+    assert meta["n_dropped"] == 5
+    # At least one call asked for the relevant config key
+    keys_asked = {c[0] for c in calls}
+    assert "clinical_board.variant_selection.max_cancer_may_include" in keys_asked
+
+
 def test_fallback_top3_NOT_implemented():
     from scripts.clinical_board.variant_selector import select_board_variants
 
