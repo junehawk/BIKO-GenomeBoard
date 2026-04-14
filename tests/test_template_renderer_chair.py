@@ -87,11 +87,7 @@ def test_fallback_headline_does_not_imply_recommended_therapies():
     of recommended treatments."""
     from scripts.clinical_board.template_renderer_chair import render_from_curated
 
-    curated = {
-        "12:25:C:T": [
-            _stub_row(f"Drug{i}", "12:25:C:T", f"cid-{i}", "A") for i in range(50)
-        ]
-    }
+    curated = {"12:25:C:T": [_stub_row(f"Drug{i}", "12:25:C:T", f"cid-{i}", "A") for i in range(50)]}
     opinion = render_from_curated(curated)
 
     # Forbidden phrasing from the pre-fix headline
@@ -109,7 +105,10 @@ def test_fallback_headline_does_not_imply_recommended_therapies():
 
     # Evidence field must also carry the disclaimer
     assert "not" in opinion.therapeutic_evidence.lower()
-    assert "research reference" in opinion.therapeutic_evidence.lower() or "evidence" in opinion.therapeutic_evidence.lower()
+    assert (
+        "research reference" in opinion.therapeutic_evidence.lower()
+        or "evidence" in opinion.therapeutic_evidence.lower()
+    )
 
 
 def test_fallback_empty_curated_has_no_matched_messaging():
