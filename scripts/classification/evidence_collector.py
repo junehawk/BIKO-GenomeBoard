@@ -83,6 +83,36 @@ def _pm1_hotspot_match(gene: Optional[str], protein_position: Optional[int]) -> 
     return best
 
 # ── Consequence groups ────────────────────────────────────────────────────────
+#
+# Inverse of scripts/intake/parse_annotation.py::format_consequence mapping.
+# Real pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
+# variant dict, but evidence_collector's tests use the raw VEP SO term. Both
+# must resolve to the same internal canonical form.
+_FORMATTED_TO_SO = {
+    "missense": "missense_variant",
+    "nonsense": "stop_gained",
+    "nonsense / stop gain": "stop_gained",
+    "frameshift": "frameshift_variant",
+    "splice donor": "splice_donor_variant",
+    "splice acceptor": "splice_acceptor_variant",
+    "in-frame deletion": "inframe_deletion",
+    "in-frame insertion": "inframe_insertion",
+    "synonymous": "synonymous_variant",
+    "start loss": "start_lost",
+    "stop loss": "stop_lost",
+    "intronic": "intron_variant",
+}
+
+
+def _canonicalize_so_term(raw: str) -> str:
+    """Return the canonical VEP SO term for either a raw SO term or a
+    BIKO-formatted label. Lowercased input is compared against the inverse
+    map first; unknown terms pass through unchanged."""
+    if not raw:
+        return ""
+    key = raw.strip().lower()
+    return _FORMATTED_TO_SO.get(key, key)
+
 
 NULL_CONSEQUENCES = frozenset({
     "stop_gained",
@@ -115,8 +145,8 @@ def _get_consequence(variant: Variant) -> Optional[str]:
         return None
     raw = variant.consequence.strip().lower()
     if "&" in raw:
-        return raw.split("&")[0]
-    return raw
+        raw = raw.split("&")[0]
+    return _canonicalize_so_term(raw)
 
 
 def _is_null(consequence: str) -> bool:

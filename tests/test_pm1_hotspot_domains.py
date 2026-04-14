@@ -56,6 +56,30 @@ def test_kras_a146t_fires_pm1_supporting():
     assert "PM1" not in codes
 
 
+def test_pm1_fires_with_biko_formatted_consequence_label():
+    """v2.2 regression — real pipeline stores consequence as the BIKO-formatted
+    short label (e.g. "Missense") via scripts/intake/parse_annotation.py::
+    format_consequence, not the raw VEP SO term. ``_get_consequence`` must
+    canonicalise both forms or PM1 silently never fires on real data.
+
+    This is the root cause of TP53 R249M staying VUS with empty acmg_codes
+    in the post-Phase-B showcase regeneration even though A3 was meant to
+    fix it.
+    """
+    variant = Variant(
+        chrom="17",
+        pos=7674217,
+        ref="C",
+        alt="A",
+        gene="TP53",
+        consequence="Missense",  # BIKO formatted form, not SO term
+        hgvsp="ENSP00000269305.4:p.Arg249Met",
+    )
+    variant.domains = ""
+    codes = collect_additional_evidence(variant)
+    assert "PM1" in codes
+
+
 def test_existing_domain_path_still_fires_pm1():
     """Regression: the legacy VEP DOMAINS-based path still works."""
     variant = _missense("FOOBAR", "p.Val100Leu", domains="PFAM:PF00001")

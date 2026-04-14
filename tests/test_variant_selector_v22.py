@@ -116,6 +116,46 @@ def test_kras_g12d_missense_tier3_admitted():
     assert selected[0]["selection_reason"] == "Tier_III_hotspot"
 
 
+def test_gate_accepts_biko_formatted_consequence_labels():
+    """v2.2 regression — the real pipeline stores consequence as the
+    BIKO-formatted short label (e.g. "Missense") via
+    scripts/intake/parse_annotation.py::format_consequence, not the raw VEP
+    SO term. The B1 gate and downstream reason detection must match both
+    forms or every Tier III MAY-arm VUS silently disappears from the Board.
+
+    Root cause of the v2.2 post-Phase-B showcase regression — TP53 R249M
+    was dropped from the real-VCF run because consequence="Missense"
+    failed set membership against {"missense_variant", ...}.
+    """
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "KRAS",
+            classification="VUS",
+            tier="Tier III",
+            hgvsp="p.Gly12Asp",
+            consequence="Missense",  # BIKO formatted form, not SO term
+        ),
+        _mk_snv(
+            "TP53",
+            classification="VUS",
+            tier="Tier II",
+            hgvsp="ENSP00000269305.4:p.Arg249Met",
+            consequence="Missense",
+        ),
+    ]
+    with _patch_clinical(
+        hotspot_positions={("KRAS", 12), ("TP53", 249)},
+    ):
+        selected, meta = select_board_variants(variants, mode="cancer")
+
+    genes = {v["gene"] for v in selected}
+    assert "KRAS" in genes
+    assert "TP53" in genes
+    assert meta["selected"] == 2
+
+
 def test_deep_intronic_clinvar_p_passes():
     """A deep-intronic ClinVar-Pathogenic splice variant MUST still be
     admitted via the unconditional P_LP bypass — the gate applies only

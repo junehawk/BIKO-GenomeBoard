@@ -72,6 +72,38 @@ _PROTEIN_IMPACTING_CONSEQUENCES = frozenset({
     "inframe_deletion",
 })
 
+# Inverse of scripts/intake/parse_annotation.py::format_consequence. The real
+# pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
+# variant dict, but the selector's gate is expressed in raw VEP SO terms. Both
+# forms must resolve to the same membership check or Tier III MAY-arm variants
+# silently disappear from the cancer board.
+_FORMATTED_TO_SO = {
+    "missense": "missense_variant",
+    "nonsense": "stop_gained",
+    "nonsense / stop gain": "stop_gained",
+    "frameshift": "frameshift_variant",
+    "splice donor": "splice_donor_variant",
+    "splice acceptor": "splice_acceptor_variant",
+    "in-frame deletion": "inframe_deletion",
+    "in-frame insertion": "inframe_insertion",
+    "synonymous": "synonymous_variant",
+    "start loss": "start_lost",
+    "stop loss": "stop_lost",
+    "intronic": "intron_variant",
+    "splice region": "splice_region_variant",
+}
+
+
+def _canonical_consequence(raw: str) -> str:
+    """Return canonical VEP SO term for either a raw term or a BIKO-formatted
+    label. Unknown terms pass through unchanged."""
+    if not raw:
+        return ""
+    key = raw.strip().lower()
+    if "&" in key:
+        key = key.split("&", 1)[0].strip()
+    return _FORMATTED_TO_SO.get(key, key)
+
 # v2.2 B1: splice-region / synonymous variants are rescued (admitted) only when
 # SpliceAI delta_max >= 0.2, per Tavtigian et al. 2023 PP3-moderate threshold.
 _SPLICE_RESCUE_CONSEQUENCES = frozenset({
@@ -126,7 +158,7 @@ def _passes_consequence_gate(v: dict) -> bool:
     The ``P_LP`` must-reason branch bypasses this gate unconditionally
     (deep-intronic ClinVar-Pathogenic splice variants must still pass).
     """
-    consequence = (v.get("consequence") or "").strip()
+    consequence = _canonical_consequence(v.get("consequence") or "")
     if consequence in _PROTEIN_IMPACTING_CONSEQUENCES:
         return True
     if consequence in _SPLICE_RESCUE_CONSEQUENCES:
@@ -332,7 +364,7 @@ def _cancer_may_reason(v: dict) -> Optional[str]:
         return None
 
     gene = v.get("gene", "")
-    consequence = v.get("consequence", "") or ""
+    consequence = _canonical_consequence(v.get("consequence", "") or "")
     pos = extract_protein_position(v.get("hgvsp", "") or "")
     hotspot_hit = bool(gene) and pos is not None and is_hotspot(gene, pos)
 
@@ -429,7 +461,7 @@ def _select_rare_disease(
             except (TypeError, ValueError):
                 pass  # unparseable AF → treat as unknown (pass)
 
-        consequence = v.get("consequence", "") or ""
+        consequence = _canonical_consequence(v.get("consequence", "") or "")
         if consequence not in _PROTEIN_IMPACTING_CONSEQUENCES:
             excluded += 1
             continue
