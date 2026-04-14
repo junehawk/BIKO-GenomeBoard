@@ -1,0 +1,410 @@
+# AI Clinical Board v2 — Design Spec
+
+**Date:** 2026-04-14
+**Status:** Approved
+**Baseline:** v0.5.0 (tag)
+
+---
+
+## 1. Overview
+
+AI Clinical Board v2는 v0.5.0의 AI Board를 4개 축으로 개선한다:
+
+1. **Grounded Prompting** — 에이전트별 도메인 특화 컨텍스트 주입 + 모드별 에이전트 역할 분리
+2. **임상 노트 입력** — 자유 텍스트 임상 정보를 옵셔널 입력으로 수용
+3. **지식 베이스** — Board 판단 이력 축적 및 재활용 (하이브리드 Wiki + SQLite)
+
+### 핵심 원칙
+
+- **온프레미스 전용**: 외부 API 호출 없음. 모든 데이터는 로컬 DB에서 조회.
+- **결정적 분류 불변**: ACMG/AMP 분류 엔진은 AI Board에 의해 변경되지 않음.
+- **Hallucination 최소화**: LLM에게 "추론"을 시키지 않고 "정리"를 시킴. 사실 근거를 프롬프트에 주입.
+- **일관성 우선**: 동일 변이 + 동일 맥락 → 동일 결과를 목표.
+
+---
+
+## 2. Phase 1: Grounded Prompting + 모드별 에이전트 분리
+
+### 2.1 에이전트 구성 — 모드별 분리
+
+| 슬롯 | Rare Disease 모드 | Cancer 모드 |
+|------|------------------|-------------|
+| Agent 1 | Variant Pathologist (단백질 기능 영향) | Therapeutic Target Analyst (druggable target, resistance mutation) |
+| Agent 2 | Disease Geneticist (변이-질환 연관, 감별진단) | Tumor Genomics Specialist (driver vs passenger, clonal 의미) |
+| Agent 3 | PGx Specialist (약물 대사, 동일) | PGx Specialist (항암제 대사 포함) |
+| Agent 4 | Literature Analyst (임상 근거 종합) | Clinical Evidence Analyst (치료 반응, 가이드라인 참조) |
+| Chair | Board Chair — 진단 종합 | Board Chair — 치료 전략 종합 |
+
+### 2.2 프롬프트 구조 변경
+
+**현재 (v0.5.0):**
+```
+[System Prompt] + [공통 브리핑 ~3K tokens]
+→ 모든 에이전트가 동일한 입력
+```
+
+**v2:**
+```
+[System Prompt] + [공통 브리핑 ~2K tokens] + [Domain Sheet (모델 한계까지)]
+→ 에이전트별로 다른 도메인 데이터
+```
+
+### 2.3 도메인 시트 — Rare Disease 모드
+
+| 에이전트 | Domain Sheet 내용 |
+|---------|-------------------|
+| Variant Pathologist | ClinVar full entry (significance, review status, condition), protein domain annotation, in silico 상세 점수 + 판정 근거, SIFT/PolyPhen raw scores |
+| Disease Geneticist | OMIM genemap 전체 phenotype 목록 + inheritance pattern, GeneReviews 질환 설명 텍스트, HPO 매칭 상세 (gene-phenotype 연관 목록), Orphanet 유병률 |
+| PGx Specialist | CPIC 가이드라인 텍스트 (drug-gene 권고사항), Korean vs Western prevalence 상세, star allele 해석 |
+| Literature Analyst | CIViC evidence 전문 (drug, evidence level, direction, PMID), GeneReviews NBK/PMID 목록, ClinGen validity classification + date |
+
+### 2.4 도메인 시트 — Cancer 모드
+
+| 에이전트 | Domain Sheet 내용 |
+|---------|-------------------|
+| Therapeutic Target Analyst | ClinVar full entry, protein domain annotation, in silico 상세, CIViC variant-level drug evidence (drug, level, direction) |
+| Tumor Genomics Specialist | OncoKB gene info (level, cancer type), CIViC gene summary, TMB/MSI 데이터, cancer hotspot 정보 |
+| PGx Specialist | CPIC 가이드라인 (항암제 포함), Korean vs Western prevalence, star allele 해석 |
+| Clinical Evidence Analyst | CIViC evidence 전문 (drug, evidence level, PMID), NCCN 스타일 치료 가이드라인 텍스트 (지식 베이스에서 로드) |
+
+### 2.5 Cancer Board Chair 출력 스키마
+
+v0.5.0 `BoardOpinion` (진단 중심)과 별도로 `CancerBoardOpinion` (치료 중심)을 추가:
+
+```python
+@dataclass
+class CancerBoardOpinion:
+    therapeutic_implications: str          # 치료적 함의 (primary_diagnosis 대체)
+    therapeutic_evidence: str              # 근거 요약
+    treatment_options: List[dict]          # [{drug, evidence_level, line, PMID, notes}]
+    actionable_findings: List[str]         # 치료에 영향을 미치는 소견
+    clinical_actions: List[str]            # 구체적 임상 조치
+    immunotherapy_eligibility: str         # TMB/MSI 기반 면역치료 적합성
+    agent_opinions: List[AgentOpinion]
+    agent_consensus: str
+    dissenting_opinions: List[str]
+    monitoring_plan: List[str]             # 반응 모니터링 계획
+    confidence: str
+    disclaimer: str
+```
+
+Rare Disease 모드의 `BoardOpinion`은 현재 구조 유지.
+
+### 2.6 Temperature 변경
+
+모든 에이전트 temperature: 0.3 → **0.1** (일관성 강화).
+
+### 2.7 구현 대상 파일
+
+**신규:**
+- `scripts/clinical_board/domain_sheets.py` — 에이전트별 + 모드별 도메인 시트 빌더
+- `scripts/clinical_board/agents/therapeutic_target.py` — Cancer Agent 1
+- `scripts/clinical_board/agents/tumor_genomics.py` — Cancer Agent 2
+- `scripts/clinical_board/agents/clinical_evidence.py` — Cancer Agent 4
+
+**수정:**
+- `scripts/clinical_board/agents/base.py` — `_build_prompt()`에 domain_sheet 파라미터 추가
+- `scripts/clinical_board/agents/board_chair.py` — 모드별 프롬프트 + 출력 스키마 분기
+- `scripts/clinical_board/models.py` — `CancerBoardOpinion` 추가
+- `scripts/clinical_board/runner.py` — 모드에 따라 에이전트 셋 선택
+- `scripts/clinical_board/render.py` — CancerBoardOpinion 렌더링 (치료 중심 레이아웃)
+- `scripts/clinical_board/ollama_client.py` — generate() default temperature 0.1로 변경
+- `templates/cancer/report.html` — 치료 중심 AI Board 섹션
+
+---
+
+## 3. Phase 2: 임상 노트 입력
+
+### 3.1 CLI 인터페이스
+
+```bash
+# 직접 텍스트
+python scripts/orchestrate.py sample.vcf --clinical-note "55세 남성, 대장암 3기, FOLFOX 후 재발"
+
+# 파일 경로
+python scripts/orchestrate.py sample.vcf --clinical-note-file clinical_history.txt
+
+# HPO와 함께 (둘 다 옵셔널, 독립적)
+python scripts/orchestrate.py patient.vcf --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 \
+  --clinical-note "6세 여아, 18개월부터 발달지연, 최근 경련 시작"
+```
+
+### 3.2 데이터 흐름
+
+```
+CLI 입력 (--clinical-note / --clinical-note-file)
+  → orchestrate.py: report_data["clinical_note"]에 저장
+  → case_briefing.py: 공통 브리핑에 == CLINICAL CONTEXT == 섹션 추가
+  → 모든 에이전트가 공통 브리핑을 통해 임상 맥락 참조
+  → 리포트 HTML에는 원문 포함하지 않음 (개인정보 보호)
+```
+
+### 3.3 제약 사항
+
+- 임상 노트는 AI Board 에이전트의 **입력으로만** 사용. 결정적 분류 엔진에 영향 없음.
+- 리포트에 원문 미포함 (로컬 처리이므로 외부 전송은 없지만 출력물에 환자 정보 잔류 방지).
+- 최대 1500자. 초과 시 트리밍 + 경고 로그.
+- 한글/영문 모두 가능. 에이전트 프롬프트에 "Clinical note may be in Korean; interpret accordingly" 안내.
+- 출력 언어는 `--board-lang` 설정을 따름 (입력 언어와 무관).
+
+### 3.4 구현 대상 파일
+
+**수정:**
+- `scripts/orchestrate.py` — `--clinical-note`, `--clinical-note-file` argparse 추가
+- `scripts/clinical_board/case_briefing.py` — `_build_clinical_note_section()` 추가
+- `scripts/clinical_board/agents/base.py` — 프롬프트에 multilingual note 안내 추가
+
+---
+
+## 4. Phase 3: 지식 베이스 (하이브리드 Wiki + SQLite)
+
+### 4.1 디렉토리 구조
+
+```
+data/knowledge_base/
+├── kb.sqlite3                      ← 구조화 데이터 (판단 이력, 통계, 검색)
+├── index.md                        ← 전체 Wiki 인덱스 (자동 관리)
+├── log.md                          ← 케이스 처리 이력 (append-only)
+│
+├── cancer/
+│   ├── genes/                      ← flat, 유전자별 종합 해석
+│   │   ├── TP53.md
+│   │   ├── BRCA2.md
+│   │   └── ...
+│   └── treatments/                 ← 암종별 치료 가이드라인 (사전 구축)
+│       ├── colorectal_cancer.md
+│       ├── lung_cancer_nsclc.md
+│       ├── breast_cancer.md
+│       └── ...
+│
+└── rare-disease/
+    ├── genes/                      ← flat, 유전자별 종합 해석
+    │   ├── TP53.md
+    │   ├── CFTR.md
+    │   └── ...
+    └── diagnoses/                  ← 질환별 변이-진단 패턴
+        ├── li_fraumeni.md
+        ├── cystic_fibrosis.md
+        └── ...
+```
+
+### 4.2 SQLite 스키마 (`kb.sqlite3`)
+
+```sql
+CREATE TABLE board_decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sample_id TEXT NOT NULL,
+    mode TEXT NOT NULL,                        -- 'cancer' | 'rare-disease'
+    date TEXT NOT NULL,                        -- ISO 8601
+    gene TEXT NOT NULL,
+    variant TEXT NOT NULL,                     -- chr:pos:ref:alt
+    hgvsc TEXT,
+    hgvsp TEXT,
+    classification TEXT,                       -- ACMG classification
+    board_diagnosis TEXT,                      -- Board의 primary diagnosis / therapeutic implication
+    board_confidence TEXT,                     -- high / moderate / low
+    clinical_context_summary TEXT,             -- 임상 노트 요약 (원문 아님, 50자 이내)
+    agent_consensus TEXT,                      -- unanimous / majority / split
+    raw_opinion_json TEXT                      -- BoardOpinion / CancerBoardOpinion 전체 직렬화
+);
+
+CREATE INDEX idx_bd_variant ON board_decisions(gene, variant, mode);
+CREATE INDEX idx_bd_gene ON board_decisions(gene, mode);
+CREATE INDEX idx_bd_date ON board_decisions(date);
+
+-- 변이별 집계 뷰
+CREATE VIEW variant_stats AS
+SELECT
+    gene, variant, mode,
+    COUNT(*) as total_cases,
+    SUM(CASE WHEN board_confidence = 'high' THEN 1 ELSE 0 END) as high_confidence_count,
+    GROUP_CONCAT(DISTINCT board_diagnosis) as diagnoses_seen,
+    MAX(date) as last_seen
+FROM board_decisions
+GROUP BY gene, variant, mode;
+```
+
+### 4.3 Wiki 페이지 관리
+
+Wiki 페이지는 **LLM이 생성/편집하지 않음**. 코드가 SQLite 데이터를 기반으로 마크다운을 자동 생성한다.
+
+```
+Board 실행 완료
+  → SQLite에 board_decisions INSERT (변이별 1행씩)
+  → 해당 유전자의 .md 파일을 코드가 재생성:
+     - 유전자 기본 정보
+     - 해당 유전자 변이들의 판단 이력 테이블 (상위 10개)
+     - 맥락별 해석 패턴 요약
+  → log.md에 케이스 append
+  → index.md 업데이트
+```
+
+이점:
+- Wiki 내용이 항상 SQLite와 동기화 (single source of truth = SQLite)
+- LLM hallucination으로 Wiki가 오염될 위험 없음
+- 사람이 .md 파일을 직접 읽고 검토 가능
+
+### 4.4 새 케이스 분석 시 활용 흐름
+
+```
+새 케이스 (TP53 R175H 포함, cancer 모드)
+  → kb_query.py: SQLite에서 variant_stats 조회
+     "cancer 모드에서 4건 분석됨: 3건 somatic driver (high), 1건 resistance (moderate)"
+  → 해당 유전자 Wiki 페이지 로드 (있으면)
+  → 에이전트 Domain Sheet에 "== PRIOR BOARD KNOWLEDGE ==" 섹션 추가:
+     "이전 4건에서 이 변이를 분석함:
+      - Somatic driver, platinum sensitivity (3건, high confidence)
+      - Resistance mutation context (1건, moderate confidence)
+      현재 케이스의 맥락을 고려하여 판단하시오."
+  → 에이전트가 prior knowledge를 참고하여 일관된 분석
+```
+
+### 4.5 판단 충돌 처리
+
+모든 판단을 보존한다. 충돌 시:
+
+```
+variants/TP53_R175H (SQLite 기록):
+
+| 케이스 | 날짜 | 판단 | Confidence | 맥락 |
+|--------|------|------|-----------|------|
+| S001 | 2026-04-14 | Somatic driver | high | 65세 남성, 폐암 |
+| S015 | 2026-04-20 | Li-Fraumeni | high | 30대 여성, 가족력 |
+
+→ Prior knowledge로 주입 시:
+  "이전 판단에서 맥락에 따라 해석이 달랐음:
+   - Somatic + 노년 → driver mutation
+   - Germline + 가족력 → Li-Fraumeni
+   현재 맥락에 적합한 해석을 제시하시오."
+```
+
+cancer/rare-disease 모드별로 분리 검색하므로, 위 예시처럼 모드가 다른 판단이 섞이는 경우는 드물다. 같은 모드 내에서의 충돌만 prior knowledge에 표시.
+
+### 4.6 Cancer treatments/ 초기 데이터
+
+NCCN 스타일 가이드라인 요약을 사전 구축한다. 공개 가이드라인 및 CIViC 데이터 기반.
+
+초기 대상 (주요 암종 10개):
+- Colorectal cancer
+- Non-small cell lung cancer
+- Breast cancer
+- Prostate cancer
+- Melanoma
+- Renal cell carcinoma
+- Hepatocellular carcinoma
+- Pancreatic cancer
+- Gastric cancer
+- Ovarian cancer
+
+각 파일은 주요 치료 라인, 표적 유전자/변이, 약물, evidence level을 포함.
+
+### 4.7 구현 대상 파일
+
+**신규:**
+- `scripts/clinical_board/knowledge_base.py` — KB 매니저 (SQLite CRUD + Wiki 자동 생성)
+- `scripts/clinical_board/kb_query.py` — 새 케이스용 prior knowledge 검색
+- `scripts/db/build_kb_db.py` — SQLite 스키마 초기화
+- `data/knowledge_base/cancer/treatments/*.md` — 주요 암종 10개 초기 가이드라인
+- `data/knowledge_base/rare-disease/diagnoses/*.md` — 주요 희귀질환 초기 데이터 (선택)
+
+**수정:**
+- `scripts/clinical_board/runner.py` — 실행 전 KB 조회, 실행 후 KB 저장
+- `scripts/clinical_board/domain_sheets.py` — prior knowledge를 Domain Sheet에 포함
+- `config.yaml` — `knowledge_base.enabled`, `knowledge_base.path` 추가
+- `.gitignore` — `data/knowledge_base/kb.sqlite3` 추가 (생성 데이터)
+
+---
+
+## 5. 전체 데이터 흐름
+
+```
+입력: VCF + (HPO) + (임상 노트)
+  │
+  ▼
+파이프라인: 분류 엔진 (결정적, 변경 없음)
+  │
+  ▼
+AI Board 실행 전:
+  ├── KB에서 prior knowledge 검색 (SQLite 쿼리 → Wiki 로드)
+  ├── 로컬 DB에서 에이전트별 도메인 시트 빌드
+  └── 공통 브리핑 생성 (케이스 개요 + 임상 노트)
+  │
+  ▼
+AI Board 실행:
+  ├── 모드별 에이전트 4명 순차 실행 (temperature 0.1)
+  │   각 에이전트: [System Prompt] + [Core Briefing] + [Domain Sheet] + [Prior Knowledge]
+  └── Board Chair 종합 (모드별 다른 출력 스키마)
+  │
+  ▼
+AI Board 실행 후:
+  ├── SQLite에 변이별 판단 이력 저장
+  ├── Wiki 페이지 자동 재생성 (해당 유전자)
+  ├── log.md append
+  └── 리포트에 Board Opinion 렌더링
+```
+
+---
+
+## 6. 구현 순서
+
+| 순서 | 작업 | 의존성 |
+|------|------|--------|
+| 1 | `domain_sheets.py` — Rare Disease 도메인 시트 빌더 | 없음 |
+| 2 | `base.py` 수정 — domain_sheet 파라미터, temperature 0.1 | 1 |
+| 3 | Cancer 에이전트 3개 신규 작성 | 2 |
+| 4 | `board_chair.py` 모드별 분기 + `CancerBoardOpinion` | 3 |
+| 5 | `runner.py` 모드별 에이전트 셋 선택 | 4 |
+| 6 | `domain_sheets.py` — Cancer 도메인 시트 빌더 | 5 |
+| 7 | `render.py` — CancerBoardOpinion 렌더링 | 4 |
+| 8 | 임상 노트 입력 (orchestrate.py + case_briefing.py) | 2 |
+| 9 | KB SQLite 스키마 + knowledge_base.py | 없음 |
+| 10 | KB 저장 (runner.py 수정) | 9 |
+| 11 | KB 조회 + domain_sheets.py 통합 | 9, 6 |
+| 12 | treatments/ 초기 가이드라인 데이터 구축 | 9 |
+| 13 | Wiki 자동 생성 로직 | 9 |
+| 14 | 테스트 작성 (전 Phase) | 전체 |
+| 15 | 통합 테스트 + 쇼케이스 리포트 재생성 | 14 |
+
+---
+
+## 7. 테스트 전략
+
+- **도메인 시트 빌더**: mock DB 데이터 → 시트 생성 → 토큰 예산 내 확인
+- **Cancer 에이전트**: mock Ollama → JSON 출력 스키마 검증
+- **CancerBoardOpinion**: 필드 검증, 렌더링 HTML 확인
+- **임상 노트**: 길이 트리밍, 한글/영문 입력, 파일 입력
+- **지식 베이스**: SQLite CRUD, variant_stats 뷰, Wiki 생성, prior knowledge 검색
+- **통합**: 실제 MedGemma로 end-to-end 실행 (Ollama 가용 시)
+
+---
+
+## 8. Config 변경
+
+```yaml
+clinical_board:
+  enabled: false
+  ollama_url: "http://localhost:11434"
+  agent_model: "alibayram/medgemma:27b"
+  chair_model: "alibayram/medgemma:27b"
+  timeout: 300
+  max_retries: 1
+  language: "en"
+  include_in_report: true
+  temperature: 0.1                          # 신규: 기본 temperature
+
+knowledge_base:
+  enabled: true                             # 신규
+  path: "data/knowledge_base"               # 신규
+  prior_knowledge_max_tokens: 1000          # 신규: prior knowledge 토큰 예산
+```
+
+---
+
+## 9. 범위 외 (Not in Scope)
+
+- Vector DB / 임베딩 기반 검색 — 정확 매칭으로 충분
+- PubMed API 연동 — 온프레미스 원칙 위반
+- 임상 노트에서 HPO 자동 추출 — 정확도 이슈, 분류 엔진 영향
+- LLM이 Wiki를 직접 편집 — hallucination 위험
+- MSI 분석 — 별도 데이터 소스 필요 (향후)
