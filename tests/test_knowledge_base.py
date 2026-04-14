@@ -190,3 +190,103 @@ def test_update_index_lists_gene_wikis(tmp_path):
     assert index.exists()
     text = index.read_text(encoding="utf-8")
     assert "EGFR" in text
+
+
+# ---------------------------------------------------------------------------
+# Task 12 — Prior knowledge query
+# ---------------------------------------------------------------------------
+
+
+def test_query_prior_knowledge_found(tmp_path):
+    """Prior knowledge returns formatted text for known variants."""
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
+    from scripts.clinical_board.kb_query import query_prior_knowledge
+
+    db_path = tmp_path / "kb.sqlite3"
+    build_kb_db(str(db_path))
+    kb = KnowledgeBase(str(db_path), str(tmp_path))
+    kb.save_decision(
+        sample_id="S001",
+        mode="cancer",
+        gene="EGFR",
+        variant="chr7:55259515:T:G",
+        board_diagnosis="TKI sensitive",
+        board_confidence="high",
+        agent_consensus="unanimous",
+    )
+    result = query_prior_knowledge(
+        str(db_path), ["chr7:55259515:T:G"], "cancer"
+    )
+    assert "PRIOR BOARD KNOWLEDGE" in result
+    assert "TKI sensitive" in result
+    assert "참고 자료" in result or "reference only" in result.lower()
+
+
+def test_query_prior_knowledge_empty_kb(tmp_path):
+    """Empty KB returns empty string."""
+    from scripts.clinical_board.kb_query import query_prior_knowledge
+
+    db_path = tmp_path / "kb.sqlite3"
+    build_kb_db(str(db_path))
+    result = query_prior_knowledge(
+        str(db_path), ["chr7:55259515:T:G"], "cancer"
+    )
+    assert result == ""
+
+
+def test_query_prior_knowledge_no_db():
+    """Missing DB file returns empty string (no crash)."""
+    from scripts.clinical_board.kb_query import query_prior_knowledge
+
+    result = query_prior_knowledge(
+        "/nonexistent/kb.sqlite3", ["chr7:55259515:T:G"], "cancer"
+    )
+    assert result == ""
+
+
+def test_query_prior_knowledge_mode_isolated(tmp_path):
+    """Cancer entries do not leak into rare-disease queries."""
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
+    from scripts.clinical_board.kb_query import query_prior_knowledge
+
+    db_path = tmp_path / "kb.sqlite3"
+    build_kb_db(str(db_path))
+    kb = KnowledgeBase(str(db_path), str(tmp_path))
+    kb.save_decision(
+        sample_id="S001",
+        mode="cancer",
+        gene="EGFR",
+        variant="chr7:55259515:T:G",
+        board_diagnosis="TKI sensitive",
+        board_confidence="high",
+        agent_consensus="unanimous",
+    )
+    result = query_prior_knowledge(
+        str(db_path), ["chr7:55259515:T:G"], "rare-disease"
+    )
+    assert result == ""
+
+
+def test_query_prior_knowledge_truncates(tmp_path):
+    """max_chars truncation is respected."""
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
+    from scripts.clinical_board.kb_query import query_prior_knowledge
+
+    db_path = tmp_path / "kb.sqlite3"
+    build_kb_db(str(db_path))
+    kb = KnowledgeBase(str(db_path), str(tmp_path))
+    variants = [f"chr1:{100 + i}:A:T" for i in range(50)]
+    for idx, v in enumerate(variants):
+        kb.save_decision(
+            sample_id=f"S{idx:03d}",
+            mode="cancer",
+            gene="EGFR",
+            variant=v,
+            board_diagnosis="TKI sensitive with a fairly long description",
+            board_confidence="high",
+            agent_consensus="unanimous",
+        )
+    result = query_prior_knowledge(
+        str(db_path), variants, "cancer", max_chars=500
+    )
+    assert len(result) <= 500
