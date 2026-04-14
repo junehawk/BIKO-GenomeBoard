@@ -140,6 +140,162 @@ def test_cache_key_format(isolated_cache):
     assert key2 == "gnomad:chrX:1000:C:T"
 
 
+# === Namespace cache (v2.2 — A1-db-2) ===
+
+def test_ns_set_and_get(isolated_cache):
+    cache = isolated_cache
+    payload = {"mutationEffect": "Gain-of-function", "highestLevel": "LEVEL_1"}
+    cache.set_cached_ns("oncokb", "BRAF:V600E", payload)
+    result = cache.get_cached_ns("oncokb", "BRAF:V600E")
+    assert result == payload
+
+
+def test_ns_miss_returns_none(isolated_cache):
+    cache = isolated_cache
+    assert cache.get_cached_ns("oncokb", "nonexistent") is None
+
+
+def test_ns_isolation_between_namespaces(isolated_cache):
+    """Same key under different namespaces must not collide."""
+    cache = isolated_cache
+    cache.set_cached_ns("oncokb", "BRAF:V600E", {"src": "oncokb"})
+    cache.set_cached_ns("civic", "BRAF:V600E", {"src": "civic"})
+    assert cache.get_cached_ns("oncokb", "BRAF:V600E") == {"src": "oncokb"}
+    assert cache.get_cached_ns("civic", "BRAF:V600E") == {"src": "civic"}
+
+
+def test_ns_does_not_collide_with_variant_keys(isolated_cache):
+    """Legacy variant-coordinate keys must stay addressable after NS inserts."""
+    cache = isolated_cache
+    cache.set_cached("chr7", 140453136, "A", "T", "clinvar", {"sig": "Pathogenic"})
+    cache.set_cached_ns("oncokb", "BRAF:V600E", {"level": "LEVEL_1"})
+
+    legacy = cache.get_cached("chr7", 140453136, "A", "T", "clinvar")
+    assert legacy is not None
+    assert legacy["sig"] == "Pathogenic"
+
+    ns = cache.get_cached_ns("oncokb", "BRAF:V600E")
+    assert ns == {"level": "LEVEL_1"}
+
+
+def test_ns_empty_inputs(isolated_cache):
+    cache = isolated_cache
+    with pytest.raises(ValueError):
+        cache.set_cached_ns("", "key", {"x": 1})
+    with pytest.raises(ValueError):
+        cache.set_cached_ns("oncokb", "", {"x": 1})
+    assert cache.get_cached_ns("", "key") is None
+    assert cache.get_cached_ns("oncokb", "") is None
+
+
+def test_ns_expired_returns_none(tmp_path):
+    """Namespaced entries honour cache.ttl_seconds."""
+    import scripts.common.cache as cache_mod
+    cache_mod.close()
+    cache_mod._conn = None
+    tmp_db = str(tmp_path / "ns_expired.sqlite3")
+
+    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
+        "cache.path": tmp_db,
+        "cache.ttl_seconds": 604800,
+    }.get(key, default)):
+        cache_mod._conn = None
+        cache_mod.set_cached_ns("oncokb", "BRAF:V600E", {"v": 1})
+
+    cache_mod.close()
+    cache_mod._conn = None
+
+    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
+        "cache.path": tmp_db,
+        "cache.ttl_seconds": 0,
+    }.get(key, default)):
+        cache_mod._conn = None
+        assert cache_mod.get_cached_ns("oncokb", "BRAF:V600E") is None
+
+    cache_mod.close()
+    cache_mod._conn = None
+
+
+def test_ns_stats_include_namespaces(isolated_cache):
+    cache = isolated_cache
+    cache.set_cached_ns("oncokb", "k1", {"v": 1})
+    cache.set_cached_ns("oncokb", "k2", {"v": 2})
+    cache.set_cached_ns("civic", "k3", {"v": 3})
+    cache.set_cached("chr1", 100, "A", "T", "clinvar", {"v": 4})
+
+    stats = cache.cache_stats()
+    assert stats["total"] == 4
+    assert stats["by_namespace"]["oncokb"] == 2
+    assert stats["by_namespace"]["civic"] == 1
+    assert stats["by_namespace"]["clinvar"] == 1
+
+
+def test_namespace_migration_preserves_existing_rows(tmp_path):
+    """Pre-v2.2 cache DBs (no namespace column) must survive migration
+    without losing clinvar/gnomad rows. Simulates a legacy cache file."""
+    import sqlite3
+    import time as t
+    tmp_db = str(tmp_path / "legacy_cache.sqlite3")
+
+    # Create a legacy cache schema (no namespace column)
+    conn = sqlite3.connect(tmp_db)
+    conn.execute("""
+        CREATE TABLE cache (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            source TEXT NOT NULL,
+            created_at REAL NOT NULL
+        )
+    """)
+    conn.execute(
+        "INSERT INTO cache (key, value, source, created_at) VALUES (?, ?, ?, ?)",
+        ("clinvar:chr17:7577120:G:A", '{"sig":"Pathogenic"}', "clinvar", t.time()),
+    )
+    conn.execute(
+        "INSERT INTO cache (key, value, source, created_at) VALUES (?, ?, ?, ?)",
+        ("gnomad:chr7:140453136:A:T", '{"af":0.001}', "gnomad", t.time()),
+    )
+    conn.commit()
+    conn.close()
+
+    # Point cache module at the legacy DB and open it — should migrate in-place.
+    import scripts.common.cache as cache_mod
+    cache_mod.close()
+    cache_mod._conn = None
+
+    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
+        "cache.path": tmp_db,
+        "cache.ttl_seconds": 604800,
+    }.get(key, default)):
+        cache_mod._conn = None
+
+        # Existing clinvar/gnomad rows must still be readable.
+        clinvar_row = cache_mod.get_cached("chr17", 7577120, "G", "A", "clinvar")
+        assert clinvar_row is not None and clinvar_row["sig"] == "Pathogenic"
+
+        gnomad_row = cache_mod.get_cached("chr7", 140453136, "A", "T", "gnomad")
+        assert gnomad_row is not None and gnomad_row["af"] == 0.001
+
+        # Namespace column must now exist and carry the source label forward.
+        conn2 = cache_mod._get_connection()
+        cols = {row[1] for row in conn2.execute("PRAGMA table_info(cache)").fetchall()}
+        assert "namespace" in cols
+
+        rows = list(conn2.execute("SELECT key, namespace FROM cache ORDER BY key"))
+        assert ("clinvar:chr17:7577120:G:A", "clinvar") in rows
+        assert ("gnomad:chr7:140453136:A:T", "gnomad") in rows
+
+        # Idempotency — reopening does not break or duplicate.
+        cache_mod.close()
+        cache_mod._conn = None
+        conn3 = cache_mod._get_connection()
+        total = conn3.execute("SELECT COUNT(*) FROM cache").fetchone()[0]
+        assert total == 2
+
+    cache_mod.close()
+    cache_mod._conn = None
+
+
 def test_clinvar_uses_cache(tmp_path, mocker):
     """Second call to query_clinvar should hit cache and not call the API."""
     import scripts.common.cache as cache_mod

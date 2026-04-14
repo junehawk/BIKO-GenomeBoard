@@ -87,6 +87,12 @@ cache:
 
 clinical_board:
   enabled: false
+  # v2.2 curated treatments (OncoKB + CIViC curator)
+  curated_treatments:
+    oncokb_base_url: "https://www.oncokb.org/api/v1"
+    http_timeout_s: 5.0
+    offline_mode: false        # when true, skip OncoKB API → CIViC-only degradation
+    cache_namespace: "oncokb"  # stored in variant_cache.sqlite3 via set_cached_ns/get_cached_ns
   ollama_url: "http://localhost:11434"
   agent_model: "alibayram/medgemma:27b"
   chair_model: "alibayram/medgemma:27b"

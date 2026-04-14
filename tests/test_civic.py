@@ -70,6 +70,45 @@ def test_build_civic_db_metadata(civic_db):
     assert int(meta["variant_count"]) > 100
 
 
+def test_evidence_has_therapy_ids_column(civic_db):
+    """v2.2 A1-db-4: evidence table carries a therapy_ids column used as
+    the primary merge key against OncoKB. Drug-name string match is fallback
+    only, so this column must exist on every fresh build."""
+    conn = sqlite3.connect(civic_db)
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(evidence)").fetchall()}
+    conn.close()
+    assert "therapy_ids" in cols, (
+        "CIViC evidence table is missing therapy_ids column — "
+        "OncoKB/CIViC merge key will fall back to fragile string matching"
+    )
+
+
+def test_civic_therapy_ids_migration_is_idempotent(tmp_path):
+    """Rebuilding on top of an existing civic.sqlite3 must not drop data
+    and the second invocation must leave therapy_ids in place."""
+    from scripts.db.build_civic_db import build_db
+
+    db_path = str(tmp_path / "civic_idempotent.sqlite3")
+    build_db(civic_dir=CIVIC_DIR, db_path=db_path)
+
+    conn = sqlite3.connect(db_path)
+    first_count = conn.execute("SELECT COUNT(*) FROM evidence").fetchone()[0]
+    cols_before = {r[1] for r in conn.execute("PRAGMA table_info(evidence)").fetchall()}
+    conn.close()
+    assert "therapy_ids" in cols_before
+    assert first_count > 0
+
+    # Rebuild in place — should not error, and therapy_ids must still exist.
+    build_db(civic_dir=CIVIC_DIR, db_path=db_path)
+
+    conn = sqlite3.connect(db_path)
+    second_count = conn.execute("SELECT COUNT(*) FROM evidence").fetchone()[0]
+    cols_after = {r[1] for r in conn.execute("PRAGMA table_info(evidence)").fetchall()}
+    conn.close()
+    assert "therapy_ids" in cols_after
+    assert second_count == first_count
+
+
 # ── Query tests ───────────────────────────────────────────────────────────────
 
 

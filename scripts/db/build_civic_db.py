@@ -86,6 +86,7 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
         variant TEXT,
         disease TEXT,
         therapies TEXT,
+        therapy_ids TEXT,
         evidence_type TEXT,
         evidence_direction TEXT,
         evidence_level TEXT,
@@ -98,6 +99,19 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
         variant_origin TEXT,
         molecular_profile TEXT
     )""")
+    # Idempotent migration path for pre-v2.2 databases: add therapy_ids if absent.
+    existing_evidence_cols = {row[1] for row in conn.execute("PRAGMA table_info(evidence)")}
+    if "therapy_ids" not in existing_evidence_cols:
+        conn.execute("ALTER TABLE evidence ADD COLUMN therapy_ids TEXT")
+
+    def _extract_therapy_ids(raw_row: dict) -> str:
+        """CIViC's ClinicalEvidenceSummaries.tsv exposes therapy identifiers
+        under one of several historical column names; try each, comma-joined."""
+        for col in ("therapy_ids", "therapy_id", "drug_ids", "drug_id"):
+            val = raw_row.get(col)
+            if val:
+                return val
+        return ""
 
     evidence_file = Path(civic_dir) / "ClinicalEvidenceSummaries.tsv"
     if evidence_file.exists():
@@ -110,24 +124,33 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
                 gene = mp.split()[0] if mp else ""
                 variant = " ".join(mp.split()[1:]) if len(mp.split()) > 1 else mp
 
-                conn.execute("INSERT OR REPLACE INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
-                    row.get("evidence_id"),
-                    gene,
-                    variant,
-                    row.get("disease", ""),
-                    row.get("therapies", ""),
-                    row.get("evidence_type", ""),
-                    row.get("evidence_direction", ""),
-                    row.get("evidence_level", ""),
-                    row.get("significance", ""),
-                    row.get("evidence_statement", ""),
-                    row.get("citation_id", ""),
-                    row.get("citation", ""),
-                    row.get("nct_ids", ""),
-                    int(row["rating"]) if row.get("rating") and row["rating"].isdigit() else None,
-                    row.get("variant_origin", ""),
-                    mp,
-                ))
+                conn.execute(
+                    "INSERT OR REPLACE INTO evidence "
+                    "(evidence_id, gene, variant, disease, therapies, therapy_ids, "
+                    "evidence_type, evidence_direction, evidence_level, significance, "
+                    "evidence_statement, citation_id, citation, nct_ids, rating, "
+                    "variant_origin, molecular_profile) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                    (
+                        row.get("evidence_id"),
+                        gene,
+                        variant,
+                        row.get("disease", ""),
+                        row.get("therapies", ""),
+                        _extract_therapy_ids(row),
+                        row.get("evidence_type", ""),
+                        row.get("evidence_direction", ""),
+                        row.get("evidence_level", ""),
+                        row.get("significance", ""),
+                        row.get("evidence_statement", ""),
+                        row.get("citation_id", ""),
+                        row.get("citation", ""),
+                        row.get("nct_ids", ""),
+                        int(row["rating"]) if row.get("rating") and row["rating"].isdigit() else None,
+                        row.get("variant_origin", ""),
+                        mp,
+                    ),
+                )
 
     # === Hotspots table (extracted from variants with single AA substitution) ===
     conn.execute("""CREATE TABLE IF NOT EXISTS hotspots (
