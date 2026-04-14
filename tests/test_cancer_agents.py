@@ -1,7 +1,20 @@
 """Tests for Cancer-mode AI Board agents and models."""
 import json
+from unittest.mock import MagicMock
 
 from scripts.clinical_board.models import BoardOpinion, CancerBoardOpinion
+
+
+def _mock_client():
+    client = MagicMock()
+    client.generate_json.return_value = {
+        "findings": [{"finding": "test", "evidence": "test", "confidence": "high"}],
+        "recommendations": ["test"],
+        "concerns": [],
+        "references": [],
+        "confidence": "high",
+    }
+    return client
 
 
 def test_cancer_board_opinion_fields():
@@ -48,3 +61,45 @@ def test_unified_disclaimer_english():
     assert "AI-Generated" in board.disclaimer
     assert "Google MedGemma" in board.disclaimer
     assert board.disclaimer == cancer.disclaimer
+
+
+# ---------------------------------------------------------------------------
+# Cancer agent properties (Task 5)
+# ---------------------------------------------------------------------------
+
+
+def test_therapeutic_target_analyst_properties():
+    from scripts.clinical_board.agents.therapeutic_target import TherapeuticTargetAnalyst
+
+    agent = TherapeuticTargetAnalyst(client=_mock_client())
+    assert agent.agent_name == "Therapeutic Target Analyst"
+    assert agent.domain == "therapeutic_target"
+    assert (
+        "druggable" in agent.system_prompt.lower()
+        or "drug" in agent.system_prompt.lower()
+    )
+
+
+def test_tumor_genomics_specialist_properties():
+    from scripts.clinical_board.agents.tumor_genomics import TumorGenomicsSpecialist
+
+    agent = TumorGenomicsSpecialist(client=_mock_client())
+    assert agent.agent_name == "Tumor Genomics Specialist"
+    assert agent.domain == "tumor_genomics"
+
+
+def test_clinical_evidence_analyst_properties():
+    from scripts.clinical_board.agents.clinical_evidence import ClinicalEvidenceAnalyst
+
+    agent = ClinicalEvidenceAnalyst(client=_mock_client())
+    assert agent.agent_name == "Clinical Evidence Analyst"
+    assert agent.domain == "clinical_evidence"
+
+
+def test_cancer_agent_analyze_returns_opinion():
+    from scripts.clinical_board.agents.therapeutic_target import TherapeuticTargetAnalyst
+
+    agent = TherapeuticTargetAnalyst(client=_mock_client())
+    opinion = agent.analyze("test briefing")
+    assert opinion.agent_name == "Therapeutic Target Analyst"
+    assert opinion.confidence == "high"
