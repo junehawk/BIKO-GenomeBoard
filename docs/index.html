@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIKO GenomeBoard — 한국인 맞춤형 유전체 변이 해석 파이프라인</title>
+<meta name="description" content="한국인 집단 빈도 기반 유전체 변이 해석 파이프라인. ACMG/AMP 결정적 분류 + 로컬 MedGemma AI Clinical Board. 100% 오프라인, 연구 참고용.">
+<style>
+  :root {
+    --biko-green: #00754A;
+    --biko-green-dark: #005C3A;
+    --biko-green-light: #E8F5EF;
+    --navy: #1E293B;
+    --teal: #0D9488;
+    --amber: #D97706;
+    --blue: #1D4ED8;
+    --gray: #64748B;
+    --light: #F8FAFC;
+    --border: #E2E8F0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Pretendard Variable", "Noto Sans KR", sans-serif;
+    color: var(--navy);
+    background: #fff;
+    line-height: 1.7;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1040px; margin: 0 auto; padding: 48px 32px; }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--biko-green-dark) 0%, var(--biko-green) 45%, #2D8B5E 100%);
+    color: #fff;
+    padding: 72px 32px 64px;
+    text-align: center;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--biko-green), #2D8B5E, var(--teal));
+  }
+  .hero h1 { font-size: 44px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
+  .hero .subtitle {
+    font-size: 18px; color: rgba(255,255,255,0.88); font-weight: 400;
+    max-width: 680px; margin: 0 auto 28px;
+  }
+  .hero .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hero .badge {
+    display: inline-block; background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 20px; padding: 5px 16px; font-size: 13px; font-weight: 600;
+    color: rgba(255,255,255,0.95);
+  }
+  .hero .lang-switch {
+    position: absolute; top: 24px; right: 32px;
+    font-size: 13px; color: rgba(255,255,255,0.85);
+  }
+  .hero .lang-switch a {
+    color: rgba(255,255,255,0.75); text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.4);
+    padding-bottom: 1px;
+  }
+  .hero .lang-switch a:hover { color: #fff; border-bottom-color: #fff; }
+
+  /* ── Section header ── */
+  .section { margin: 64px 0; }
+  .section-title {
+    font-size: 24px; font-weight: 700; color: var(--navy);
+    border-left: 4px solid var(--biko-green); padding-left: 16px; margin-bottom: 12px;
+  }
+  .section-desc { color: var(--gray); margin-bottom: 28px; font-size: 15.5px; max-width: 760px; }
+
+  /* ── Disclaimer callout ── */
+  .callout {
+    background: #FEF3C7; border: 1px solid #FBBF24; border-left: 4px solid #D97706;
+    border-radius: 10px; padding: 20px 24px; margin: 32px 0;
+    font-size: 14.5px; color: #78350F;
+  }
+  .callout strong { color: #78350F; }
+
+  /* ── Showcase cards ── */
+  .showcase-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+  }
+  .show-card {
+    background: #fff; border: 1px solid var(--border); border-radius: 14px;
+    padding: 28px 26px; text-decoration: none; color: inherit;
+    transition: all 0.2s ease; display: flex; flex-direction: column; gap: 6px;
+    min-height: 220px;
+  }
+  .show-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(0, 117, 74, 0.12);
+    border-color: var(--biko-green);
+  }
+  .show-card .icon { font-size: 36px; margin-bottom: 10px; }
+  .show-card h3 {
+    font-size: 18px; font-weight: 700; color: var(--navy); margin-bottom: 4px;
+  }
+  .show-card p {
+    font-size: 13.5px; color: var(--gray); line-height: 1.6; flex: 1;
+  }
+  .show-card .tag {
+    display: inline-block; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 12px; margin-top: 10px;
+    align-self: flex-start;
+  }
+  .tag-intro { background: var(--biko-green-light); color: var(--biko-green-dark); }
+  .tag-cancer { background: #FEF2F2; color: #991B1B; }
+  .tag-rare { background: #EFF6FF; color: #1E40AF; }
+
+  /* ── Overview 3-col ── */
+  .overview-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px;
+    margin-top: 20px;
+  }
+  .overview-box {
+    padding: 24px; border-radius: 12px;
+  }
+  .overview-box.deterministic { background: #ECFDF5; border: 1px solid #A7D7BE; }
+  .overview-box.llm { background: #FFF7ED; border: 1px solid #FDBA74; }
+  .overview-box.korean { background: #EFF6FF; border: 1px solid #93C5FD; }
+  .overview-box h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+  .overview-box.deterministic h4 { color: #065F46; }
+  .overview-box.llm h4 { color: #9A3412; }
+  .overview-box.korean h4 { color: #1E3A8A; }
+  .overview-box p { font-size: 13.5px; color: #334155; line-height: 1.65; }
+
+  /* ── Docs link row ── */
+  .docs-row {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 20px;
+  }
+  .docs-link {
+    text-decoration: none;
+    background: var(--light); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 20px;
+    color: var(--navy); font-weight: 600; font-size: 14px;
+    transition: all 0.2s;
+  }
+  .docs-link:hover {
+    background: var(--biko-green-light); border-color: var(--biko-green);
+    color: var(--biko-green-dark);
+  }
+  .docs-link .arrow { color: var(--biko-green); margin-left: 6px; }
+
+  /* ── CTA ── */
+  .cta {
+    background: linear-gradient(135deg, var(--biko-green-light), #F0FDF8);
+    border: 1px solid #A7D7BE; border-radius: 14px;
+    padding: 40px 32px; text-align: center; margin: 56px 0;
+  }
+  .cta h3 { font-size: 20px; color: var(--biko-green-dark); margin-bottom: 8px; }
+  .cta p { color: #475569; font-size: 15px; margin-bottom: 20px; }
+  .cta .btn {
+    display: inline-block; background: var(--biko-green); color: #fff;
+    padding: 12px 28px; border-radius: 8px; text-decoration: none;
+    font-weight: 600; font-size: 14px; transition: all 0.2s;
+  }
+  .cta .btn:hover { background: var(--biko-green-dark); transform: translateY(-1px); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; padding: 40px 0 24px; color: var(--gray); font-size: 13px;
+    border-top: 2px solid var(--border); margin-top: 48px;
+  }
+  .footer a { color: var(--biko-green); text-decoration: none; font-weight: 600; }
+  .footer a:hover { text-decoration: underline; }
+  .footer .small { font-size: 11px; color: #94A3B8; margin-top: 10px; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 32px; }
+    .hero .subtitle { font-size: 15px; }
+    .overview-grid { grid-template-columns: 1fr; }
+    .container { padding: 32px 20px; }
+    .section { margin: 48px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== Hero ========== -->
+<div class="hero">
+  <div class="lang-switch">
+    한국어 · <a href="https://github.com/junehawk/BIKO-GenomeBoard/blob/main/README.en.md">English README</a>
+  </div>
+  <h1>BIKO GenomeBoard</h1>
+  <p class="subtitle">
+    한국인 집단 빈도 기반 유전체 변이 해석 파이프라인 —
+    ACMG/AMP 결정적 분류와 로컬 MedGemma AI Clinical Board로,
+    병원 내에서 완전히 오프라인으로 동작합니다.
+  </p>
+  <div class="badges">
+    <span class="badge">Python 3.10+</span>
+    <span class="badge">901 Tests</span>
+    <span class="badge">100% Offline</span>
+    <span class="badge">Research Use Only</span>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ========== Disclaimer ========== -->
+<div class="callout">
+  ⚠️ <strong>연구 참고용 문서</strong> — BIKO GenomeBoard는 임상 참고 자료를 생성하며,
+  <strong>임상 의사결정 도구가 아닙니다.</strong>
+  모든 해석은 반드시 자격을 갖춘 임상의의 검토를 거쳐야 합니다.
+</div>
+
+<!-- ========== 개요 ========== -->
+<div class="section">
+  <h2 class="section-title">한눈에 보기</h2>
+  <p class="section-desc">
+    이미 주석된 VCF 파일(VEP/ANNOVAR)을 입력으로 받아 한국인 환자에게 최적화된
+    임상 리포트를 자동으로 생성합니다. 의사가 다음 환자로 넘어가기 전 15분 안에
+    훑어볼 수 있도록 디자인되었습니다.
+  </p>
+
+  <div class="overview-grid">
+    <div class="overview-box deterministic">
+      <h4>🧬 결정적 분류</h4>
+      <p>
+        ACMG/AMP 2015(희귀질환), AMP/ASCO/CAP 2017(암) 모두
+        <strong>LLM 없는 순수 Python 규칙 엔진</strong>으로 수행됩니다.
+        같은 입력 → 같은 출력이 보장됩니다.
+      </p>
+    </div>
+    <div class="overview-box llm">
+      <h4>🤖 큐레이션 후 설명</h4>
+      <p>
+        치료 근거는 <strong>OncoKB + 로컬 CIViC</strong>에서 결정적으로 수집된 후에만
+        로컬 MedGemma가 설명합니다. LLM이 목록에 없는 약물을 제안하는 것은
+        구조적으로 불가능합니다.
+      </p>
+    </div>
+    <div class="overview-box korean">
+      <h4>🇰🇷 한국인 빈도</h4>
+      <p>
+        <strong>KRGDB + Korea4K + NARD2</strong>를 gnomAD EAS/ALL과 함께 5-tier로 비교해
+        한국인 환자에 맞는 BA1/BS1/PM2 판정과 Korean enrichment를 산출합니다.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Sample Reports ========== -->
+<div class="section">
+  <h2 class="section-title">샘플 리포트</h2>
+  <p class="section-desc">
+    출력물이 어떤 느낌인지 먼저 확인해보세요. 각 리포트는 실제 파이프라인이
+    생성한 HTML 그대로이며, 클릭하면 전체 내용을 볼 수 있습니다.
+  </p>
+
+  <div class="showcase-grid">
+    <a href="showcase/BIKO_GenomeBoard_소개.html" class="show-card">
+      <div class="icon">📖</div>
+      <h3>프로젝트 소개</h3>
+      <p>파이프라인 전체 기능을 한 문서에서 설명합니다 — ACMG 엔진, Curate-then-narrate,
+        AI Clinical Board, 로컬 DB, CLI 사용법, 기술 스택까지.</p>
+      <span class="tag tag-intro">개요 · 한국어</span>
+    </a>
+
+    <a href="showcase/sample_cancer_report.html" class="show-card">
+      <div class="icon">🧪</div>
+      <h3>Cancer — 합성 데모</h3>
+      <p>5개 변이로 구성된 합성 VCF(MLH1/MSH2/BRCA2 등)에서 PGx + TMB + 치료 큐레이션이
+        어떻게 나오는지 보여줍니다. 쉬운 entry point.</p>
+      <span class="tag tag-cancer">암 · 소규모</span>
+    </a>
+
+    <a href="showcase/sample_codegen_777_report.html" class="show-card">
+      <div class="icon">🔬</div>
+      <h3>Cancer — 실제 WGS (777 변이)</h3>
+      <p>실제 codegen WGS에서 777개 원시 변이가 3개 Board-presented 변이(KRAS G12D,
+        TP53 R249M, RELN)로 선별되는 전체 과정.</p>
+      <span class="tag tag-cancer">암 · 실제 WGS</span>
+    </a>
+
+    <a href="showcase/sample_rare_disease_report.html" class="show-card">
+      <div class="icon">🧭</div>
+      <h3>Rare Disease — HPO 기반</h3>
+      <p>5개 변이 + 3개 HPO 표현형(Seizure, Developmental delay, Neoplasm)으로
+        HPO 랭킹 + OMIM 유전패턴 + ClinGen 유효성 평가가 결합된 희귀질환 리포트.</p>
+      <span class="tag tag-rare">희귀질환</span>
+    </a>
+  </div>
+</div>
+
+<!-- ========== Docs ========== -->
+<div class="section">
+  <h2 class="section-title">더 자세히</h2>
+  <p class="section-desc">
+    설치, 사용법, 아키텍처 문서는 GitHub repository에서 확인하실 수 있습니다.
+  </p>
+  <div class="docs-row">
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard" class="docs-link">
+      GitHub Repository <span class="arrow">→</span>
+    </a>
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard/blob/main/README.md" class="docs-link">
+      README (한국어) <span class="arrow">→</span>
+    </a>
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard/blob/main/README.en.md" class="docs-link">
+      README (English) <span class="arrow">→</span>
+    </a>
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard/blob/main/docs/SETUP.md" class="docs-link">
+      Setup Guide <span class="arrow">→</span>
+    </a>
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard/blob/main/docs/ARCHITECTURE.md" class="docs-link">
+      Architecture <span class="arrow">→</span>
+    </a>
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard/blob/main/docs/TIERING_PRINCIPLES.md" class="docs-link">
+      Tiering Principles <span class="arrow">→</span>
+    </a>
+  </div>
+</div>
+
+<!-- ========== CTA ========== -->
+<div class="cta">
+  <h3>직접 실행해보기</h3>
+  <p>
+    Python 3.10+ · 로컬 데이터베이스 셋업 스크립트 제공 · Ollama 선택 사항
+  </p>
+  <a href="https://github.com/junehawk/BIKO-GenomeBoard#설치" class="btn">
+    Installation Guide →
+  </a>
+</div>
+
+</div><!-- /container -->
+
+<!-- ========== Footer ========== -->
+<div class="footer">
+  <p>
+    <strong>BIKO GenomeBoard</strong> — Korean Population-Aware Genomic Variant Interpretation Platform
+  </p>
+  <p style="margin-top:6px;">
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard">GitHub</a> ·
+    <a href="https://github.com/junehawk/BIKO-GenomeBoard/releases">Releases</a> ·
+    MIT License
+  </p>
+  <p class="small">
+    AI Clinical Board powered by
+    <a href="https://deepmind.google/models/gemma/medgemma/" style="color:#94A3B8;">Google MedGemma</a>
+    under <a href="https://ai.google.dev/gemma/terms" style="color:#94A3B8;">Gemma Terms of Use</a>.
+    Research use only.
+  </p>
+</div>
+
+</body>
+</html>
