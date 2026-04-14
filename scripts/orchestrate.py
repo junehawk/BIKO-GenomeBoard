@@ -55,6 +55,21 @@ def _progress(msg: str) -> None:
     print(msg, file=sys.stderr, flush=True)
 
 
+def _format_board_summary(board_opinion) -> str:
+    """Format a one-line Clinical Board summary, branching on opinion type."""
+    from scripts.clinical_board.models import CancerBoardOpinion
+
+    if isinstance(board_opinion, CancerBoardOpinion):
+        return (
+            f"  → Therapeutic implications: {board_opinion.therapeutic_implications} "
+            f"({board_opinion.confidence} confidence)"
+        )
+    return (
+        f"  → Primary diagnosis: {board_opinion.primary_diagnosis} "
+        f"({board_opinion.confidence} confidence)"
+    )
+
+
 def run_pipeline(
     vcf_path: str,
     output_path: str = "output/report.html",
@@ -268,8 +283,7 @@ def run_pipeline(
             if board_opinion:
                 report_data["clinical_board"] = board_opinion
                 report_data["clinical_board_html"] = render_board_opinion_html(board_opinion, language=board_lang or get("clinical_board.language", "en"))
-                _progress(f"  → Primary diagnosis: {board_opinion.primary_diagnosis} "
-                         f"({board_opinion.confidence} confidence)")
+                _progress(_format_board_summary(board_opinion))
             else:
                 _progress("  → Clinical Board skipped (Ollama not available)")
         except Exception as e:

@@ -165,6 +165,36 @@ def test_render_board_opinion_backward_compatible():
     assert "Li-Fraumeni" in html
 
 
+def test_orchestrate_format_board_summary_cancer():
+    """orchestrate._format_board_summary handles CancerBoardOpinion without AttributeError."""
+    from scripts.orchestrate import _format_board_summary
+
+    cancer = CancerBoardOpinion(
+        therapeutic_implications="EGFR L858R — TKI sensitive",
+        therapeutic_evidence="CIViC Level A",
+        treatment_options=[],
+        actionable_findings=[],
+        clinical_actions=[],
+        immunotherapy_eligibility="",
+        confidence="moderate",
+    )
+    line = _format_board_summary(cancer)
+    assert "Therapeutic implications" in line
+    assert "EGFR L858R" in line
+    assert "moderate" in line
+
+
+def test_orchestrate_format_board_summary_rare_disease():
+    """orchestrate._format_board_summary handles BoardOpinion (rare-disease)."""
+    from scripts.orchestrate import _format_board_summary
+
+    rd = BoardOpinion(primary_diagnosis="Li-Fraumeni", confidence="high")
+    line = _format_board_summary(rd)
+    assert "Primary diagnosis" in line
+    assert "Li-Fraumeni" in line
+    assert "high" in line
+
+
 def test_board_chair_rare_disease_mode_default():
     """Board Chair defaults to rare-disease mode (backward compatible)."""
     from scripts.clinical_board.agents.board_chair import BoardChair
