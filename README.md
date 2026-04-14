@@ -1,259 +1,237 @@
+**언어:** 한국어 | [English](README.en.md)
+
 # BIKO GenomeBoard
 
-Korean Population-Aware Genomic Variant Interpretation Platform
+**한국인 집단 데이터 기반 유전체 변이 해석 플랫폼**
 
-> **Research reference only** — BIKO GenomeBoard produces research reference documents for clinicians to consult. It is not a clinical decision instrument and is not intended to make treatment recommendations.
+![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![Tests](https://img.shields.io/badge/tests-901%20passed-brightgreen) ![Offline](https://img.shields.io/badge/offline-100%25-success) ![Research Use Only](https://img.shields.io/badge/research--use--only-important)
 
----
-
-## v2.2 Highlights (2026-04-14)
-
-Patient-safety hot-fix release closing four clinical-credibility gaps surfaced by the FoundationOne CDx head-to-head audit:
-
-- **Curate-then-narrate (A1/A2)** — Treatment Options are now deterministically curated from OncoKB + local CIViC. The Board Chair LLM may only *narrate* curated rows. A `narrative_scrubber` drops any drug mention outside the curated set, a `template_renderer_chair` deterministic fallback fires when the LLM cannot produce valid `(curated_id, variant_key)` pairs, and futibatinib-as-KRAS-inhibitor-style hallucinations are structurally impossible.
-- **PM1 hotspot table (A3)** — `data/pm1_hotspot_domains.json` lets the ACMG engine fire PM1 via a curated gene/residue lookup (TP53, KRAS, NRAS, BRAF, PIK3CA, EGFR, IDH1/2, …) even when VEP `DOMAINS` is empty. Every entry cites a PMID.
-- **ClinVar conflict reconciliation (A4)** — `apply_hotspot_conflict_reconciliation` at the post-classify seam emits `clinvar_override_reason` when the engine independently reaches LP, ClinVar is "Conflicting", and PM1 + PM5 both fire. Narrow, auditable, config-gated.
-- **Selector tightening (B1) + MMR/Lynch carve-out (B2)** — Tier III VUS selector now enforces a protein-impacting consequence gate (with P/LP bypass and SpliceAI ≥ 0.2 splice-rescue) and admits all protein-impacting MMR-gene VUS regardless of hotspot status.
-
-Rollback: `git reset --hard pre-v2.2-phaseA` (tag at the pre-Phase-A checkpoint).
-
-Full v2.2 plan: [`docs/superpowers/plans/2026-04-14-ai-board-v2.2.md`](docs/superpowers/plans/2026-04-14-ai-board-v2.2.md)
+> ⚠️ **연구 참고용 문서** — BIKO GenomeBoard는 임상 참고 자료를 생성하며, **임상 의사결정 도구가 아닙니다.** 모든 해석은 반드시 자격을 갖춘 임상의의 검토를 거쳐야 합니다.
 
 ---
 
-## Features
+## 이 프로젝트는 무엇을 하나요?
 
-### Variant Classification
-- **ACMG/AMP 2015** deterministic rule engine (germline)
-- **AMP/ASCO/CAP 2017** somatic tiering (Tier 1–4) with OncoKB + CIViC
-- **ClinGen SVI 2022** in silico thresholds (REVEL, CADD, AlphaMissense, SpliceAI → PP3/BP4)
-- Additional ACMG evidence collection (PVS1, PM1, PM4, PM5, PP2, BP1, BP7)
-- InterVar integration for external ACMG evidence
-- ClinVar expert panel / multi-submitter direct override
+이미 주석된 VCF 파일(VEP/ANNOVAR)을 입력으로 받아 **한국인 환자에게 최적화된 임상 리포트**를 자동 생성합니다. 의사가 다음 환자로 넘어가기 전 15분 안에 훑어볼 수 있도록 디자인되었습니다.
 
-### Korean Population Analysis
-- **5-tier frequency comparison**: KRGDB, Korea4K, NARD2, gnomAD EAS, gnomAD ALL
-- 12-gene PGx screening with Korean vs Western prevalence comparison
-- CPIC Level A/B drug-gene interaction recommendations
+BIKO가 해결하려는 문제는 4가지입니다.
 
-### AI Clinical Board (v2.2)
-- Local multi-agent diagnostic synthesis powered by **MedGemma 27B** (Ollama)
-- **Mode-specific agent sets** — rare-disease (Variant Pathologist, Disease Geneticist, PGx Specialist, Literature Analyst) and cancer (Therapeutic Target Analyst, Tumor Genomics Specialist, PGx Specialist, Clinical Evidence Analyst)
-- **Grounded prompting** — per-agent domain sheets inject ClinVar / OncoKB / CIViC / HPO / OMIM / CPIC context instead of free-form reasoning
-- **Curate-then-narrate (v2.2 A1/A2)** — treatment options come from a deterministic OncoKB + local CIViC curator (`scripts/clinical_board/curated_treatments.py`); the LLM may only narrate curated rows by `(curated_id, variant_key)`. A `narrative_scrubber` enforces that no drug outside the curated set appears in the final opinion, and a `template_renderer_chair` deterministic fallback fires when the LLM cannot produce valid curated pairs.
-- **`CancerBoardOpinion`** treatment-focused output schema (therapeutic implications, treatment options with PMID, immunotherapy eligibility, monitoring plan)
-- **Clinical note input** — `--clinical-note` / `--clinical-note-file` feeds free-text history (KR/EN, 1500 char cap) into briefings without altering deterministic classification
-- **Knowledge Base (hybrid SQLite + Wiki)** — prior board decisions stored in `data/knowledge_base/kb.sqlite3`, cross-case variant stats injected as Prior Knowledge (with anti-anchoring guardrail)
-- Bilingual output (English / Korean), temperature 0.1 for consistency
-- Board Chair synthesis with consensus opinion, differential diagnoses (rare) or therapeutic strategy (cancer)
-- Deterministic classification is never altered by AI — AI provides interpretive synthesis only
+1. **WGS/WES 결과가 쏟아지지만 한국인 빈도로 필터링된 결과가 필요**합니다 — gnomAD만으로는 한국인 환자에게 덜 정확합니다. KRGDB·Korea4K·NARD2를 gnomAD EAS/ALL과 함께 비교해야 BA1/BS1/PM2 판정이 임상에 의미 있습니다.
+2. **ACMG/AMP 2015(희귀질환)과 AMP/ASCO/CAP 2017(암) 가이드라인을 일관되게 적용**해야 합니다 — 사람이 매번 코드를 계산하면 reproducibility가 무너집니다.
+3. **치료 근거는 환각 없이 PMID와 함께** 제시되어야 합니다 — LLM이 "KRAS G12D에는 futibatinib이 좋습니다" 같은 엉터리를 절대로 말하면 안 됩니다.
+4. **병원 안에서 모든 게 돌아가야** 합니다 — 환자 VCF를 외부 API에 올리는 건 개인정보 관점에서 허용되지 않습니다.
 
-### Variant Selector (AI Board Input Filter)
-Clinical tiered filter that decides which variants reach the AI Board, implemented per AMP/ASCO/CAP 2017 (PMID 27993330) and ACMG/AMP 2015 (PMID 25741868).
+BIKO는 이 4가지 요구를 **100% 오프라인·온프레미스** 환경에서 충족합니다.
 
-- **MUST-include (cancer)** — ClinVar P/LP, AMP Tier I/II, and Tier III variants at Cancer Hotspots residues or OncoKB oncogenic annotations in COSMIC CGC Tier 1 genes
-- **MUST-include (rare disease)** — ClinVar P/LP, ACMG P/LP, and CNV/SV Class 4–5
-- **MAY-include (cancer VUS)** — Cancer Hotspots residue, OncoKB oncogenic/likely-oncogenic, or truncating LoF in CGC Tier 1 tumor suppressors. Capped at 10.
-- **v2.2 B1 consequence gate** — Tier III VUS selector rejects variants whose primary VEP consequence is non-coding (intronic, UTR, upstream, downstream). `P/LP` must-reason bypasses the gate unconditionally so deep-intronic ClinVar-Pathogenic splice variants still pass. Splice-region / synonymous variants are rescued when SpliceAI `delta_max >= 0.2`.
-- **v2.2 B2 MMR/Lynch carve-out** — protein-impacting VUS in any MMR gene (MLH1, MSH2, MSH6, PMS2, EPCAM) is admitted as `VUS_MMR_Lynch` (priority between `VUS_hotspot` and `VUS_TSG_LoF`), independent of hotspot / TSG / HPO status. The B1 consequence gate still applies — no Lynch exception for intronic variants.
-- **MAY-include (rare disease VUS)** — requires HPO phenotype match above threshold. ACMG SF v3.2 genes are excluded from silent inclusion (opt-in path not yet modeled).
-- **Soft caps** — 30 for cancer, 20 for rare disease; MUST-include items are never truncated. When MAY-include overflows, selector emits `truncated=True` and `n_dropped=<n>` metadata.
-- **No top-k fallback** — when nothing qualifies, the selector emits an empty selection with `empty_reason`, and the report renders "No reportable somatic alterations" / "No candidate variants meeting diagnostic criteria" instead of fabricating low-evidence picks. QC, coverage, TMB, and methodology are still reported.
-- **Audit trail** — every selected variant carries `selection_reason` ∈ {`P/LP`, `Tier_I`, `Tier_II`, `Tier_III_hotspot`, `VUS_hotspot`, `VUS_MMR_Lynch`, `VUS_TSG_LoF`, `VUS_HPO_match`, …}
-- **Pre-analytic filtering caption** — every AI Board HTML section shows "Pre-analytic filtering: N variants → M presented to Board / Criteria: …" so clinicians can see exactly how much the selector pruned.
-- **No-findings placeholder** — empty `AgentOpinion` panels render "No specific findings identified for this case." (EN) / "이 케이스에서 특별한 소견은 확인되지 않았습니다." (KO)
+## 누구를 위한 도구인가요?
 
-### Report Regeneration Tooling
-- **`orchestrate.py`** now dumps `clinical_board` as a dict (asdict) in the run JSON, so reports can be regenerated from cached results
-- **`scripts/rerender_report.py`** — regenerate HTML from the cached orchestrate JSON without re-running Ollama. Useful for template tweaks and showcase rebuilds.
+| 사용자 | 왜 이 도구가 필요한가요? |
+|---|---|
+| **임상 유전학자 / 혈액종양내과** | 이미 주석된 VCF를 곧바로 읽히는 리포트로 |
+| **바이오인포매틱스 연구자** | WGS 파이프라인 뒤에 붙이는 리포트 자동화 계층 |
+| **한국인 코호트 연구자** | KRGDB/Korea4K/NARD2 빈도를 리포트에 직접 반영 |
+| **임상 유전체 교육자** | ACMG evidence code가 어떤 식으로 조합되는지 보여주는 투명한 예시 |
 
-### Cancer Report
-- FoundationOne CDx-style tiered layout
-- OncoKB-based Tier 1–4 with CIViC treatment evidence and PMID citations
-- Tumor Mutational Burden (TMB) — nonsynonymous variants per Mb
-- Cancer hotspot detection (CIViC-derived)
+**재차 강조**: 이 도구는 진단 장비가 아닙니다. 생성된 리포트는 "연구용 참고 자료" 태그와 함께 출력되며, 실제 임상 결정은 반드시 자격을 갖춘 임상의가 내려야 합니다.
 
-### Rare Disease Report
-- HPO phenotype-driven candidate gene ranking
-- OMIM genemap2 gene-disease associations with inheritance patterns (AD/AR/XL/XLD/XLR/MT)
-- ClinGen gene validity scores
-- Orphanet prevalence data
-- GeneReviews cross-references
+## 파이프라인 흐름
 
-### Structural Variants
-- AnnotSV TSV parsing for CNV/SV
-- ACMG CNV 2020 classification display (Class 1–5)
-- Cytoband, size, phenotype annotations
+```mermaid
+flowchart TD
+    A[Annotated VCF<br/>VEP / ANNOVAR] --> B[1 · VCF 파싱<br/>SNV/Indel + CNV/SV]
+    B --> C[2 · 로컬 DB 조회<br/>ClinVar · gnomAD · CIViC<br/>OMIM · HPO · ClinGen]
+    C --> D[3 · 한국인 빈도 비교<br/>KRGDB · Korea4K · NARD2<br/>5-tier + Korean enrichment]
+    D --> E[4 · ACMG Evidence 수집<br/>PVS1 · PM1 · PM5 · PP3/BP4 ...]
+    E --> F[5 · 결정적 분류<br/>ACMG/AMP 2015 · AMP 2017]
+    F --> G{모드}
+    G -->|Cancer| H[Tier I–IV · TMB · PGx]
+    G -->|Rare Disease| I[5단계 · HPO 랭킹 · 유전패턴]
+    H --> J[6 · AI Clinical Board<br/>MedGemma 27B · curate-then-narrate<br/>_optional_]
+    I --> J
+    J --> K[HTML / PDF 리포트]
 
-### Pipeline
-- VEP pre-annotated VCF parsing (CSQ fields including in silico scores)
-- Batch processing with variant deduplication across samples
-- On-premise deployment (Docker) — no external API dependency required
-- 100% offline analysis with local databases
+    style F fill:#e8f5ef,stroke:#00754A,stroke-width:2px
+    style J fill:#fff7ed,stroke:#d97706,stroke-width:2px
+    style K fill:#eff6ff,stroke:#1e40af,stroke-width:2px
+```
 
----
+### 두 가지 핵심 원칙
 
-## Quick Start
+**원칙 1 · 분류는 100% 결정적** — ACMG 분류와 AMP Tier 결정은 LLM을 전혀 사용하지 않는 Python 규칙 엔진으로 동작합니다. 같은 VCF를 몇 번을 돌려도 같은 결과가 나옵니다. 재현성이 핵심입니다.
 
-### 1. Install Dependencies
+**원칙 2 · 치료 근거는 "큐레이션 먼저, 설명은 나중에"** — 치료 옵션은 OncoKB + 로컬 CIViC에서 결정적으로 수집된 후에만 로컬 LLM(MedGemma)이 *설명*할 수 있습니다. 큐레이션된 목록에 없는 약물을 LLM이 제안하는 것은 **구조적으로 불가능**합니다. 스크러버가 자유 문장에서도 허용되지 않은 약물명을 제거합니다.
+
+이 두 원칙 덕분에 LLM 환각은 변이 분류나 치료 추천에 영향을 주지 못합니다. LLM은 "이 근거를 이 환자 맥락에서 이렇게 해석하면 됩니다"라는 *설명*만 담당합니다.
+
+## 주요 기능
+
+### 분석 모드
+
+| 모드 | 가이드라인 | 주요 출력 |
+|---|---|---|
+| **Cancer (체세포)** | AMP/ASCO/CAP 2017 | Tier I–IV + TMB(mut/Mb) + 치료 옵션 + 면역치료 적합성 + PGx |
+| **Rare Disease (생식세포)** | ACMG/AMP 2015 | 5단계 분류(P/LP/VUS/LB/B) + HPO 표현형 랭킹 + 유전패턴(AD/AR/XL) |
+
+### 기능 목록
+
+- **한국인 빈도 5-tier 비교** — KRGDB + Korea4K + NARD2 + gnomAD EAS + gnomAD ALL을 동시에 비교해 BA1/BS1/PM2 판정, Korean enrichment ratio 자동 계산
+- **결정적 ACMG 엔진** — 28개 evidence code, in silico threshold(REVEL/CADD/AlphaMissense/SpliceAI → PP3/BP4), ClinVar expert panel override, PMID 기반 PM1 hotspot 테이블
+- **AMP 2017 Tiering** — CIViC variant-level evidence + OncoKB + Cancer Hotspots + ClinVar Pathogenic
+- **치료 근거 curate-then-narrate** — OncoKB + CIViC로부터 PMID와 함께 결정적으로 큐레이션, LLM은 설명만 담당
+- **TMB 계산** — FoundationOne CDx 방법론, High/Intermediate/Low 자동 분류
+- **CNV/SV 분석** — AnnotSV TSV → ACMG CNV 2020 Class 1–5
+- **HPO 표현형 랭킹** — 329K+ 유전자-표현형 연관, 오프라인 SQLite
+- **AI Clinical Board** — 로컬 MedGemma 27B 기반 다전문가 시스템(4 전문의 + Board Chair), Grounded Prompting, 결정적 분류는 절대 변경하지 않음
+- **PGx 스크리닝** — 12개 유전자, CPIC Level A/B, 한국인 vs 서양인 유병률 비교
+- **변이 선별기** — AI Board에 들어갈 변이를 AMP/ACMG 기준으로 결정적으로 선별(protein-impacting gate, MMR/Lynch carve-out 포함)
+- **100% 오프라인** — 모든 핵심 DB가 로컬, 외부 API 호출은 선택 사항
+- **한국어/영어 리포트**
+- **리포트 재생성 도구** — 캐시된 JSON에서 Ollama 재호출 없이 HTML을 다시 렌더링
+
+### 샘플 리포트 (직접 보기)
+
+출력물이 어떤 느낌인지 먼저 확인하세요:
+
+| 리포트 | 입력 | 특징 |
+|---|---|---|
+| [Cancer — 합성 데모](docs/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + 치료 큐레이션 |
+| [Cancer — 실제 WGS (777 변이)](docs/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 변이 선별, KRAS G12D 드라이버 |
+| [Rare Disease — HPO 기반](docs/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO 표현형 | HPO 랭킹 + OMIM + ClinGen |
+| [프로젝트 소개 (상세)](docs/showcase/BIKO_GenomeBoard_소개.html) | — | 기능 전체 설명 + 기술 스택 |
+
+## 설치
+
+### 1. 의존성 설치
+
 ```bash
+git clone git@github.com:junehawk/BIKO-GenomeBoard.git
+cd BIKO-GenomeBoard
 pip install -r requirements.txt
 ```
 
-### 2. Set Up Databases
+**요구사항**: Python ≥ 3.10, 충분한 디스크 공간(gnomAD VCF 전체 ~700GB, 또는 염색체별 선택).
+
+### 2. 로컬 데이터베이스 빌드
+
 ```bash
-# Downloads and builds all public reference databases
 bash scripts/setup_databases.sh
-
-# For manual downloads (OMIM genemap2, ClinGen), see script output
 ```
 
-### 3. Run Analysis
+이 스크립트는 공공 데이터베이스를 자동으로 내려받고 빌드합니다.
+
+| 자동 설치 | 수동 설치 필요 |
+|---|---|
+| ClinVar · gnomAD · CIViC · HPO · Orphanet · GeneReviews · Korea4K · NARD2 · KRGDB · cancerhotspots | OMIM genemap2 (계정 필요) · ClinGen(웹 내보내기) |
+
+수동 설치 경로는 스크립트 출력에 안내됩니다. 자세한 단계는 [docs/SETUP.md](docs/SETUP.md)를 참조하세요.
+
+### 3. (선택) AI Clinical Board
+
+AI Clinical Board를 사용하려면 [Ollama](https://ollama.com)를 설치하고 MedGemma 27B를 내려받습니다:
+
 ```bash
-# Cancer report (default)
-python scripts/orchestrate.py sample.vcf -o report.html --skip-api --hide-vus
-
-# Rare disease with HPO terms
-python scripts/orchestrate.py patient.vcf --mode rare-disease \
-  --hpo HP:0001250,HP:0001263 -o report.html
-
-# With AI Clinical Board
-python scripts/orchestrate.py sample.vcf --clinical-board --board-lang en -o report.html
-
-# Batch processing
-python scripts/orchestrate.py --batch vcf_dir/ --output-dir reports/ --workers 8
+ollama pull alibayram/medgemma:27b
 ```
+
+Ollama 없이도 **결정적 분류 + 리포트 생성은 정상 동작**합니다. AI Board는 추가 계층일 뿐입니다.
+
+## 사용법
+
+### 가장 기본: 암 모드
+
+```bash
+python scripts/orchestrate.py sample.vcf -o report.html --skip-api
+```
+
+`--skip-api`는 외부 API 호출을 막고 로컬 DB만 사용합니다.
+
+### 희귀질환 모드 + HPO 표현형
+
+```bash
+python scripts/orchestrate.py patient.vcf --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 \
+  -o report.html --skip-api
+```
+
+HPO 표현형은 후보유전자 랭킹에 사용됩니다.
+
+### AI Clinical Board 포함
+
+```bash
+python scripts/orchestrate.py sample.vcf --clinical-board --board-lang ko \
+  -o report.html --skip-api
+```
+
+MedGemma 27B가 다전문가 종합 추론을 수행하고, 치료 옵션은 OncoKB+CIViC에서 큐레이션된 것만 narrate합니다. `--board-lang en`으로 영어 출력도 가능합니다.
+
+### CNV/SV + InterVar 통합
+
+```bash
+python scripts/orchestrate.py sample.vcf \
+  --sv annotsv_output.tsv \
+  --intervar intervar_output.tsv \
+  -o report.html --skip-api
+```
+
+### 배치 처리 (병렬)
+
+```bash
+python scripts/orchestrate.py --batch vcf_dir/ \
+  --output-dir reports/ --workers 8 --skip-api
+```
+
+### 임상 노트 주입
+
+```bash
+python scripts/orchestrate.py sample.vcf --clinical-board \
+  --clinical-note "55세 남성, 이전 흡연력, 우상엽 종괴, 1차 세포독성 화학요법 후 진행" \
+  -o report.html --skip-api
+```
+
+임상 노트는 AI Board 브리핑에만 주입되며, 결정적 분류 엔진에는 영향을 주지 않습니다. 리포트 HTML에는 원문이 포함되지 않습니다(재식별 방지).
 
 ### Docker
+
 ```bash
 docker build -t biko-genomeboard .
-docker run -v ./data/db:/app/data/db -v ./input:/app/input -v ./output:/app/output \
-  biko-genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api --hide-vus
+docker run \
+  -v ./data/db:/app/data/db \
+  -v ./input:/app/input \
+  -v ./output:/app/output \
+  biko-genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api
 ```
 
----
-
-## Data Sources
-
-| Source | Type | Size | Setup |
-|--------|------|------|-------|
-| ClinVar | SQLite (NCBI TSV) | ~1.5 GB | `setup_databases.sh` |
-| gnomAD v4.1 | Tabix VCF (direct query) | ~700 GB | Manual download |
-| CIViC | SQLite (civicdb.org TSV) | ~5 MB | `setup_databases.sh` |
-| HPO | SQLite (gene-phenotype) | ~5 MB | `setup_databases.sh` |
-| OMIM mim2gene | SQLite (MIM mapping) | ~1 MB | `setup_databases.sh` |
-| OMIM genemap2 | SQLite (gene-disease) | ~2 MB | Manual (OMIM account) |
-| Orphanet | SQLite (prevalence XML) | ~2 MB | `setup_databases.sh` |
-| GeneReviews | SQLite (NCBI FTP) | ~1 MB | `setup_databases.sh` |
-| ClinGen | SQLite (gene validity CSV) | ~1 MB | Manual (web export) |
-| KRGDB | TSV (Korean freq) | ~1 MB | Pre-included |
-| Korea4K | TSV (Korean freq) | ~1 MB | Pre-included |
-| NARD2 | TSV (Korean freq) | ~1 MB | Pre-included |
-
----
-
-## Configuration
-
-All settings in `config.yaml`:
-
-| Key | Default | Description |
-|-----|---------|-------------|
-| `annotation.source` | `auto` | `local` / `api` / `auto` |
-| `thresholds.ba1` | `0.05` | Stand-alone benign AF |
-| `thresholds.bs1` | `0.01` | Strong benign AF |
-| `thresholds.pm2` | `0.001` | PM2_Supporting AF cutoff |
-| `in_silico.revel_pp3_strong` | `0.932` | REVEL PP3_Strong threshold |
-| `in_silico.revel_pp3_moderate` | `0.644` | REVEL PP3_Moderate threshold |
-| `in_silico.revel_bp4_strong` | `0.016` | REVEL BP4_Strong threshold |
-| `in_silico.spliceai_pp3_strong` | `0.5` | SpliceAI PP3_Strong threshold |
-| `clinical_board.enabled` | `false` | Enable AI Clinical Board |
-| `clinical_board.agent_model` | `alibayram/medgemma:27b` | Ollama model for specialists |
-| `pgx.genes` | 12 genes | PGx gene list |
-
----
-
-## Project Structure
-
-```
-gb/
-├── scripts/
-│   ├── orchestrate.py              # Main CLI entry point
-│   ├── setup_databases.sh          # Database download & build helper
-│   ├── pipeline/
-│   │   ├── query.py                # Variant database queries
-│   │   ├── classify.py             # Classification & record building
-│   │   └── batch.py                # Batch processing engine
-│   ├── classification/
-│   │   ├── acmg_engine.py          # ACMG/AMP 2015 classifier
-│   │   ├── in_silico.py            # REVEL/CADD/AlphaMissense/SpliceAI → PP3/BP4
-│   │   └── evidence_collector.py   # PVS1, PM1, PM4, PM5, PP2, BP7
-│   ├── clinical/
-│   │   ├── oncokb.py               # OncoKB tiering + hotspot
-│   │   ├── hpo_matcher.py          # HPO phenotype scoring
-│   │   ├── query_omim.py           # OMIM gene-disease lookup
-│   │   └── query_clingen.py        # ClinGen validity
-│   ├── clinical_board/
-│   │   ├── agents/                 # 4 specialists + Board Chair
-│   │   ├── ollama_client.py        # Ollama REST API client
-│   │   ├── case_briefing.py        # Pipeline results → LLM briefing
-│   │   ├── runner.py               # Sequential agent execution
-│   │   └── render.py               # Board opinion → HTML
-│   ├── somatic/
-│   │   └── amp_tiering.py          # AMP/ASCO/CAP 2017 tiering
-│   ├── db/                         # Database builders (build_*.py)
-│   ├── korean_pop/                 # KRGDB, Korea4K, NARD2, gnomAD, freq comparison
-│   ├── pharma/                     # PGx analysis
-│   ├── intake/                     # VCF/AnnotSV/InterVar parsers
-│   ├── counselor/                  # Report generation (Jinja2 → HTML/PDF)
-│   └── common/                     # Config, models, cache
-├── templates/
-│   ├── cancer/report.html          # Cancer report template
-│   └── rare-disease/report.html    # Rare disease report template
-├── data/
-│   ├── sample_vcf/                 # Demo VCF files
-│   └── db/                         # Local databases (built by setup script)
-├── tests/                          # 899 pytest tests
-├── docs/
-│   ├── showcase/                   # Sample reports & intro document
-│   ├── SETUP.md
-│   ├── ARCHITECTURE.md
-│   ├── KOREAN_STRATEGY.md
-│   └── TIERING_PRINCIPLES.md
-├── config.yaml
-├── Dockerfile
-└── requirements.txt
-```
-
----
-
-## Testing
+## 테스트
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest tests/ -v
+python -m pytest tests/ -q
 ```
 
-899 tests covering ACMG classification, in silico PP3/BP4 thresholds, ClinVar override + v2.2 hotspot conflict reconciliation, CIViC integration, OncoKB curator + 401-degradation, PM1 hotspot table lookup, TMB calculation, CNV/SV parsing, HPO matching, Korean frequency comparison, PGx analysis, AI Clinical Board agents (rare-disease + cancer), curate-then-narrate curator, narrative scrubber and template-renderer fallback, variant selector v2.2 B1/B2 consequence gate and MMR Lynch carve-out, knowledge base CRUD, batch deduplication, config validation, and report generation. CI green on ubuntu-latest / Python 3.10, 3.11, 3.12.
+**901+ 테스트**, ubuntu-latest / Python 3.10·3.11·3.12 CI 녹색. ACMG 분류, in silico threshold, ClinVar override, CIViC/OncoKB 통합, TMB, CNV/SV, HPO 매칭, 한국인 빈도 비교, PGx, AI Clinical Board, 변이 선별기, 리포트 생성 모두 커버합니다.
+
+## 문서
+
+| 문서 | 내용 |
+|---|---|
+| [docs/SETUP.md](docs/SETUP.md) | 설치 및 데이터베이스 설정 상세 |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 시스템 아키텍처 및 데이터 흐름 |
+| [docs/KOREAN_STRATEGY.md](docs/KOREAN_STRATEGY.md) | 한국인 인구집단 분석 전략 |
+| [docs/TIERING_PRINCIPLES.md](docs/TIERING_PRINCIPLES.md) | 변이 Tiering 원칙 (Cancer + Rare Disease) |
+| [CLAUDE.md](CLAUDE.md) | AI 에이전트 작업 가이드 (Claude Code 전용) |
+
+## 라이선스
+
+MIT — 자세한 내용은 [LICENSE](LICENSE).
+
+AI Clinical Board 기능은 [Google MedGemma](https://ai.google.dev/gemma/docs/medgemma)를 [MedGemma Terms of Use](https://ai.google.dev/gemma/docs/medgemma/terms) 하에 사용합니다. MedGemma는 임상 등급이 아니며, 이 도구는 연구 보조 용도로만 사용됩니다.
 
 ---
 
-## AI Clinical Board Attribution
+<div align="center">
 
-The AI Clinical Board feature uses [Google MedGemma](https://ai.google.dev/gemma/docs/medgemma) via Ollama for local inference. MedGemma is provided under the [MedGemma Terms of Use](https://ai.google.dev/gemma/docs/medgemma/terms). This feature is for research assistance only, not for diagnostic purposes.
+**BIKO GenomeBoard** — Korean Population-Aware Genomic Variant Interpretation Platform
 
----
+Python ≥ 3.10 · Docker Ready · Offline Capable · Research Use Only
 
-## Documentation
-
-| Doc | Contents |
-|-----|----------|
-| [docs/SETUP.md](docs/SETUP.md) | Installation and database setup |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and data flow |
-| [docs/KOREAN_STRATEGY.md](docs/KOREAN_STRATEGY.md) | Korean population analysis strategy |
-| [docs/TIERING_PRINCIPLES.md](docs/TIERING_PRINCIPLES.md) | Variant tiering principles |
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).
+</div>

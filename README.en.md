@@ -1,0 +1,237 @@
+**Language:** [한국어](README.md) | English
+
+# BIKO GenomeBoard
+
+**Korean Population-Aware Genomic Variant Interpretation Platform**
+
+![Python](https://img.shields.io/badge/python-3.10%2B-blue) ![Tests](https://img.shields.io/badge/tests-901%20passed-brightgreen) ![Offline](https://img.shields.io/badge/offline-100%25-success) ![Research Use Only](https://img.shields.io/badge/research--use--only-important)
+
+> ⚠️ **Research reference only** — BIKO GenomeBoard produces research reference documents for clinicians to consult. It is **not a clinical decision instrument**. Every interpretation must be reviewed by a qualified clinician.
+
+---
+
+## What does this project do?
+
+BIKO GenomeBoard takes an already-annotated VCF (VEP/ANNOVAR) and automatically produces a **Korean-patient-tuned clinical report** — designed to be skim-readable in the 15 minutes a clinician has between patients.
+
+BIKO addresses four specific pain points:
+
+1. **WGS/WES results flood in, but Korean-population-filtered outputs are needed.** gnomAD alone is less accurate for Korean patients. KRGDB, Korea4K, and NARD2 must be compared alongside gnomAD EAS/ALL for BA1/BS1/PM2 calls to be clinically meaningful.
+2. **ACMG/AMP 2015 (germline) and AMP/ASCO/CAP 2017 (somatic) must be applied consistently.** Hand-computing evidence codes per case destroys reproducibility.
+3. **Treatment rationale must carry PMIDs and must never hallucinate.** An LLM saying "futibatinib targets KRAS G12D" is not acceptable in a clinical context.
+4. **Everything must run inside the hospital.** Uploading patient VCFs to a hosted API is a privacy non-starter.
+
+BIKO satisfies all four in a **100% offline, on-premise** environment.
+
+## Who is this for?
+
+| Audience | Why this tool? |
+|---|---|
+| **Clinical geneticists / hemonc oncologists** | Turn annotated VCFs into readable reports immediately |
+| **Bioinformatics researchers** | Bolt-on reporting layer for a WGS pipeline |
+| **Korean-cohort researchers** | Pull KRGDB/Korea4K/NARD2 frequencies directly into the report |
+| **Clinical genomics educators** | Transparent, inspectable example of how ACMG evidence codes combine |
+
+**Restated disclaimer**: This is not a diagnostic instrument. Every generated report carries a "research use only" tag, and the final clinical decision must always be made by a qualified clinician.
+
+## Pipeline flow
+
+```mermaid
+flowchart TD
+    A[Annotated VCF<br/>VEP / ANNOVAR] --> B[1 · VCF parsing<br/>SNV/Indel + CNV/SV]
+    B --> C[2 · Local DB lookup<br/>ClinVar · gnomAD · CIViC<br/>OMIM · HPO · ClinGen]
+    C --> D[3 · Korean frequency compare<br/>KRGDB · Korea4K · NARD2<br/>5-tier + Korean enrichment]
+    D --> E[4 · ACMG evidence collection<br/>PVS1 · PM1 · PM5 · PP3/BP4 ...]
+    E --> F[5 · Deterministic classification<br/>ACMG/AMP 2015 · AMP 2017]
+    F --> G{Mode}
+    G -->|Cancer| H[Tier I–IV · TMB · PGx]
+    G -->|Rare Disease| I[5-tier · HPO rank · inheritance]
+    H --> J[6 · AI Clinical Board<br/>MedGemma 27B · curate-then-narrate<br/>_optional_]
+    I --> J
+    J --> K[HTML / PDF report]
+
+    style F fill:#e8f5ef,stroke:#00754A,stroke-width:2px
+    style J fill:#fff7ed,stroke:#d97706,stroke-width:2px
+    style K fill:#eff6ff,stroke:#1e40af,stroke-width:2px
+```
+
+### Two core principles
+
+**Principle 1 · Classification is 100% deterministic.** ACMG classification and AMP tiering run as pure Python rule engines — no LLM involved. The same VCF always yields the same result. Reproducibility is the point.
+
+**Principle 2 · Treatment evidence is "curate first, narrate second".** Treatment options are deterministically curated from OncoKB + local CIViC, and the local LLM (MedGemma) is only allowed to *narrate* them. It is **structurally impossible** for the LLM to suggest a drug that is not in the curated list. A scrubber strips any unauthorised drug mentions from free-text fields as a second line of defence.
+
+These two principles together mean LLM hallucinations cannot leak into variant classification or treatment recommendations. The LLM's job is explanation: "given this curated evidence, here is how to read it in this patient's context."
+
+## Key features
+
+### Analysis modes
+
+| Mode | Guideline | Primary output |
+|---|---|---|
+| **Cancer (somatic)** | AMP/ASCO/CAP 2017 | Tier I–IV + TMB (mut/Mb) + treatment options + immunotherapy eligibility + PGx |
+| **Rare Disease (germline)** | ACMG/AMP 2015 | 5-tier classification (P/LP/VUS/LB/B) + HPO phenotype ranking + inheritance (AD/AR/XL) |
+
+### Feature list
+
+- **5-tier Korean frequency comparison** — KRGDB + Korea4K + NARD2 + gnomAD EAS + gnomAD ALL compared simultaneously for BA1/BS1/PM2 calls; Korean enrichment ratio computed automatically
+- **Deterministic ACMG engine** — 28 evidence codes, in silico thresholds (REVEL/CADD/AlphaMissense/SpliceAI → PP3/BP4), ClinVar expert panel override, PMID-backed PM1 hotspot table
+- **AMP 2017 Tiering** — CIViC variant-level evidence + OncoKB + Cancer Hotspots + ClinVar Pathogenic
+- **Curate-then-narrate treatment rationale** — OncoKB + CIViC deterministically curated with PMIDs; LLM narrates only
+- **TMB calculation** — FoundationOne CDx methodology, High/Intermediate/Low auto-classification
+- **CNV/SV analysis** — AnnotSV TSV → ACMG CNV 2020 Class 1–5
+- **HPO phenotype ranking** — 329K+ gene-phenotype associations, offline SQLite
+- **AI Clinical Board** — local MedGemma 27B multi-specialist system (4 specialists + Board Chair), Grounded Prompting, never alters the deterministic classification
+- **PGx screening** — 12 genes, CPIC Level A/B, Korean vs Western prevalence comparison
+- **Variant selector** — deterministic pre-filter that decides which variants reach the AI Board (protein-impacting consequence gate, MMR/Lynch carve-out)
+- **100% offline** — all core databases local, external API calls are opt-in
+- **Korean / English report output**
+- **Report regeneration tool** — re-render HTML from a cached run JSON without calling Ollama again
+
+### Sample reports (see them first)
+
+Curious what the output looks like?
+
+| Report | Input | Notes |
+|---|---|---|
+| [Cancer — synthetic demo](docs/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + curated therapies |
+| [Cancer — real WGS (777 variants)](docs/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 variants selected, KRAS G12D driver |
+| [Rare Disease — HPO-driven](docs/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO phenotypes | HPO ranking + OMIM + ClinGen |
+| [Project overview (detailed)](docs/showcase/BIKO_GenomeBoard_소개.html) | — | Full feature walkthrough + tech stack (Korean) |
+
+## Installation
+
+### 1. Install dependencies
+
+```bash
+git clone git@github.com:junehawk/BIKO-GenomeBoard.git
+cd BIKO-GenomeBoard
+pip install -r requirements.txt
+```
+
+**Requirements**: Python ≥ 3.10, enough disk for gnomAD VCFs (~700 GB full, or chromosome-sliced).
+
+### 2. Build local databases
+
+```bash
+bash scripts/setup_databases.sh
+```
+
+This script downloads and builds public databases automatically.
+
+| Automated | Requires manual setup |
+|---|---|
+| ClinVar · gnomAD · CIViC · HPO · Orphanet · GeneReviews · Korea4K · NARD2 · KRGDB · cancerhotspots | OMIM genemap2 (account required) · ClinGen (web export) |
+
+Manual steps are printed by the script. See [docs/SETUP.md](docs/SETUP.md) for details.
+
+### 3. (Optional) AI Clinical Board
+
+To use the AI Clinical Board, install [Ollama](https://ollama.com) and pull MedGemma 27B:
+
+```bash
+ollama pull alibayram/medgemma:27b
+```
+
+**The deterministic classification + report generation work fine without Ollama.** The AI Board is an additive layer.
+
+## Usage
+
+### Minimal cancer run
+
+```bash
+python scripts/orchestrate.py sample.vcf -o report.html --skip-api
+```
+
+`--skip-api` disables external API calls and uses only local databases.
+
+### Rare disease mode with HPO phenotypes
+
+```bash
+python scripts/orchestrate.py patient.vcf --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 \
+  -o report.html --skip-api
+```
+
+HPO terms drive the candidate-gene ranking.
+
+### With AI Clinical Board
+
+```bash
+python scripts/orchestrate.py sample.vcf --clinical-board --board-lang en \
+  -o report.html --skip-api
+```
+
+MedGemma 27B runs the multi-specialist synthesis. Treatment options are only narrated from the OncoKB + CIViC curator output. Use `--board-lang ko` for Korean output.
+
+### CNV/SV + InterVar integration
+
+```bash
+python scripts/orchestrate.py sample.vcf \
+  --sv annotsv_output.tsv \
+  --intervar intervar_output.tsv \
+  -o report.html --skip-api
+```
+
+### Batch processing (parallel)
+
+```bash
+python scripts/orchestrate.py --batch vcf_dir/ \
+  --output-dir reports/ --workers 8 --skip-api
+```
+
+### Clinical note injection
+
+```bash
+python scripts/orchestrate.py sample.vcf --clinical-board \
+  --clinical-note "55yo male, former smoker, RUL mass, progression after 1st-line cytotoxic chemo" \
+  -o report.html --skip-api
+```
+
+The clinical note is injected into the AI Board briefing only. It never touches the deterministic classification engine, and the raw text is not embedded in the rendered HTML (re-identification prevention).
+
+### Docker
+
+```bash
+docker build -t biko-genomeboard .
+docker run \
+  -v ./data/db:/app/data/db \
+  -v ./input:/app/input \
+  -v ./output:/app/output \
+  biko-genomeboard /app/input/sample.vcf -o /app/output/report.html --skip-api
+```
+
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest tests/ -q
+```
+
+**901+ tests**, green CI on ubuntu-latest / Python 3.10 · 3.11 · 3.12. Coverage includes ACMG classification, in silico thresholds, ClinVar override, CIViC/OncoKB integration, TMB, CNV/SV, HPO matching, Korean frequency comparison, PGx, AI Clinical Board, variant selector, and report generation.
+
+## Documentation
+
+| Doc | Contents |
+|---|---|
+| [docs/SETUP.md](docs/SETUP.md) | Installation and database setup details |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | System architecture and data flow |
+| [docs/KOREAN_STRATEGY.md](docs/KOREAN_STRATEGY.md) | Korean population analysis strategy |
+| [docs/TIERING_PRINCIPLES.md](docs/TIERING_PRINCIPLES.md) | Variant tiering principles (Cancer + Rare Disease) |
+| [CLAUDE.md](CLAUDE.md) | Agent working guide (Claude Code only) |
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+The AI Clinical Board feature uses [Google MedGemma](https://ai.google.dev/gemma/docs/medgemma) under the [MedGemma Terms of Use](https://ai.google.dev/gemma/docs/medgemma/terms). MedGemma is not clinical-grade; this tool is for research assistance only.
+
+---
+
+<div align="center">
+
+**BIKO GenomeBoard** — Korean Population-Aware Genomic Variant Interpretation Platform
+
+Python ≥ 3.10 · Docker Ready · Offline Capable · Research Use Only
+
+</div>
