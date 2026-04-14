@@ -37,3 +37,9 @@ paperclip.log
 paperclip-config/
 package.json
 package-lock.json
+
+# Knowledge Base (generated content)
+data/knowledge_base/kb.sqlite3
+data/knowledge_base/*/genes/
+data/knowledge_base/log.md
+data/knowledge_base/index.md

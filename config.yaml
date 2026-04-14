@@ -94,3 +94,10 @@ clinical_board:
   max_retries: 1
   language: "en"         # en or ko
   include_in_report: true
+  temperature: 0.1
+  clinical_note_max_chars: 1500
+
+knowledge_base:
+  enabled: true
+  path: "data/knowledge_base"
+  prior_knowledge_max_tokens: 1000
