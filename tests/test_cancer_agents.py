@@ -136,6 +136,35 @@ def test_board_chair_cancer_mode():
     assert "AI-Generated" in result.disclaimer
 
 
+def test_render_cancer_board_opinion():
+    """CancerBoardOpinion renders treatment-focused HTML."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    from scripts.clinical_board.models import AgentOpinion
+    opinion = CancerBoardOpinion(
+        therapeutic_implications="EGFR L858R — TKI sensitive",
+        therapeutic_evidence="CIViC Level A",
+        treatment_options=[{"drug": "Erlotinib", "evidence_level": "A", "resistance_notes": "T790M risk"}],
+        actionable_findings=["Activating EGFR mutation"],
+        clinical_actions=["Start erlotinib"],
+        immunotherapy_eligibility="TMB-low",
+        agent_opinions=[AgentOpinion(agent_name="Test", domain="test", confidence="high")],
+        agent_consensus="unanimous",
+    )
+    html = render_board_opinion_html(opinion, language="en")
+    assert "Therapeutic" in html or "Treatment" in html
+    assert "Erlotinib" in html
+    assert "T790M" in html
+    assert "AI-Generated" in html
+
+
+def test_render_board_opinion_backward_compatible():
+    """Existing BoardOpinion still renders correctly."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    opinion = BoardOpinion(primary_diagnosis="Li-Fraumeni")
+    html = render_board_opinion_html(opinion, language="en")
+    assert "Li-Fraumeni" in html
+
+
 def test_board_chair_rare_disease_mode_default():
     """Board Chair defaults to rare-disease mode (backward compatible)."""
     from scripts.clinical_board.agents.board_chair import BoardChair
