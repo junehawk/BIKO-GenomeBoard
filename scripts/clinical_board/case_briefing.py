@@ -11,6 +11,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from scripts.common.config import get
+
 # Classification priority for sorting variants (lower = more significant)
 _CLASSIFICATION_PRIORITY = {
     "Pathogenic": 0,
@@ -48,6 +50,11 @@ def build_case_briefing(report_data: dict, mode: str) -> str:
 
     # 1. Case Overview
     sections.append(_build_overview(report_data, mode))
+
+    # 1b. Clinical Note (optional, free-text from clinician)
+    clinical_section = _build_clinical_note_section(report_data)
+    if clinical_section:
+        sections.append(clinical_section)
 
     # 2. Classified Variants
     sections.append(_build_variants_section(report_data, mode))
@@ -101,6 +108,17 @@ def _minimal_briefing(mode: str) -> str:
         f"Mode: {mode}\n"
         "No variant data available for analysis."
     )
+
+
+def _build_clinical_note_section(data: dict) -> Optional[str]:
+    """Format a clinician-supplied free-text note for inclusion in the briefing."""
+    note = data.get("clinical_note", "")
+    if not note or not note.strip():
+        return None
+    max_chars = get("clinical_board.clinical_note_max_chars", 1500)
+    if len(note) > max_chars:
+        note = note[:max_chars] + "\n[...clinical note truncated]"
+    return f"== CLINICAL CONTEXT ==\n\n{note}"
 
 
 def _build_overview(data: dict, mode: str) -> str:

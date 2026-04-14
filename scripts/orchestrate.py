@@ -71,6 +71,7 @@ def run_pipeline(
     intervar_path: str = None,
     clinical_board: bool = False,
     board_lang: str = None,
+    clinical_note: str = None,
 ) -> dict:
     """Run the full BIKO GenomeBoard analysis pipeline.
 
@@ -256,6 +257,8 @@ def run_pipeline(
         report_data["tmb"] = None
 
     # ── Clinical Board (optional LLM diagnostic synthesis) ────────────────────
+    if clinical_note:
+        report_data["clinical_note"] = clinical_note
     if clinical_board:
         try:
             from scripts.clinical_board.runner import run_clinical_board
@@ -367,6 +370,9 @@ EXAMPLES
     parser.add_argument("--intervar", dest="intervar_path", help="InterVar output TSV for ACMG evidence codes")
     parser.add_argument("--clinical-board", action="store_true", dest="clinical_board", help="Enable Clinical Board diagnostic synthesis (requires Ollama)")
     parser.add_argument("--board-lang", default=None, dest="board_lang", choices=["en", "ko"], help="Clinical Board output language (default: en)")
+    note_group = parser.add_mutually_exclusive_group()
+    note_group.add_argument("--clinical-note", type=str, default=None, dest="clinical_note", help="Free-text clinical note (Korean or English) for the Clinical Board")
+    note_group.add_argument("--clinical-note-file", type=str, default=None, dest="clinical_note_file", help="Path to file containing the clinical note")
 
     args = parser.parse_args()
 
@@ -406,6 +412,15 @@ EXAMPLES
         if args.json_flag is not None:
             json_output = args.json_flag if args.json_flag is not True else str(Path(args.output).with_suffix(".json"))
 
+        clinical_note_text = getattr(args, "clinical_note", None)
+        clinical_note_file = getattr(args, "clinical_note_file", None)
+        if clinical_note_file:
+            try:
+                clinical_note_text = Path(clinical_note_file).read_text(encoding="utf-8")
+            except OSError as e:
+                logger.error(f"Failed to read clinical note file: {e}")
+                sys.exit(1)
+
         result = run_pipeline(
             vcf_path=args.vcf_path, output_path=args.output, krgdb_path=args.krgdb,
             sample_id=args.sample_id, json_output=json_output, skip_api=args.skip_api,
@@ -414,6 +429,7 @@ EXAMPLES
             intervar_path=getattr(args, "intervar_path", None),
             clinical_board=getattr(args, "clinical_board", False),
             board_lang=getattr(args, "board_lang", None),
+            clinical_note=clinical_note_text,
         )
 
         if result is None:
