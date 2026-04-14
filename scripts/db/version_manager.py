@@ -1,9 +1,11 @@
 """Collect and manage database version metadata for reports."""
+import json
 import os
+import sqlite3
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, Tuple
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
@@ -110,7 +112,104 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
             "modified": datetime.fromtimestamp(Path(gk_path).stat().st_mtime).strftime('%Y-%m-%d'),
         }
 
+    # PM1 Hotspots — curated ACMG PM1 table (v2.2 A3)
+    pm1_meta = _pm1_hotspots_version()
+    if pm1_meta:
+        versions["PM1_Hotspots"] = pm1_meta
+
+    # CIViC — previously omitted despite having a metadata table (v2.2 bycatch C2-db-1)
+    civic_meta = _civic_version()
+    if civic_meta:
+        versions["CIViC"] = civic_meta
+
+    # cancerhotspots v2 single-residue TSV — informational; may be stubbed out
+    ch_meta = _cancerhotspots_version()
+    if ch_meta:
+        versions["cancerhotspots_v2_single"] = ch_meta
+
     # Annotation source config
     versions["_annotation_source"] = get("annotation.source", "auto")
 
     return versions
+
+
+# ---------------------------------------------------------------------------
+# v2.2 helpers — individual source version lookups
+# ---------------------------------------------------------------------------
+
+
+def _pm1_hotspots_version() -> Optional[Dict]:
+    """Read version metadata from data/pm1_hotspot_domains.json if present."""
+    json_path = Path(get("paths.pm1_hotspots_json", "data/pm1_hotspot_domains.json"))
+    if not json_path.exists():
+        return None
+    try:
+        with json_path.open() as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("PM1 hotspot JSON unreadable at %s: %s", json_path, e)
+        return None
+
+    return {
+        "source": "local_json",
+        "version": payload.get("version", "unknown"),
+        "build_date": payload.get("build_date", "unknown"),
+        "source_refs": payload.get("source_refs", []),
+        "source_hash": payload.get("source_hash", ""),
+        "record_count": payload.get("record_count", 0),
+        "path": str(json_path),
+    }
+
+
+def _civic_version() -> Optional[Dict]:
+    """Read CIViC metadata table — previously missing from get_all_db_versions."""
+    db_path = Path(get("paths.civic_db", "data/db/civic.sqlite3"))
+    if not db_path.exists():
+        return None
+    try:
+        conn = sqlite3.connect(str(db_path))
+        try:
+            rows = dict(conn.execute("SELECT key, value FROM metadata").fetchall())
+        finally:
+            conn.close()
+    except sqlite3.Error as e:
+        logger.warning("CIViC metadata read failed for %s: %s", db_path, e)
+        return None
+
+    return {
+        "source": "local_db",
+        "build_date": rows.get("build_date", "unknown"),
+        "upstream": rows.get("source", "CIViC (civicdb.org)"),
+        "gene_count": int(rows.get("gene_count", 0) or 0),
+        "variant_count": int(rows.get("variant_count", 0) or 0),
+        "evidence_count": int(rows.get("evidence_count", 0) or 0),
+        "path": str(db_path),
+    }
+
+
+def _cancerhotspots_version() -> Optional[Dict]:
+    """Surface cancerhotspots_v2_single TSV file status (may be a stub)."""
+    tsv_path = Path(get("paths.cancerhotspots_tsv", "data/db/hotspots/hotspots_v2_single.tsv"))
+    if not tsv_path.exists():
+        return None
+    stat = tsv_path.stat()
+    size = stat.st_size
+    # A non-stub TSV would be orders of magnitude larger than 1 KB.
+    stubbed = size < 1024
+    return {
+        "source": "local_tsv" if not stubbed else "stub",
+        "path": str(tsv_path),
+        "size_bytes": size,
+        "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d"),
+        "note": "placeholder — upstream download not re-wired" if stubbed else "",
+    }
+
+
+def get_version(name: str, skip_api: bool = True) -> Optional[Dict]:
+    """Return the version metadata dict for a single named source.
+
+    Thin wrapper around `get_all_db_versions` for test ergonomics. Returns
+    None when the source is unknown or unavailable.
+    """
+    versions = get_all_db_versions(skip_api=skip_api)
+    return versions.get(name)

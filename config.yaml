@@ -25,6 +25,9 @@ paths:
   omim_genemap_db: "data/db/omim_genemap.sqlite3"
   korea4k_freq: "data/korea4k_freq.tsv"
   nard2_freq: "data/nard2_freq.tsv"
+  pm1_hotspots_json: "data/pm1_hotspot_domains.json"
+  pm1_hotspots_overrides: "data/pm1_hotspot_overrides.yaml"
+  cancerhotspots_tsv: "data/db/hotspots/hotspots_v2_single.tsv"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)

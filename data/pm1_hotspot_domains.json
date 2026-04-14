@@ -1,0 +1,309 @@
+{
+  "$schema": "https://biko/schema/pm1_hotspot_domains.v1.json",
+  "version": "1.0",
+  "build_date": "2026-04-14",
+  "source_refs": [
+    "pm1_hotspot_overrides.yaml_v1.0_2026-04-14",
+    "ClinGen_TP53_VCEP_v2.0",
+    "Giacomelli_2018_PMID_30224644",
+    "AMP_ASCO_CAP_2017_PMID_27993330",
+    "Garrett_2021_PMID_33280026"
+  ],
+  "source_hash": "sha256:4fe59739dcdb6f842970710030e2d47fca241b10badca5022538000d50196200",
+  "record_count": 25,
+  "genes": {
+    "BRAF": [
+      {
+        "range": [
+          600,
+          600
+        ],
+        "domain": "Kinase activation loop (V600)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (V600E — melanoma, CRC, HCL, NSCLC); AMP/ASCO/CAP 2017 canonical Tier I example; COSMIC v99 top hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          601,
+          601
+        ],
+        "domain": "Kinase activation loop (adjacent to V600)",
+        "strength": "supporting",
+        "source": "PMID 27993330",
+        "rationale": "Recurrent but OncoKB Level 3A only; avoid conflation with V600E dominant hotspot",
+        "locked": false
+      }
+    ],
+    "EGFR": [
+      {
+        "range": [
+          719,
+          719
+        ],
+        "domain": "ATP-binding P-loop (G719)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (NSCLC afatinib); COSMIC v99",
+        "locked": true
+      },
+      {
+        "range": [
+          746,
+          750
+        ],
+        "domain": "Exon 19 deletion region",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (NSCLC EGFR-TKI); AMP/ASCO/CAP 2017 canonical Tier I",
+        "locked": true
+      },
+      {
+        "range": [
+          790,
+          790
+        ],
+        "domain": "Gatekeeper T790M (resistance)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (osimertinib); COSMIC v99; known TKI-resistance hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          858,
+          858
+        ],
+        "domain": "Activation loop (L858R)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1; COSMIC v99 top hotspot; AMP/ASCO/CAP 2017 canonical",
+        "locked": true
+      },
+      {
+        "range": [
+          861,
+          861
+        ],
+        "domain": "Activation loop (L861Q)",
+        "strength": "supporting",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 afatinib but COSMIC recurrence ~10× below L858R — conservative supporting",
+        "locked": false
+      }
+    ],
+    "HRAS": [
+      {
+        "range": [
+          12,
+          13
+        ],
+        "domain": "G-domain P-loop / switch I",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (HNSCC, thyroid); COSMIC v99",
+        "locked": true
+      },
+      {
+        "range": [
+          61,
+          61
+        ],
+        "domain": "G-domain switch II",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1; COSMIC v99",
+        "locked": true
+      }
+    ],
+    "IDH1": [
+      {
+        "range": [
+          132,
+          132
+        ],
+        "domain": "Active site (R132)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (AML ivosidenib; cholangiocarcinoma); COSMIC v99 top hotspot",
+        "locked": true
+      }
+    ],
+    "IDH2": [
+      {
+        "range": [
+          140,
+          140
+        ],
+        "domain": "Active site (R140)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (AML enasidenib); COSMIC v99 top hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          172,
+          172
+        ],
+        "domain": "Active site (R172)",
+        "strength": "supporting",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 2/3A; functional data and therapeutic evidence thinner than R140",
+        "locked": false
+      }
+    ],
+    "KRAS": [
+      {
+        "range": [
+          12,
+          13
+        ],
+        "domain": "G-domain P-loop / switch I",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (CRC, NSCLC, PDAC); COSMIC v99 #1 hotspot; AMP/ASCO/CAP 2017 canonical Tier I example",
+        "locked": true
+      },
+      {
+        "range": [
+          61,
+          61
+        ],
+        "domain": "G-domain switch II",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1; COSMIC v99 top hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          117,
+          117
+        ],
+        "domain": "G-domain nucleotide binding",
+        "strength": "supporting",
+        "source": "PMID 27993330",
+        "rationale": "Recurrent but OncoKB Level 3A only; functional data thinner than 12/13/61 — conservative supporting",
+        "locked": false
+      },
+      {
+        "range": [
+          146,
+          146
+        ],
+        "domain": "G-domain nucleotide binding",
+        "strength": "supporting",
+        "source": "PMID 27993330",
+        "rationale": "Recurrent but OncoKB Level 3A only; conservative supporting",
+        "locked": false
+      }
+    ],
+    "NRAS": [
+      {
+        "range": [
+          12,
+          13
+        ],
+        "domain": "G-domain P-loop / switch I",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (melanoma, AML); COSMIC v99 top hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          61,
+          61
+        ],
+        "domain": "G-domain switch II",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (melanoma Q61); COSMIC v99 top hotspot",
+        "locked": true
+      }
+    ],
+    "PIK3CA": [
+      {
+        "range": [
+          542,
+          542
+        ],
+        "domain": "Helical domain (E542)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (breast, alpelisib); COSMIC v99 top hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          545,
+          545
+        ],
+        "domain": "Helical domain (E545)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1; COSMIC v99 top hotspot",
+        "locked": true
+      },
+      {
+        "range": [
+          1047,
+          1047
+        ],
+        "domain": "Kinase domain (H1047)",
+        "strength": "moderate",
+        "source": "PMID 27993330",
+        "rationale": "OncoKB Level 1 (breast alpelisib); COSMIC v99 top hotspot",
+        "locked": true
+      }
+    ],
+    "TP53": [
+      {
+        "range": [
+          175,
+          175
+        ],
+        "domain": "DBD β-sandwich (R175 structural hotspot)",
+        "strength": "moderate",
+        "source": "PMID 30224644",
+        "rationale": "Giacomelli 2018 Fig 2 top-5 LOF; IARC TP53 r20 top-5 somatic; ClinGen TP53 VCEP v2.0 PM1 list",
+        "locked": true
+      },
+      {
+        "range": [
+          245,
+          249
+        ],
+        "domain": "DBD L3 loop (aa 245-254)",
+        "strength": "moderate",
+        "source": "PMID 30224644",
+        "rationale": "L3 loop is the single most mutation-dense contiguous functional block in TP53 (Giacomelli 2018 Fig 2). IARC TP53 r20: R248 #1, R249 #2 somatic hotspots genome-wide. R245/246/247 loss-of-function scores uniformly top-decile. Downgrading 246-248 because they flank R249 would be arbitrary and inconsistent with Garrett 2021 ClinGen SVI block-level assignment.",
+        "locked": true
+      },
+      {
+        "range": [
+          273,
+          273
+        ],
+        "domain": "DBD DNA-contact surface (R273)",
+        "strength": "moderate",
+        "source": "PMID 30224644",
+        "rationale": "Top-5 IARC r20 somatic; ClinGen TP53 VCEP v2.0 PM1; Giacomelli Fig 2 top-decile LOF",
+        "locked": true
+      },
+      {
+        "range": [
+          282,
+          282
+        ],
+        "domain": "DBD L3 loop-adjacent (R282)",
+        "strength": "moderate",
+        "source": "PMID 30224644",
+        "rationale": "Top-10 IARC r20 somatic; ClinGen TP53 VCEP v2.0 PM1",
+        "locked": true
+      }
+    ]
+  }
+}

@@ -1,5 +1,6 @@
 # tests/test_version_manager.py
-"""Tests for the centralized DB version manager (Task 3.5)."""
+"""Tests for the centralized DB version manager (Task 3.5 + v2.2 A3)."""
+import json
 import sqlite3
 from pathlib import Path
 
@@ -461,3 +462,128 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
+
+
+# ---------------------------------------------------------------------------
+# v2.2 A3 — PM1 Hotspots, CIViC, cancerhotspots registration
+# ---------------------------------------------------------------------------
+
+
+def _write_min_config(tmp_path, monkeypatch, **paths):
+    """Tiny config writer with sensible defaults for PM1/CIViC tests."""
+    import yaml
+    from scripts.common.config import reset
+    cfg = {
+        "paths": {
+            "clinvar_db": str(tmp_path / "no_clinvar.sqlite3"),
+            "gnomad_db": str(tmp_path / "no_gnomad.sqlite3"),
+            "krgdb": str(tmp_path / "no_krgdb.tsv"),
+            "gene_knowledge": "data/gene_knowledge.json",
+            "pgx_table": "data/korean_pgx_table.json",
+            "acmg_rules": "data/acmg_rules.json",
+            "templates": "templates",
+            **paths,
+        },
+        "annotation": {"source": "local"},
+        "thresholds": {"ba1": 0.05, "bs1": 0.01, "pm2": 0.001},
+        "report": {"default_mode": "cancer", "default_genome_build": "GRCh38"},
+        "pgx": {"genes": [], "risk_factor_genes": []},
+    }
+    cfg_path = str(tmp_path / "cfg.yaml")
+    with open(cfg_path, "w") as f:
+        yaml.dump(cfg, f)
+    monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
+    reset()
+    # Reset local DB conns so they re-read config
+    import scripts.db.query_local_clinvar as cv_mod
+    import scripts.db.query_local_gnomad as gn_mod
+    cv_mod.close()
+    cv_mod._conn = None
+    gn_mod.close()
+    gn_mod._conn = None
+    return cfg_path
+
+
+def test_pm1_hotspots_registered(tmp_path, monkeypatch):
+    """After build_pm1_hotspots runs, version_manager exposes PM1_Hotspots."""
+    from scripts.db.build_pm1_hotspots import build_pm1_hotspots
+
+    pm1_path = tmp_path / "pm1.json"
+    build_pm1_hotspots(output_path=pm1_path)
+    _write_min_config(tmp_path, monkeypatch, pm1_hotspots_json=str(pm1_path))
+
+    from scripts.db.version_manager import get_all_db_versions, get_version
+    versions = get_all_db_versions(skip_api=True)
+
+    assert "PM1_Hotspots" in versions
+    meta = versions["PM1_Hotspots"]
+    assert meta["source"] == "local_json"
+    assert meta["version"]
+    assert meta["build_date"]
+    assert meta["source_refs"]
+    assert meta["source_hash"].startswith("sha256:")
+    assert meta["record_count"] > 0
+
+    assert get_version("PM1_Hotspots") == meta
+
+
+def test_pm1_hotspots_absent_when_file_missing(tmp_path, monkeypatch):
+    """When the JSON does not exist, PM1_Hotspots must not appear."""
+    _write_min_config(
+        tmp_path, monkeypatch,
+        pm1_hotspots_json=str(tmp_path / "absent.json"),
+    )
+    from scripts.db.version_manager import get_all_db_versions, get_version
+    versions = get_all_db_versions(skip_api=True)
+    assert "PM1_Hotspots" not in versions
+    assert get_version("PM1_Hotspots") is None
+
+
+def test_civic_registered_when_db_present(tmp_path, monkeypatch):
+    """CIViC was previously missing from version_manager (C2-db-1 bycatch);
+    it must now surface when civic.sqlite3 has a metadata table."""
+    civic_db = tmp_path / "civic.sqlite3"
+    conn = sqlite3.connect(str(civic_db))
+    conn.execute("CREATE TABLE metadata (key TEXT PRIMARY KEY, value TEXT)")
+    conn.execute("INSERT INTO metadata VALUES ('build_date', '2026-04-14T00:00:00')")
+    conn.execute("INSERT INTO metadata VALUES ('source', 'CIViC (civicdb.org)')")
+    conn.execute("INSERT INTO metadata VALUES ('gene_count', '500')")
+    conn.execute("INSERT INTO metadata VALUES ('variant_count', '2000')")
+    conn.execute("INSERT INTO metadata VALUES ('evidence_count', '5000')")
+    conn.commit()
+    conn.close()
+
+    _write_min_config(tmp_path, monkeypatch, civic_db=str(civic_db))
+
+    from scripts.db.version_manager import get_all_db_versions, get_version
+    versions = get_all_db_versions(skip_api=True)
+    assert "CIViC" in versions
+    assert versions["CIViC"]["source"] == "local_db"
+    assert versions["CIViC"]["build_date"] == "2026-04-14T00:00:00"
+    assert versions["CIViC"]["gene_count"] == 500
+    assert versions["CIViC"]["variant_count"] == 2000
+    assert versions["CIViC"]["evidence_count"] == 5000
+
+    assert get_version("CIViC")["gene_count"] == 500
+
+
+def test_cancerhotspots_stub_flagged(tmp_path, monkeypatch):
+    """A stubbed cancerhotspots TSV (small file) must be surfaced with
+    source='stub' so reports can note the placeholder."""
+    tsv = tmp_path / "hotspots_v2_single.tsv"
+    tsv.write_text('{"status":404}')
+    _write_min_config(tmp_path, monkeypatch, cancerhotspots_tsv=str(tsv))
+
+    from scripts.db.version_manager import get_all_db_versions
+    versions = get_all_db_versions(skip_api=True)
+    assert "cancerhotspots_v2_single" in versions
+    meta = versions["cancerhotspots_v2_single"]
+    assert meta["source"] == "stub"
+    assert meta["size_bytes"] > 0
+    assert "placeholder" in meta["note"]
+
+
+def test_get_version_unknown_source_returns_none(tmp_path, monkeypatch):
+    _write_min_config(tmp_path, monkeypatch)
+    from scripts.db.version_manager import get_version
+    assert get_version("not_a_real_source") is None
