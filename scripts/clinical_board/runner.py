@@ -18,6 +18,8 @@ from scripts.clinical_board.curated_treatments import curate_treatments
 from scripts.clinical_board.domain_sheets import build_domain_sheet
 from scripts.clinical_board.kb_query import query_prior_knowledge
 from scripts.clinical_board.knowledge_base import KnowledgeBase
+from scripts.clinical_board.narrative_scrubber import scrub_opinion
+from scripts.clinical_board.template_renderer_chair import render_from_curated
 from scripts.clinical_board.variant_selector import select_board_variants
 from scripts.common.config import get
 
@@ -188,10 +190,45 @@ def run_clinical_board(
     # Step 3: Board Chair synthesis
     logger.info("[Clinical Board] Board Chair synthesizing opinions...")
     chair = _load_chair(client, chair_model, language)
-    board_opinion = chair.synthesize(briefing, opinions, mode=mode)
+    curated_for_chair = report_data.get("_curated_treatments", {}) if mode == "cancer" else None
+    board_opinion = chair.synthesize(
+        briefing, opinions, curated_treatments=curated_for_chair, mode=mode
+    )
     board_opinion.agent_opinions = opinions
     # Propagate selection audit trail for render.py footer and KB traceability.
     board_opinion.selection_metadata = selection_metadata
+
+    # Step 3b (cancer only): narrative_scrubber patient-safety gate.
+    # Drops any (curated_id, variant_key) pair the curator did not emit and
+    # strips banned drug tokens out of every prose field. The
+    # template_renderer_chair fallback only fires when the Board Chair LLM
+    # produced *zero* treatment rows at all — i.e. the LLM ignored the
+    # curated block entirely. If the LLM emitted rows but the scrubber
+    # dropped all of them (e.g. cross-variant paste attack), we leave the
+    # table empty: a truncated table is preferable to emitting any
+    # curator row the LLM didn't actually endorse.
+    if mode == "cancer":
+        pre_scrub_count = len(getattr(board_opinion, "treatment_options", []) or [])
+        curated_nonempty = bool(
+            curated_for_chair and any(rows for rows in curated_for_chair.values())
+        )
+        try:
+            stats = scrub_opinion(board_opinion, curated_for_chair or {})
+            logger.info(
+                f"[Clinical Board] narrative_scrubber: kept={stats['kept']} "
+                f"dropped={stats['dropped']} banned_terms={stats['banned_terms']}"
+            )
+        except Exception as scrub_err:
+            logger.warning(f"[Clinical Board] narrative_scrubber failed: {scrub_err}")
+
+        if curated_nonempty and pre_scrub_count == 0:
+            logger.warning(
+                "[Clinical Board] Board Chair LLM returned zero treatment "
+                "rows — falling back to template_renderer_chair"
+            )
+            fallback = render_from_curated(curated_for_chair or {}, agent_opinions=opinions)
+            fallback.selection_metadata = selection_metadata
+            board_opinion = fallback
 
     # Step 4: Save decisions to Knowledge Base
     if get("knowledge_base.enabled", False):

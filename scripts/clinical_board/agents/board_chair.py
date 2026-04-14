@@ -105,13 +105,20 @@ KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
 ## 응답 언어
 반드시 한국어로 응답하세요. (단, `therapeutic_headline`은 임상 표기 관례상 영문 약어 사용 가능)
 
+## 중요 · 치료 옵션 결정론적 바인딩 (v2.2 curate-then-narrate)
+**curated_id는 CURATED EVIDENCE 섹션에서만 가져오시오.** 그 섹션에 없는 약물을 발명하지
+마시오. 각 treatment_options 항목은 반드시 아래 4개 키를 모두 포함해야 합니다:
+``curated_id`` (CURATED EVIDENCE에 있는 정확한 ID), ``variant_key``
+(CURATED EVIDENCE에서 해당 curated_id가 소속된 ``{chrom}:{pos}:{ref}:{alt}``),
+``drug``, ``evidence_level``. curated_id 없이 약물을 제안하지 마시오.
+
 ## 응답 형식 (JSON)
 {
   "therapeutic_headline": "Stage IV PDAC — KRAS G12D driver, no standard targeted therapy",
   "therapeutic_implications": "치료 시사점 종합 (상세 단락)",
   "therapeutic_evidence": "근거 요약 (CIViC level 등)",
   "treatment_options": [
-    {"drug": "약물명", "evidence_level": "A/B/C/D", "resistance_notes": "저항성 위험 (있을 경우)"}
+    {"curated_id": "cid-sot", "variant_key": "12:25398284:C:T", "drug": "약물명", "evidence_level": "A/B/C/D", "resistance_notes": "저항성 위험 (있을 경우)"}
   ],
   "actionable_findings": ["임상적으로 활용 가능한 핵심 소견"],
   "clinical_actions": ["권고되는 임상 조치"],
@@ -172,15 +179,21 @@ class BoardChair:
         self,
         case_briefing: str,
         agent_opinions: List[AgentOpinion],
+        curated_treatments: dict = None,
         mode: str = "rare-disease",
     ) -> Union[BoardOpinion, CancerBoardOpinion]:
         """Synthesize all agent opinions into a unified board opinion.
 
         Args:
+            curated_treatments: mapping of ``{chrom}:{pos}:{ref}:{alt}`` →
+                ``list[CuratedTreatment]`` from the v2.2 curator. Cancer
+                mode only; rare-disease can pass ``None``.
             mode: "rare-disease" (default) returns BoardOpinion;
                   "cancer" returns CancerBoardOpinion (treatment-focused).
         """
-        prompt = self._build_prompt(case_briefing, agent_opinions)
+        prompt = self._build_prompt(
+            case_briefing, agent_opinions, curated_treatments=curated_treatments
+        )
         system_prompt = CANCER_SYSTEM_PROMPT if mode == "cancer" else SYSTEM_PROMPT
 
         try:
@@ -214,13 +227,46 @@ class BoardChair:
             return self._parse_cancer_response(response, agent_opinions)
         return self._parse_response(response, agent_opinions)
 
+    def _format_curated_evidence(self, curated_treatments: dict) -> str:
+        """Render the curator output as a prompt-friendly, LLM-citable block.
+
+        Every row lists ``curated_id``, ``variant_key``, drug, evidence level,
+        disease context and PMIDs so the LLM has exactly one authoritative
+        source to cite from. Empty or missing curator output is rendered as a
+        "no curated rows available" placeholder so the prompt stays stable.
+        """
+        if not curated_treatments:
+            return "(no curated rows available — do not invent drug/target pairings)"
+        lines = []
+        for variant_key, rows in curated_treatments.items():
+            if not rows:
+                lines.append(f"- variant_key={variant_key}: (no curated rows)")
+                continue
+            for row in rows:
+                drug = getattr(row, "drug", "") or (row.get("drug") if isinstance(row, dict) else "")
+                cid = getattr(row, "curated_id", "") or (row.get("curated_id") if isinstance(row, dict) else "")
+                level = getattr(row, "evidence_level", "") or (row.get("evidence_level") if isinstance(row, dict) else "")
+                disease = getattr(row, "disease_context", "") or (row.get("disease_context") if isinstance(row, dict) else "")
+                pmids = getattr(row, "pmids", []) or (row.get("pmids") if isinstance(row, dict) else [])
+                source = getattr(row, "source", "") or (row.get("source") if isinstance(row, dict) else "")
+                pmid_str = ",".join(str(p) for p in (pmids or []))
+                lines.append(
+                    f"- curated_id={cid} variant_key={variant_key} drug={drug} "
+                    f"level={level} source={source} disease={disease} pmids={pmid_str}"
+                )
+        return "\n".join(lines)
+
     def _build_prompt(
-        self, case_briefing: str, agent_opinions: List[AgentOpinion]
+        self,
+        case_briefing: str,
+        agent_opinions: List[AgentOpinion],
+        curated_treatments: dict = None,
     ) -> str:
         """Build the synthesis prompt with case briefing and all agent opinions."""
         opinions_text = "\n\n".join(
             _format_agent_opinion(op) for op in agent_opinions
         )
+        curated_block = self._format_curated_evidence(curated_treatments)
 
         if self.language == "ko":
             return f"""다음은 임상유전학 사례 회의 자료입니다.
@@ -230,12 +276,16 @@ class BoardChair:
 ## 케이스 정보
 {case_briefing}
 
+## CURATED EVIDENCE (authoritative — 치료 옵션의 유일한 출처)
+{curated_block}
+
 ## 전문의 소견
 
 {opinions_text}
 
 ## 요청
-위 케이스 정보와 전문의 소견을 종합하여, 지정된 JSON 형식으로 최종 진단 의견을 제시하세요."""
+위 케이스 정보와 전문의 소견을 종합하여, 지정된 JSON 형식으로 최종 진단 의견을 제시하세요.
+**치료 옵션은 반드시 CURATED EVIDENCE 섹션의 curated_id만 사용하여 작성하시오.**"""
         else:
             return f"""The following is a clinical genetics case conference.
 Synthesize the case information and 4 domain specialists' opinions into a final diagnostic opinion.
@@ -244,12 +294,16 @@ Respond in English.
 ## Case Information
 {case_briefing}
 
+## CURATED EVIDENCE (authoritative — the only source for treatment options)
+{curated_block}
+
 ## Specialist Opinions
 
 {opinions_text}
 
 ## Request
-Synthesize the case information and specialist opinions above into a final diagnostic opinion in the specified JSON format."""
+Synthesize the case information and specialist opinions above into a final diagnostic opinion in the specified JSON format.
+**Treatment options MUST cite only curated_id values from the CURATED EVIDENCE section above.**"""
 
     def _parse_response(
         self, response, agent_opinions: List[AgentOpinion]
@@ -308,11 +362,25 @@ Synthesize the case information and specialist opinions above into a final diagn
                     raw_response=response,
                 )
 
+        # Preserve curated_id + variant_key on every treatment row so the
+        # narrative_scrubber downstream can enforce the (cid, variant_key)
+        # pair binding.
+        treatment_options = []
+        for opt in response.get("treatment_options", []) or []:
+            if isinstance(opt, dict):
+                treatment_options.append({
+                    "drug": opt.get("drug", ""),
+                    "curated_id": opt.get("curated_id", ""),
+                    "variant_key": opt.get("variant_key", ""),
+                    "evidence_level": opt.get("evidence_level", ""),
+                    "resistance_notes": opt.get("resistance_notes", ""),
+                })
+
         return CancerBoardOpinion(
             therapeutic_headline=response.get("therapeutic_headline", ""),
             therapeutic_implications=response.get("therapeutic_implications", ""),
             therapeutic_evidence=response.get("therapeutic_evidence", ""),
-            treatment_options=response.get("treatment_options", []),
+            treatment_options=treatment_options,
             actionable_findings=response.get("actionable_findings", []),
             clinical_actions=response.get("clinical_actions", []),
             immunotherapy_eligibility=response.get("immunotherapy_eligibility", ""),

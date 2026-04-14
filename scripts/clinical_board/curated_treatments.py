@@ -61,15 +61,19 @@ class CuratedTreatment:
     """A single deterministic treatment row the narrator may cite.
 
     ``curated_id`` is a stable short hash so the Board Chair's JSON output
-    can reference the row by ID without leaking internal shapes.
+    can reference the row by ID without leaking internal shapes. ``variant_key``
+    is redundant with the dict key in the ``curate_treatments()`` output but
+    kept on each row so downstream consumers (narrative_scrubber, template
+    renderer) can enforce (curated_id, variant_key) pair binding without
+    re-walking the outer dict.
     """
 
-    curated_id: str
-    variant_key: str
-    drug: str
-    target: str
-    evidence_level: str            # Normalised AMP: A/B/C/D
-    source: str                    # "oncokb" | "civic" | "both"
+    curated_id: str = ""
+    drug: str = ""
+    target: str = ""
+    evidence_level: str = "D"      # Normalised AMP: A/B/C/D
+    source: str = ""               # "oncokb" | "civic" | "both"
+    variant_key: str = ""
     pmids: List[str] = field(default_factory=list)
     disease_context: str = ""
     significance: str = "sensitivity"  # sensitivity | resistance | adverse
