@@ -1,13 +1,14 @@
-"""v2.2 Phase B1 regression — protein-impacting consequence gate.
+"""v2.2 Phase B1/B2 regression — consequence gate + MMR/Lynch carve-out.
 
 Scope:
 - B1: Tier III (and Tier I/II) consequence gate rejects non-coding VUS.
 - B1: P_LP branch bypasses the gate unconditionally.
 - B1: SpliceAI >= 0.2 rescues synonymous / splice_region consequences.
+- B2: MMR/Lynch VUS carve-out admits protein-impacting VUS in
+  MLH1/MSH2/MSH6/PMS2/EPCAM regardless of hotspot / TSG / HPO.
 
 All tests mock ``is_hotspot`` / ``is_cancer_gene`` to isolate the
-selector logic from CIViC DB availability. B2 MMR/Lynch carve-out
-tests live in the sibling commit that adds the carve-out.
+selector logic from CIViC DB availability.
 """
 from __future__ import annotations
 
@@ -227,5 +228,151 @@ def test_cancer_may_arm_also_gated():
         selected, meta = select_board_variants(variants, mode="cancer")
 
     assert selected == []
+
+
+# ---------------------------------------------------------------------------
+# B2 — MMR / Lynch carve-out
+# ---------------------------------------------------------------------------
+
+
+def test_pms2_r563q_missense_vus_admitted_as_mmr_lynch():
+    """PMS2 R563Q — missense VUS, no hotspot, no TSG_LoF — must be
+    admitted with reason ``VUS_MMR_Lynch``. This is the F1-parity case
+    where BIKO previously dropped the row.
+    """
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "PMS2",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp="p.Arg563Gln",
+            consequence="missense_variant",
+        ),
+    ]
+    with _patch_clinical():
+        selected, meta = select_board_variants(variants, mode="cancer")
+
+    assert len(selected) == 1
+    assert selected[0]["gene"] == "PMS2"
+    assert selected[0]["selection_reason"] == "VUS_MMR_Lynch"
+
+
+def test_mlh1_intronic_vus_not_admitted_b1_b2_intersection():
+    """B1 consequence gate still applies inside the MMR carve-out —
+    an MLH1 intronic VUS is NOT admitted. There is no Lynch exception
+    to the consequence gate.
+    """
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "MLH1",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp="",
+            consequence="intron_variant",
+        ),
+    ]
+    with _patch_clinical():
+        selected, meta = select_board_variants(variants, mode="cancer")
+
+    assert selected == []
+
+
+def test_all_mmr_lynch_genes_covered():
+    """All five MMR/Lynch panel genes admit protein-impacting VUS."""
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(g, classification="VUS", tier="Tier IV", hgvsp="p.Arg100Lys")
+        for g in ("MLH1", "MSH2", "MSH6", "PMS2", "EPCAM")
+    ]
+    with _patch_clinical():
+        selected, _ = select_board_variants(variants, mode="cancer")
+
+    assert {v["gene"] for v in selected} == {
+        "MLH1", "MSH2", "MSH6", "PMS2", "EPCAM",
+    }
+    assert all(v["selection_reason"] == "VUS_MMR_Lynch" for v in selected)
+
+
+def test_mmr_lynch_priority_between_hotspot_and_tsg_lof():
+    """Ordering invariant: VUS_hotspot < VUS_MMR_Lynch < VUS_TSG_LoF."""
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "TP53",
+            classification="VUS",
+            tier="Tier IV",
+            consequence="frameshift_variant",
+            cancer_gene_type="TSG",
+        ),
+        _mk_snv(
+            "PMS2",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp="p.Arg563Gln",
+            consequence="missense_variant",
+        ),
+        _mk_snv(
+            "BRAF",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp="p.Val600Glu",
+            consequence="missense_variant",
+        ),
+    ]
+    with _patch_clinical(hotspot_positions={("BRAF", 600)}):
+        selected, _ = select_board_variants(variants, mode="cancer")
+
+    order = [v["gene"] for v in selected]
+    assert order.index("BRAF") < order.index("PMS2") < order.index("TP53")
+
+
+def test_mmr_lynch_non_protein_consequence_rejected():
+    """A PMS2 synonymous VUS (no SpliceAI signal) is NOT admitted —
+    Lynch carve-out still respects the consequence gate.
+    """
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "PMS2",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp="p.Arg563Arg",
+            consequence="synonymous_variant",
+        ),
+    ]
+    with _patch_clinical():
+        selected, _ = select_board_variants(variants, mode="cancer")
+
+    assert selected == []
+
+
+def test_mmr_lynch_hotspot_takes_higher_priority_reason():
+    """A hotspot-positive MMR variant takes the higher-priority
+    VUS_hotspot reason, not VUS_MMR_Lynch — MMR carve-out is below
+    VUS_hotspot in the MAY branch order.
+    """
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "MSH2",
+            classification="VUS",
+            tier="Tier IV",
+            hgvsp="p.Arg200Gln",
+            consequence="missense_variant",
+        ),
+    ]
+    with _patch_clinical(hotspot_positions={("MSH2", 200)}):
+        selected, _ = select_board_variants(variants, mode="cancer")
+
+    assert len(selected) == 1
+    assert selected[0]["selection_reason"] == "VUS_hotspot"
 
 

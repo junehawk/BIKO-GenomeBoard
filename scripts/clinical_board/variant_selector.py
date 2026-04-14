@@ -80,11 +80,20 @@ _SPLICE_RESCUE_CONSEQUENCES = frozenset({
 })
 _SPLICEAI_RESCUE_THRESHOLD = 0.2
 
+# v2.2 B2: MMR/Lynch panel carve-out — protein-impacting VUS in any of these
+# genes are admitted to the cancer board regardless of hotspot / TSG / HPO
+# status. Clinical rationale: Lynch syndrome screening + pembrolizumab MSI-H
+# tumour-agnostic eligibility require MMR-VUS visibility even when no other
+# driver signal is present. The B1 consequence gate still applies — there is
+# no Lynch exception for intronic / UTR variants.
+_MMR_LYNCH_GENES = frozenset({"MLH1", "MSH2", "MSH6", "PMS2", "EPCAM"})
+
 _P_LP = frozenset({"Pathogenic", "Likely Pathogenic"})
 _BENIGN = frozenset({"Benign", "Likely Benign"})
 _MUST_TIERS = frozenset({"Tier I", "Tier II"})
 
-# AMP 2017 Table 2 ordering (lower = earlier in output list)
+# AMP 2017 Table 2 ordering (lower = earlier in output list). v2.2 B2 inserts
+# VUS_MMR_Lynch between VUS_hotspot and VUS_TSG_LoF at priority 6.
 _REASON_PRIORITY = {
     "P_LP": 0,
     "Tier_I": 1,
@@ -92,12 +101,18 @@ _REASON_PRIORITY = {
     "Tier_III_hotspot": 3,
     "Tier_III_oncokb_gene": 4,
     "VUS_hotspot": 5,
-    "VUS_TSG_LoF": 6,
-    "VUS_indel_hotspot": 7,
-    "VUS_HPO_match": 8,
+    "VUS_MMR_Lynch": 6,
+    "VUS_TSG_LoF": 7,
+    "VUS_indel_hotspot": 8,
+    "VUS_HPO_match": 9,
 }
 
-_MAY_REASONS_CANCER = ("VUS_hotspot", "VUS_TSG_LoF", "VUS_indel_hotspot")
+_MAY_REASONS_CANCER = (
+    "VUS_hotspot",
+    "VUS_MMR_Lynch",
+    "VUS_TSG_LoF",
+    "VUS_indel_hotspot",
+)
 _MAY_REASONS_RARE = ("VUS_HPO_match",)
 
 
@@ -323,6 +338,13 @@ def _cancer_may_reason(v: dict) -> Optional[str]:
 
     if hotspot_hit and consequence not in _INFRAME_INDEL_CONSEQUENCES:
         return "VUS_hotspot"
+
+    # v2.2 B2: MMR/Lynch panel carve-out — any protein-impacting VUS in an
+    # MMR gene is admitted regardless of hotspot / TSG / HPO status. Placed
+    # after VUS_hotspot so a hotspot-positive MMR variant still takes the
+    # higher-priority hotspot reason.
+    if gene in _MMR_LYNCH_GENES:
+        return "VUS_MMR_Lynch"
 
     if (
         v.get("cancer_gene_type", "") == "TSG"
