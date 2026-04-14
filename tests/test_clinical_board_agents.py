@@ -477,3 +477,46 @@ def test_agent_empty_response():
     assert opinion.confidence == "moderate"  # default
     assert opinion.findings == []
     assert opinion.recommendations == []
+
+
+# ---------------------------------------------------------------------------
+# Domain Sheet + Prior Knowledge (AI Board v2 — Task 2)
+# ---------------------------------------------------------------------------
+
+
+def test_build_prompt_with_domain_sheet():
+    """Domain sheet is included in the prompt when provided."""
+    mock_client = MagicMock()
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
+
+    agent = VariantPathologist(client=mock_client)
+    prompt = agent._build_prompt(
+        "case briefing text",
+        domain_sheet="== DOMAIN DATA ==\nClinVar: Pathogenic",
+    )
+    assert "DOMAIN DATA" in prompt
+    assert "ClinVar: Pathogenic" in prompt
+
+
+def test_build_prompt_without_domain_sheet():
+    """Prompt works without domain sheet (backward compatible)."""
+    mock_client = MagicMock()
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
+
+    agent = VariantPathologist(client=mock_client)
+    prompt = agent._build_prompt("case briefing text")
+    assert "case briefing text" in prompt
+
+
+def test_build_prompt_with_prior_knowledge():
+    """Prior knowledge is included as separate section."""
+    mock_client = MagicMock()
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
+
+    agent = VariantPathologist(client=mock_client)
+    prompt = agent._build_prompt(
+        "briefing",
+        prior_knowledge="== PRIOR BOARD KNOWLEDGE ==\n3 prior cases",
+    )
+    assert "PRIOR BOARD KNOWLEDGE" in prompt
+    assert "3 prior cases" in prompt
