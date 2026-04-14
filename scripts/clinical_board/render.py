@@ -255,11 +255,30 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
         else '#DC2626'
     )
 
-    # Therapeutic Implications card (replaces Primary Diagnosis)
+    # Therapeutic Implications card (replaces Primary Diagnosis).
+    # When the Board Chair returns a short therapeutic_headline, render it as a
+    # bold title and the longer therapeutic_implications as a body paragraph.
+    # When the headline is missing (older runs / legacy templates), fall back
+    # to rendering implications directly as readable body text — never as the
+    # old 15px bold title style.
+    headline_html = ""
+    if opinion.therapeutic_headline:
+        headline_html = (
+            '<div style="font-size:14px;font-weight:700;color:#1E1B4B;'
+            'margin-bottom:6px;line-height:1.35;">'
+            f'{opinion.therapeutic_headline}</div>'
+        )
+    body_text = opinion.therapeutic_implications or 'Not determined'
+    body_html = (
+        '<div style="font-size:12.5px;font-weight:400;color:#334155;'
+        'line-height:1.5;margin-bottom:6px;">'
+        f'{body_text}</div>'
+    )
     html_parts.append(f"""
     <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:16px;margin-bottom:16px;">
       <div style="font-size:9px;font-weight:700;color:#115E59;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Therapeutic Implications</div>
-      <div style="font-size:15px;font-weight:700;color:#1E1B4B;margin-bottom:4px;">{opinion.therapeutic_implications or 'Not determined'}</div>
+      {headline_html}
+      {body_html}
       <div style="font-size:11px;color:#0F766E;line-height:1.5;">{opinion.therapeutic_evidence or ''}</div>
       <div style="margin-top:8px;">
         <span style="display:inline-block;background:{confidence_color};color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: {opinion.confidence.upper()}</span>

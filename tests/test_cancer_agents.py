@@ -396,3 +396,91 @@ def test_board_chair_rare_disease_mode_default():
     result = chair.synthesize("briefing", [])
     assert isinstance(result, BoardOpinion)
     assert result.primary_diagnosis == "Li-Fraumeni"
+
+
+def test_render_cancer_headline_and_body():
+    """When therapeutic_headline is present, it renders as a bold title and
+    therapeutic_implications renders as a separate body paragraph."""
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    headline = "Stage IV PDAC — KRAS G12D driver, no standard targeted therapy"
+    body = (
+        "환자의 종양은 KRAS G12D 변이를 보이며 표준 표적치료제는 부재합니다. "
+        "임상시험 등록을 적극 검토할 수 있으며, 면역치료 적응증 평가가 권고됩니다."
+    )
+    opinion = CancerBoardOpinion(
+        therapeutic_headline=headline,
+        therapeutic_implications=body,
+        therapeutic_evidence="CIViC Level C",
+    )
+    html = render_board_opinion_html(opinion, language="en")
+
+    # Headline and body must appear as distinct elements.
+    assert headline in html
+    assert body in html
+    headline_idx = html.find(headline)
+    body_idx = html.find(body)
+    assert headline_idx != -1 and body_idx != -1
+    # The body paragraph must come after the headline, not be the same element.
+    assert body_idx > headline_idx
+    between = html[headline_idx + len(headline):body_idx]
+    assert "</div>" in between, "headline and body should live in separate <div>s"
+
+    # Body must be styled as a readable paragraph, not a 15px bold title.
+    body_start = html.rfind("<", 0, body_idx)
+    body_tag = html[body_start:body_idx]
+    assert "font-size:15px" not in body_tag
+    assert "font-weight:700" not in body_tag
+    assert "line-height:1.5" in body_tag
+
+
+def test_render_cancer_fallback_no_headline():
+    """When therapeutic_headline is empty, therapeutic_implications renders directly
+    as body text — NOT as a 15px bold title."""
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    body = (
+        "EGFR L858R 활성화 변이가 검출되어 EGFR TKI 표적치료에 민감할 것으로 예측됩니다. "
+        "1세대 또는 3세대 TKI 사용을 권고하며, 저항성 모니터링이 필요합니다."
+    )
+    opinion = CancerBoardOpinion(
+        therapeutic_headline="",
+        therapeutic_implications=body,
+        therapeutic_evidence="CIViC Level A",
+    )
+    html = render_board_opinion_html(opinion, language="en")
+
+    assert body in html
+    body_idx = html.find(body)
+    body_start = html.rfind("<", 0, body_idx)
+    body_tag = html[body_start:body_idx]
+    # Fallback body must not be styled as the old bold title.
+    assert "font-size:15px" not in body_tag
+    assert "font-weight:700" not in body_tag
+    assert "line-height:1.5" in body_tag
+    # Section caption stays.
+    assert "Therapeutic Implications" in html
+
+
+def test_render_cancer_evidence_below():
+    """therapeutic_evidence still renders as the caption block below the body text."""
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    body = "임상시험 등록을 권고합니다."
+    evidence = "CIViC Level C — supporting evidence summary"
+    opinion = CancerBoardOpinion(
+        therapeutic_headline="Stage IV PDAC headline",
+        therapeutic_implications=body,
+        therapeutic_evidence=evidence,
+    )
+    html = render_board_opinion_html(opinion, language="en")
+
+    assert evidence in html
+    body_idx = html.find(body)
+    evidence_idx = html.find(evidence)
+    assert evidence_idx > body_idx, "evidence should appear after the body paragraph"
+
+    evidence_start = html.rfind("<", 0, evidence_idx)
+    evidence_tag = html[evidence_start:evidence_idx]
+    assert "font-size:11px" in evidence_tag
+    assert "#0F766E" in evidence_tag
