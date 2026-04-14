@@ -319,6 +319,64 @@ def test_orchestrate_format_board_summary_rare_disease():
     assert "high" in line
 
 
+def test_cancer_board_opinion_has_optional_headline():
+    """CancerBoardOpinion accepts therapeutic_headline; default is empty string."""
+    default = CancerBoardOpinion()
+    assert default.therapeutic_headline == ""
+
+    populated = CancerBoardOpinion(therapeutic_headline="Stage IV PDAC — KRAS G12D driver")
+    assert populated.therapeutic_headline == "Stage IV PDAC — KRAS G12D driver"
+
+
+def test_board_chair_cancer_emits_headline():
+    """Board Chair populates therapeutic_headline from the LLM response."""
+    from scripts.clinical_board.agents.board_chair import BoardChair
+
+    mock_client = MagicMock()
+    mock_client.generate_json.return_value = {
+        "therapeutic_headline": "Stage IV PDAC — KRAS driver",
+        "therapeutic_implications": "No approved targeted therapy for KRAS G12D; consider trials.",
+        "therapeutic_evidence": "CIViC Level C",
+        "treatment_options": [],
+        "actionable_findings": [],
+        "clinical_actions": [],
+        "immunotherapy_eligibility": "",
+        "confidence": "moderate",
+        "agent_consensus": "majority",
+        "dissenting_opinions": [],
+        "monitoring_plan": [],
+    }
+    chair = BoardChair(client=mock_client)
+    result = chair.synthesize("briefing", [], mode="cancer")
+    assert isinstance(result, CancerBoardOpinion)
+    assert result.therapeutic_headline == "Stage IV PDAC — KRAS driver"
+    assert result.therapeutic_implications.startswith("No approved")
+
+
+def test_board_chair_cancer_backward_compat_no_headline():
+    """When the LLM omits therapeutic_headline, synthesize still works with empty headline."""
+    from scripts.clinical_board.agents.board_chair import BoardChair
+
+    mock_client = MagicMock()
+    mock_client.generate_json.return_value = {
+        "therapeutic_implications": "Legacy paragraph only.",
+        "therapeutic_evidence": "Level B",
+        "treatment_options": [],
+        "actionable_findings": [],
+        "clinical_actions": [],
+        "immunotherapy_eligibility": "",
+        "confidence": "moderate",
+        "agent_consensus": "unanimous",
+        "dissenting_opinions": [],
+        "monitoring_plan": [],
+    }
+    chair = BoardChair(client=mock_client)
+    result = chair.synthesize("briefing", [], mode="cancer")
+    assert isinstance(result, CancerBoardOpinion)
+    assert result.therapeutic_headline == ""
+    assert result.therapeutic_implications == "Legacy paragraph only."
+
+
 def test_board_chair_rare_disease_mode_default():
     """Board Chair defaults to rare-disease mode (backward compatible)."""
     from scripts.clinical_board.agents.board_chair import BoardChair

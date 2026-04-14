@@ -75,6 +75,16 @@ CANCER_SYSTEM_PROMPT = """당신은 종양유전체 임상 회의의 위원장(C
 1. **치료 시사점 종합**
    - Therapeutic Target, Tumor Genomics, PGx, Clinical Evidence 분석가의 소견을 종합하여
      치료(therapeutic implications)에 초점을 맞춘 종합 의견을 제시하세요.
+   - 먼저 `therapeutic_headline`으로 치료 입장을 요약하는 짧은 임상 헤드라인(최대 120자)을
+     작성하세요. 예: "Stage IV pancreatic adenocarcinoma — KRAS G12D driver, no standard
+     targeted therapy" 또는 "Stage III NSCLC — TP53/BRCA2 co-mutated, DDR-targeted
+     therapy candidate". 그 다음 기존과 같이 `therapeutic_implications`에 상세 단락을
+     작성하세요.
+   - EN guidance: Provide a short clinical headline (max 120 characters) summarising
+     the therapeutic stance in `therapeutic_headline`, e.g. "Stage IV pancreatic
+     adenocarcinoma — KRAS G12D driver, no standard targeted therapy" or "Stage III
+     NSCLC — TP53/BRCA2 co-mutated, DDR-targeted therapy candidate". Then provide the
+     full therapeutic_implications paragraph as before.
 
 2. **치료 옵션 정리**
    - 약물명, 근거 수준(A/B/C/D), 저항성 위험 정보를 포함한 치료 옵션 목록을 작성하세요.
@@ -93,11 +103,12 @@ CANCER_SYSTEM_PROMPT = """당신은 종양유전체 임상 회의의 위원장(C
 KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
 
 ## 응답 언어
-반드시 한국어로 응답하세요.
+반드시 한국어로 응답하세요. (단, `therapeutic_headline`은 임상 표기 관례상 영문 약어 사용 가능)
 
 ## 응답 형식 (JSON)
 {
-  "therapeutic_implications": "치료 시사점 종합",
+  "therapeutic_headline": "Stage IV PDAC — KRAS G12D driver, no standard targeted therapy",
+  "therapeutic_implications": "치료 시사점 종합 (상세 단락)",
   "therapeutic_evidence": "근거 요약 (CIViC level 등)",
   "treatment_options": [
     {"drug": "약물명", "evidence_level": "A/B/C/D", "resistance_notes": "저항성 위험 (있을 경우)"}
@@ -298,6 +309,7 @@ Synthesize the case information and specialist opinions above into a final diagn
                 )
 
         return CancerBoardOpinion(
+            therapeutic_headline=response.get("therapeutic_headline", ""),
             therapeutic_implications=response.get("therapeutic_implications", ""),
             therapeutic_evidence=response.get("therapeutic_evidence", ""),
             treatment_options=response.get("treatment_options", []),

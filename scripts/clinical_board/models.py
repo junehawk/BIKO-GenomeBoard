@@ -48,6 +48,11 @@ class BoardOpinion:
 @dataclass
 class CancerBoardOpinion:
     """Synthesized opinion from Cancer Clinical Board — treatment-focused."""
+    therapeutic_headline: str = ""
+    """Short (<= 120 chars) headline summarising the therapeutic stance, rendered as
+    the section title. Empty when the Board Chair prompt is running against an older
+    template — render.py falls back to rendering therapeutic_implications as a body
+    paragraph."""
     therapeutic_implications: str = ""
     therapeutic_evidence: str = ""
     treatment_options: List[dict] = field(default_factory=list)
