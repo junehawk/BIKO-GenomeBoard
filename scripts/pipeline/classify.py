@@ -4,7 +4,12 @@ import logging
 from typing import Optional
 
 from scripts.common.models import AcmgEvidence, FrequencyData
-from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict, apply_clinvar_override
+from scripts.classification.acmg_engine import (
+    classify_variant,
+    check_clinvar_conflict,
+    apply_clinvar_override,
+    apply_hotspot_conflict_reconciliation,
+)
 from scripts.clinical.hpo_matcher import calculate_hpo_score, get_matching_hpo_terms
 from scripts.clinical.query_omim import query_omim
 from scripts.clinical.query_clingen import get_gene_validity
@@ -76,9 +81,26 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
         conflict = check_clinvar_conflict(classification.classification, clinvar_sig)
         classification.conflict = conflict
 
-        # Apply ClinVar override when evidence is high-confidence
+        # A4: narrow hotspot+PM5 reconciliation when ClinVar is Conflicting.
+        # Fires only when all four gate conditions hold (engine ≥LP, ClinVar
+        # Conflicting, PM1, PM5). Populates classification.clinvar_override_reason
+        # when it fires; leaves the engine classification untouched. When the
+        # reason is populated we skip the legacy apply_clinvar_override so the
+        # conflict cannot silently downgrade the already-earned LP/P.
+        apply_hotspot_conflict_reconciliation(
+            classification,
+            clinvar_significance=clinvar_sig,
+            gene=getattr(variant, "gene", "") or "",
+            hgvsp=getattr(variant, "hgvsp", "") or "",
+        )
+
         original_classification = classification.classification
-        final_classification = apply_clinvar_override(original_classification, clinvar_sig, review_status)
+        if classification.clinvar_override_reason:
+            final_classification = original_classification
+        else:
+            final_classification = apply_clinvar_override(
+                original_classification, clinvar_sig, review_status
+            )
         if final_classification != original_classification:
             classification.classification = final_classification
             classification.clinvar_override = True

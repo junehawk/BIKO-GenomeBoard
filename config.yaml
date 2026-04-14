@@ -58,6 +58,14 @@ pgx:
   genes: ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD", "CYP3A5", "UGT1A1", "SLCO1B1", "VKORC1", "CYP1A2", "G6PD", "IFNL3"]
   risk_factor_genes: ["APOE"]
 
+acmg:
+  # A4: narrow ClinVar-conflict reconciliation gate. When true, engine-earned
+  # LP/P is preserved against a ClinVar "Conflicting" status iff PM1 (from the
+  # A3 hotspot table) AND PM5 both fire. Flip to false to fully defer to
+  # ClinVar without touching logic. See _workspace/v22-phaseA/artifacts/
+  # 00_clinical_review.md §5 for rollback criteria.
+  allow_engine_override_on_conflict: true
+
 somatic:
   tiering_strategy: "B"  # "A" (CIViC priority), "B" (combined), "C" (OncoKB only)
   tmb_high_threshold: 10

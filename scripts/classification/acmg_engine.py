@@ -15,6 +15,7 @@ class ClassificationResult:
     evidence_codes: List[str] = field(default_factory=list)
     conflict: bool = False
     matched_rule: str = ""
+    clinvar_override_reason: str = ""
 
 
 _RULES_CACHE: dict = {}
@@ -124,6 +125,190 @@ def check_clinvar_conflict(classification: str, clinvar_sig: str) -> bool:
 
     # Conflict if difference >= 2 steps (LP vs P is only 1 step, not flagged)
     return abs(engine_rank - clinvar_rank) >= 2
+
+
+# ── A4: narrow ClinVar-conflict reconciliation ───────────────────────────────
+#
+# ACMG/AMP 2015 (PMID 25741868) does NOT mandate that a laboratory must defer
+# to ClinVar when ClinVar itself is in a *conflicting* state. It mandates
+# reconciliation with reasoning documented and reviewable. ClinGen SVI PM1
+# refinement (Garrett 2021, PMID 33280026) further contemplates laboratory-
+# level application of PM1 at moderate strength in peer-reviewed hotspot
+# regions even when ClinVar classifications lag. The override below is the
+# narrow reconciliation pattern cleared by clinical-advisor on 2026-04-14
+# (see _workspace/v22-phaseA/artifacts/00_clinical_review.md §2).
+#
+# Fires ONLY when all four conditions hold:
+#   1. Engine evidence chain independently reaches P or LP (pre-override).
+#   2. ClinVar status category is "Conflicting" (prefix/category match).
+#   3. PM1 fires from the protein-domain hotspot table (A3).
+#   4. PM5 fires from an adjacent-residue ClinVar P/LP entry.
+#
+# On fire: preserve engine classification, populate clinvar_override_reason
+# with a ≤200-char human-readable citation pointing at PM1 (gene + domain +
+# PMID) and PM5. Config gate: acmg.allow_engine_override_on_conflict
+# (default: true).
+
+_CONFLICTING_PREFIXES = (
+    "conflicting classifications of pathogenicity",
+    "conflicting interpretations of pathogenicity",
+    "conflicting_pathogenicity",
+)
+
+# Short gene-hotspot descriptors for the override_reason template. Keep
+# strings compact so the full reason fits under the 200-char cap even when
+# the {ADJ_VAR} / {VARIANT} expansions add ~30 chars.
+_HOTSPOT_DESCRIPTORS = {
+    "TP53": {
+        175: ("DBD R175 hotspot", "30224644"),
+        245: ("DBD L3 loop", "30224644"),
+        246: ("DBD L3 loop", "30224644"),
+        247: ("DBD L3 loop", "30224644"),
+        248: ("DBD L3 loop", "30224644"),
+        249: ("DBD L3 loop", "30224644"),
+        273: ("DBD R273 DNA-contact", "30224644"),
+        282: ("DBD R282 hotspot", "30224644"),
+    },
+    "KRAS": {
+        12: ("G-domain P-loop", "27993330"),
+        13: ("G-domain P-loop", "27993330"),
+        61: ("G-domain switch II", "27993330"),
+    },
+    "NRAS": {
+        12: ("G-domain switch I/II", "27993330"),
+        13: ("G-domain switch I/II", "27993330"),
+        61: ("G-domain switch I/II", "27993330"),
+    },
+    "HRAS": {
+        12: ("G-domain switch I/II", "27993330"),
+        13: ("G-domain switch I/II", "27993330"),
+        61: ("G-domain switch I/II", "27993330"),
+    },
+    "BRAF": {600: ("kinase activation loop", "27993330")},
+    "EGFR": {
+        719: ("ATP-binding P-loop", "27993330"),
+        790: ("T790M gatekeeper", "27993330"),
+        858: ("L858R activation loop", "27993330"),
+    },
+    "IDH1": {132: ("active site", "27993330")},
+    "IDH2": {140: ("active site", "27993330")},
+    "PIK3CA": {
+        542: ("helical domain", "27993330"),
+        545: ("helical domain", "27993330"),
+        1047: ("H1047R kinase domain", "27993330"),
+    },
+}
+
+
+def _is_conflicting_status(status) -> bool:
+    """Prefix/category match for ClinVar "Conflicting" states.
+
+    Accepts any status string whose lowercase form begins with a known
+    conflicting-pathogenicity prefix. Tolerant of whitespace and case.
+    """
+    if not status:
+        return False
+    norm = str(status).strip().lower()
+    return any(norm.startswith(p) for p in _CONFLICTING_PREFIXES)
+
+
+def _override_enabled() -> bool:
+    """Return the config gate; defaults to True for v2.2."""
+    return bool(get("acmg.allow_engine_override_on_conflict", True))
+
+
+def _hotspot_descriptor(gene: str, hgvsp: str):
+    """Return ``(domain_label, pmid)`` for the A4 reason string."""
+    from scripts.common.hgvs_utils import extract_protein_position
+
+    pos = extract_protein_position(hgvsp)
+    if pos is None:
+        return ("hotspot", "30224644")
+    gene_map = _HOTSPOT_DESCRIPTORS.get(gene or "", {})
+    return gene_map.get(pos, ("hotspot domain", "30224644"))
+
+
+def _short_hgvsp(hgvsp: str) -> str:
+    """Return a compact 1-letter representation like ``R249M`` for the reason."""
+    from scripts.common.hgvs_utils import AA3TO1, extract_protein_position
+
+    if not hgvsp:
+        return "variant"
+    import re as _re
+
+    m = _re.search(r"p\.([A-Z][a-z]{2})(\d+)([A-Z][a-z]{2})", hgvsp)
+    if m:
+        ref = AA3TO1.get(m.group(1), m.group(1))
+        alt = AA3TO1.get(m.group(3), m.group(3))
+        return f"{ref}{m.group(2)}{alt}"
+    m = _re.search(r"p\.([A-Z])(\d+)([A-Z*])", hgvsp)
+    if m:
+        return f"{m.group(1)}{m.group(2)}{m.group(3)}"
+    pos = extract_protein_position(hgvsp)
+    return f"p.{pos}" if pos is not None else "variant"
+
+
+def apply_hotspot_conflict_reconciliation(
+    result: ClassificationResult,
+    clinvar_significance: str,
+    gene: str,
+    hgvsp: str,
+    adjacent_variant: str = "",
+    adjacent_class: str = "Pathogenic",
+) -> ClassificationResult:
+    """Apply the A4 narrow ClinVar-conflict override to ``result``.
+
+    Mutates ``result`` in place (and also returns it) — preserves the engine
+    classification and populates ``clinvar_override_reason`` when all four
+    gate conditions hold. Returns the same object unchanged otherwise.
+
+    Args:
+        result: engine ``ClassificationResult`` (pre-override).
+        clinvar_significance: raw ClinVar ``clinical_significance`` string.
+        gene: HUGO symbol.
+        hgvsp: HGVSp (3-letter or 1-letter) for the current variant.
+        adjacent_variant: short HGVSp (e.g. ``R249S``) of the adjacent-residue
+            ClinVar P/LP entry that fired PM5. Optional; when blank the
+            reason string uses a generic "adjacent PM5" fragment.
+        adjacent_class: ``"Pathogenic"`` or ``"Likely Pathogenic"``.
+    """
+    if not _override_enabled():
+        return result
+
+    # Condition 1: engine reached P or LP independently
+    engine_class = (result.classification or "").strip()
+    engine_upper = engine_class.lower()
+    if engine_upper not in ("pathogenic", "likely pathogenic"):
+        return result
+
+    # Condition 2: ClinVar status is Conflicting
+    if not _is_conflicting_status(clinvar_significance):
+        return result
+
+    # Conditions 3+4: PM1 and PM5 fire
+    codes = {c.upper() for c in (result.evidence_codes or [])}
+    has_pm1 = "PM1" in codes  # PM1_Supporting intentionally NOT accepted
+    has_pm5 = "PM5" in codes
+    if not (has_pm1 and has_pm5):
+        return result
+
+    domain_label, pmid = _hotspot_descriptor(gene, hgvsp)
+    short_class = "P" if engine_upper == "pathogenic" else "LP"
+    short_var = _short_hgvsp(hgvsp)
+    adj_fragment = (
+        f"PM5 ({adjacent_variant} ClinVar {adjacent_class})"
+        if adjacent_variant
+        else f"PM5 (adjacent ClinVar {adjacent_class})"
+    )
+    reason = (
+        f"engine {short_class} override: PM1 ({gene} {domain_label}, "
+        f"PMID {pmid}) + {adj_fragment}; ClinVar {short_var} shows "
+        f"conflicting submitters"
+    )
+    if len(reason) > 200:
+        reason = reason[:200]
+    result.clinvar_override_reason = reason
+    return result
 
 
 def apply_clinvar_override(engine_classification: str, clinvar_significance: str, review_status: str) -> str:
