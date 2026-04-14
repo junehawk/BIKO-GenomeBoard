@@ -21,12 +21,33 @@ Korean Population-Aware Genomic Variant Interpretation Platform
 - 12-gene PGx screening with Korean vs Western prevalence comparison
 - CPIC Level A/B drug-gene interaction recommendations
 
-### AI Clinical Board
+### AI Clinical Board (v2)
 - Local multi-agent diagnostic synthesis powered by **MedGemma 27B** (Ollama)
-- 4 domain specialists: Variant Pathologist, Disease Geneticist, PGx Specialist, Literature Analyst
-- Board Chair synthesis with consensus opinion and differential diagnoses
-- Bilingual output (English / Korean)
+- **Mode-specific agent sets** — rare-disease (Variant Pathologist, Disease Geneticist, PGx Specialist, Literature Analyst) and cancer (Therapeutic Target Analyst, Tumor Genomics Specialist, PGx Specialist, Clinical Evidence Analyst)
+- **Grounded prompting** — per-agent domain sheets inject ClinVar / OncoKB / CIViC / HPO / OMIM / CPIC context instead of free-form reasoning
+- **`CancerBoardOpinion`** treatment-focused output schema (therapeutic implications, treatment options with PMID, immunotherapy eligibility, monitoring plan)
+- **Clinical note input** — `--clinical-note` / `--clinical-note-file` feeds free-text history (KR/EN, 1500 char cap) into briefings without altering deterministic classification
+- **Knowledge Base (hybrid SQLite + Wiki)** — prior board decisions stored in `data/knowledge_base/kb.sqlite3`, cross-case variant stats injected as Prior Knowledge (with anti-anchoring guardrail)
+- Bilingual output (English / Korean), temperature 0.1 for consistency
+- Board Chair synthesis with consensus opinion, differential diagnoses (rare) or therapeutic strategy (cancer)
 - Deterministic classification is never altered by AI — AI provides interpretive synthesis only
+
+### Variant Selector (AI Board Input Filter)
+Clinical tiered filter that decides which variants reach the AI Board, implemented per AMP/ASCO/CAP 2017 (PMID 27993330) and ACMG/AMP 2015 (PMID 25741868). Reviewed against the clinical criteria note at [`_workspace/variant-selector/00_clinical_review.md`](_workspace/variant-selector/00_clinical_review.md).
+
+- **MUST-include (cancer)** — ClinVar P/LP, AMP Tier I/II, and Tier III variants at Cancer Hotspots residues or OncoKB oncogenic annotations in COSMIC CGC Tier 1 genes
+- **MUST-include (rare disease)** — ClinVar P/LP, ACMG P/LP, and CNV/SV Class 4–5
+- **MAY-include (cancer VUS)** — Cancer Hotspots residue, OncoKB oncogenic/likely-oncogenic, or truncating LoF in CGC Tier 1 tumor suppressors. Capped at 10.
+- **MAY-include (rare disease VUS)** — requires HPO phenotype match above threshold. ACMG SF v3.2 genes are excluded from silent inclusion (opt-in path not yet modeled).
+- **Soft caps** — 30 for cancer, 20 for rare disease; MUST-include items are never truncated. When MAY-include overflows, selector emits `truncated=True` and `n_dropped=<n>` metadata.
+- **No top-k fallback** — when nothing qualifies, the selector emits an empty selection with `empty_reason`, and the report renders "No reportable somatic alterations" / "No candidate variants meeting diagnostic criteria" instead of fabricating low-evidence picks. QC, coverage, TMB, and methodology are still reported.
+- **Audit trail** — every selected variant carries `selection_reason` ∈ {`P/LP`, `Tier_I`, `Tier_II`, `Tier_III_hotspot`, `VUS_hotspot`, `VUS_TSG_LoF`, `VUS_HPO_match`, …}
+- **Pre-analytic filtering caption** — every AI Board HTML section shows "Pre-analytic filtering: N variants → M presented to Board / Criteria: …" so clinicians can see exactly how much the selector pruned (see `sample_codegen_777_report_v2.html` — 777 raw WGS variants → 2 board-presented).
+- **No-findings placeholder** — empty `AgentOpinion` panels render "No specific findings identified for this case." (EN) / "이 케이스에서 특별한 소견은 확인되지 않았습니다." (KO)
+
+### Report Regeneration Tooling
+- **`orchestrate.py`** now dumps `clinical_board` as a dict (asdict) in the run JSON, so reports can be regenerated from cached results
+- **`scripts/rerender_report.py`** — regenerate HTML from the cached orchestrate JSON without re-running Ollama. Useful for template tweaks and showcase rebuilds.
 
 ### Cancer Report
 - FoundationOne CDx-style tiered layout
@@ -173,7 +194,7 @@ gb/
 ├── data/
 │   ├── sample_vcf/                 # Demo VCF files
 │   └── db/                         # Local databases (built by setup script)
-├── tests/                          # 638 pytest tests
+├── tests/                          # 673+ pytest tests
 ├── docs/
 │   ├── showcase/                   # Sample reports & intro document
 │   ├── SETUP.md
@@ -194,7 +215,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -v
 ```
 
-638 tests covering ACMG classification, in silico PP3/BP4 thresholds, ClinVar override, CIViC integration, OncoKB tiering, TMB calculation, CNV/SV parsing, HPO matching, Korean frequency comparison, PGx analysis, AI Clinical Board agents, batch deduplication, config validation, and report generation.
+673+ tests covering ACMG classification, in silico PP3/BP4 thresholds, ClinVar override, CIViC integration, OncoKB tiering, TMB calculation, CNV/SV parsing, HPO matching, Korean frequency comparison, PGx analysis, AI Clinical Board agents (rare-disease + cancer), variant selector MUST/MAY tiers and soft caps, domain sheet builders, clinical note trimming, knowledge base CRUD, batch deduplication, config validation, and report generation.
 
 ---
 

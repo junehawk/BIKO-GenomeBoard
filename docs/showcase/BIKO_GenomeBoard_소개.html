@@ -191,7 +191,8 @@
     <span class="badge">AMP/ASCO/CAP 2017</span>
     <span class="badge">ClinGen SVI 2022</span>
     <span class="badge">한국인 3종 빈도 DB</span>
-    <span class="badge">AI Clinical Board</span>
+    <span class="badge">AI Clinical Board v2</span>
+    <span class="badge">Variant Selector (AMP/ACMG)</span>
     <span class="badge">Offline Ready</span>
   </div>
 </div>
@@ -405,10 +406,41 @@
 
     <div class="card" style="border:2px solid #A7D7BE;background:linear-gradient(135deg,var(--biko-green-light),#F8FAFC);">
       <div class="card-icon">&#x1F9E0;</div>
-      <h3>AI Clinical Board</h3>
-      <p><strong>Google MedGemma 27B</strong> 기반 다전문가 임상 Board 시스템. 4명의 도메인 전문 Agent(변이 병리, 질환 유전학, 약물유전체, 문헌 분석)가 독립 분석 후, Board Chair가 종합 진단 의견을 도출. 감별진단 목록, 권고사항, 추적 계획 포함. 결정적 분류 엔진 결과를 변경하지 않으며, 모든 출력에 AI-Generated 태그 표시. MedGemma는 임상 등급이 아니며, 연구 보조 목적으로만 사용됩니다.</p>
+      <h3>AI Clinical Board v2 (모드별 전문의 분리)</h3>
+      <p><strong>Google MedGemma 27B</strong> 기반 다전문가 임상 Board 시스템. <strong>모드별로 전문의 구성이 다릅니다</strong>: 희귀질환 모드는 변이 병리·질환 유전학·약물유전체·문헌 분석 4인, 암 모드는 치료 표적 분석·Tumor Genomics·약물유전체·임상 근거 분석 4인. 각 전문의는 <strong>Grounded Prompting</strong> 방식으로 ClinVar/OncoKB/CIViC/HPO/OMIM/CPIC 도메인 시트를 주입받아 자유 추론 대신 근거 정리를 수행합니다. Board Chair는 모드별로 다른 출력 스키마를 사용합니다 — 희귀질환은 감별진단 중심의 <code>BoardOpinion</code>, 암은 치료 전략 중심의 <code>CancerBoardOpinion</code>(치료 옵션 + PMID, 면역치료 적합성, 모니터링 계획). Temperature 0.1로 일관성을 강화하고, 결정적 분류 엔진은 절대 변경하지 않습니다. 모든 출력에 AI-Generated 태그와 고정 disclaimer가 포함됩니다. MedGemma는 임상 등급이 아니며, 연구 보조 목적으로만 사용됩니다.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
       <span class="tag" style="background:var(--biko-green-light);color:var(--teal);margin-left:4px;">Ollama (온프레미스)</span>
+    </div>
+
+    <div class="card" style="border:2px solid #A7D7BE;background:linear-gradient(135deg,#FFF7ED,#F8FAFC);">
+      <div class="card-icon">&#x1F3AF;</div>
+      <h3>Variant Selector — 임상 기반 전처리 필터</h3>
+      <p>AI Board에 전달할 변이를 <strong>AMP/ASCO/CAP 2017</strong>과 <strong>ACMG/AMP 2015</strong>에 따라 선별하는 결정적 필터. 777개 원시 WGS 변이가 2개의 Board 제시 변이로 축약된 <a href="sample_codegen_777_report_v2.html">codegen showcase</a>에서 동작을 확인할 수 있습니다.</p>
+      <p style="margin-top:8px;">
+        <strong>MUST-include(암)</strong>: ClinVar P/LP, Tier I/II, 그리고 Cancer Hotspots 재발 잔기 또는 OncoKB oncogenic(COSMIC CGC Tier 1 유전자)인 Tier III 변이.<br>
+        <strong>MUST-include(희귀질환)</strong>: ClinVar P/LP, ACMG P/LP, CNV/SV Class 4–5.<br>
+        <strong>MAY-include VUS(암)</strong>: Cancer Hotspots / OncoKB oncogenic / CGC Tier 1 TSG 절단 변이. 최대 10개.<br>
+        <strong>MAY-include VUS(희귀질환)</strong>: HPO 표현형 매칭 threshold 이상. <strong>ACMG SF v3.2 유전자</strong>는 명시적 opt-in 경로가 모델링되기 전까지 자동 포함에서 제외됩니다.<br>
+        <strong>Soft caps</strong>: 암 30 / 희귀질환 20. MUST-include 항목은 절대 잘리지 않으며, MAY-include가 초과하면 <code>truncated=True</code> 및 <code>n_dropped</code> 메타데이터가 기록됩니다.<br>
+        <strong>Top-k fallback 없음</strong>: 조건을 만족하는 변이가 없을 때, 상위 3개를 억지로 surface하지 않고 <code>empty_reason</code>과 함께 빈 선택을 반환합니다. 리포트에는 "보고 가능한 소견 없음" 문구가 렌더링되며 TMB·커버리지·방법론 섹션은 정상 출력됩니다.<br>
+        <strong>감사 추적</strong>: 선별된 모든 변이에 <code>selection_reason</code> 태그(<code>P/LP</code>, <code>Tier_I</code>, <code>Tier_III_hotspot</code>, <code>VUS_hotspot</code>, <code>VUS_TSG_LoF</code>, <code>VUS_HPO_match</code> 등)가 부여됩니다.
+      </p>
+      <p style="margin-top:8px;">임상 기준 검토 결과는 <code>_workspace/variant-selector/00_clinical_review.md</code>에 기록되어 있으며, AMP 2017 (PMID 27993330), ACMG/AMP 2015 (PMID 25741868), ACMG SF v3.2 (PMID 37347242), Schwaederle 2015, Harris 2016 (iCAT) 문헌에 근거합니다.</p>
+      <span class="tag tag-both">Cancer + Rare Disease</span>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">&#x1F4DD;</div>
+      <h3>임상 노트 입력 + Knowledge Base</h3>
+      <p><strong>--clinical-note</strong> / <strong>--clinical-note-file</strong>: 환자의 자유 텍스트 임상 이력(한/영, 최대 1500자)을 AI Board 브리핑에 주입합니다. 결정적 분류 엔진에는 영향을 주지 않으며, 리포트 HTML에는 원문이 포함되지 않습니다(재식별 방지). <strong>Knowledge Base</strong>는 Board의 과거 판단을 <code>kb.sqlite3</code>에 저장하고, 동일 변이 재분석 시 "이전 N건의 판단 이력"을 Prior Knowledge 구간으로 주입합니다. Wiki 페이지는 코드가 SQLite에서 자동 생성하며 LLM이 편집하지 않습니다(hallucination 방지). anti-anchoring 가드레일 포함.</p>
+      <span class="tag tag-both">Cancer + Rare Disease</span>
+    </div>
+
+    <div class="card">
+      <div class="card-icon">&#x1F504;</div>
+      <h3>리포트 재생성 도구</h3>
+      <p><strong>orchestrate.py</strong>가 <code>clinical_board</code>를 dict(asdict)로 JSON에 기록하며, <strong>scripts/rerender_report.py</strong>가 캐시된 JSON에서 Ollama 재호출 없이 HTML 리포트를 재생성합니다. 템플릿 수정, 쇼케이스 리빌드, 표시 문구 변경 등을 즉시 반영할 수 있습니다.</p>
+      <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
   </div>
@@ -512,7 +544,7 @@
       <tr><td><strong>리포트 엔진</strong></td><td>Jinja2 (HTML) + WeasyPrint (PDF)</td></tr>
       <tr><td><strong>병렬 처리</strong></td><td>ThreadPoolExecutor (DB 쿼리) + ProcessPoolExecutor (리포트)</td></tr>
       <tr><td><strong>설정</strong></td><td>YAML + 스키마 검증 (로드 시점)</td></tr>
-      <tr><td><strong>테스트</strong></td><td>pytest (638개)</td></tr>
+      <tr><td><strong>테스트</strong></td><td>pytest (673+개)</td></tr>
       <tr><td><strong>배포</strong></td><td>Docker + docker-compose / CLI 직접 실행</td></tr>
     </tbody>
   </table>
@@ -576,7 +608,7 @@
     <a href="https://www.kisti.re.kr" target="_blank"><img src="assets/kisti_logo.png" alt="KISTI"></a>
   </div>
   <p><strong>BIKO GenomeBoard</strong> &mdash; Korean Population-Aware Genomic Variant Interpretation Pipeline</p>
-  <p style="margin-top:6px;">Python &ge; 3.10 &middot; 638 Tests &middot; Docker Ready &middot; Offline Capable</p>
+  <p style="margin-top:6px;">Python &ge; 3.10 &middot; 673+ Tests &middot; Docker Ready &middot; Offline Capable</p>
   <p style="margin-top:8px;font-size:11px;color:#94A3B8;">
     AI Clinical Board powered by <a href="https://ai.google.dev/gemma/docs/medgemma" style="color:#94A3B8;">Google MedGemma</a> under
     <a href="https://ai.google.dev/gemma/docs/medgemma/terms" style="color:#94A3B8;">MedGemma Terms of Use</a>.

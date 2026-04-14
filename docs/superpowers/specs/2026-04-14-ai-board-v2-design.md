@@ -436,3 +436,67 @@ knowledge_base:
 - 임상 노트에서 HPO 자동 추출 — 정확도 이슈, 분류 엔진 영향
 - LLM이 Wiki를 직접 편집 — hallucination 위험
 - MSI 분석 — 별도 데이터 소스 필요 (향후)
+
+---
+
+## 10. 구현 현황 (Implementation Status) — 2026-04-14
+
+Phase 1–3이 v2.1 쇼케이스 시점에 모두 통합되었다. 아래는 실제 머지된 커밋 요약이다 (메인 브랜치).
+
+### 10.1 AI Board v2 Phase 1–3 (2026-04-10 ~ 2026-04-13)
+
+| 영역 | 커밋 | 비고 |
+|------|------|------|
+| Base agent `domain_sheet` 파라미터 + temperature config | 상위 커밋 | 하위 호환 기본값 `""` |
+| Rare/Cancer 도메인 시트 빌더 (`domain_sheets.py`) | 상위 커밋 | ClinVar / OncoKB / CIViC / HPO / OMIM / CPIC 주입 |
+| Cancer 에이전트 3종 (`therapeutic_target.py`, `tumor_genomics.py`, `clinical_evidence.py`) | `8a0c984` | rare-disease 에이전트와 분리 |
+| Board Chair 모드 분기 + `CancerBoardOpinion` | `fe4e90f` | 치료 중심 출력 스키마 |
+| Runner 모드 기반 에이전트 셋 선택 | `0346585` | `Optional[Union[BoardOpinion, CancerBoardOpinion]]` |
+| 임상 노트 입력 (`--clinical-note` / `--clinical-note-file`) | `02c7f96` | 1500자 캡, KR/EN, mutually exclusive |
+| Runner KB 통합 (prior knowledge + 저장) | `820ca35` | SQLite 조회 + Wiki 자동 재생성 |
+| Config: temperature, clinical_note_max_chars, knowledge_base | `932638d` | section 8 yaml 그대로 |
+| CancerBoardOpinion 렌더링 (치료 중심 레이아웃) | `d3aa5c2` | cancer 템플릿 신규 섹션 |
+| KB 스키마 자동 초기화 | `d1ffe2b` | 최초 사용 시 lazy init |
+| Cancer orchestrate 로그 `therapeutic_implications` | `2210de9` | rare-disease 전용 로그와 분기 |
+| Domain sheet 입력 보호 + KB gene-less 행 skip | `f17a37c` | 문자열 HPO/phenotype 허용 |
+
+### 10.2 Variant Selector v1 (2026-04-14)
+
+임상 기준 검토(`_workspace/variant-selector/00_clinical_review.md`, AMP 2017 PMID 27993330 / ACMG/AMP 2015 PMID 25741868 / ACMG SF v3.2 PMID 37347242 / Schwaederle 2015 / Harris 2016 / Van Allen 2014 근거)를 선행한 후 구현.
+
+| 영역 | 커밋 | 비고 |
+|------|------|------|
+| `variant_selector.py` 모듈 + 단위 테스트 | `75ea590` | AMP 2017 / ACMG 2015 tiered filter |
+| case_briefing + domain_sheets 통합 | `0e52578` | selector output을 브리핑·도메인 시트 입력으로 사용 |
+| Runner 배선 + 선택 메타데이터 전파 | `af43c46` | `selection_reason`, `truncated`, `n_dropped`, `empty_reason` |
+| `config.yaml` selector caps + criteria overrides | `3cbf518` | soft caps 30 / 20, VUS MAY 10 |
+| `render.py` 선택 메타데이터 푸터 | `2fb7a3a` | "Pre-analytic filtering: N → M / Criteria: …" |
+| No-findings placeholder (AgentOpinion 0건) | `e318c86` | EN / KO 고정 문구 |
+| `scripts/rerender_report.py` | `f46fcbd` | 캐시 JSON → HTML 리렌더 |
+| orchestrate `clinical_board` asdict dump | `f595159` | rerender roundtrip 가능 |
+| v2.1 쇼케이스 재생성 (cancer / codegen / rare-disease) | `c00e54e`, `5f54708` | codegen: 777 raw → 2 board-presented (KRAS G12D LP + TP53 Tier II VUS) |
+
+### 10.3 임상 검토에 반영된 설계 결정
+
+clinical review에서 요구한 5가지 수정은 전부 반영되었다:
+
+1. **Tier III hotspot/OncoKB MUST-include** — 구현됨. `selection_reason = "Tier_III_hotspot"`로 태그.
+2. **"Protein-impacting" VUS 거부** — 구현됨. VUS 인정 기준은 hotspot / OncoKB oncogenic / CGC Tier 1 TSG LoF / indel hotspot으로 엄격화.
+3. **HPO threshold + ACMG SF v3.2 제외** — 구현됨. 임상 기준은 operational threshold를 사용하며, SF v3.2 유전자는 opt-in 경로가 모델링되기 전까지 자동 포함 차단.
+4. **Soft caps** — 구현됨. MUST-include는 절대 잘리지 않고, MAY-include overflow만 truncate. 메타데이터에 `truncated`/`n_dropped`.
+5. **Top-3 fallback 제거** — 구현됨. 조건 불만족 시 `empty_reason` 기반의 honest empty selection. TMB·QC·방법론은 정상 출력.
+
+### 10.4 쇼케이스 산출물
+
+- `docs/showcase/sample_cancer_report_v2.html` — 10-variant demo (NSCLC stage III)
+- `docs/showcase/sample_codegen_777_report_v2.html` — 777-variant WGS demo (pancreatic cancer stage IV), selector의 pre-analytic filtering 효과 시연
+- `docs/showcase/sample_rare_disease_report_v2.html` — 5-variant demo (pediatric GDD)
+
+세 HTML 모두 AI Board 섹션에 pre-analytic filtering 캡션과 (해당 시) no-findings placeholder가 렌더링된다.
+
+### 10.5 v3 후보 (본 스펙 범위 외)
+
+- ACMG SF v3.2 opt-in 경로 모델링 — 현재는 selector에서 silent exclude
+- 동적 tumor-type × OncoKB level 매핑 (현재 Tier I/II는 global rule)
+- variant selector UI/API 수준 노출 — 현재는 내부 파이프라인 전용
+- MSI / fusion / clonal fraction 기반 추가 필터 — 데이터 소스 확보 후
