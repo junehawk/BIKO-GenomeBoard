@@ -40,6 +40,9 @@ class BoardOpinion:
     confidence: str = "moderate"
     disclaimer: str = BOARD_DISCLAIMER
     raw_response: str = ""
+    # Populated by runner.py from select_board_variants() — lets render.py
+    # show the audit footer without re-running the selector.
+    selection_metadata: Optional[dict] = None
 
 
 @dataclass
@@ -58,3 +61,4 @@ class CancerBoardOpinion:
     confidence: str = "moderate"
     disclaimer: str = BOARD_DISCLAIMER
     raw_response: str = ""
+    selection_metadata: Optional[dict] = None

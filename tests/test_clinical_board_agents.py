@@ -550,3 +550,129 @@ def test_runner_loads_rare_disease_agents_default():
     assert "Variant Pathologist" in names
     assert "Disease Geneticist" in names
     assert len(agents) == 4
+
+
+# ---------------------------------------------------------------------------
+# Runner selector wiring (Task 4)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_uses_selector_and_records_metadata(monkeypatch):
+    """run_clinical_board runs the selector, pre-populates report_data, and
+    propagates selection_metadata onto the returned BoardOpinion."""
+    from scripts.clinical_board import runner as runner_mod
+    from scripts.clinical_board.models import (
+        AgentOpinion,
+        BoardOpinion,
+    )
+
+    captured: dict = {}
+
+    # --- Mock OllamaClient: always-available, always-model-loaded ---
+    class _FakeClient:
+        def __init__(self, *a, **kw):
+            pass
+
+        def is_available(self):
+            return True
+
+        def has_model(self, m):
+            return True
+
+    monkeypatch.setattr(runner_mod, "OllamaClient", _FakeClient)
+
+    # --- Mock domain agents: one fake agent, records the variant list it sees ---
+    fake_agent = MagicMock()
+    fake_agent.agent_name = "FakeAgent"
+    fake_agent.domain = "fake_domain"
+    fake_agent.analyze.return_value = AgentOpinion(
+        agent_name="FakeAgent", domain="fake_domain", confidence="high"
+    )
+    monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [fake_agent])
+
+    def _fake_build_domain_sheet(domain, mode, variants, report_data):
+        captured["domain_variants"] = list(variants)
+        return "fake sheet"
+
+    monkeypatch.setattr(runner_mod, "build_domain_sheet", _fake_build_domain_sheet)
+
+    # --- Mock chair: returns a minimal BoardOpinion ---
+    fake_chair = MagicMock()
+    fake_chair.synthesize.return_value = BoardOpinion(
+        primary_diagnosis="test diagnosis",
+        confidence="moderate",
+    )
+    monkeypatch.setattr(runner_mod, "_load_chair", lambda *a, **kw: fake_chair)
+
+    # --- KB disabled to keep the test hermetic ---
+    def _fake_get(key, default=None):
+        if key.startswith("knowledge_base"):
+            return False if key.endswith(".enabled") else ""
+        return default
+
+    monkeypatch.setattr(runner_mod, "get", _fake_get)
+
+    # Mix of Tier I (MUST), Tier III passenger (EXCLUDED), Benign (EXCLUDED)
+    report_data = {
+        "sample_id": "TEST-SEL",
+        "variants": [
+            {
+                "gene": "EGFR",
+                "variant": "chr7:1",
+                "classification": "VUS",
+                "tier": "Tier I",
+                "hgvsp": "p.Leu858Arg",
+                "consequence": "missense_variant",
+                "cancer_gene_type": "",
+                "oncokb_level": "",
+                "hpo_score": 0,
+                "gnomad_af": None,
+                "variant_type": "SNV",
+            },
+            {
+                "gene": "RANDOM",
+                "variant": "chr1:1",
+                "classification": "VUS",
+                "tier": "Tier IV",
+                "hgvsp": "",
+                "consequence": "missense_variant",
+                "cancer_gene_type": "",
+                "oncokb_level": "",
+                "hpo_score": 0,
+                "gnomad_af": None,
+                "variant_type": "SNV",
+            },
+            {
+                "gene": "NOISE",
+                "variant": "chr2:1",
+                "classification": "Benign",
+                "tier": "Tier IV",
+                "hgvsp": "",
+                "consequence": "missense_variant",
+                "cancer_gene_type": "",
+                "oncokb_level": "",
+                "hpo_score": 0,
+                "gnomad_af": None,
+                "variant_type": "SNV",
+            },
+        ],
+        "summary": {"total": 3},
+    }
+
+    opinion = runner_mod.run_clinical_board(report_data, mode="cancer")
+
+    assert opinion is not None
+    # Selector populated the report_data side-channel
+    assert "_board_variants" in report_data
+    assert "_board_selection_metadata" in report_data
+    selected_genes = {v["gene"] for v in report_data["_board_variants"]}
+    assert selected_genes == {"EGFR"}
+    meta = report_data["_board_selection_metadata"]
+    assert meta["total_input"] == 3
+    assert meta["selected"] == 1
+    assert meta["must_included"] == 1
+    # Domain sheet saw the board list, not the raw one
+    assert [v["gene"] for v in captured["domain_variants"]] == ["EGFR"]
+    # Metadata propagated onto the opinion for render.py
+    assert opinion.selection_metadata is not None
+    assert opinion.selection_metadata["selected"] == 1

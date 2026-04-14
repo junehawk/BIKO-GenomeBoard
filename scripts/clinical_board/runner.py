@@ -17,6 +17,7 @@ from scripts.clinical_board.case_briefing import build_case_briefing
 from scripts.clinical_board.domain_sheets import build_domain_sheet
 from scripts.clinical_board.kb_query import query_prior_knowledge
 from scripts.clinical_board.knowledge_base import KnowledgeBase
+from scripts.clinical_board.variant_selector import select_board_variants
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
@@ -111,6 +112,22 @@ def run_clinical_board(
             logger.warning(f"[Clinical Board] Model '{model_name}' not found. "
                           f"Run 'ollama pull {model_name}' to download.")
 
+    # Step 0: Pre-filter variants with the deterministic selector. Every
+    # downstream consumer (case briefing, domain sheets, KB save, render
+    # footer) reads the same filtered list via report_data["_board_variants"]
+    # so the audit trail stays consistent.
+    raw_variants = report_data.get("variants", []) or []
+    board_variants, selection_metadata = select_board_variants(
+        raw_variants, mode, report_data=report_data
+    )
+    report_data["_board_variants"] = board_variants
+    report_data["_board_selection_metadata"] = selection_metadata
+    logger.info(
+        f"[Clinical Board] Pre-filter: {selection_metadata['total_input']} → "
+        f"{selection_metadata['selected']} variants "
+        f"({selection_metadata['criteria_summary']})"
+    )
+
     # Step 1: Build case briefing
     logger.info("[Clinical Board] Building case briefing...")
     briefing = build_case_briefing(report_data, mode)
@@ -134,7 +151,7 @@ def run_clinical_board(
     for agent in agents:
         try:
             domain_sheet = build_domain_sheet(
-                agent.domain, mode, report_data.get("variants", []), report_data
+                agent.domain, mode, board_variants, report_data
             )
             opinion = agent.analyze(
                 briefing, domain_sheet=domain_sheet, prior_knowledge=prior_knowledge
@@ -155,6 +172,8 @@ def run_clinical_board(
     chair = _load_chair(client, chair_model, language)
     board_opinion = chair.synthesize(briefing, opinions, mode=mode)
     board_opinion.agent_opinions = opinions
+    # Propagate selection audit trail for render.py footer and KB traceability.
+    board_opinion.selection_metadata = selection_metadata
 
     # Step 4: Save decisions to Knowledge Base
     if get("knowledge_base.enabled", False):
@@ -162,7 +181,7 @@ def run_clinical_board(
             kb = KnowledgeBase(kb_db, kb_path)
             saved_genes: set[str] = set()
             skipped = 0
-            for v in report_data.get("variants", [])[:20]:
+            for v in board_variants:
                 gene = v.get("gene") or ""
                 variant_id = v.get("variant") or ""
                 if not gene or not variant_id:
