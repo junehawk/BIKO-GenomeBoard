@@ -50,9 +50,9 @@ flowchart TD
     I --> J
     J --> K[HTML / PDF report]
 
-    style F fill:#e8f5ef,stroke:#00754A,stroke-width:2px
-    style J fill:#fff7ed,stroke:#d97706,stroke-width:2px
-    style K fill:#eff6ff,stroke:#1e40af,stroke-width:2px
+    style F fill:#0d7840,stroke:#0a5e32,stroke-width:2px,color:#ffffff
+    style J fill:#c2570c,stroke:#9a4309,stroke-width:2px,color:#ffffff
+    style K fill:#1d4ed8,stroke:#172f8a,stroke-width:2px,color:#ffffff
 ```
 
 ### Two core principles
@@ -224,7 +224,7 @@ python -m pytest tests/ -q
 
 MIT — see [LICENSE](LICENSE).
 
-The AI Clinical Board feature uses [Google MedGemma](https://ai.google.dev/gemma/docs/medgemma) under the [MedGemma Terms of Use](https://ai.google.dev/gemma/docs/medgemma/terms). MedGemma is not clinical-grade; this tool is for research assistance only.
+The AI Clinical Board feature uses [Google MedGemma](https://deepmind.google/models/gemma/medgemma/) under the [Gemma Terms of Use](https://ai.google.dev/gemma/terms) (MedGemma is governed by the Gemma terms). Model code: [google-health/medgemma](https://github.com/google-health/medgemma). MedGemma is not clinical-grade; this tool is for research assistance only.
 
 ---
 
