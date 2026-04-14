@@ -13,6 +13,7 @@ import json
 import logging
 import sys
 import time
+from dataclasses import asdict, is_dataclass
 from datetime import date
 from pathlib import Path
 
@@ -309,8 +310,15 @@ def run_pipeline(
     if json_output:
         json_path = Path(json_output)
         json_path.parent.mkdir(parents=True, exist_ok=True)
+        # Unwrap the BoardOpinion/CancerBoardOpinion dataclass so that
+        # rerender_report.py can round-trip it back to a dataclass instance.
+        # json.dumps(default=str) would otherwise stringify it as a repr.
+        dump_data = report_data
+        cb = report_data.get("clinical_board")
+        if cb is not None and is_dataclass(cb):
+            dump_data = {**report_data, "clinical_board": asdict(cb)}
         json_path.write_text(
-            json.dumps(report_data, indent=2, default=str, ensure_ascii=False),
+            json.dumps(dump_data, indent=2, default=str, ensure_ascii=False),
             encoding="utf-8",
         )
         _progress(f"  → JSON: {json_path}")
