@@ -63,6 +63,7 @@ _INFRAME_INDEL_CONSEQUENCES = frozenset({
 _PROTEIN_IMPACTING_CONSEQUENCES = frozenset({
     "missense_variant",
     "stop_gained",
+    "stop_lost",
     "frameshift_variant",
     "splice_donor_variant",
     "splice_acceptor_variant",
@@ -70,6 +71,14 @@ _PROTEIN_IMPACTING_CONSEQUENCES = frozenset({
     "inframe_insertion",
     "inframe_deletion",
 })
+
+# v2.2 B1: splice-region / synonymous variants are rescued (admitted) only when
+# SpliceAI delta_max >= 0.2, per Tavtigian et al. 2023 PP3-moderate threshold.
+_SPLICE_RESCUE_CONSEQUENCES = frozenset({
+    "synonymous_variant",
+    "splice_region_variant",
+})
+_SPLICEAI_RESCUE_THRESHOLD = 0.2
 
 _P_LP = frozenset({"Pathogenic", "Likely Pathogenic"})
 _BENIGN = frozenset({"Benign", "Likely Benign"})
@@ -90,6 +99,30 @@ _REASON_PRIORITY = {
 
 _MAY_REASONS_CANCER = ("VUS_hotspot", "VUS_TSG_LoF", "VUS_indel_hotspot")
 _MAY_REASONS_RARE = ("VUS_HPO_match",)
+
+
+def _passes_consequence_gate(v: dict) -> bool:
+    """v2.2 B1 protein-impacting consequence gate.
+
+    Returns True if the variant's primary VEP consequence is a coding-effect
+    class, or if it is a splice-region / synonymous variant rescued by
+    SpliceAI delta_max >= 0.2 (read from ``v["in_silico"]["spliceai_max"]``).
+
+    The ``P_LP`` must-reason branch bypasses this gate unconditionally
+    (deep-intronic ClinVar-Pathogenic splice variants must still pass).
+    """
+    consequence = (v.get("consequence") or "").strip()
+    if consequence in _PROTEIN_IMPACTING_CONSEQUENCES:
+        return True
+    if consequence in _SPLICE_RESCUE_CONSEQUENCES:
+        in_silico = v.get("in_silico") or {}
+        raw = in_silico.get("spliceai_max") if isinstance(in_silico, dict) else None
+        try:
+            if raw is not None and float(raw) >= _SPLICEAI_RESCUE_THRESHOLD:
+                return True
+        except (TypeError, ValueError):
+            return False
+    return False
 
 
 def select_board_variants(
@@ -252,8 +285,14 @@ def _cancer_must_reason(v: dict) -> Optional[str]:
     classification = v.get("classification", "")
     tier = v.get("tier", "")
 
+    # P/LP bypasses the v2.2 B1 consequence gate unconditionally —
+    # a deep-intronic ClinVar-Pathogenic splice variant must still pass.
     if classification in _P_LP:
         return "P_LP"
+
+    if not _passes_consequence_gate(v):
+        return None
+
     if tier == "Tier I":
         return "Tier_I"
     if tier == "Tier II":
@@ -272,6 +311,9 @@ def _cancer_must_reason(v: dict) -> Optional[str]:
 
 def _cancer_may_reason(v: dict) -> Optional[str]:
     if v.get("classification", "") != "VUS":
+        return None
+
+    if not _passes_consequence_gate(v):
         return None
 
     gene = v.get("gene", "")
