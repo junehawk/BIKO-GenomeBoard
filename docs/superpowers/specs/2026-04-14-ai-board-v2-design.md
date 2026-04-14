@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-AI Clinical Board v2는 v0.5.0의 AI Board를 4개 축으로 개선한다:
+AI Clinical Board v2는 v0.5.0의 AI Board를 3개 축으로 개선한다:
 
 1. **Grounded Prompting** — 에이전트별 도메인 특화 컨텍스트 주입 + 모드별 에이전트 역할 분리
 2. **임상 노트 입력** — 자유 텍스트 임상 정보를 옵셔널 입력으로 수용
@@ -79,7 +79,7 @@ class CancerBoardOpinion:
     treatment_options: List[dict]          # [{drug, evidence_level, line, PMID, notes}]
     actionable_findings: List[str]         # 치료에 영향을 미치는 소견
     clinical_actions: List[str]            # 구체적 임상 조치
-    immunotherapy_eligibility: str         # TMB/MSI 기반 면역치료 적합성
+    immunotherapy_eligibility: str         # TMB 기반 면역치료 적합성 (MSI는 향후)
     agent_opinions: List[AgentOpinion]
     agent_consensus: str
     dissenting_opinions: List[str]
@@ -204,7 +204,7 @@ CREATE TABLE board_decisions (
     classification TEXT,                       -- ACMG classification
     board_diagnosis TEXT,                      -- Board의 primary diagnosis / therapeutic implication
     board_confidence TEXT,                     -- high / moderate / low
-    clinical_context_summary TEXT,             -- 임상 노트 요약 (원문 아님, 50자 이내)
+    clinical_context_summary TEXT,             -- 임상 노트 앞 100자 truncation (원문 저장 안 함)
     agent_consensus TEXT,                      -- unanimous / majority / split
     raw_opinion_json TEXT                      -- BoardOpinion / CancerBoardOpinion 전체 직렬화
 );
@@ -265,21 +265,21 @@ Board 실행 완료
 모든 판단을 보존한다. 충돌 시:
 
 ```
-variants/TP53_R175H (SQLite 기록):
+EGFR L858R (cancer 모드, SQLite 기록):
 
 | 케이스 | 날짜 | 판단 | Confidence | 맥락 |
 |--------|------|------|-----------|------|
-| S001 | 2026-04-14 | Somatic driver | high | 65세 남성, 폐암 |
-| S015 | 2026-04-20 | Li-Fraumeni | high | 30대 여성, 가족력 |
+| S001 | 2026-04-14 | Erlotinib sensitive | high | 비소세포폐암, 1차 치료 |
+| S015 | 2026-04-20 | Osimertinib preferred | high | 비소세포폐암, T790M 동반 |
 
 → Prior knowledge로 주입 시:
-  "이전 판단에서 맥락에 따라 해석이 달랐음:
-   - Somatic + 노년 → driver mutation
-   - Germline + 가족력 → Li-Fraumeni
-   현재 맥락에 적합한 해석을 제시하시오."
+  "이전 2건에서 이 변이를 분석함:
+   - 1차 치료 맥락 → Erlotinib sensitive (1건, high)
+   - T790M 동반 맥락 → Osimertinib preferred (1건, high)
+   현재 케이스의 맥락을 고려하여 판단하시오."
 ```
 
-cancer/rare-disease 모드별로 분리 검색하므로, 위 예시처럼 모드가 다른 판단이 섞이는 경우는 드물다. 같은 모드 내에서의 충돌만 prior knowledge에 표시.
+cancer/rare-disease 모드별로 분리 검색하므로, 다른 모드의 판단이 섞이지 않는다. 같은 모드 내에서의 맥락 차이만 prior knowledge에 표시.
 
 ### 4.6 Cancer treatments/ 초기 데이터
 
@@ -355,7 +355,7 @@ AI Board 실행 후:
 | 3 | Cancer 에이전트 3개 신규 작성 | 2 |
 | 4 | `board_chair.py` 모드별 분기 + `CancerBoardOpinion` | 3 |
 | 5 | `runner.py` 모드별 에이전트 셋 선택 | 4 |
-| 6 | `domain_sheets.py` — Cancer 도메인 시트 빌더 | 5 |
+| 6 | `domain_sheets.py` — Cancer 도메인 시트 빌더 | 3 |
 | 7 | `render.py` — CancerBoardOpinion 렌더링 | 4 |
 | 8 | 임상 노트 입력 (orchestrate.py + case_briefing.py) | 2 |
 | 9 | KB SQLite 스키마 + knowledge_base.py | 없음 |
@@ -372,7 +372,7 @@ AI Board 실행 후:
 
 - **도메인 시트 빌더**: mock DB 데이터 → 시트 생성 → 토큰 예산 내 확인
 - **Cancer 에이전트**: mock Ollama → JSON 출력 스키마 검증
-- **CancerBoardOpinion**: 필드 검증, 렌더링 HTML 확인
+- **CancerBoardOpinion**: 필드 검증, 렌더링 HTML 확인 (치료 중심 레이아웃 포함)
 - **임상 노트**: 길이 트리밍, 한글/영문 입력, 파일 입력
 - **지식 베이스**: SQLite CRUD, variant_stats 뷰, Wiki 생성, prior knowledge 검색
 - **통합**: 실제 MedGemma로 end-to-end 실행 (Ollama 가용 시)
