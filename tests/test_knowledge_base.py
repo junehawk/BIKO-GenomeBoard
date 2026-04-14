@@ -48,6 +48,57 @@ def test_kb_indexes_exist(tmp_path):
 # ---------------------------------------------------------------------------
 
 
+def test_knowledge_base_auto_initialises_empty_db(tmp_path):
+    """Regression: a 0-byte or missing kb.sqlite3 must auto-initialise on first use.
+
+    Previously, pointing KnowledgeBase at an empty file caused save_decision to
+    fail with `no such table: board_decisions`. KnowledgeBase now ensures the
+    schema exists during __init__.
+    """
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
+
+    db_path = tmp_path / "kb.sqlite3"
+    db_path.write_bytes(b"")  # 0-byte file, like the gitignored placeholder
+    assert db_path.exists() and db_path.stat().st_size == 0
+
+    kb = KnowledgeBase(str(db_path), str(tmp_path))
+    kb.save_decision(
+        sample_id="S001",
+        mode="cancer",
+        gene="EGFR",
+        variant="chr7:55259515:T:G",
+        board_diagnosis="TKI sensitive",
+        board_confidence="high",
+        agent_consensus="unanimous",
+    )
+
+    conn = sqlite3.connect(str(db_path))
+    rows = conn.execute("SELECT sample_id FROM board_decisions").fetchall()
+    conn.close()
+    assert len(rows) == 1
+    assert rows[0][0] == "S001"
+
+
+def test_knowledge_base_auto_initialises_missing_db(tmp_path):
+    """KnowledgeBase works against a db_path that doesn't exist yet."""
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
+
+    db_path = tmp_path / "nested" / "kb.sqlite3"
+    assert not db_path.exists()
+
+    kb = KnowledgeBase(str(db_path), str(tmp_path))
+    kb.save_decision(
+        sample_id="S042",
+        mode="rare-disease",
+        gene="BRCA2",
+        variant="chr13:32936732:A:G",
+        board_diagnosis="Likely pathogenic",
+        board_confidence="high",
+        agent_consensus="unanimous",
+    )
+    assert db_path.exists()
+
+
 def test_save_board_decision(tmp_path):
     """Saving a decision inserts into SQLite."""
     from scripts.clinical_board.knowledge_base import KnowledgeBase

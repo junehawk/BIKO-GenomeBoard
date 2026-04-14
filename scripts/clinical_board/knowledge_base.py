@@ -13,6 +13,8 @@ from datetime import date as _date
 from pathlib import Path
 from typing import Any
 
+from scripts.db.build_kb_db import build_kb_db
+
 
 _ALLOWED_FIELDS = (
     "sample_id",
@@ -40,6 +42,37 @@ class KnowledgeBase:
         self.db_path = db_path
         self.wiki_dir = Path(wiki_dir)
         self.wiki_dir.mkdir(parents=True, exist_ok=True)
+        self._ensure_schema()
+
+    def _ensure_schema(self) -> None:
+        """Initialise the KB schema on first use.
+
+        Handles three cold-start cases that show up in deployments:
+        - the db file doesn't exist yet,
+        - the db file exists but is 0 bytes (e.g. gitignored placeholder),
+        - the db file exists but `board_decisions` was never created.
+
+        `build_kb_db` is idempotent, so a no-op call on an already-populated
+        DB is safe.
+        """
+        path = Path(self.db_path)
+        if not path.exists() or path.stat().st_size == 0:
+            build_kb_db(self.db_path)
+            return
+        try:
+            conn = sqlite3.connect(self.db_path)
+            try:
+                row = conn.execute(
+                    "SELECT name FROM sqlite_master "
+                    "WHERE type='table' AND name='board_decisions'"
+                ).fetchone()
+            finally:
+                conn.close()
+        except sqlite3.DatabaseError:
+            build_kb_db(self.db_path)
+            return
+        if row is None:
+            build_kb_db(self.db_path)
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
