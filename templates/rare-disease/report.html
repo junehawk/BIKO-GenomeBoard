@@ -1,3 +1,4 @@
+{%- import "macros/override.html" as override -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1481,6 +1482,14 @@
           </div>
         </div>
       </div>
+
+      {# A4: ClinVar-conflict override notice — macro-driven, bilingual,
+         page-break-inside: avoid. Renders only when
+         clinvar_override_reason was populated by
+         apply_hotspot_conflict_reconciliation. #}
+      {% if v.clinvar_override_reason is defined and v.clinvar_override_reason %}
+        {{ override.override_notice(v.clinvar_override_reason, language | default('en')) }}
+      {% endif %}
 
       <!-- 3-column detail grid -->
       <div class="detail-grid">

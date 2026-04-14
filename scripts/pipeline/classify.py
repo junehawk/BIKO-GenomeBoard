@@ -139,6 +139,7 @@ def build_variant_records(variants, db_results, freq_results, classification_res
                 "acmg_codes": classification.evidence_codes,
                 "conflict": classification.conflict,
                 "clinvar_override": getattr(classification, "clinvar_override", False),
+                "clinvar_override_reason": getattr(classification, "clinvar_override_reason", "") or "",
                 "original_engine_classification": getattr(classification, "original_engine_classification", None),
                 "clinvar_significance": clinvar.get("clinvar_significance", "Not Found"),
                 "clinvar_id": clinvar.get("clinvar_id"),
