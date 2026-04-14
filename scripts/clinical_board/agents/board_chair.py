@@ -2,20 +2,20 @@
 
 import json
 import logging
-from typing import List
+from typing import List, Union
 
-from scripts.clinical_board.models import AgentOpinion, BoardOpinion
+from scripts.clinical_board.models import (
+    BOARD_DISCLAIMER,
+    AgentOpinion,
+    BoardOpinion,
+    CancerBoardOpinion,
+)
 from scripts.clinical_board.ollama_client import OllamaClient
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
 
-DISCLAIMER = (
-    "[AI-Generated] 본 소견은 로컬 LLM 기반 다전문가 시스템에 의해 생성되었습니다. "
-    "최종 임상 판단은 반드시 담당 임상의가 수행해야 합니다. "
-    "변이 분류(ACMG/AMP)는 결정적 분류 엔진에 의해 수행되었으며, "
-    "본 소견은 해당 분류를 변경하지 않습니다."
-)
+DISCLAIMER = BOARD_DISCLAIMER
 
 SYSTEM_PROMPT = """당신은 임상유전학 사례 회의의 위원장(Board Chair)입니다.
 4명의 도메인 전문의로부터 분석 소견을 받아 종합적인 진단 의견을 제시하는 것이 당신의 역할입니다.
@@ -67,6 +67,51 @@ SYSTEM_PROMPT = """당신은 임상유전학 사례 회의의 위원장(Board Ch
 }"""
 
 
+CANCER_SYSTEM_PROMPT = """당신은 종양유전체 임상 회의의 위원장(Cancer Board Chair)입니다.
+4명의 종양 전문 분석가의 소견을 종합하여 치료 중심의 종합 의견을 제시합니다.
+
+## 종합 지침
+
+1. **치료 시사점 종합**
+   - Therapeutic Target, Tumor Genomics, PGx, Clinical Evidence 분석가의 소견을 종합하여
+     치료(therapeutic implications)에 초점을 맞춘 종합 의견을 제시하세요.
+
+2. **치료 옵션 정리**
+   - 약물명, 근거 수준(A/B/C/D), 저항성 위험 정보를 포함한 치료 옵션 목록을 작성하세요.
+
+3. **면역치료 적격성**
+   - TMB, MSI 등 가용한 데이터를 바탕으로 면역치료 적격성을 평가하세요.
+
+4. **모니터링 계획**
+   - 치료 반응 및 저항성 발현을 추적하기 위한 모니터링 항목을 제안하세요.
+
+5. **합의 및 이견**
+   - 분석가 간 합의 및 이견을 명확히 구분하세요.
+
+## 중요 원칙
+전문가들의 분석은 결정적 분류 엔진의 결과를 변경하지 않습니다.
+KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
+
+## 응답 언어
+반드시 한국어로 응답하세요.
+
+## 응답 형식 (JSON)
+{
+  "therapeutic_implications": "치료 시사점 종합",
+  "therapeutic_evidence": "근거 요약 (CIViC level 등)",
+  "treatment_options": [
+    {"drug": "약물명", "evidence_level": "A/B/C/D", "resistance_notes": "저항성 위험 (있을 경우)"}
+  ],
+  "actionable_findings": ["임상적으로 활용 가능한 핵심 소견"],
+  "clinical_actions": ["권고되는 임상 조치"],
+  "immunotherapy_eligibility": "면역치료 적격성 평가",
+  "monitoring_plan": ["모니터링 항목"],
+  "agent_consensus": "unanimous/majority/split",
+  "dissenting_opinions": ["소수 의견"],
+  "confidence": "high/moderate/low"
+}"""
+
+
 def _format_agent_opinion(opinion: AgentOpinion) -> str:
     """Format an agent opinion into readable text for the chair prompt."""
     lines = [f"=== {opinion.agent_name} 소견 ==="]
@@ -113,20 +158,37 @@ class BoardChair:
         self.language = language or get("clinical_board.language", "en")
 
     def synthesize(
-        self, case_briefing: str, agent_opinions: List[AgentOpinion]
-    ) -> BoardOpinion:
-        """Synthesize all agent opinions into a unified board opinion."""
+        self,
+        case_briefing: str,
+        agent_opinions: List[AgentOpinion],
+        mode: str = "rare-disease",
+    ) -> Union[BoardOpinion, CancerBoardOpinion]:
+        """Synthesize all agent opinions into a unified board opinion.
+
+        Args:
+            mode: "rare-disease" (default) returns BoardOpinion;
+                  "cancer" returns CancerBoardOpinion (treatment-focused).
+        """
         prompt = self._build_prompt(case_briefing, agent_opinions)
+        system_prompt = CANCER_SYSTEM_PROMPT if mode == "cancer" else SYSTEM_PROMPT
 
         try:
             response = self.client.generate_json(
                 model=self.model,
                 prompt=prompt,
-                system=SYSTEM_PROMPT,
-                temperature=0.3,
+                system=system_prompt,
+                temperature=get("clinical_board.temperature", 0.1),
             )
         except Exception as e:
             logger.error(f"Board Chair synthesis failed: {e}")
+            if mode == "cancer":
+                return CancerBoardOpinion(
+                    therapeutic_implications=f"종합 분석 실패: {e}",
+                    agent_opinions=agent_opinions,
+                    agent_consensus="split",
+                    confidence="low",
+                    disclaimer=DISCLAIMER,
+                )
             return BoardOpinion(
                 primary_diagnosis=f"종합 분석 실패: {e}",
                 primary_diagnosis_evidence="",
@@ -137,6 +199,8 @@ class BoardChair:
                 disclaimer=DISCLAIMER,
             )
 
+        if mode == "cancer":
+            return self._parse_cancer_response(response, agent_opinions)
         return self._parse_response(response, agent_opinions)
 
     def _build_prompt(
@@ -207,6 +271,43 @@ Synthesize the case information and specialist opinions above into a final diagn
             agent_consensus=response.get("agent_consensus", "split"),
             dissenting_opinions=response.get("dissenting_opinions", []),
             follow_up=response.get("follow_up", []),
+            confidence=response.get("confidence", "moderate"),
+            disclaimer=DISCLAIMER,
+            raw_response=(
+                json.dumps(response, ensure_ascii=False)
+                if isinstance(response, dict)
+                else str(response)
+            ),
+        )
+
+    def _parse_cancer_response(
+        self, response, agent_opinions: List[AgentOpinion]
+    ) -> CancerBoardOpinion:
+        """Parse LLM response into CancerBoardOpinion (treatment-focused)."""
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except json.JSONDecodeError:
+                return CancerBoardOpinion(
+                    therapeutic_implications=response[:200],
+                    agent_opinions=agent_opinions,
+                    agent_consensus="split",
+                    confidence="low",
+                    disclaimer=DISCLAIMER,
+                    raw_response=response,
+                )
+
+        return CancerBoardOpinion(
+            therapeutic_implications=response.get("therapeutic_implications", ""),
+            therapeutic_evidence=response.get("therapeutic_evidence", ""),
+            treatment_options=response.get("treatment_options", []),
+            actionable_findings=response.get("actionable_findings", []),
+            clinical_actions=response.get("clinical_actions", []),
+            immunotherapy_eligibility=response.get("immunotherapy_eligibility", ""),
+            agent_opinions=agent_opinions,
+            agent_consensus=response.get("agent_consensus", "split"),
+            dissenting_opinions=response.get("dissenting_opinions", []),
+            monitoring_plan=response.get("monitoring_plan", []),
             confidence=response.get("confidence", "moderate"),
             disclaimer=DISCLAIMER,
             raw_response=(

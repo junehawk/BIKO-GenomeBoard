@@ -103,3 +103,55 @@ def test_cancer_agent_analyze_returns_opinion():
     opinion = agent.analyze("test briefing")
     assert opinion.agent_name == "Therapeutic Target Analyst"
     assert opinion.confidence == "high"
+
+
+# ---------------------------------------------------------------------------
+# Board Chair mode branching (Task 6)
+# ---------------------------------------------------------------------------
+
+
+def test_board_chair_cancer_mode():
+    """Board Chair in cancer mode returns CancerBoardOpinion."""
+    from scripts.clinical_board.agents.board_chair import BoardChair
+
+    mock_client = MagicMock()
+    mock_client.generate_json.return_value = {
+        "therapeutic_implications": "EGFR TKI sensitive",
+        "therapeutic_evidence": "Level A evidence",
+        "treatment_options": [{"drug": "Erlotinib", "evidence_level": "A"}],
+        "actionable_findings": ["EGFR L858R detected"],
+        "clinical_actions": ["Start TKI therapy"],
+        "immunotherapy_eligibility": "TMB-low",
+        "confidence": "high",
+        "agent_consensus": "unanimous",
+        "dissenting_opinions": [],
+        "monitoring_plan": ["CT q3m"],
+    }
+    chair = BoardChair(client=mock_client)
+    result = chair.synthesize("briefing", [], mode="cancer")
+    assert isinstance(result, CancerBoardOpinion)
+    assert result.therapeutic_implications == "EGFR TKI sensitive"
+    assert result.treatment_options[0]["drug"] == "Erlotinib"
+    assert result.monitoring_plan == ["CT q3m"]
+    assert "AI-Generated" in result.disclaimer
+
+
+def test_board_chair_rare_disease_mode_default():
+    """Board Chair defaults to rare-disease mode (backward compatible)."""
+    from scripts.clinical_board.agents.board_chair import BoardChair
+
+    mock_client = MagicMock()
+    mock_client.generate_json.return_value = {
+        "primary_diagnosis": "Li-Fraumeni",
+        "confidence": "high",
+        "agent_consensus": "unanimous",
+        "key_findings": [],
+        "recommendations": [],
+        "differential_diagnoses": [],
+        "dissenting_opinions": [],
+        "follow_up": [],
+    }
+    chair = BoardChair(client=mock_client)
+    result = chair.synthesize("briefing", [])
+    assert isinstance(result, BoardOpinion)
+    assert result.primary_diagnosis == "Li-Fraumeni"
