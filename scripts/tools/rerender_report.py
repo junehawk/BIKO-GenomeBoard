@@ -12,6 +12,7 @@ Exit codes:
     1 — I/O error (missing input file, bad JSON, etc.)
     2 — JSON is missing required fields (older dump format)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -81,8 +82,7 @@ def rerender(input_json_path: Path, output_html_path: Path) -> int:
     mode = report_data.get("mode") or report_data.get("report_mode")
     if not mode:
         print(
-            "error: JSON is missing the 'mode' field — cannot determine template "
-            "(older dump format?)",
+            "error: JSON is missing the 'mode' field — cannot determine template (older dump format?)",
             file=sys.stderr,
         )
         return 2

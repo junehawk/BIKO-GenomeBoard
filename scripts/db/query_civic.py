@@ -1,4 +1,5 @@
 """Query local CIViC database for gene descriptions, variant evidence, and hotspots."""
+
 import sqlite3
 import re
 import logging
@@ -53,27 +54,28 @@ def get_variant_evidence(gene: str, variant_name: str = None) -> List[Dict]:
     if variant_name:
         cursor = conn.execute(
             "SELECT * FROM evidence WHERE gene = ? AND variant = ? ORDER BY evidence_level, rating DESC",
-            (gene, variant_name))
+            (gene, variant_name),
+        )
     else:
-        cursor = conn.execute(
-            "SELECT * FROM evidence WHERE gene = ? ORDER BY evidence_level, rating DESC",
-            (gene,))
+        cursor = conn.execute("SELECT * FROM evidence WHERE gene = ? ORDER BY evidence_level, rating DESC", (gene,))
 
     results = []
     for row in cursor:
-        results.append({
-            "gene": row["gene"],
-            "variant": row["variant"],
-            "disease": row["disease"],
-            "therapies": row["therapies"],
-            "evidence_type": row["evidence_type"],
-            "evidence_level": row["evidence_level"],
-            "significance": row["significance"],
-            "statement": row["evidence_statement"],
-            "pmid": row["citation_id"],
-            "citation": row["citation"],
-            "nct_ids": row["nct_ids"],
-        })
+        results.append(
+            {
+                "gene": row["gene"],
+                "variant": row["variant"],
+                "disease": row["disease"],
+                "therapies": row["therapies"],
+                "evidence_type": row["evidence_type"],
+                "evidence_level": row["evidence_level"],
+                "significance": row["significance"],
+                "statement": row["evidence_statement"],
+                "pmid": row["citation_id"],
+                "citation": row["citation"],
+                "nct_ids": row["nct_ids"],
+            }
+        )
     return results
 
 
@@ -113,9 +115,7 @@ def is_hotspot(gene: str, protein_position: int) -> bool:
     conn = _get_connection()
     if not conn:
         return False
-    row = conn.execute(
-        "SELECT * FROM hotspots WHERE gene = ? AND position = ?", (gene, protein_position)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM hotspots WHERE gene = ? AND position = ?", (gene, protein_position)).fetchone()
     return row is not None
 
 
@@ -140,19 +140,17 @@ def extract_protein_position(hgvsp: str) -> Optional[int]:
     if not hgvsp:
         return None
     # Match p.Xxx123Yyy (3-letter AA codes)
-    m = re.search(r'p\.(?:[A-Z][a-z]{2})(\d+)', hgvsp)
+    m = re.search(r"p\.(?:[A-Z][a-z]{2})(\d+)", hgvsp)
     if m:
         return int(m.group(1))
     # Try 1-letter: p.R249M
-    m = re.search(r'p\.[A-Z](\d+)', hgvsp)
+    m = re.search(r"p\.[A-Z](\d+)", hgvsp)
     if m:
         return int(m.group(1))
     return None
 
 
-def get_predictive_evidence_for_tier(
-    gene: str, hgvsp: str, db_path: Optional[str] = None
-) -> Dict:
+def get_predictive_evidence_for_tier(gene: str, hgvsp: str, db_path: Optional[str] = None) -> Dict:
     """Get Predictive evidence for tier determination.
     Returns: {"match_level": "variant"|"gene"|"none", "evidence": [...]}
     Only Predictive evidence is returned. match_level distinguishes
@@ -163,6 +161,7 @@ def get_predictive_evidence_for_tier(
         return {"match_level": "none", "evidence": []}
 
     from scripts.common.hgvs_utils import hgvsp_to_civic_variant
+
     civic_name = hgvsp_to_civic_variant(hgvsp)
 
     # Try variant-specific match first
@@ -176,13 +175,16 @@ def get_predictive_evidence_for_tier(
         if rows:
             evidence = [
                 {
-                    "gene": r["gene"], "variant": r["variant"],
-                    "disease": r["disease"], "therapies": r["therapies"],
+                    "gene": r["gene"],
+                    "variant": r["variant"],
+                    "disease": r["disease"],
+                    "therapies": r["therapies"],
                     "evidence_type": r["evidence_type"],
                     "evidence_level": r["evidence_level"],
                     "significance": r["significance"],
                     "statement": r["evidence_statement"],
-                    "pmid": r["citation_id"], "citation": r["citation"],
+                    "pmid": r["citation_id"],
+                    "citation": r["citation"],
                 }
                 for r in rows
             ]
@@ -190,21 +192,23 @@ def get_predictive_evidence_for_tier(
 
     # Gene-level fallback (for display only, not Tier I elevation)
     cursor = conn.execute(
-        "SELECT * FROM evidence WHERE gene = ? "
-        "AND evidence_type = 'Predictive' ORDER BY evidence_level, rating DESC",
+        "SELECT * FROM evidence WHERE gene = ? AND evidence_type = 'Predictive' ORDER BY evidence_level, rating DESC",
         (gene,),
     )
     rows = cursor.fetchall()
     if rows:
         evidence = [
             {
-                "gene": r["gene"], "variant": r["variant"],
-                "disease": r["disease"], "therapies": r["therapies"],
+                "gene": r["gene"],
+                "variant": r["variant"],
+                "disease": r["disease"],
+                "therapies": r["therapies"],
                 "evidence_type": r["evidence_type"],
                 "evidence_level": r["evidence_level"],
                 "significance": r["significance"],
                 "statement": r["evidence_statement"],
-                "pmid": r["citation_id"], "citation": r["citation"],
+                "pmid": r["citation_id"],
+                "citation": r["citation"],
             }
             for r in rows
         ]

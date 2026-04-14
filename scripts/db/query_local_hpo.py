@@ -44,9 +44,7 @@ def get_hpo_for_gene(gene: str, db_path: Optional[str] = None) -> List[Dict]:
         return []
 
 
-def resolve_hpo_terms_local(
-    hpo_ids: List[str], db_path: Optional[str] = None
-) -> List[Dict]:
+def resolve_hpo_terms_local(hpo_ids: List[str], db_path: Optional[str] = None) -> List[Dict]:
     """Resolve HPO IDs to names and genes using local DB (no API).
     Same return format as hpo_matcher.resolve_hpo_terms().
     """

@@ -1,5 +1,6 @@
 # tests/test_intervar.py
 """Tests for InterVar TSV parser."""
+
 import pytest
 from pathlib import Path
 
@@ -10,6 +11,7 @@ SAMPLE_FILE = str(Path(__file__).parent.parent / "data" / "sample_intervar" / "s
 
 
 # ── parse_intervar ────────────────────────────────────────────────────────────
+
 
 def test_parse_intervar_basic():
     """Parse sample file — verify variant count and specific evidence codes."""
@@ -112,6 +114,7 @@ def test_parse_intervar_no_chr_prefix(tmp_path):
 
 
 # ── get_intervar_evidence ─────────────────────────────────────────────────────
+
 
 def test_get_intervar_evidence_found():
     """Variant present in parsed data returns its codes."""

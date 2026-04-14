@@ -39,7 +39,7 @@ _CSQ_FIELD_MAP: Dict[str, str] = {
     "revel_score": "revel",
     "revel": "revel",
     "cadd_phred": "cadd_phred",
-    "cadd_raw_rankscore": None,          # ignored
+    "cadd_raw_rankscore": None,  # ignored
     "am_class": "alphamissense_class",
     "am_pathogenicity": "alphamissense_score",
     "spliceai_pred_ds_ag": "spliceai_ds_ag",
@@ -58,26 +58,28 @@ _MISSING_VALUES = {"", ".", "-", "NA", "None"}
 # Data class
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class InSilicoScores:
     """In silico prediction scores parsed from VEP CSQ."""
 
-    revel: Optional[float] = None              # 0-1, higher = more pathogenic
-    cadd_phred: Optional[float] = None         # phred-scaled, >20 = top 1%
+    revel: Optional[float] = None  # 0-1, higher = more pathogenic
+    cadd_phred: Optional[float] = None  # phred-scaled, >20 = top 1%
     alphamissense_score: Optional[float] = None  # 0-1
     alphamissense_class: Optional[str] = None  # likely_pathogenic / ambiguous / likely_benign
-    spliceai_max: Optional[float] = None       # max of 4 delta scores
-    spliceai_ds_ag: Optional[float] = None     # acceptor gain
-    spliceai_ds_al: Optional[float] = None     # acceptor loss
-    spliceai_ds_dg: Optional[float] = None     # donor gain
-    spliceai_ds_dl: Optional[float] = None     # donor loss
-    sift: Optional[str] = None                 # e.g. deleterious(0.01)
-    polyphen: Optional[str] = None             # e.g. probably_damaging(0.998)
+    spliceai_max: Optional[float] = None  # max of 4 delta scores
+    spliceai_ds_ag: Optional[float] = None  # acceptor gain
+    spliceai_ds_al: Optional[float] = None  # acceptor loss
+    spliceai_ds_dg: Optional[float] = None  # donor gain
+    spliceai_ds_dl: Optional[float] = None  # donor loss
+    sift: Optional[str] = None  # e.g. deleterious(0.01)
+    polyphen: Optional[str] = None  # e.g. probably_damaging(0.998)
 
 
 # ---------------------------------------------------------------------------
 # Parsing
 # ---------------------------------------------------------------------------
+
 
 def _safe_float(value: str) -> Optional[float]:
     """Convert a string to float, returning None for missing/invalid values."""
@@ -142,7 +144,8 @@ def parse_in_silico_from_csq(csq_fields: Dict[str, str]) -> InSilicoScores:
 def _compute_spliceai_max(scores: InSilicoScores) -> Optional[float]:
     """Return max of the four SpliceAI delta scores, or None if all absent."""
     vals = [
-        v for v in (
+        v
+        for v in (
             scores.spliceai_ds_ag,
             scores.spliceai_ds_al,
             scores.spliceai_ds_dg,
@@ -156,6 +159,7 @@ def _compute_spliceai_max(scores: InSilicoScores) -> Optional[float]:
 # ---------------------------------------------------------------------------
 # PP3 / BP4 evidence generation
 # ---------------------------------------------------------------------------
+
 
 def generate_pp3_bp4(
     scores: InSilicoScores,
@@ -294,26 +298,20 @@ def _fallback_cadd_am(
     t: Dict[str, Any],
 ) -> Optional[str]:
     """Fallback when REVEL is unavailable: CADD + AlphaMissense."""
-    cadd_ok = (
-        scores.cadd_phred is not None
-        and scores.cadd_phred >= t["cadd_pathogenic"]
-    )
-    am_pathogenic = (
-        scores.alphamissense_class is not None
-        and scores.alphamissense_class.lower() in ("likely_pathogenic", "pathogenic")
+    cadd_ok = scores.cadd_phred is not None and scores.cadd_phred >= t["cadd_pathogenic"]
+    am_pathogenic = scores.alphamissense_class is not None and scores.alphamissense_class.lower() in (
+        "likely_pathogenic",
+        "pathogenic",
     )
 
     if cadd_ok and am_pathogenic:
         return "PP3_Supporting"
 
     # Check for benign fallback: low CADD + benign AlphaMissense
-    cadd_benign = (
-        scores.cadd_phred is not None
-        and scores.cadd_phred < 15.0
-    )
-    am_benign = (
-        scores.alphamissense_class is not None
-        and scores.alphamissense_class.lower() in ("likely_benign", "benign")
+    cadd_benign = scores.cadd_phred is not None and scores.cadd_phred < 15.0
+    am_benign = scores.alphamissense_class is not None and scores.alphamissense_class.lower() in (
+        "likely_benign",
+        "benign",
     )
 
     if cadd_benign and am_benign:
@@ -325,6 +323,7 @@ def _fallback_cadd_am(
 # ---------------------------------------------------------------------------
 # Display formatting
 # ---------------------------------------------------------------------------
+
 
 def format_scores_for_display(scores: InSilicoScores) -> Dict[str, str]:
     """Format in silico scores for report display.

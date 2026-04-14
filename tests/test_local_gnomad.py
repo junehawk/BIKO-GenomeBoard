@@ -1,7 +1,7 @@
 # tests/test_local_gnomad.py
 """Tests for the local gnomAD SQLite DB (Task 3.2)."""
+
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -13,9 +13,11 @@ from scripts.common.models import Variant
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_db(db_path: str):
     """Build the test gnomAD DB at db_path."""
     from scripts.db.build_test_gnomad_db import build_test_db
+
     build_test_db(db_path)
     return db_path
 
@@ -23,6 +25,7 @@ def _make_db(db_path: str):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def test_db_path(tmp_path_factory):
@@ -37,6 +40,7 @@ def test_db_path(tmp_path_factory):
 def reset_connection():
     """Reset the module-level DB connection before each test."""
     import scripts.db.query_local_gnomad as qmod
+
     qmod.close()
     qmod._conn = None
     yield
@@ -47,6 +51,7 @@ def reset_connection():
 # ---------------------------------------------------------------------------
 # 1. test_build_test_db
 # ---------------------------------------------------------------------------
+
 
 def test_build_test_db(tmp_path):
     db_path = str(tmp_path / "gnomad_test.sqlite3")
@@ -63,9 +68,11 @@ def test_build_test_db(tmp_path):
 # 2. test_query_by_position_exact
 # ---------------------------------------------------------------------------
 
+
 def test_query_by_position_exact(test_db_path):
     import scripts.db.query_local_gnomad as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -83,9 +90,11 @@ def test_query_by_position_exact(test_db_path):
 # 3. test_query_by_rsid
 # ---------------------------------------------------------------------------
 
+
 def test_query_by_rsid(test_db_path):
     import scripts.db.query_local_gnomad as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -103,9 +112,11 @@ def test_query_by_rsid(test_db_path):
 # 4. test_query_not_found
 # ---------------------------------------------------------------------------
 
+
 def test_query_not_found(test_db_path):
     import scripts.db.query_local_gnomad as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -122,10 +133,12 @@ def test_query_not_found(test_db_path):
 # 5. test_query_returns_eas_af
 # ---------------------------------------------------------------------------
 
+
 def test_query_returns_eas_af(test_db_path):
     """EAS-enriched variant (NUDT15 rs116855232) has higher EAS AF than global."""
     import scripts.db.query_local_gnomad as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -144,9 +157,11 @@ def test_query_returns_eas_af(test_db_path):
 # 6. test_get_db_version
 # ---------------------------------------------------------------------------
 
+
 def test_get_db_version(test_db_path):
     import scripts.db.query_local_gnomad as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -161,6 +176,7 @@ def test_get_db_version(test_db_path):
 # ---------------------------------------------------------------------------
 # 7. test_pipeline_local_gnomad
 # ---------------------------------------------------------------------------
+
 
 def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
     """Run orchestrate.run_pipeline with annotation.source=local using test gnomAD DB."""
@@ -194,6 +210,7 @@ def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
 
     # Reset gnomAD connection so it picks up the new config
     import scripts.db.query_local_gnomad as qmod
+
     qmod.close()
     qmod._conn = None
 
@@ -209,6 +226,7 @@ def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
     output_path = str(tmp_path / "report.html")
 
     from scripts.orchestrate import run_pipeline
+
     result = run_pipeline(
         vcf_path=vcf_path,
         output_path=output_path,

@@ -4,10 +4,10 @@ Deterministic curator that merges OncoKB + CIViC into ranked rows keyed by
 ``{chrom}:{pos}:{ref}:{alt}``. Critical patient-safety surface: the futibatinib
 hallucination is only prevented if the curator never emits it for KRAS G12D.
 """
+
 from __future__ import annotations
 
 import time
-from unittest.mock import patch
 
 import pytest
 
@@ -15,6 +15,7 @@ import pytest
 @pytest.fixture(autouse=True)
 def clear_caches():
     from scripts.common import cache
+
     conn = cache._get_connection()
     conn.execute("DELETE FROM cache WHERE namespace = ?", ("oncokb",))
     conn.commit()
@@ -55,10 +56,20 @@ def test_kras_g12d_returns_curated_hits_no_futibatinib(monkeypatch):
         oncokb_client,
         "annotate_protein_change",
         lambda gene, change, offline_mode=False: [
-            {"drug": "Sotorasib", "level": "LEVEL_1", "pmids": ["32955176"],
-             "disease": "Non-small cell lung cancer", "significance": "sensitivity"},
-            {"drug": "Adagrasib", "level": "LEVEL_1", "pmids": ["35658005"],
-             "disease": "Non-small cell lung cancer", "significance": "sensitivity"},
+            {
+                "drug": "Sotorasib",
+                "level": "LEVEL_1",
+                "pmids": ["32955176"],
+                "disease": "Non-small cell lung cancer",
+                "significance": "sensitivity",
+            },
+            {
+                "drug": "Adagrasib",
+                "level": "LEVEL_1",
+                "pmids": ["35658005"],
+                "disease": "Non-small cell lung cancer",
+                "significance": "sensitivity",
+            },
         ],
     )
     # Stub CIViC to empty so the test isolates the OncoKB path
@@ -85,8 +96,7 @@ def test_empty_variant_returns_empty_list(monkeypatch):
     monkeypatch.setattr(oncokb_client, "annotate_protein_change", lambda *a, **kw: [])
     monkeypatch.setattr(curated_treatments, "_query_civic_for_variant", lambda *a, **kw: [])
 
-    variants = [{"gene": "NOSUCH", "hgvsp": "p.Xaa1Ala",
-                 "chrom": "1", "pos": 1, "ref": "A", "alt": "T"}]
+    variants = [{"gene": "NOSUCH", "hgvsp": "p.Xaa1Ala", "chrom": "1", "pos": 1, "ref": "A", "alt": "T"}]
     result = curate_treatments(variants, offline_mode=False)
     assert result == {"1:1:A:T": []}
 
@@ -114,6 +124,7 @@ def test_offline_mode_uses_only_civic(monkeypatch):
 
 def test_missing_genomic_coords_raises_valueerror():
     from scripts.clinical_board.curated_treatments import curate_treatments
+
     variants = [{"gene": "KRAS", "hgvsp": "p.Gly12Asp"}]
     with pytest.raises(ValueError, match="genomic coordinates"):
         curate_treatments(variants)
@@ -121,6 +132,7 @@ def test_missing_genomic_coords_raises_valueerror():
 
 def test_partial_coords_also_raise():
     from scripts.clinical_board.curated_treatments import curate_treatments
+
     variants = [{"gene": "KRAS", "hgvsp": "p.Gly12Asp", "chrom": "12", "pos": 25398284, "ref": "C"}]
     with pytest.raises(ValueError):
         curate_treatments(variants)
@@ -140,9 +152,15 @@ def test_http_429_degrades_to_civic_only(monkeypatch, caplog):
         curated_treatments,
         "_query_civic_for_variant",
         lambda gene, hgvsp, **kw: [
-            {"drug": "Cetuximab", "level": "B", "pmids": ["24401442"],
-             "disease": "Colorectal cancer", "significance": "resistance",
-             "therapy_ids": "5", "raw_row": {}},
+            {
+                "drug": "Cetuximab",
+                "level": "B",
+                "pmids": ["24401442"],
+                "disease": "Colorectal cancer",
+                "significance": "resistance",
+                "therapy_ids": "5",
+                "raw_row": {},
+            },
         ],
     )
 
@@ -177,18 +195,29 @@ def test_merge_by_therapy_ids(monkeypatch):
         oncokb_client,
         "annotate_protein_change",
         lambda gene, change, offline_mode=False: [
-            {"drug": "Dabrafenib", "level": "LEVEL_1", "pmids": ["22663011"],
-             "disease": "Melanoma", "significance": "sensitivity",
-             "therapy_ids": "19"},
+            {
+                "drug": "Dabrafenib",
+                "level": "LEVEL_1",
+                "pmids": ["22663011"],
+                "disease": "Melanoma",
+                "significance": "sensitivity",
+                "therapy_ids": "19",
+            },
         ],
     )
     monkeypatch.setattr(
         curated_treatments,
         "_query_civic_for_variant",
         lambda gene, hgvsp, **kw: [
-            {"drug": "Dabrafenib", "level": "A", "pmids": ["26758427"],
-             "disease": "Melanoma", "significance": "sensitivity",
-             "therapy_ids": "19", "raw_row": {}},
+            {
+                "drug": "Dabrafenib",
+                "level": "A",
+                "pmids": ["26758427"],
+                "disease": "Melanoma",
+                "significance": "sensitivity",
+                "therapy_ids": "19",
+                "raw_row": {},
+            },
         ],
     )
 
@@ -211,17 +240,28 @@ def test_merge_by_drug_name_fallback(monkeypatch):
         oncokb_client,
         "annotate_protein_change",
         lambda gene, change, offline_mode=False: [
-            {"drug": "Sotorasib", "level": "LEVEL_1", "pmids": ["32955176"],
-             "disease": "NSCLC", "significance": "sensitivity"},
+            {
+                "drug": "Sotorasib",
+                "level": "LEVEL_1",
+                "pmids": ["32955176"],
+                "disease": "NSCLC",
+                "significance": "sensitivity",
+            },
         ],
     )
     monkeypatch.setattr(
         curated_treatments,
         "_query_civic_for_variant",
         lambda gene, hgvsp, **kw: [
-            {"drug": "sotorasib", "level": "B", "pmids": ["35110016"],
-             "disease": "NSCLC", "significance": "sensitivity",
-             "therapy_ids": "", "raw_row": {}},
+            {
+                "drug": "sotorasib",
+                "level": "B",
+                "pmids": ["35110016"],
+                "disease": "NSCLC",
+                "significance": "sensitivity",
+                "therapy_ids": "",
+                "raw_row": {},
+            },
         ],
     )
 
@@ -241,9 +281,33 @@ def test_rank_by_evidence_level_a_before_d(monkeypatch):
         curated_treatments,
         "_query_civic_for_variant",
         lambda *a, **kw: [
-            {"drug": "DrugD", "level": "D", "pmids": ["1"], "significance": "sensitivity", "therapy_ids": "", "raw_row": {}, "disease": "cancer"},
-            {"drug": "DrugA", "level": "A", "pmids": ["2"], "significance": "sensitivity", "therapy_ids": "", "raw_row": {}, "disease": "cancer"},
-            {"drug": "DrugB", "level": "B", "pmids": ["3"], "significance": "sensitivity", "therapy_ids": "", "raw_row": {}, "disease": "cancer"},
+            {
+                "drug": "DrugD",
+                "level": "D",
+                "pmids": ["1"],
+                "significance": "sensitivity",
+                "therapy_ids": "",
+                "raw_row": {},
+                "disease": "cancer",
+            },
+            {
+                "drug": "DrugA",
+                "level": "A",
+                "pmids": ["2"],
+                "significance": "sensitivity",
+                "therapy_ids": "",
+                "raw_row": {},
+                "disease": "cancer",
+            },
+            {
+                "drug": "DrugB",
+                "level": "B",
+                "pmids": ["3"],
+                "significance": "sensitivity",
+                "therapy_ids": "",
+                "raw_row": {},
+                "disease": "cancer",
+            },
         ],
     )
     result = curate_treatments([_kras_g12d()], offline_mode=False)
@@ -260,7 +324,15 @@ def test_curated_id_is_stable_hash(monkeypatch):
     monkeypatch.setattr(
         oncokb_client,
         "annotate_protein_change",
-        lambda *a, **kw: [{"drug": "Sotorasib", "level": "LEVEL_1", "pmids": ["32955176"], "disease": "NSCLC", "significance": "sensitivity"}],
+        lambda *a, **kw: [
+            {
+                "drug": "Sotorasib",
+                "level": "LEVEL_1",
+                "pmids": ["32955176"],
+                "disease": "NSCLC",
+                "significance": "sensitivity",
+            }
+        ],
     )
     monkeypatch.setattr(curated_treatments, "_query_civic_for_variant", lambda *a, **kw: [])
 
@@ -276,8 +348,7 @@ def test_walltime_budget_offline_under_1s(monkeypatch):
 
     monkeypatch.setattr(curated_treatments, "_query_civic_for_variant", lambda *a, **kw: [])
     variants = [
-        {"gene": "G", "hgvsp": "p.Gly12Asp", "chrom": str(i), "pos": 100 + i, "ref": "C", "alt": "T"}
-        for i in range(30)
+        {"gene": "G", "hgvsp": "p.Gly12Asp", "chrom": str(i), "pos": 100 + i, "ref": "C", "alt": "T"} for i in range(30)
     ]
     t0 = time.monotonic()
     curate_treatments(variants, offline_mode=True)
@@ -327,18 +398,38 @@ def test_drug_alias_fuzz(monkeypatch, oncokb_name, civic_name):
     monkeypatch.setattr(
         oncokb_client,
         "annotate_protein_change",
-        lambda *a, **kw: [{"drug": oncokb_name, "level": "LEVEL_1", "pmids": ["1"], "disease": "cancer", "significance": "sensitivity"}],
+        lambda *a, **kw: [
+            {
+                "drug": oncokb_name,
+                "level": "LEVEL_1",
+                "pmids": ["1"],
+                "disease": "cancer",
+                "significance": "sensitivity",
+            }
+        ],
     )
     monkeypatch.setattr(
         curated_treatments,
         "_query_civic_for_variant",
-        lambda *a, **kw: [{"drug": civic_name, "level": "A", "pmids": ["2"], "disease": "cancer", "significance": "sensitivity", "therapy_ids": "", "raw_row": {}}],
+        lambda *a, **kw: [
+            {
+                "drug": civic_name,
+                "level": "A",
+                "pmids": ["2"],
+                "disease": "cancer",
+                "significance": "sensitivity",
+                "therapy_ids": "",
+                "raw_row": {},
+            }
+        ],
     )
 
     result = curate_treatments([_kras_g12d()], offline_mode=False)
     rows = result["12:25398284:C:T"]
     both_rows = [r for r in rows if r.source == "both"]
-    assert len(both_rows) == 1, f"alias {oncokb_name}/{civic_name} not merged; rows: {[(r.drug, r.source) for r in rows]}"
+    assert len(both_rows) == 1, (
+        f"alias {oncokb_name}/{civic_name} not merged; rows: {[(r.drug, r.source) for r in rows]}"
+    )
 
 
 def test_rare_disease_mode_skips_curator_in_runner(monkeypatch):

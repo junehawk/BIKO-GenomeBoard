@@ -4,6 +4,7 @@ The client is a thin wrapper around ``/annotate/mutations/byProteinChange``.
 v2.2 A1 requires graceful degradation: any transient network failure must
 raise ``OncoKBUnavailable`` so the curator can fall back to CIViC-only.
 """
+
 from __future__ import annotations
 
 import time
@@ -16,6 +17,7 @@ import pytest
 def clear_ns_cache():
     """Wipe the oncokb cache namespace between tests so stubs don't leak."""
     from scripts.common import cache
+
     conn = cache._get_connection()
     conn.execute("DELETE FROM cache WHERE namespace = ?", ("oncokb",))
     conn.commit()
@@ -80,10 +82,12 @@ def test_happy_path_returns_hits_and_caches(monkeypatch):
     payload = {
         "query": {"hugoSymbol": "KRAS", "alteration": "G12D"},
         "treatments": [
-            {"drugs": [{"drugName": "Sotorasib"}],
-             "level": "LEVEL_1",
-             "pmids": ["32955176"],
-             "indication": "Colorectal adenocarcinoma"},
+            {
+                "drugs": [{"drugName": "Sotorasib"}],
+                "level": "LEVEL_1",
+                "pmids": ["32955176"],
+                "indication": "Colorectal adenocarcinoma",
+            },
         ],
         "mutationEffect": {"knownEffect": "Gain-of-function"},
     }

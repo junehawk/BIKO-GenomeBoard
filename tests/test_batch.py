@@ -11,6 +11,7 @@ BATCH_DIR = Path(__file__).parent.parent / "data" / "sample_vcf" / "batch_test"
 
 # ── Discovery tests ────────────────────────────────────────────────────────────
 
+
 def test_discover_samples_from_directory():
     """_discover_samples finds all VCFs in batch_test directory."""
     from scripts.orchestrate import _discover_samples
@@ -56,6 +57,7 @@ def test_discover_samples_invalid_path():
 
 # ── Deduplication tests ────────────────────────────────────────────────────────
 
+
 def test_collect_unique_variants():
     """_collect_unique_variants correctly deduplicates shared variants.
 
@@ -98,6 +100,7 @@ def test_batch_pipeline_dedup_count():
 
 
 # ── End-to-end tests ───────────────────────────────────────────────────────────
+
 
 def test_batch_pipeline_end_to_end(tmp_path):
     """run_batch_pipeline processes 3 VCFs and generates 3 HTML reports."""
@@ -180,6 +183,13 @@ def test_batch_result_schema():
         _skip_reports=True,
     )
 
-    for key in ("samples_processed", "total_variants", "unique_variants",
-                "cache_hits", "reports_generated", "errors", "elapsed_seconds"):
+    for key in (
+        "samples_processed",
+        "total_variants",
+        "unique_variants",
+        "cache_hits",
+        "reports_generated",
+        "errors",
+        "elapsed_seconds",
+    ):
         assert key in result, f"Missing key in batch result: {key}"

@@ -30,6 +30,7 @@ def _create_sample_titles_tsv(path):
 
 def test_build_genreviews_db(tmp_path):
     from scripts.db.build_genreviews_db import build_db
+
     genes_path = str(tmp_path / "genes.txt")
     titles_path = str(tmp_path / "titles.txt")
     db_path = str(tmp_path / "genreviews.sqlite3")
@@ -45,6 +46,7 @@ def test_build_genreviews_db(tmp_path):
 
 def test_query_genreviews_by_gene(tmp_genreviews_db):
     from scripts.db.query_genreviews import get_genreviews_for_gene
+
     result = get_genreviews_for_gene("TP53", tmp_genreviews_db)
     assert result is not None
     assert result["nbk_id"] == "NBK1311"
@@ -55,12 +57,14 @@ def test_query_genreviews_by_gene(tmp_genreviews_db):
 
 def test_query_genreviews_unknown(tmp_genreviews_db):
     from scripts.db.query_genreviews import get_genreviews_for_gene
+
     assert get_genreviews_for_gene("FAKEGENE", tmp_genreviews_db) is None
 
 
 def test_query_brca_shared_entry(tmp_genreviews_db):
     """BRCA1과 BRCA2는 같은 GeneReviews entry를 공유."""
     from scripts.db.query_genreviews import get_genreviews_for_gene
+
     r1 = get_genreviews_for_gene("BRCA1", tmp_genreviews_db)
     r2 = get_genreviews_for_gene("BRCA2", tmp_genreviews_db)
     assert r1["nbk_id"] == r2["nbk_id"] == "NBK1247"
@@ -69,6 +73,7 @@ def test_query_brca_shared_entry(tmp_genreviews_db):
 @pytest.fixture
 def tmp_genreviews_db(tmp_path):
     from scripts.db.build_genreviews_db import build_db
+
     genes_path = str(tmp_path / "genes.txt")
     titles_path = str(tmp_path / "titles.txt")
     db_path = str(tmp_path / "genreviews.sqlite3")

@@ -70,18 +70,20 @@ def parse_annotsv(tsv_path: str) -> List[StructuralVariant]:
         for annotsv_id, row in full_rows.items():
             gene_details = []
             for sr in split_rows.get(annotsv_id, []):
-                gene_details.append({
-                    "gene": sr.get("Gene_name", ""),
-                    "transcript": sr.get("Tx", ""),
-                    "cds_percent": _safe_float(sr.get("Overlapped_CDS_percent"), 0.0),
-                    "frameshift": sr.get("Frameshift", ""),
-                    "location": sr.get("Location", ""),
-                    "exon_count": _safe_int(sr.get("Exon_count")),
-                    "hi": _safe_int(sr.get("HI")),
-                    "ts": _safe_int(sr.get("TS")),
-                    "pli": _safe_float(sr.get("GnomAD_pLI"), 0.0),
-                    "omim_morbid": (sr.get("OMIM_morbid") or "").lower() == "yes",
-                })
+                gene_details.append(
+                    {
+                        "gene": sr.get("Gene_name", ""),
+                        "transcript": sr.get("Tx", ""),
+                        "cds_percent": _safe_float(sr.get("Overlapped_CDS_percent"), 0.0),
+                        "frameshift": sr.get("Frameshift", ""),
+                        "location": sr.get("Location", ""),
+                        "exon_count": _safe_int(sr.get("Exon_count")),
+                        "hi": _safe_int(sr.get("HI")),
+                        "ts": _safe_int(sr.get("TS")),
+                        "pli": _safe_float(sr.get("GnomAD_pLI"), 0.0),
+                        "omim_morbid": (sr.get("OMIM_morbid") or "").lower() == "yes",
+                    }
+                )
 
             sv = StructuralVariant(
                 annotsv_id=annotsv_id,

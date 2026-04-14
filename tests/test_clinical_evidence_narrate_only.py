@@ -6,13 +6,12 @@ scrubber runs as the downstream gate, but the prompt-level instruction
 prevents the common-case failure where the model confidently asserts a
 plausible-but-wrong drug association.
 """
+
 from __future__ import annotations
 
 import dataclasses
 import json
 from unittest.mock import MagicMock
-
-import pytest
 
 
 def _stub_row(drug, vk, cid):
@@ -80,12 +79,20 @@ def test_no_futibatinib_for_kras_g12d_end_to_end(monkeypatch):
         "therapeutic_implications": "limited direct options",
         "therapeutic_evidence": "curated rows only",
         "treatment_options": [
-            {"drug": "Sotorasib", "curated_id": "cid-sot",
-             "variant_key": variant_key, "evidence_level": "A",
-             "resistance_notes": ""},
-            {"drug": "Futibatinib", "curated_id": "bogus",
-             "variant_key": variant_key, "evidence_level": "A",
-             "resistance_notes": ""},
+            {
+                "drug": "Sotorasib",
+                "curated_id": "cid-sot",
+                "variant_key": variant_key,
+                "evidence_level": "A",
+                "resistance_notes": "",
+            },
+            {
+                "drug": "Futibatinib",
+                "curated_id": "bogus",
+                "variant_key": variant_key,
+                "evidence_level": "A",
+                "resistance_notes": "",
+            },
         ],
         "actionable_findings": [],
         "clinical_actions": [],
@@ -105,10 +112,19 @@ def test_no_futibatinib_for_kras_g12d_end_to_end(monkeypatch):
     report_data = {
         "sample_id": "CE-KRAS",
         "variants": [
-            {"gene": "KRAS", "hgvsp": "p.Gly12Asp", "chrom": "12",
-             "pos": 25398284, "ref": "C", "alt": "T", "variant": variant_key,
-             "classification": "Likely Pathogenic", "tier": "Tier I",
-             "consequence": "missense_variant", "variant_type": "SNV"},
+            {
+                "gene": "KRAS",
+                "hgvsp": "p.Gly12Asp",
+                "chrom": "12",
+                "pos": 25398284,
+                "ref": "C",
+                "alt": "T",
+                "variant": variant_key,
+                "classification": "Likely Pathogenic",
+                "tier": "Tier I",
+                "consequence": "missense_variant",
+                "variant_type": "SNV",
+            },
         ],
         "summary": {"total": 1},
     }

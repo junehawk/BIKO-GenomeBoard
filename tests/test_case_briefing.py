@@ -1,4 +1,5 @@
 """Tests for case briefing builder."""
+
 from pathlib import Path
 
 import pytest
@@ -8,17 +9,28 @@ from scripts.clinical_board.case_briefing import build_case_briefing
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 
-DEMO_VCF = str(
-    Path(__file__).parent.parent
-    / "data" / "sample_vcf" / "demo_variants_grch38_annotated.vcf"
+DEMO_VCF = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants_grch38_annotated.vcf")
+
+# Tests that run the full pipeline and assert specific variants appear in the
+# case briefing depend on the civic.sqlite3 hotspot lookup. CI runs without
+# that DB provisioned, so is_hotspot() returns False and TP53 R249M (a hotspot
+# VUS the tests expect to see) gets dropped from the selector's MAY arm. Skip
+# the full-pipeline briefing tests when the DB is absent — the selector is
+# covered by tests/test_variant_selector_v22.py with mocked is_hotspot.
+_CIVIC_DB = Path(__file__).parent.parent / "data" / "db" / "civic.sqlite3"
+_requires_civic_db = pytest.mark.skipif(
+    not _CIVIC_DB.exists(),
+    reason="requires data/db/civic.sqlite3 for is_hotspot() (not provisioned on CI)",
 )
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+
 def _run_pipeline_cancer(tmp_path):
     """Run the pipeline in cancer mode on the demo VCF."""
     from scripts.orchestrate import run_pipeline
+
     return run_pipeline(
         DEMO_VCF,
         output_path=str(tmp_path / "r.html"),
@@ -30,6 +42,7 @@ def _run_pipeline_cancer(tmp_path):
 def _run_pipeline_rare_disease(tmp_path):
     """Run the pipeline in rare-disease mode on the demo VCF."""
     from scripts.orchestrate import run_pipeline
+
     return run_pipeline(
         DEMO_VCF,
         output_path=str(tmp_path / "r.html"),
@@ -41,6 +54,8 @@ def _run_pipeline_rare_disease(tmp_path):
 
 # ── Cancer briefing ─────────────────────────────────────────────────────────
 
+
+@_requires_civic_db
 def test_build_briefing_cancer(tmp_path):
     result = _run_pipeline_cancer(tmp_path)
     assert result is not None
@@ -67,6 +82,7 @@ def test_build_briefing_cancer(tmp_path):
 
 # ── Rare disease briefing ───────────────────────────────────────────────────
 
+
 def test_build_briefing_rare_disease(tmp_path):
     result = _run_pipeline_rare_disease(tmp_path)
     assert result is not None
@@ -83,6 +99,8 @@ def test_build_briefing_rare_disease(tmp_path):
 
 # ── In silico scores ────────────────────────────────────────────────────────
 
+
+@_requires_civic_db
 def test_build_briefing_with_in_silico(tmp_path):
     """Verify in-silico / prediction scores are included when present."""
     result = _run_pipeline_cancer(tmp_path)
@@ -98,6 +116,7 @@ def test_build_briefing_with_in_silico(tmp_path):
 
 # ── PGx section ─────────────────────────────────────────────────────────────
 
+
 def test_build_briefing_with_pgx(tmp_path):
     """Verify PGx section appears when PGx data is present."""
     result = _run_pipeline_cancer(tmp_path)
@@ -111,17 +130,19 @@ def test_build_briefing_with_pgx(tmp_path):
         assert "CPIC Level:" in briefing
     else:
         # If pipeline didn't find PGx, inject synthetic data
-        result["pgx_results"] = [{
-            "gene": "CYP2C19",
-            "star_allele": "*2",
-            "phenotype": "Poor Metabolizer",
-            "cpic_level": "A",
-            "cpic_recommendation": "Use alternative drug",
-            "korean_prevalence": 0.15,
-            "western_prevalence": 0.03,
-            "korean_flag": True,
-            "clinical_impact": "Reduced metabolism",
-        }]
+        result["pgx_results"] = [
+            {
+                "gene": "CYP2C19",
+                "star_allele": "*2",
+                "phenotype": "Poor Metabolizer",
+                "cpic_level": "A",
+                "cpic_recommendation": "Use alternative drug",
+                "korean_prevalence": 0.15,
+                "western_prevalence": 0.03,
+                "korean_flag": True,
+                "clinical_impact": "Reduced metabolism",
+            }
+        ]
         briefing = build_case_briefing(result, "cancer")
         assert "== PHARMACOGENOMICS ==" in briefing
         assert "CYP2C19" in briefing
@@ -130,34 +151,44 @@ def test_build_briefing_with_pgx(tmp_path):
 
 # ── Board variant selection ─────────────────────────────────────────────────
 
+
 def _passenger_vus_report(n: int = 30) -> dict:
     variants = []
     for i in range(n):
-        variants.append({
-            "variant": f"chr1:{1000 + i}:A>T",
-            "gene": f"GENE{i}",
-            "classification": "VUS",
-            "acmg_codes": ["PM2_Supporting"],
-            "clinvar_significance": "Not Found",
-            "hgvsc": f"c.{100+i}A>T",
-            "hgvsp": "",
-            "consequence": "missense_variant",
-            "in_silico": {},
-            "sift": "",
-            "polyphen": "",
-            "tier": "Tier IV",
-            "tier_label": "VUS",
-            "tier_evidence_source": "",
-            "hpo_score": 0,
-            "gnomad_af": None,
-        })
+        variants.append(
+            {
+                "variant": f"chr1:{1000 + i}:A>T",
+                "gene": f"GENE{i}",
+                "classification": "VUS",
+                "acmg_codes": ["PM2_Supporting"],
+                "clinvar_significance": "Not Found",
+                "hgvsc": f"c.{100 + i}A>T",
+                "hgvsp": "",
+                "consequence": "missense_variant",
+                "in_silico": {},
+                "sift": "",
+                "polyphen": "",
+                "tier": "Tier IV",
+                "tier_label": "VUS",
+                "tier_evidence_source": "",
+                "hpo_score": 0,
+                "gnomad_af": None,
+            }
+        )
     return {
         "sample_id": "TEST_SELECT",
         "date": "2026-04-14",
         "variants": variants,
-        "summary": {"total": n, "pathogenic": 0, "likely_pathogenic": 0,
-                    "vus": n, "likely_benign": 0, "benign": 0,
-                    "drug_response": 0, "risk_factor": 0},
+        "summary": {
+            "total": n,
+            "pathogenic": 0,
+            "likely_pathogenic": 0,
+            "vus": n,
+            "likely_benign": 0,
+            "benign": 0,
+            "drug_response": 0,
+            "risk_factor": 0,
+        },
         "pgx_results": [],
     }
 
@@ -236,9 +267,14 @@ def test_build_briefing_mixed_pass_fail_selection():
         "date": "2026-04-14",
         "variants": variants,
         "summary": {
-            "total": 3, "pathogenic": 1, "likely_pathogenic": 0,
-            "vus": 2, "likely_benign": 0, "benign": 0,
-            "drug_response": 0, "risk_factor": 0,
+            "total": 3,
+            "pathogenic": 1,
+            "likely_pathogenic": 0,
+            "vus": 2,
+            "likely_benign": 0,
+            "benign": 0,
+            "drug_response": 0,
+            "risk_factor": 0,
         },
         "pgx_results": [],
     }
@@ -304,6 +340,7 @@ def test_build_briefing_consumes_precomputed_selection():
 
 # ── Empty data ───────────────────────────────────────────────────────────────
 
+
 def test_build_briefing_empty():
     """Empty report_data produces a minimal briefing."""
     briefing = build_case_briefing({}, "cancer")
@@ -320,6 +357,7 @@ def test_build_briefing_none():
 
 
 # ── TMB section (cancer) ────────────────────────────────────────────────────
+
 
 def test_build_briefing_tmb(tmp_path):
     """TMB section appears in cancer briefings."""

@@ -1,19 +1,21 @@
-import pytest
-
-
 def test_fetch_genreviews_known_gene(monkeypatch):
     """TP53에 대한 GeneReviews PMID 조회."""
     from scripts.tools.sources.genreviews import fetch_genreviews_info
 
     mock_search = {"esearchresult": {"idlist": ["20301371"]}}
-    mock_summary = {"result": {"20301371": {
-        "uid": "20301371",
-        "title": "Li-Fraumeni Syndrome",
-        "source": "GeneReviews",
-        "bookshelfaccession": "NBK1311",
-    }}}
+    mock_summary = {
+        "result": {
+            "20301371": {
+                "uid": "20301371",
+                "title": "Li-Fraumeni Syndrome",
+                "source": "GeneReviews",
+                "bookshelfaccession": "NBK1311",
+            }
+        }
+    }
 
     call_count = [0]
+
     def mock_fetch(url, **kw):
         call_count[0] += 1
         if "esearch" in url:

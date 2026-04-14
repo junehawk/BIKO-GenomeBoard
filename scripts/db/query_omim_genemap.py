@@ -61,8 +61,7 @@ def get_inheritance_patterns(gene: str, db_path: Optional[str] = None) -> Option
     try:
         conn = sqlite3.connect(path)
         rows = conn.execute(
-            "SELECT DISTINCT inheritance FROM omim_genemap "
-            "WHERE gene = ? AND inheritance != ''",
+            "SELECT DISTINCT inheritance FROM omim_genemap WHERE gene = ? AND inheritance != ''",
             (gene,),
         ).fetchall()
         conn.close()

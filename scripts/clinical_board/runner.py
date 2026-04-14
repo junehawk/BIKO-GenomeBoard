@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Optional, Union
 
 from scripts.clinical_board.models import (
@@ -38,6 +37,7 @@ def _load_agents(
         from scripts.clinical_board.agents.tumor_genomics import TumorGenomicsSpecialist
         from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
         from scripts.clinical_board.agents.clinical_evidence import ClinicalEvidenceAnalyst
+
         return [
             TherapeuticTargetAnalyst(client=client, model=model, language=language),
             TumorGenomicsSpecialist(client=client, model=model, language=language),
@@ -49,6 +49,7 @@ def _load_agents(
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
     from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
+
     return [
         VariantPathologist(client=client, model=model, language=language),
         DiseaseGeneticist(client=client, model=model, language=language),
@@ -59,6 +60,7 @@ def _load_agents(
 
 def _load_chair(client: OllamaClient, model: str, language: str):
     from scripts.clinical_board.agents.board_chair import BoardChair
+
     return BoardChair(client=client, model=model, language=language)
 
 
@@ -112,17 +114,16 @@ def run_clinical_board(
     # Check models
     for model_name in [agent_model, chair_model]:
         if not client.has_model(model_name):
-            logger.warning(f"[Clinical Board] Model '{model_name}' not found. "
-                          f"Run 'ollama pull {model_name}' to download.")
+            logger.warning(
+                f"[Clinical Board] Model '{model_name}' not found. Run 'ollama pull {model_name}' to download."
+            )
 
     # Step 0: Pre-filter variants with the deterministic selector. Every
     # downstream consumer (case briefing, domain sheets, KB save, render
     # footer) reads the same filtered list via report_data["_board_variants"]
     # so the audit trail stays consistent.
     raw_variants = report_data.get("variants", []) or []
-    board_variants, selection_metadata = select_board_variants(
-        raw_variants, mode, report_data=report_data
-    )
+    board_variants, selection_metadata = select_board_variants(raw_variants, mode, report_data=report_data)
     report_data["_board_variants"] = board_variants
     report_data["_board_selection_metadata"] = selection_metadata
     logger.info(
@@ -141,9 +142,7 @@ def run_clinical_board(
             )
             report_data["_curated_treatments"] = curated
             total_rows = sum(len(rows) for rows in curated.values())
-            logger.info(
-                f"[Clinical Board] Curated treatments: {len(curated)} variants → {total_rows} rows"
-            )
+            logger.info(f"[Clinical Board] Curated treatments: {len(curated)} variants → {total_rows} rows")
         except Exception as curator_err:
             logger.warning(f"[Clinical Board] Curator failed: {curator_err}")
             report_data["_curated_treatments"] = {}
@@ -170,30 +169,28 @@ def run_clinical_board(
     # (parallel execution causes timeouts when agents compete for GPU)
     for agent in agents:
         try:
-            domain_sheet = build_domain_sheet(
-                agent.domain, mode, board_variants, report_data
-            )
-            opinion = agent.analyze(
-                briefing, domain_sheet=domain_sheet, prior_knowledge=prior_knowledge
-            )
+            domain_sheet = build_domain_sheet(agent.domain, mode, board_variants, report_data)
+            opinion = agent.analyze(briefing, domain_sheet=domain_sheet, prior_knowledge=prior_knowledge)
             opinions.append(opinion)
-            logger.info(f"  [Board] {agent.agent_name}: {opinion.confidence} confidence, "
-                       f"{len(opinion.findings)} findings")
+            logger.info(
+                f"  [Board] {agent.agent_name}: {opinion.confidence} confidence, {len(opinion.findings)} findings"
+            )
         except Exception as e:
             logger.error(f"  [Board] {agent.agent_name} failed: {e}")
-            opinions.append(AgentOpinion(
-                agent_name=agent.agent_name, domain="error",
-                findings=[{"finding": f"Agent failed: {e}", "evidence": "", "confidence": "low"}],
-                confidence="low",
-            ))
+            opinions.append(
+                AgentOpinion(
+                    agent_name=agent.agent_name,
+                    domain="error",
+                    findings=[{"finding": f"Agent failed: {e}", "evidence": "", "confidence": "low"}],
+                    confidence="low",
+                )
+            )
 
     # Step 3: Board Chair synthesis
     logger.info("[Clinical Board] Board Chair synthesizing opinions...")
     chair = _load_chair(client, chair_model, language)
     curated_for_chair = report_data.get("_curated_treatments", {}) if mode == "cancer" else None
-    board_opinion = chair.synthesize(
-        briefing, opinions, curated_treatments=curated_for_chair, mode=mode
-    )
+    board_opinion = chair.synthesize(briefing, opinions, curated_treatments=curated_for_chair, mode=mode)
     board_opinion.agent_opinions = opinions
     # Propagate selection audit trail for render.py footer and KB traceability.
     board_opinion.selection_metadata = selection_metadata
@@ -209,9 +206,7 @@ def run_clinical_board(
     # curator row the LLM didn't actually endorse.
     if mode == "cancer":
         pre_scrub_count = len(getattr(board_opinion, "treatment_options", []) or [])
-        curated_nonempty = bool(
-            curated_for_chair and any(rows for rows in curated_for_chair.values())
-        )
+        curated_nonempty = bool(curated_for_chair and any(rows for rows in curated_for_chair.values()))
         try:
             stats = scrub_opinion(board_opinion, curated_for_chair or {})
             logger.info(
@@ -262,9 +257,7 @@ def run_clinical_board(
                     )
                     saved_genes.add(gene)
                 except Exception as row_err:
-                    logger.warning(
-                        f"[Clinical Board] KB save skipped {gene}/{variant_id}: {row_err}"
-                    )
+                    logger.warning(f"[Clinical Board] KB save skipped {gene}/{variant_id}: {row_err}")
                     skipped += 1
             for gene in saved_genes:
                 kb.generate_gene_wiki(gene, mode)
@@ -283,8 +276,7 @@ def run_clinical_board(
         summary = board_opinion.primary_diagnosis
         label = "Primary diagnosis"
     logger.info(
-        f"[Clinical Board] Complete in {elapsed:.1f}s — "
-        f"{label}: {summary} ({board_opinion.confidence} confidence)"
+        f"[Clinical Board] Complete in {elapsed:.1f}s — {label}: {summary} ({board_opinion.confidence} confidence)"
     )
 
     return board_opinion

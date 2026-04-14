@@ -1,8 +1,7 @@
 """Tests for Knowledge Base SQLite and Wiki management."""
-import sqlite3
-from pathlib import Path
 
-import pytest
+import sqlite3
+
 
 from scripts.db.build_kb_db import build_kb_db
 
@@ -12,13 +11,9 @@ def test_build_kb_db_creates_tables(tmp_path):
     db_path = tmp_path / "kb.sqlite3"
     build_kb_db(str(db_path))
     conn = sqlite3.connect(str(db_path))
-    tables = [r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table'"
-    ).fetchall()]
+    tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
     assert "board_decisions" in tables
-    views = [r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='view'"
-    ).fetchall()]
+    views = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='view'").fetchall()]
     assert "variant_stats" in views
     conn.close()
 
@@ -35,9 +30,7 @@ def test_kb_indexes_exist(tmp_path):
     db_path = tmp_path / "kb.sqlite3"
     build_kb_db(str(db_path))
     conn = sqlite3.connect(str(db_path))
-    indexes = [r[0] for r in conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='index'"
-    ).fetchall()]
+    indexes = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='index'").fetchall()]
     assert "idx_bd_variant" in indexes
     assert "idx_bd_hgvsp" in indexes
     conn.close()
@@ -144,8 +137,7 @@ def test_variant_stats_aggregation(tmp_path):
         )
     conn = sqlite3.connect(str(db_path))
     stats = conn.execute(
-        "SELECT gene, variant, mode, total_cases, high_confidence_count "
-        "FROM variant_stats WHERE gene='EGFR'"
+        "SELECT gene, variant, mode, total_cases, high_confidence_count FROM variant_stats WHERE gene='EGFR'"
     ).fetchone()
     assert stats is not None
     assert stats[3] == 3  # total_cases
@@ -170,10 +162,7 @@ def test_cross_mode_isolation(tmp_path):
         agent_consensus="unanimous",
     )
     conn = sqlite3.connect(str(db_path))
-    rare = conn.execute(
-        "SELECT * FROM variant_stats "
-        "WHERE gene='TP53' AND mode='rare-disease'"
-    ).fetchall()
+    rare = conn.execute("SELECT * FROM variant_stats WHERE gene='TP53' AND mode='rare-disease'").fetchall()
     assert len(rare) == 0
     conn.close()
 
@@ -265,9 +254,7 @@ def test_query_prior_knowledge_found(tmp_path):
         board_confidence="high",
         agent_consensus="unanimous",
     )
-    result = query_prior_knowledge(
-        str(db_path), ["chr7:55259515:T:G"], "cancer"
-    )
+    result = query_prior_knowledge(str(db_path), ["chr7:55259515:T:G"], "cancer")
     assert "PRIOR BOARD KNOWLEDGE" in result
     assert "TKI sensitive" in result
     assert "참고 자료" in result or "reference only" in result.lower()
@@ -279,9 +266,7 @@ def test_query_prior_knowledge_empty_kb(tmp_path):
 
     db_path = tmp_path / "kb.sqlite3"
     build_kb_db(str(db_path))
-    result = query_prior_knowledge(
-        str(db_path), ["chr7:55259515:T:G"], "cancer"
-    )
+    result = query_prior_knowledge(str(db_path), ["chr7:55259515:T:G"], "cancer")
     assert result == ""
 
 
@@ -289,9 +274,7 @@ def test_query_prior_knowledge_no_db():
     """Missing DB file returns empty string (no crash)."""
     from scripts.clinical_board.kb_query import query_prior_knowledge
 
-    result = query_prior_knowledge(
-        "/nonexistent/kb.sqlite3", ["chr7:55259515:T:G"], "cancer"
-    )
+    result = query_prior_knowledge("/nonexistent/kb.sqlite3", ["chr7:55259515:T:G"], "cancer")
     assert result == ""
 
 
@@ -312,9 +295,7 @@ def test_query_prior_knowledge_mode_isolated(tmp_path):
         board_confidence="high",
         agent_consensus="unanimous",
     )
-    result = query_prior_knowledge(
-        str(db_path), ["chr7:55259515:T:G"], "rare-disease"
-    )
+    result = query_prior_knowledge(str(db_path), ["chr7:55259515:T:G"], "rare-disease")
     assert result == ""
 
 
@@ -337,7 +318,5 @@ def test_query_prior_knowledge_truncates(tmp_path):
             board_confidence="high",
             agent_consensus="unanimous",
         )
-    result = query_prior_knowledge(
-        str(db_path), variants, "cancer", max_chars=500
-    )
+    result = query_prior_knowledge(str(db_path), variants, "cancer", max_chars=500)
     assert len(result) <= 500

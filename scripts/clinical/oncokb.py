@@ -1,10 +1,10 @@
 """OncoKB cancer gene lookup and variant tiering."""
+
 import json
 import logging
 from pathlib import Path
 from typing import Dict, Optional
 from scripts.common.config import get
-from scripts.db.query_civic import is_hotspot, extract_protein_position
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +52,7 @@ def assign_tier(classification: str, gene: str, clinvar_significance: str = "", 
     Kept for backward compatibility — delegates to amp_assign_tier with strategy C.
     """
     from scripts.somatic.amp_tiering import amp_assign_tier
+
     result = amp_assign_tier(classification, gene, hgvsp=hgvsp, strategy="C")
     return result.tier
 
@@ -59,4 +60,5 @@ def assign_tier(classification: str, gene: str, clinvar_significance: str = "", 
 def get_tier_label(tier: int) -> str:
     """Human-readable tier label (AMP/ASCO/CAP 2017)."""
     from scripts.somatic.amp_tiering import AMP_TIER_LABELS
+
     return AMP_TIER_LABELS.get(tier, "Unknown")

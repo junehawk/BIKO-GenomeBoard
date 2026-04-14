@@ -191,9 +191,7 @@ class BoardChair:
             mode: "rare-disease" (default) returns BoardOpinion;
                   "cancer" returns CancerBoardOpinion (treatment-focused).
         """
-        prompt = self._build_prompt(
-            case_briefing, agent_opinions, curated_treatments=curated_treatments
-        )
+        prompt = self._build_prompt(case_briefing, agent_opinions, curated_treatments=curated_treatments)
         system_prompt = CANCER_SYSTEM_PROMPT if mode == "cancer" else SYSTEM_PROMPT
 
         try:
@@ -245,8 +243,12 @@ class BoardChair:
             for row in rows:
                 drug = getattr(row, "drug", "") or (row.get("drug") if isinstance(row, dict) else "")
                 cid = getattr(row, "curated_id", "") or (row.get("curated_id") if isinstance(row, dict) else "")
-                level = getattr(row, "evidence_level", "") or (row.get("evidence_level") if isinstance(row, dict) else "")
-                disease = getattr(row, "disease_context", "") or (row.get("disease_context") if isinstance(row, dict) else "")
+                level = getattr(row, "evidence_level", "") or (
+                    row.get("evidence_level") if isinstance(row, dict) else ""
+                )
+                disease = getattr(row, "disease_context", "") or (
+                    row.get("disease_context") if isinstance(row, dict) else ""
+                )
                 pmids = getattr(row, "pmids", []) or (row.get("pmids") if isinstance(row, dict) else [])
                 source = getattr(row, "source", "") or (row.get("source") if isinstance(row, dict) else "")
                 pmid_str = ",".join(str(p) for p in (pmids or []))
@@ -263,9 +265,7 @@ class BoardChair:
         curated_treatments: dict = None,
     ) -> str:
         """Build the synthesis prompt with case briefing and all agent opinions."""
-        opinions_text = "\n\n".join(
-            _format_agent_opinion(op) for op in agent_opinions
-        )
+        opinions_text = "\n\n".join(_format_agent_opinion(op) for op in agent_opinions)
         curated_block = self._format_curated_evidence(curated_treatments)
 
         if self.language == "ko":
@@ -305,9 +305,7 @@ Respond in English.
 Synthesize the case information and specialist opinions above into a final diagnostic opinion in the specified JSON format.
 **Treatment options MUST cite only curated_id values from the CURATED EVIDENCE section above.**"""
 
-    def _parse_response(
-        self, response, agent_opinions: List[AgentOpinion]
-    ) -> BoardOpinion:
+    def _parse_response(self, response, agent_opinions: List[AgentOpinion]) -> BoardOpinion:
         """Parse LLM response into BoardOpinion."""
         if isinstance(response, str):
             try:
@@ -326,9 +324,7 @@ Synthesize the case information and specialist opinions above into a final diagn
 
         return BoardOpinion(
             primary_diagnosis=response.get("primary_diagnosis", ""),
-            primary_diagnosis_evidence=response.get(
-                "primary_diagnosis_evidence", ""
-            ),
+            primary_diagnosis_evidence=response.get("primary_diagnosis_evidence", ""),
             differential_diagnoses=response.get("differential_diagnoses", []),
             key_findings=response.get("key_findings", []),
             recommendations=response.get("recommendations", []),
@@ -338,16 +334,10 @@ Synthesize the case information and specialist opinions above into a final diagn
             follow_up=response.get("follow_up", []),
             confidence=response.get("confidence", "moderate"),
             disclaimer=DISCLAIMER,
-            raw_response=(
-                json.dumps(response, ensure_ascii=False)
-                if isinstance(response, dict)
-                else str(response)
-            ),
+            raw_response=(json.dumps(response, ensure_ascii=False) if isinstance(response, dict) else str(response)),
         )
 
-    def _parse_cancer_response(
-        self, response, agent_opinions: List[AgentOpinion]
-    ) -> CancerBoardOpinion:
+    def _parse_cancer_response(self, response, agent_opinions: List[AgentOpinion]) -> CancerBoardOpinion:
         """Parse LLM response into CancerBoardOpinion (treatment-focused)."""
         if isinstance(response, str):
             try:
@@ -368,13 +358,15 @@ Synthesize the case information and specialist opinions above into a final diagn
         treatment_options = []
         for opt in response.get("treatment_options", []) or []:
             if isinstance(opt, dict):
-                treatment_options.append({
-                    "drug": opt.get("drug", ""),
-                    "curated_id": opt.get("curated_id", ""),
-                    "variant_key": opt.get("variant_key", ""),
-                    "evidence_level": opt.get("evidence_level", ""),
-                    "resistance_notes": opt.get("resistance_notes", ""),
-                })
+                treatment_options.append(
+                    {
+                        "drug": opt.get("drug", ""),
+                        "curated_id": opt.get("curated_id", ""),
+                        "variant_key": opt.get("variant_key", ""),
+                        "evidence_level": opt.get("evidence_level", ""),
+                        "resistance_notes": opt.get("resistance_notes", ""),
+                    }
+                )
 
         return CancerBoardOpinion(
             therapeutic_headline=response.get("therapeutic_headline", ""),
@@ -390,9 +382,5 @@ Synthesize the case information and specialist opinions above into a final diagn
             monitoring_plan=response.get("monitoring_plan", []),
             confidence=response.get("confidence", "moderate"),
             disclaimer=DISCLAIMER,
-            raw_response=(
-                json.dumps(response, ensure_ascii=False)
-                if isinstance(response, dict)
-                else str(response)
-            ),
+            raw_response=(json.dumps(response, ensure_ascii=False) if isinstance(response, dict) else str(response)),
         )

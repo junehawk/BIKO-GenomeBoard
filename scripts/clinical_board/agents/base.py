@@ -123,9 +123,7 @@ Respond in English. Use the following JSON format:
                 return AgentOpinion(
                     agent_name=self.agent_name,
                     domain=self.domain,
-                    findings=[
-                        {"finding": response, "evidence": "", "confidence": "low"}
-                    ],
+                    findings=[{"finding": response, "evidence": "", "confidence": "low"}],
                     confidence="low",
                     raw_response=response,
                 )
@@ -138,9 +136,5 @@ Respond in English. Use the following JSON format:
             concerns=response.get("concerns", []),
             references=response.get("references", []),
             confidence=response.get("confidence", "moderate"),
-            raw_response=(
-                json.dumps(response, ensure_ascii=False)
-                if isinstance(response, dict)
-                else str(response)
-            ),
+            raw_response=(json.dumps(response, ensure_ascii=False) if isinstance(response, dict) else str(response)),
         )

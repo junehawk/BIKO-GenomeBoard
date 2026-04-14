@@ -1,4 +1,5 @@
 """Tests for OllamaClient — all Ollama interactions are mocked."""
+
 import json
 from unittest.mock import patch, MagicMock
 
@@ -9,6 +10,7 @@ from scripts.clinical_board.ollama_client import OllamaClient, _extract_json
 
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture
 def client():
@@ -25,12 +27,14 @@ def _mock_response(json_data=None, status_code=200, text=""):
     resp.raise_for_status.return_value = None
     if status_code >= 400:
         resp.raise_for_status.side_effect = requests.HTTPError(
-            f"{status_code} Error", response=resp,
+            f"{status_code} Error",
+            response=resp,
         )
     return resp
 
 
 # ── is_available ─────────────────────────────────────────────────────────────
+
 
 @patch("scripts.clinical_board.ollama_client.requests.get")
 def test_is_available_success(mock_get, client):
@@ -53,14 +57,17 @@ def test_is_available_timeout(mock_get, client):
 
 # ── list_models / has_model ──────────────────────────────────────────────────
 
+
 @patch("scripts.clinical_board.ollama_client.requests.get")
 def test_list_models(mock_get, client):
-    mock_get.return_value = _mock_response({
-        "models": [
-            {"name": "medgemma:27b"},
-            {"name": "gemma4:31b"},
-        ]
-    })
+    mock_get.return_value = _mock_response(
+        {
+            "models": [
+                {"name": "medgemma:27b"},
+                {"name": "gemma4:31b"},
+            ]
+        }
+    )
     models = client.list_models()
     assert models == ["medgemma:27b", "gemma4:31b"]
 
@@ -73,27 +80,26 @@ def test_list_models_error(mock_get, client):
 
 @patch("scripts.clinical_board.ollama_client.requests.get")
 def test_has_model_found(mock_get, client):
-    mock_get.return_value = _mock_response({
-        "models": [{"name": "medgemma:27b"}, {"name": "gemma4:31b"}]
-    })
+    mock_get.return_value = _mock_response({"models": [{"name": "medgemma:27b"}, {"name": "gemma4:31b"}]})
     assert client.has_model("medgemma:27b") is True
 
 
 @patch("scripts.clinical_board.ollama_client.requests.get")
 def test_has_model_not_found(mock_get, client):
-    mock_get.return_value = _mock_response({
-        "models": [{"name": "gemma4:31b"}]
-    })
+    mock_get.return_value = _mock_response({"models": [{"name": "gemma4:31b"}]})
     assert client.has_model("medgemma:27b") is False
 
 
 # ── generate ─────────────────────────────────────────────────────────────────
 
+
 @patch("scripts.clinical_board.ollama_client.requests.post")
 def test_generate_success(mock_post, client):
-    mock_post.return_value = _mock_response({
-        "response": "The TP53 variant is likely pathogenic.",
-    })
+    mock_post.return_value = _mock_response(
+        {
+            "response": "The TP53 variant is likely pathogenic.",
+        }
+    )
     result = client.generate("medgemma:27b", "Analyze TP53 R175L")
     assert "TP53" in result
     assert "pathogenic" in result.lower()
@@ -149,12 +155,15 @@ def test_generate_connection_error(mock_post, client):
 
 # ── generate_json ────────────────────────────────────────────────────────────
 
+
 @patch("scripts.clinical_board.ollama_client.requests.post")
 def test_generate_json_success(mock_post, client):
     expected = {"diagnosis": "Li-Fraumeni syndrome", "confidence": "high"}
-    mock_post.return_value = _mock_response({
-        "response": json.dumps(expected),
-    })
+    mock_post.return_value = _mock_response(
+        {
+            "response": json.dumps(expected),
+        }
+    )
     result = client.generate_json("medgemma:27b", "Analyze this case")
     assert result == expected
 
@@ -189,6 +198,7 @@ def test_generate_json_connection_error(mock_post, client):
 
 # ── _extract_json helper ─────────────────────────────────────────────────────
 
+
 def test_extract_json_clean():
     assert _extract_json('{"a": 1}') == {"a": 1}
 
@@ -212,6 +222,7 @@ def test_extract_json_empty():
 
 
 # ── Default config ───────────────────────────────────────────────────────────
+
 
 def test_default_config():
     """Client uses config defaults when no explicit args are given."""

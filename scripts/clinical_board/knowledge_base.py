@@ -4,6 +4,7 @@ Persists board decisions into a SQLite database and mirrors per-gene
 summaries into a markdown wiki tree (`{wiki_dir}/{mode}/genes/{gene}.md`)
 so clinicians can browse historical board outcomes.
 """
+
 from __future__ import annotations
 
 import json
@@ -63,8 +64,7 @@ class KnowledgeBase:
             conn = sqlite3.connect(self.db_path)
             try:
                 row = conn.execute(
-                    "SELECT name FROM sqlite_master "
-                    "WHERE type='table' AND name='board_decisions'"
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='board_decisions'"
                 ).fetchone()
             finally:
                 conn.close()

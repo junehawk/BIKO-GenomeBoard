@@ -35,8 +35,7 @@ def build_db(txt_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
                 continue
             conn.execute(
                 "INSERT INTO mim2gene VALUES (?,?,?,?,?)",
-                (parts[0], parts[1], parts[2], gene_symbol,
-                 parts[4] if len(parts) > 4 else ""),
+                (parts[0], parts[1], parts[2], gene_symbol, parts[4] if len(parts) > 4 else ""),
             )
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_omim_gene ON mim2gene(gene_symbol)")
@@ -57,6 +56,7 @@ def build_db(txt_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("txt_path", nargs="?", default="data/db/mim2gene.txt")

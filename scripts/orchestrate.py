@@ -31,11 +31,16 @@ from scripts.common.config import get
 # Pipeline modules (extracted from this file)
 from scripts.pipeline.query import query_variant_databases
 from scripts.pipeline.classify import (
-    classify_variants, build_variant_records, build_summary,
-    sv_to_dict, split_variants_for_display,
+    classify_variants,
+    build_variant_records,
+    build_summary,
+    sv_to_dict,
+    split_variants_for_display,
 )
 from scripts.pipeline.batch import (
-    discover_samples, collect_unique_variants, run_batch_pipeline,
+    discover_samples,
+    collect_unique_variants,
+    run_batch_pipeline,
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -65,10 +70,7 @@ def _format_board_summary(board_opinion) -> str:
             f"  → Therapeutic implications: {board_opinion.therapeutic_implications} "
             f"({board_opinion.confidence} confidence)"
         )
-    return (
-        f"  → Primary diagnosis: {board_opinion.primary_diagnosis} "
-        f"({board_opinion.confidence} confidence)"
-    )
+    return f"  → Primary diagnosis: {board_opinion.primary_diagnosis} ({board_opinion.confidence} confidence)"
 
 
 def run_pipeline(
@@ -176,6 +178,7 @@ def run_pipeline(
     if intervar_path:
         try:
             from scripts.intake.parse_intervar import parse_intervar
+
             intervar_data = parse_intervar(intervar_path)
             _progress(f"  [InterVar] Loaded evidence for {len(intervar_data)} variants")
         except Exception as e:
@@ -194,8 +197,9 @@ def run_pipeline(
     )
     summary = build_summary(variant_records)
 
-    tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = \
-        split_variants_for_display(variant_records, hide_vus)
+    tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = split_variants_for_display(
+        variant_records, hide_vus
+    )
 
     report_data = {
         "sample_id": sample_id,
@@ -236,6 +240,7 @@ def run_pipeline(
     sv_variants = []
     if sv_path:
         from scripts.intake.parse_annotsv import parse_annotsv
+
         sv_variants = parse_annotsv(sv_path)
         logger.info(f"[SV] Parsed {len(sv_variants)} structural variants")
 
@@ -254,6 +259,7 @@ def run_pipeline(
     # Calculate TMB (cancer mode only)
     if mode == "cancer":
         from scripts.somatic.tmb import calculate_tmb, calculate_panel_size_from_bed
+
         tmb_panel = panel_size_mb
         if bed_path:
             tmb_panel = calculate_panel_size_from_bed(bed_path)
@@ -266,9 +272,11 @@ def run_pipeline(
             "panel_size_mb": tmb_result.panel_size_mb,
             "counted_consequences": tmb_result.counted_consequences,
         }
-        logger.info(f"[TMB] {tmb_result.score} mut/Mb ({tmb_result.level}) — "
-                     f"{tmb_result.variant_count}/{tmb_result.total_variants} variants, "
-                     f"{tmb_result.panel_size_mb} Mb panel")
+        logger.info(
+            f"[TMB] {tmb_result.score} mut/Mb ({tmb_result.level}) — "
+            f"{tmb_result.variant_count}/{tmb_result.total_variants} variants, "
+            f"{tmb_result.panel_size_mb} Mb panel"
+        )
     else:
         report_data["tmb"] = None
 
@@ -279,11 +287,14 @@ def run_pipeline(
         try:
             from scripts.clinical_board.runner import run_clinical_board
             from scripts.clinical_board.render import render_board_opinion_html
+
             _progress("[Board] Running Clinical Board diagnostic synthesis...")
             board_opinion = run_clinical_board(report_data, mode, language=board_lang)
             if board_opinion:
                 report_data["clinical_board"] = board_opinion
-                report_data["clinical_board_html"] = render_board_opinion_html(board_opinion, language=board_lang or get("clinical_board.language", "en"))
+                report_data["clinical_board_html"] = render_board_opinion_html(
+                    board_opinion, language=board_lang or get("clinical_board.language", "en")
+                )
                 _progress(_format_board_summary(board_opinion))
             else:
                 _progress("  → Clinical Board skipped (Ollama not available)")
@@ -338,6 +349,7 @@ def run_pipeline(
 
 # ── CLI ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="BIKO GenomeBoard — Korean Population-Aware Genomic Variant Interpretation Pipeline",
@@ -375,26 +387,61 @@ EXAMPLES
     parser.add_argument("--output", "-o", default="output/report.html", help="Output file path (.html or .pdf)")
     parser.add_argument("--krgdb", default="data/krgdb_freq.tsv", help="KRGDB frequency data file")
     parser.add_argument("--sample-id", default=None, dest="sample_id", help="Sample ID for the report")
-    parser.add_argument("--json", nargs="?", const=True, default=None, dest="json_flag", metavar="PATH", help="Also write raw JSON data")
-    parser.add_argument("--skip-api", action="store_true", dest="skip_api", help="Skip external API calls, use local DBs only")
-    parser.add_argument("--mode", choices=["cancer", "rare-disease"], default=None, help="Report mode (default: cancer)")
+    parser.add_argument(
+        "--json", nargs="?", const=True, default=None, dest="json_flag", metavar="PATH", help="Also write raw JSON data"
+    )
+    parser.add_argument(
+        "--skip-api", action="store_true", dest="skip_api", help="Skip external API calls, use local DBs only"
+    )
+    parser.add_argument(
+        "--mode", choices=["cancer", "rare-disease"], default=None, help="Report mode (default: cancer)"
+    )
     parser.add_argument("--hpo", type=str, default=None, help="Comma-separated HPO IDs for rare disease mode")
     parser.add_argument("--clear-cache", action="store_true", dest="clear_cache", help="Clear variant response cache")
     parser.add_argument("--verbose", "-v", action="store_true", help="Enable verbose (DEBUG) logging")
     parser.add_argument("--batch", type=str, default=None, help="Batch mode: directory of VCFs or manifest CSV")
     parser.add_argument("--workers", type=int, default=None, help="Parallel workers for batch mode")
-    parser.add_argument("--output-dir", type=str, default="output/batch", dest="output_dir", help="Batch output directory")
-    parser.add_argument("--hide-vus", action="store_true", dest="hide_vus", help="(Default) Hide VUS/Benign from detail pages")
-    parser.add_argument("--show-all-variants", action="store_true", dest="show_all_variants", help="Show ALL variants in detail pages")
+    parser.add_argument(
+        "--output-dir", type=str, default="output/batch", dest="output_dir", help="Batch output directory"
+    )
+    parser.add_argument(
+        "--hide-vus", action="store_true", dest="hide_vus", help="(Default) Hide VUS/Benign from detail pages"
+    )
+    parser.add_argument(
+        "--show-all-variants", action="store_true", dest="show_all_variants", help="Show ALL variants in detail pages"
+    )
     parser.add_argument("--sv", dest="sv_path", help="AnnotSV TSV file for CNV/SV integration")
     parser.add_argument("--panel-size", type=float, dest="panel_size", help="Panel size in Mb for TMB calculation")
     parser.add_argument("--bed", dest="bed_path", help="BED file for panel size calculation (overrides --panel-size)")
     parser.add_argument("--intervar", dest="intervar_path", help="InterVar output TSV for ACMG evidence codes")
-    parser.add_argument("--clinical-board", action="store_true", dest="clinical_board", help="Enable Clinical Board diagnostic synthesis (requires Ollama)")
-    parser.add_argument("--board-lang", default=None, dest="board_lang", choices=["en", "ko"], help="Clinical Board output language (default: en)")
+    parser.add_argument(
+        "--clinical-board",
+        action="store_true",
+        dest="clinical_board",
+        help="Enable Clinical Board diagnostic synthesis (requires Ollama)",
+    )
+    parser.add_argument(
+        "--board-lang",
+        default=None,
+        dest="board_lang",
+        choices=["en", "ko"],
+        help="Clinical Board output language (default: en)",
+    )
     note_group = parser.add_mutually_exclusive_group()
-    note_group.add_argument("--clinical-note", type=str, default=None, dest="clinical_note", help="Free-text clinical note (Korean or English) for the Clinical Board")
-    note_group.add_argument("--clinical-note-file", type=str, default=None, dest="clinical_note_file", help="Path to file containing the clinical note")
+    note_group.add_argument(
+        "--clinical-note",
+        type=str,
+        default=None,
+        dest="clinical_note",
+        help="Free-text clinical note (Korean or English) for the Clinical Board",
+    )
+    note_group.add_argument(
+        "--clinical-note-file",
+        type=str,
+        default=None,
+        dest="clinical_note_file",
+        help="Path to file containing the clinical note",
+    )
 
     args = parser.parse_args()
 
@@ -404,6 +451,7 @@ EXAMPLES
 
     if args.clear_cache:
         from scripts.common.cache import clear_cache
+
         count = clear_cache()
         logger.info(f"Cache cleared: {count} entries removed")
 
@@ -413,13 +461,20 @@ EXAMPLES
 
     if args.batch:
         result = run_batch_pipeline(
-            batch_path=args.batch, output_dir=args.output_dir, mode=mode,
-            workers=args.workers, skip_api=args.skip_api, krgdb_path=args.krgdb,
-            hpo_ids=hpo_ids, hide_vus=effective_hide_vus,
+            batch_path=args.batch,
+            output_dir=args.output_dir,
+            mode=mode,
+            workers=args.workers,
+            skip_api=args.skip_api,
+            krgdb_path=args.krgdb,
+            hpo_ids=hpo_ids,
+            hide_vus=effective_hide_vus,
         )
 
         if args.json_flag is not None:
-            json_out = args.json_flag if args.json_flag is not True else str(Path(args.output_dir) / "batch_summary.json")
+            json_out = (
+                args.json_flag if args.json_flag is not True else str(Path(args.output_dir) / "batch_summary.json")
+            )
             Path(json_out).parent.mkdir(parents=True, exist_ok=True)
             Path(json_out).write_text(json.dumps(result, indent=2, default=str, ensure_ascii=False), encoding="utf-8")
             _progress(f"  → Batch summary JSON: {json_out}")
@@ -444,10 +499,18 @@ EXAMPLES
                 sys.exit(1)
 
         result = run_pipeline(
-            vcf_path=args.vcf_path, output_path=args.output, krgdb_path=args.krgdb,
-            sample_id=args.sample_id, json_output=json_output, skip_api=args.skip_api,
-            mode=mode, hpo_ids=hpo_ids, hide_vus=effective_hide_vus,
-            sv_path=args.sv_path, panel_size_mb=args.panel_size, bed_path=args.bed_path,
+            vcf_path=args.vcf_path,
+            output_path=args.output,
+            krgdb_path=args.krgdb,
+            sample_id=args.sample_id,
+            json_output=json_output,
+            skip_api=args.skip_api,
+            mode=mode,
+            hpo_ids=hpo_ids,
+            hide_vus=effective_hide_vus,
+            sv_path=args.sv_path,
+            panel_size_mb=args.panel_size,
+            bed_path=args.bed_path,
             intervar_path=getattr(args, "intervar_path", None),
             clinical_board=getattr(args, "clinical_board", False),
             board_lang=getattr(args, "board_lang", None),

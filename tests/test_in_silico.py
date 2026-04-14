@@ -5,7 +5,6 @@ from pathlib import Path
 import pytest
 
 from scripts.classification.in_silico import (
-    DEFAULT_THRESHOLDS,
     InSilicoScores,
     format_scores_for_display,
     generate_pp3_bp4,

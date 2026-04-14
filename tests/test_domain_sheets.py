@@ -1,4 +1,5 @@
 """Tests for domain sheet builders."""
+
 from scripts.clinical_board.domain_sheets import MAX_DOMAIN_CHARS, build_domain_sheet
 
 
@@ -92,9 +93,7 @@ def test_tumor_genomics_sheet_cancer():
 def test_clinical_evidence_sheet_loads_guidelines(tmp_path):
     """Clinical Evidence sheet loads treatment guidelines from KB."""
     guideline = tmp_path / "lung_cancer_nsclc.md"
-    guideline.write_text(
-        "---\nsource: CIViC + public guidelines\n---\n# NSCLC\nEGFR: erlotinib first-line"
-    )
+    guideline.write_text("---\nsource: CIViC + public guidelines\n---\n# NSCLC\nEGFR: erlotinib first-line")
     variants = [{"gene": "EGFR"}]
     report_data = {"_kb_treatments_dir": str(tmp_path)}
     sheet = build_domain_sheet("clinical_evidence", "cancer", variants, report_data)

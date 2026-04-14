@@ -1,6 +1,7 @@
 """HPO phenotype matching for rare disease variant prioritization."""
+
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List
 from scripts.common.api_utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ def resolve_hpo_terms(hpo_ids: List[str]) -> List[Dict]:
         if not genes:
             try:
                 from scripts.db.query_local_hpo import resolve_hpo_terms_local
+
                 local = resolve_hpo_terms_local([hpo_id])
                 if local:
                     if not name:

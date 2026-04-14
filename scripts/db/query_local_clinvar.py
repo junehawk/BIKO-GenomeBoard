@@ -1,4 +1,5 @@
 """Query local ClinVar SQLite database."""
+
 import sqlite3
 import logging
 from typing import Optional, Dict, List
@@ -72,25 +73,21 @@ def query_local_clinvar(variant: Variant) -> Dict:
     # Strategy 1: Search by rsID
     row = None
     if variant.rsid:
-        cursor = conn.execute(
-            "SELECT * FROM variants WHERE rsid = ? LIMIT 1",
-            (variant.rsid,)
-        )
+        cursor = conn.execute("SELECT * FROM variants WHERE rsid = ? LIMIT 1", (variant.rsid,))
         row = cursor.fetchone()
 
     # Strategy 2: Search by position
     if not row:
         cursor = conn.execute(
             "SELECT * FROM variants WHERE chrom = ? AND pos = ? AND ref = ? AND alt = ? LIMIT 1",
-            (variant.chrom, variant.pos, variant.ref, variant.alt)
+            (variant.chrom, variant.pos, variant.ref, variant.alt),
         )
         row = cursor.fetchone()
 
     # Strategy 3: Search by chrom + pos (relaxed)
     if not row:
         cursor = conn.execute(
-            "SELECT * FROM variants WHERE chrom = ? AND pos = ? LIMIT 1",
-            (variant.chrom, variant.pos)
+            "SELECT * FROM variants WHERE chrom = ? AND pos = ? LIMIT 1", (variant.chrom, variant.pos)
         )
         row = cursor.fetchone()
 

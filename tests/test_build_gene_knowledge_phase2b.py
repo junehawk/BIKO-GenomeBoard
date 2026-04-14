@@ -1,14 +1,15 @@
 # tests/test_build_gene_knowledge_phase2b.py
 import json
-import pytest
 
 
 def test_orphanet_prevalence_in_knowledge(tmp_path, monkeypatch):
     """Orphanet prevalence가 frequency_prognosis에 포함."""
     from scripts.tools.build_gene_knowledge import build_knowledge
 
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_summary",
-        lambda g: {"gene": g, "description": "Test gene", "aliases": ""} if g == "CFTR" else None)
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.get_gene_summary",
+        lambda g: {"gene": g, "description": "Test gene", "aliases": ""} if g == "CFTR" else None,
+    )
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_gene_summary", lambda g: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_genreviews_info", lambda g: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_validity_local", lambda g, **kw: None)
@@ -17,16 +18,16 @@ def test_orphanet_prevalence_in_knowledge(tmp_path, monkeypatch):
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_cpic_gene", lambda g: None)
 
     # Mock Orphanet
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_prevalence_text",
-        lambda g: "Cystic fibrosis: 1-5 / 10 000 (Europe)" if g == "CFTR" else "")
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.get_prevalence_text",
+        lambda g: "Cystic fibrosis: 1-5 / 10 000 (Europe)" if g == "CFTR" else "",
+    )
 
     # Mock GeneReviews local DB
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_genreviews_for_gene_local",
-        lambda g: None)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_genreviews_for_gene_local", lambda g: None)
 
     # Mock OMIM
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_mim_for_gene",
-        lambda g: None)
+    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_mim_for_gene", lambda g: None)
 
     output = str(tmp_path / "knowledge.json")
     build_knowledge(["CFTR"], output)
@@ -42,9 +43,20 @@ def test_genreviews_local_replaces_api(tmp_path, monkeypatch):
     from scripts.tools.build_gene_knowledge import build_knowledge
 
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_summary", lambda g: None)
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_gene_summary",
-        lambda g: {"gene": g, "entrez_id": "7157", "full_name": "tumor protein p53",
-                    "summary": "Tumor suppressor.", "aliases": ""} if g == "TP53" else None)
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.fetch_gene_summary",
+        lambda g: (
+            {
+                "gene": g,
+                "entrez_id": "7157",
+                "full_name": "tumor protein p53",
+                "summary": "Tumor suppressor.",
+                "aliases": "",
+            }
+            if g == "TP53"
+            else None
+        ),
+    )
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_genreviews_info", lambda g: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_validity_local", lambda g, **kw: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_treatment_summary", lambda g, v=None: "")
@@ -54,10 +66,20 @@ def test_genreviews_local_replaces_api(tmp_path, monkeypatch):
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_mim_for_gene", lambda g: None)
 
     # GeneReviews local DB returns data
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_genreviews_for_gene_local",
-        lambda g: {"gene": g, "nbk_id": "NBK1311", "pmid": "20301371",
-                    "title": "Li-Fraumeni Syndrome",
-                    "url": "https://www.ncbi.nlm.nih.gov/books/NBK1311/"} if g == "TP53" else None)
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.get_genreviews_for_gene_local",
+        lambda g: (
+            {
+                "gene": g,
+                "nbk_id": "NBK1311",
+                "pmid": "20301371",
+                "title": "Li-Fraumeni Syndrome",
+                "url": "https://www.ncbi.nlm.nih.gov/books/NBK1311/",
+            }
+            if g == "TP53"
+            else None
+        ),
+    )
 
     output = str(tmp_path / "knowledge.json")
     build_knowledge(["TP53"], output)
@@ -73,9 +95,20 @@ def test_omim_mim_in_references(tmp_path, monkeypatch):
     from scripts.tools.build_gene_knowledge import build_knowledge
 
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_summary", lambda g: None)
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_gene_summary",
-        lambda g: {"gene": g, "entrez_id": "7157", "full_name": "tumor protein p53",
-                    "summary": "Tumor suppressor.", "aliases": ""} if g == "TP53" else None)
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.fetch_gene_summary",
+        lambda g: (
+            {
+                "gene": g,
+                "entrez_id": "7157",
+                "full_name": "tumor protein p53",
+                "summary": "Tumor suppressor.",
+                "aliases": "",
+            }
+            if g == "TP53"
+            else None
+        ),
+    )
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_genreviews_info", lambda g: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_validity_local", lambda g, **kw: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_treatment_summary", lambda g, v=None: "")
@@ -85,10 +118,21 @@ def test_omim_mim_in_references(tmp_path, monkeypatch):
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_genreviews_for_gene_local", lambda g: None)
 
     # OMIM returns MIM
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_mim_for_gene",
-        lambda g: {"gene": g, "mim_number": "191170", "entry_type": "gene",
-                    "entrez_id": "7157", "ensembl_id": "", "url": "https://omim.org/entry/191170"}
-        if g == "TP53" else None)
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.get_mim_for_gene",
+        lambda g: (
+            {
+                "gene": g,
+                "mim_number": "191170",
+                "entry_type": "gene",
+                "entrez_id": "7157",
+                "ensembl_id": "",
+                "url": "https://omim.org/entry/191170",
+            }
+            if g == "TP53"
+            else None
+        ),
+    )
 
     output = str(tmp_path / "knowledge.json")
     build_knowledge(["TP53"], output)

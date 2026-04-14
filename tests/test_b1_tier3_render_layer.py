@@ -13,6 +13,7 @@ This closes the Foundation One leak end-to-end (not just at the selector
 boundary) — if the gate ever regresses, the rendered Board HTML will
 start carrying NOTCH2 again.
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock
@@ -80,9 +81,7 @@ def test_b1_render_layer_notch2_intronic_excluded_kras_present(monkeypatch):
     # No domain agents, no curator rows — we only want to exercise the
     # selector → briefing → chair → render path.
     monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [], raising=False)
-    monkeypatch.setattr(
-        runner_mod, "curate_treatments", lambda variants, **kw: {}, raising=False
-    )
+    monkeypatch.setattr(runner_mod, "curate_treatments", lambda variants, **kw: {}, raising=False)
 
     # Fake OllamaClient: the Board Chair calls .generate_json(prompt=...)
     # with a prompt that embeds the case briefing (which is built from the
@@ -108,9 +107,7 @@ def test_b1_render_layer_notch2_intronic_excluded_kras_present(monkeypatch):
     fake_client.is_available.return_value = True
     fake_client.has_model.return_value = True
     fake_client.generate_json.side_effect = fake_generate_json
-    monkeypatch.setattr(
-        runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False
-    )
+    monkeypatch.setattr(runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False)
 
     report_data = {
         "sample_id": "B1-RENDER-FIXTURE-4",
@@ -130,8 +127,7 @@ def test_b1_render_layer_notch2_intronic_excluded_kras_present(monkeypatch):
     # Render the cancer board opinion to HTML and assert on the final artifact.
     html = render_mod.render_board_opinion_html(opinion, language="en")
     assert "KRAS" in html, (
-        "KRAS missense Tier III should reach the rendered Clinical Board HTML — "
-        "the consequence gate is over-rejecting."
+        "KRAS missense Tier III should reach the rendered Clinical Board HTML — the consequence gate is over-rejecting."
     )
     assert "NOTCH2" not in html, (
         "NOTCH2 intronic Tier III leaked into the rendered Clinical Board HTML "

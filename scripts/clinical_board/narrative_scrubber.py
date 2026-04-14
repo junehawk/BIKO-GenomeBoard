@@ -13,6 +13,7 @@ Post-processor that walks the full ``CancerBoardOpinion`` dataclass and:
 The scrubber is the patient-safety gate enforced *after* the LLM response is
 parsed and *before* it is serialised to ``raw_opinion_json`` or rendered.
 """
+
 from __future__ import annotations
 
 import logging
@@ -65,9 +66,7 @@ def _scrub_text(text: str, banned: Iterable[str]) -> str:
     return out
 
 
-def validate_treatment_option(
-    option: Dict[str, Any], curated_by_variant: Dict[str, list]
-) -> bool:
+def validate_treatment_option(option: Dict[str, Any], curated_by_variant: Dict[str, list]) -> bool:
     """Return True iff the row's ``(curated_id, variant_key)`` pair is valid.
 
     A row is valid iff:
@@ -137,7 +136,9 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
             banned.add(drug.lower())
         logger.warning(
             "[narrative_scrubber] dropped treatment row drug=%r curated_id=%r variant_key=%r",
-            drug, cid, vk,
+            drug,
+            cid,
+            vk,
         )
 
     if hasattr(opinion, "treatment_options"):
@@ -160,10 +161,7 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
         for field in _PROSE_LIST_FIELDS:
             val = getattr(opinion, field, None)
             if isinstance(val, list):
-                new_list = [
-                    _scrub_text(item, banned) if isinstance(item, str) else item
-                    for item in val
-                ]
+                new_list = [_scrub_text(item, banned) if isinstance(item, str) else item for item in val]
                 setattr(opinion, field, new_list)
 
         # Agent opinions (nested dataclasses)
@@ -171,10 +169,9 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
             new_findings = []
             for f in getattr(agent_op, "findings", None) or []:
                 if isinstance(f, dict):
-                    new_findings.append({
-                        k: (_scrub_text(v, banned) if isinstance(v, str) else v)
-                        for k, v in f.items()
-                    })
+                    new_findings.append(
+                        {k: (_scrub_text(v, banned) if isinstance(v, str) else v) for k, v in f.items()}
+                    )
                 else:
                     new_findings.append(f)
             agent_op.findings = new_findings
@@ -183,8 +180,7 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
                 for r in (getattr(agent_op, "recommendations", None) or [])
             ]
             agent_op.concerns = [
-                _scrub_text(c, banned) if isinstance(c, str) else c
-                for c in (getattr(agent_op, "concerns", None) or [])
+                _scrub_text(c, banned) if isinstance(c, str) else c for c in (getattr(agent_op, "concerns", None) or [])
             ]
             if isinstance(getattr(agent_op, "raw_response", None), str):
                 agent_op.raw_response = _scrub_text(agent_op.raw_response, banned)

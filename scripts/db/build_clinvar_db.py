@@ -5,7 +5,6 @@ import gzip
 import sqlite3
 import logging
 import sys
-import time
 from pathlib import Path
 from datetime import datetime
 
@@ -14,17 +13,20 @@ logger = logging.getLogger(__name__)
 CLINVAR_URL = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz"
 DEFAULT_DB_PATH = "data/db/clinvar.sqlite3"
 
+
 def download_clinvar(output_path: str) -> str:
     """Download ClinVar variant_summary.txt.gz"""
     import requests
+
     logger.info(f"Downloading ClinVar from {CLINVAR_URL}...")
     resp = requests.get(CLINVAR_URL, stream=True, timeout=300)
     resp.raise_for_status()
-    with open(output_path, 'wb') as f:
+    with open(output_path, "wb") as f:
         for chunk in resp.iter_content(chunk_size=8192):
             f.write(chunk)
     logger.info(f"Downloaded to {output_path}")
     return output_path
+
 
 def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     """Build SQLite DB from variant_summary.txt.gz
@@ -79,21 +81,21 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     count = 0
     skipped = 0
 
-    open_func = gzip.open if tsv_gz_path.endswith('.gz') else open
-    mode = 'rt' if tsv_gz_path.endswith('.gz') else 'r'
+    open_func = gzip.open if tsv_gz_path.endswith(".gz") else open
+    mode = "rt" if tsv_gz_path.endswith(".gz") else "r"
 
     with open_func(tsv_gz_path, mode) as f:
         header = None
         batch = []
         for line in f:
-            if line.startswith('#'):
+            if line.startswith("#"):
                 # Parse header
-                header = line.strip('#').strip().split('\t')
+                header = line.strip("#").strip().split("\t")
                 continue
             if header is None:
                 continue
 
-            fields = line.strip().split('\t')
+            fields = line.strip().split("\t")
             if len(fields) < 33:
                 skipped += 1
                 continue
@@ -101,16 +103,16 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
             row = dict(zip(header, fields))
 
             # Only keep GRCh38 assembly
-            assembly = row.get('Assembly', '')
-            if assembly != 'GRCh38':
+            assembly = row.get("Assembly", "")
+            if assembly != "GRCh38":
                 continue
 
-            chrom = row.get('Chromosome', '')
-            pos_str = row.get('PositionVCF', '')
-            ref = row.get('ReferenceAlleleVCF', '')
-            alt = row.get('AlternateAlleleVCF', '')
+            chrom = row.get("Chromosome", "")
+            pos_str = row.get("PositionVCF", "")
+            ref = row.get("ReferenceAlleleVCF", "")
+            alt = row.get("AlternateAlleleVCF", "")
 
-            if not chrom or not pos_str or pos_str == '-1' or not ref or not alt:
+            if not chrom or not pos_str or pos_str == "-1" or not ref or not alt:
                 skipped += 1
                 continue
 
@@ -120,48 +122,56 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
                 skipped += 1
                 continue
 
-            rsid_raw = row.get('RS# (dbSNP)', '')
-            rsid = f"rs{rsid_raw}" if rsid_raw and rsid_raw != '-1' else None
+            rsid_raw = row.get("RS# (dbSNP)", "")
+            rsid = f"rs{rsid_raw}" if rsid_raw and rsid_raw != "-1" else None
 
-            batch.append((
-                f"chr{chrom}" if not chrom.startswith('chr') else chrom,
-                pos,
-                ref,
-                alt,
-                rsid,
-                row.get('GeneSymbol', ''),
-                row.get('ClinicalSignificance', ''),
-                row.get('ReviewStatus', ''),
-                row.get('PhenotypeList', ''),
-                row.get('VariationID', ''),
-                row.get('#AlleleID', row.get('AlleleID', '')),
-                row.get('OriginSimple', ''),
-                assembly,
-                row.get('LastEvaluated', ''),
-                int(row.get('NumberSubmitters', '0') or '0'),
-            ))
+            batch.append(
+                (
+                    f"chr{chrom}" if not chrom.startswith("chr") else chrom,
+                    pos,
+                    ref,
+                    alt,
+                    rsid,
+                    row.get("GeneSymbol", ""),
+                    row.get("ClinicalSignificance", ""),
+                    row.get("ReviewStatus", ""),
+                    row.get("PhenotypeList", ""),
+                    row.get("VariationID", ""),
+                    row.get("#AlleleID", row.get("AlleleID", "")),
+                    row.get("OriginSimple", ""),
+                    assembly,
+                    row.get("LastEvaluated", ""),
+                    int(row.get("NumberSubmitters", "0") or "0"),
+                )
+            )
 
             count += 1
             if len(batch) >= 10000:
-                conn.executemany("""
+                conn.executemany(
+                    """
                     INSERT INTO variants (chrom, pos, ref, alt, rsid, gene,
                         clinical_significance, review_status, phenotype_list,
                         variation_id, allele_id, origin, assembly, last_evaluated,
                         number_submitters)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, batch)
+                """,
+                    batch,
+                )
                 batch = []
                 if count % 100000 == 0:
                     logger.info(f"  Processed {count:,} variants...")
 
     if batch:
-        conn.executemany("""
+        conn.executemany(
+            """
             INSERT INTO variants (chrom, pos, ref, alt, rsid, gene,
                 clinical_significance, review_status, phenotype_list,
                 variation_id, allele_id, origin, assembly, last_evaluated,
                 number_submitters)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, batch)
+        """,
+            batch,
+        )
 
     # Create indexes
     logger.info("Creating indexes...")
@@ -182,6 +192,7 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
     logger.info(f"ClinVar DB built: {count:,} variants, {skipped:,} skipped → {db_path}")
     return db_path
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")

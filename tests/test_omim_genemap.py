@@ -19,9 +19,11 @@ def genemap_db(tmp_path):
 
 # ── Build tests ──────────────────────────────────────────────────────────
 
+
 def test_build_omim_genemap_db(genemap_db):
     """DB should contain records for all genes in the sample file."""
     import sqlite3
+
     conn = sqlite3.connect(genemap_db)
     count = conn.execute("SELECT COUNT(*) FROM omim_genemap").fetchone()[0]
     gene_count = conn.execute("SELECT COUNT(DISTINCT gene) FROM omim_genemap").fetchone()[0]
@@ -34,6 +36,7 @@ def test_build_omim_genemap_db(genemap_db):
 def test_build_metadata(genemap_db):
     """Metadata table should have build_date, source, record_count."""
     import sqlite3
+
     conn = sqlite3.connect(genemap_db)
     meta = dict(conn.execute("SELECT key, value FROM metadata").fetchall())
     conn.close()
@@ -44,6 +47,7 @@ def test_build_metadata(genemap_db):
 
 
 # ── Query: gene phenotypes ───────────────────────────────────────────────
+
 
 def test_query_gene_phenotypes_found(genemap_db):
     """BRCA1 should return phenotypes including breast-ovarian cancer."""
@@ -70,6 +74,7 @@ def test_query_no_db():
 
 
 # ── Query: inheritance patterns ──────────────────────────────────────────
+
 
 def test_query_inheritance_patterns(genemap_db):
     """CFTR should have AR inheritance."""
@@ -115,6 +120,7 @@ def test_query_inheritance_digenic(genemap_db):
 
 # ── Multiple phenotypes ──────────────────────────────────────────────────
 
+
 def test_multiple_phenotypes(genemap_db):
     """BRCA1 should have both breast-ovarian cancer and Fanconi anemia."""
     results = get_gene_phenotypes("BRCA1", db_path=genemap_db)
@@ -135,6 +141,7 @@ def test_multiple_phenotypes_gba(genemap_db):
 
 
 # ── Dual inheritance ─────────────────────────────────────────────────────
+
 
 def test_dual_inheritance(genemap_db):
     """BRCA1 should have both AD and AR patterns (breast=AD, Fanconi=AR)."""
@@ -162,11 +169,10 @@ def test_dual_inheritance_scn5a(genemap_db):
 
 # ── Phenotype parsing unit tests ─────────────────────────────────────────
 
+
 def test_parse_phenotypes_basic():
     """Parse a single phenotype entry."""
-    result = _parse_phenotypes(
-        "{Cystic fibrosis}, 219700 (3), Autosomal recessive"
-    )
+    result = _parse_phenotypes("{Cystic fibrosis}, 219700 (3), Autosomal recessive")
     assert len(result) == 1
     assert result[0]["phenotype"] == "Cystic fibrosis"
     assert result[0]["phenotype_mim"] == "219700"

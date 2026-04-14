@@ -1,4 +1,5 @@
 """Tests for CIViC database build + query + hotspot tiering."""
+
 import sqlite3
 from pathlib import Path
 
@@ -24,6 +25,7 @@ def civic_db(tmp_path_factory):
 def reset_civic_conn():
     """Reset the query_civic connection cache around each test."""
     from scripts.db import query_civic
+
     query_civic.reset_civic_connection()
     yield
     query_civic.reset_civic_connection()
@@ -116,6 +118,7 @@ def test_get_gene_summary_kras(civic_db, monkeypatch):
     """get_gene_summary returns a description for KRAS."""
     monkeypatch.setenv("GB_CONFIG_PATH", "")
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -129,6 +132,7 @@ def test_get_gene_summary_kras(civic_db, monkeypatch):
 def test_get_gene_summary_unknown(civic_db, monkeypatch):
     """get_gene_summary returns None for unknown genes."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -139,6 +143,7 @@ def test_get_gene_summary_unknown(civic_db, monkeypatch):
 def test_get_variant_evidence_kras(civic_db, monkeypatch):
     """get_variant_evidence returns evidence items with therapies for KRAS."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -159,6 +164,7 @@ def test_get_variant_evidence_kras(civic_db, monkeypatch):
 def test_get_treatment_summary_braf(civic_db, monkeypatch):
     """get_treatment_summary returns a formatted treatment string for BRAF."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -172,6 +178,7 @@ def test_get_treatment_summary_braf(civic_db, monkeypatch):
 def test_get_treatment_summary_empty_for_unknown(civic_db, monkeypatch):
     """get_treatment_summary returns empty string for unknown gene."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -185,6 +192,7 @@ def test_get_treatment_summary_empty_for_unknown(civic_db, monkeypatch):
 def test_is_hotspot_tp53_249(civic_db, monkeypatch):
     """TP53 position 249 is a known hotspot."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -194,6 +202,7 @@ def test_is_hotspot_tp53_249(civic_db, monkeypatch):
 def test_is_hotspot_tp53_999(civic_db, monkeypatch):
     """TP53 position 999 is not a known hotspot."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -203,6 +212,7 @@ def test_is_hotspot_tp53_999(civic_db, monkeypatch):
 def test_is_hotspot_kras_12(civic_db, monkeypatch):
     """KRAS position 12 is a known hotspot."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -212,9 +222,11 @@ def test_is_hotspot_kras_12(civic_db, monkeypatch):
 def test_is_hotspot_no_connection():
     """is_hotspot returns False when DB is unavailable."""
     import scripts.db.query_civic as qc
+
     qc._conn = None
     # Use a path that doesn't exist to ensure no connection
     import os
+
     orig = os.environ.get("GB_CONFIG_PATH")
     # Patch _get_connection to return None
     orig_fn = qc._get_connection
@@ -228,6 +240,7 @@ def test_is_hotspot_no_connection():
 def test_get_hotspot_variants_kras_12(civic_db, monkeypatch):
     """get_hotspot_variants returns multiple variants for KRAS G12."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
@@ -243,6 +256,7 @@ def test_get_hotspot_variants_kras_12(civic_db, monkeypatch):
 def test_extract_protein_position_3letter():
     """Extracts position from 3-letter HGVSp notation."""
     from scripts.db.query_civic import extract_protein_position
+
     assert extract_protein_position("p.Gly12Asp") == 12
     assert extract_protein_position("p.Val600Glu") == 600
     assert extract_protein_position("p.Arg249Met") == 249
@@ -251,6 +265,7 @@ def test_extract_protein_position_3letter():
 def test_extract_protein_position_1letter():
     """Extracts position from 1-letter HGVSp notation."""
     from scripts.db.query_civic import extract_protein_position
+
     assert extract_protein_position("p.R249M") == 249
     assert extract_protein_position("p.V600E") == 600
     assert extract_protein_position("p.G12D") == 12
@@ -259,6 +274,7 @@ def test_extract_protein_position_1letter():
 def test_extract_protein_position_none():
     """Returns None for empty/invalid input."""
     from scripts.db.query_civic import extract_protein_position
+
     assert extract_protein_position(None) is None
     assert extract_protein_position("") is None
     assert extract_protein_position("c.35G>A") is None
@@ -267,6 +283,7 @@ def test_extract_protein_position_none():
 def test_extract_protein_position_with_transcript_prefix():
     """Handles HGVSp with transcript prefix."""
     from scripts.db.query_civic import extract_protein_position
+
     assert extract_protein_position("NP_004324.2:p.Val600Glu") == 600
 
 
@@ -276,24 +293,28 @@ def test_extract_protein_position_with_transcript_prefix():
 def test_hgvsp_to_civic_variant_gly12asp():
     """p.Gly12Asp -> G12D"""
     from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+
     assert _hgvsp_to_civic_variant("p.Gly12Asp") == "G12D"
 
 
 def test_hgvsp_to_civic_variant_val600glu():
     """p.Val600Glu -> V600E"""
     from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+
     assert _hgvsp_to_civic_variant("p.Val600Glu") == "V600E"
 
 
 def test_hgvsp_to_civic_variant_arg249met():
     """p.Arg249Met -> R249M"""
     from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+
     assert _hgvsp_to_civic_variant("p.Arg249Met") == "R249M"
 
 
 def test_hgvsp_to_civic_variant_none():
     """Returns None for empty/invalid input."""
     from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+
     assert _hgvsp_to_civic_variant(None) is None
     assert _hgvsp_to_civic_variant("") is None
     assert _hgvsp_to_civic_variant("c.35G>A") is None
@@ -305,10 +326,12 @@ def test_hgvsp_to_civic_variant_none():
 def test_assign_tier_vus_hotspot_tp53(civic_db, monkeypatch):
     """VUS on TP53 at hotspot position 249 → Tier 2."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
     from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+
     reset_oncokb_cache()
     # p.Arg249Ser → position 249 (TP53 R249S is in hotspots)
     result = assign_tier("VUS", "TP53", hgvsp="p.Arg249Ser")
@@ -318,10 +341,12 @@ def test_assign_tier_vus_hotspot_tp53(civic_db, monkeypatch):
 def test_assign_tier_vus_hotspot_kras_12(civic_db, monkeypatch):
     """VUS on KRAS at hotspot position 12 → Tier 2."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
     from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+
     reset_oncokb_cache()
     result = assign_tier("VUS", "KRAS", hgvsp="p.Gly12Asp")
     assert result == 2, f"Expected Tier 2 for VUS KRAS G12D hotspot, got {result}"
@@ -330,10 +355,12 @@ def test_assign_tier_vus_hotspot_kras_12(civic_db, monkeypatch):
 def test_assign_tier_vus_non_hotspot_cancer_gene(civic_db, monkeypatch):
     """VUS on KRAS at non-hotspot position → Tier 3."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
     from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+
     reset_oncokb_cache()
     result = assign_tier("VUS", "KRAS", hgvsp="p.Ala999Val")
     assert result == 3, f"Expected Tier 3 for non-hotspot VUS KRAS, got {result}"
@@ -342,6 +369,7 @@ def test_assign_tier_vus_non_hotspot_cancer_gene(civic_db, monkeypatch):
 def test_assign_tier_vus_no_hgvsp_still_tier3():
     """VUS on cancer gene without hgvsp → Tier 3 (no hotspot check possible)."""
     from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+
     reset_oncokb_cache()
     result = assign_tier("VUS", "KRAS", hgvsp="")
     assert result == 3
@@ -350,6 +378,7 @@ def test_assign_tier_vus_no_hgvsp_still_tier3():
 def test_assign_tier_existing_behavior_unchanged():
     """Existing tier assignments are not affected by the new hgvsp parameter."""
     from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+
     reset_oncokb_cache()
     # Pathogenic level-1 gene → Tier 1
     assert assign_tier("Pathogenic", "KRAS") == 1
@@ -367,10 +396,12 @@ def test_assign_tier_existing_behavior_unchanged():
 def test_pipeline_kras_has_treatment(civic_db, tmp_path, monkeypatch):
     """Run pipeline on demo VCF; any KRAS variant gets treatment_strategies from CIViC."""
     import scripts.db.query_civic as qc
+
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
     from scripts.clinical.oncokb import reset_oncokb_cache
+
     reset_oncokb_cache()
 
     from scripts.orchestrate import run_pipeline

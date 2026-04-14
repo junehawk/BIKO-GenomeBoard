@@ -42,7 +42,7 @@ def fetch_with_retry(
 
             if resp.status_code >= 500:
                 if attempt < max_retries - 1:
-                    time.sleep(backoff_base * (2 ** attempt))
+                    time.sleep(backoff_base * (2**attempt))
                     continue
             elif resp.status_code >= 400:
                 return None
@@ -51,7 +51,7 @@ def fetch_with_retry(
             return resp.json()
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError):
             if attempt < max_retries - 1:
-                time.sleep(backoff_base * (2 ** attempt))
+                time.sleep(backoff_base * (2**attempt))
         except Exception:
             return None
     return None

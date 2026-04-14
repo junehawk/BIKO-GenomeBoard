@@ -1,10 +1,10 @@
 # tests/test_local_hpo.py
 """Tests for the local HPO gene-phenotype SQLite DB."""
+
 import sqlite3
 import tempfile
 import os
 import pytest
-from pathlib import Path
 
 
 def _create_sample_hpo_tsv(path):
@@ -21,6 +21,7 @@ def _create_sample_hpo_tsv(path):
 def tmp_hpo_db(tmp_path):
     """Build temp HPO DB for testing."""
     from scripts.db.build_hpo_db import build_db
+
     tsv_path = tmp_path / "genes_to_phenotype.txt"
     with open(tsv_path, "w") as f:
         f.write("#Format: ncbi_gene_id\tgene_symbol\thpo_id\thpo_name\tfrequency\tdisease_id\n")
@@ -35,6 +36,7 @@ def tmp_hpo_db(tmp_path):
 
 def test_build_hpo_db():
     from scripts.db.build_hpo_db import build_db
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tsv_path = os.path.join(tmpdir, "genes_to_phenotype.txt")
         db_path = os.path.join(tmpdir, "hpo.sqlite3")
@@ -43,17 +45,13 @@ def test_build_hpo_db():
         assert result == db_path
         conn = sqlite3.connect(db_path)
         # TP53 has 2 HPO terms
-        rows = conn.execute(
-            "SELECT hpo_id, hpo_name FROM gene_phenotype WHERE gene_symbol = 'TP53'"
-        ).fetchall()
+        rows = conn.execute("SELECT hpo_id, hpo_name FROM gene_phenotype WHERE gene_symbol = 'TP53'").fetchall()
         assert len(rows) == 2
         hpo_ids = {r[0] for r in rows}
         assert "HP:0001250" in hpo_ids
         assert "HP:0002664" in hpo_ids
         # HP:0002664 maps to 2 genes
-        rows = conn.execute(
-            "SELECT gene_symbol FROM gene_phenotype WHERE hpo_id = 'HP:0002664'"
-        ).fetchall()
+        rows = conn.execute("SELECT gene_symbol FROM gene_phenotype WHERE hpo_id = 'HP:0002664'").fetchall()
         genes = {r[0] for r in rows}
         assert genes == {"TP53", "BRCA2"}
         conn.close()
@@ -62,6 +60,7 @@ def test_build_hpo_db():
 def test_get_genes_for_hpo(tmp_hpo_db):
     """HPO ID로 연관 유전자 목록 조회."""
     from scripts.db.query_local_hpo import get_genes_for_hpo
+
     genes = get_genes_for_hpo("HP:0002664", tmp_hpo_db)
     assert set(genes) == {"TP53", "BRCA2"}
 
@@ -69,6 +68,7 @@ def test_get_genes_for_hpo(tmp_hpo_db):
 def test_get_hpo_for_gene(tmp_hpo_db):
     """유전자로 연관 HPO 목록 조회."""
     from scripts.db.query_local_hpo import get_hpo_for_gene
+
     terms = get_hpo_for_gene("TP53", tmp_hpo_db)
     assert len(terms) == 2
     ids = {t["hpo_id"] for t in terms}
@@ -78,6 +78,7 @@ def test_get_hpo_for_gene(tmp_hpo_db):
 def test_resolve_hpo_terms_local(tmp_hpo_db):
     """resolve_hpo_terms_local: HPO ID 리스트 → term name + genes (API 없이)."""
     from scripts.db.query_local_hpo import resolve_hpo_terms_local
+
     results = resolve_hpo_terms_local(["HP:0001250", "HP:0002664"], tmp_hpo_db)
     assert len(results) == 2
     seizure = next(r for r in results if r["id"] == "HP:0001250")

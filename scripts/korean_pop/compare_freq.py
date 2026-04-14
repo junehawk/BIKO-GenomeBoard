@@ -12,11 +12,7 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     flags: List[str] = []
 
     all_freqs = [freq.krgdb, freq.korea4k, freq.nard2, freq.gnomad_eas, freq.gnomad_all]
-    max_freq = (
-        max(f for f in all_freqs if f is not None)
-        if any(f is not None for f in all_freqs)
-        else None
-    )
+    max_freq = max(f for f in all_freqs if f is not None) if any(f is not None for f in all_freqs) else None
 
     if max_freq is None:
         return {
@@ -76,5 +72,11 @@ if __name__ == "__main__":
     gnomad_all = float(sys.argv[3]) if len(sys.argv) > 3 else None
     freq = FrequencyData(krgdb=krgdb, gnomad_eas=eas, gnomad_all=gnomad_all)
     result = compare_frequencies(freq)
-    result["frequencies"] = {"krgdb": freq.krgdb, "korea4k": freq.korea4k, "nard2": freq.nard2, "gnomad_eas": freq.gnomad_eas, "gnomad_all": freq.gnomad_all}
+    result["frequencies"] = {
+        "krgdb": freq.krgdb,
+        "korea4k": freq.korea4k,
+        "nard2": freq.nard2,
+        "gnomad_eas": freq.gnomad_eas,
+        "gnomad_all": freq.gnomad_all,
+    }
     print(json.dumps(result, indent=2, ensure_ascii=False))

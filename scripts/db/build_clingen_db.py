@@ -74,6 +74,7 @@ def build_db(csv_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("csv_path")

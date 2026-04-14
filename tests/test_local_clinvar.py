@@ -1,8 +1,7 @@
 # tests/test_local_clinvar.py
 """Tests for the local ClinVar SQLite DB (Task 3.1)."""
-import os
+
 import sqlite3
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -14,9 +13,11 @@ from scripts.common.models import Variant
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_db(db_path: str):
     """Build the test DB at db_path using the build_test_clinvar_db module."""
     from scripts.db.build_test_clinvar_db import build_test_db
+
     build_test_db(db_path)
     return db_path
 
@@ -24,6 +25,7 @@ def _make_db(db_path: str):
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="module")
 def test_db_path(tmp_path_factory):
@@ -38,6 +40,7 @@ def test_db_path(tmp_path_factory):
 def reset_connection():
     """Reset the module-level DB connection before each test."""
     import scripts.db.query_local_clinvar as qmod
+
     qmod.close()
     qmod._conn = None
     yield
@@ -48,6 +51,7 @@ def reset_connection():
 # ---------------------------------------------------------------------------
 # 1. build_test_db
 # ---------------------------------------------------------------------------
+
 
 def test_build_test_db(tmp_path):
     db_path = str(tmp_path / "clinvar_test.sqlite3")
@@ -64,10 +68,12 @@ def test_build_test_db(tmp_path):
 # 2. query_by_rsid
 # ---------------------------------------------------------------------------
 
+
 def test_query_by_rsid(test_db_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", "")
     import scripts.db.query_local_clinvar as qmod
     from scripts.common.config import reset
+
     reset()
     # Point the module directly to the test DB
     qmod._conn = sqlite3.connect(test_db_path)
@@ -86,9 +92,11 @@ def test_query_by_rsid(test_db_path, monkeypatch):
 # 3. query_by_position
 # ---------------------------------------------------------------------------
 
+
 def test_query_by_position(test_db_path, monkeypatch):
     import scripts.db.query_local_clinvar as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -106,9 +114,11 @@ def test_query_by_position(test_db_path, monkeypatch):
 # 4. query_not_found
 # ---------------------------------------------------------------------------
 
+
 def test_query_not_found(test_db_path, monkeypatch):
     import scripts.db.query_local_clinvar as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -125,6 +135,7 @@ def test_query_not_found(test_db_path, monkeypatch):
 # 5. _derive_acmg_codes — expert panel → PS1 + PP5
 # ---------------------------------------------------------------------------
 
+
 def test_derive_acmg_codes_expert_panel():
     from scripts.db.query_local_clinvar import _derive_acmg_codes
 
@@ -136,6 +147,7 @@ def test_derive_acmg_codes_expert_panel():
 # ---------------------------------------------------------------------------
 # 6. _derive_acmg_codes — single submitter → PP5 only
 # ---------------------------------------------------------------------------
+
 
 def test_derive_acmg_codes_single_submitter():
     from scripts.db.query_local_clinvar import _derive_acmg_codes
@@ -149,9 +161,11 @@ def test_derive_acmg_codes_single_submitter():
 # 7. get_db_version
 # ---------------------------------------------------------------------------
 
+
 def test_get_db_version(test_db_path, monkeypatch):
     import scripts.db.query_local_clinvar as qmod
     from scripts.common.config import reset
+
     reset()
     qmod._conn = sqlite3.connect(test_db_path)
     qmod._conn.row_factory = sqlite3.Row
@@ -166,6 +180,7 @@ def test_get_db_version(test_db_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 8. pipeline local mode
 # ---------------------------------------------------------------------------
+
 
 def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
     """Run orchestrate.run_pipeline with annotation.source=local using the test DB."""
@@ -199,6 +214,7 @@ def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
 
     # Reset the local clinvar connection so it picks up the new config
     import scripts.db.query_local_clinvar as qmod
+
     qmod.close()
     qmod._conn = None
 
@@ -214,6 +230,7 @@ def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
     output_path = str(tmp_path / "report.html")
 
     from scripts.orchestrate import run_pipeline
+
     result = run_pipeline(
         vcf_path=vcf_path,
         output_path=output_path,
@@ -233,6 +250,7 @@ def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 9. pipeline auto mode — local hit
 # ---------------------------------------------------------------------------
+
 
 def test_pipeline_auto_mode_local_hit(test_db_path, monkeypatch):
     """auto mode should return a result from the local DB without calling the API."""

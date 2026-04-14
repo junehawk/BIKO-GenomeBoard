@@ -90,11 +90,13 @@ def _parse_phenotypes(phenotype_str: str) -> list[dict]:
             phenotype_name = entry
 
         if phenotype_name:
-            results.append({
-                "phenotype": phenotype_name,
-                "phenotype_mim": phenotype_mim,
-                "inheritance": inheritance,
-            })
+            results.append(
+                {
+                    "phenotype": phenotype_name,
+                    "phenotype_mim": phenotype_mim,
+                    "inheritance": inheritance,
+                }
+            )
 
     return results
 
@@ -136,17 +138,18 @@ def build_db(txt_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
                 rows.append((gene, mim_number, "", "", ""))
             else:
                 for p in phenotypes:
-                    rows.append((
-                        gene,
-                        mim_number,
-                        p["phenotype"],
-                        p["inheritance"],
-                        p["phenotype_mim"],
-                    ))
+                    rows.append(
+                        (
+                            gene,
+                            mim_number,
+                            p["phenotype"],
+                            p["inheritance"],
+                            p["phenotype_mim"],
+                        )
+                    )
 
     conn.executemany(
-        "INSERT INTO omim_genemap (gene, mim_number, phenotype, inheritance, phenotype_mim) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO omim_genemap (gene, mim_number, phenotype, inheritance, phenotype_mim) VALUES (?, ?, ?, ?, ?)",
         rows,
     )
 
@@ -170,11 +173,15 @@ def build_db(txt_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description="Build OMIM genemap2 SQLite database")
-    parser.add_argument("txt_path", nargs="?", default="data/db/genemap2.txt",
-                        help="Path to genemap2.txt (default: data/db/genemap2.txt)")
-    parser.add_argument("--db-path", default=DEFAULT_DB_PATH,
-                        help=f"Output SQLite path (default: {DEFAULT_DB_PATH})")
+    parser.add_argument(
+        "txt_path",
+        nargs="?",
+        default="data/db/genemap2.txt",
+        help="Path to genemap2.txt (default: data/db/genemap2.txt)",
+    )
+    parser.add_argument("--db-path", default=DEFAULT_DB_PATH, help=f"Output SQLite path (default: {DEFAULT_DB_PATH})")
     args = parser.parse_args()
     build_db(args.txt_path, args.db_path)

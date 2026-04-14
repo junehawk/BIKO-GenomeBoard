@@ -7,6 +7,7 @@ in-memory dict with thread-safe singleton caching.
 
 TSV format: chrom  pos  ref  alt  frequency
 """
+
 import threading
 from typing import Optional
 from scripts.common.models import Variant
@@ -50,7 +51,11 @@ if __name__ == "__main__":
     import json
 
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_korea4k 'chr17:7675088 C>A' [korea4k_path]"}))
+        print(
+            json.dumps(
+                {"error": "Usage: python -m scripts.korean_pop.query_korea4k 'chr17:7675088 C>A' [korea4k_path]"}
+            )
+        )
         sys.exit(1)
     v = Variant.from_string(sys.argv[1])
     path = sys.argv[2] if len(sys.argv) > 2 else "data/korea4k_freq.tsv"

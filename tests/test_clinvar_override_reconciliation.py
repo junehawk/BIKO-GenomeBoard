@@ -5,6 +5,7 @@ Covers the five clinically blessed fixtures from
 the five fires the override — the other four exercise the four negative
 paths around the gate.
 """
+
 from __future__ import annotations
 
 import pytest

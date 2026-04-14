@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 _tabix_files = {}  # chrom -> pysam.TabixFile
 _lock = threading.Lock()
 
+
 def _get_vcf_dir() -> str:
     return get("paths.gnomad_vcf_dir", "data/db/gnomad_vcf")
+
 
 def _find_vcf_for_chrom(chrom: str) -> Optional[str]:
     """Find the gnomAD VCF file for a given chromosome."""
@@ -54,6 +56,7 @@ def _find_vcf_for_chrom(chrom: str) -> Optional[str]:
 
     return None
 
+
 def _get_tabix(chrom: str):
     """Get or open a pysam.TabixFile for a chromosome."""
     with _lock:
@@ -71,6 +74,7 @@ def _get_tabix(chrom: str):
 
     try:
         import pysam
+
         tbx = pysam.TabixFile(vcf_path)
         with _lock:
             _tabix_files[chrom] = tbx
@@ -78,6 +82,7 @@ def _get_tabix(chrom: str):
     except Exception as e:
         logger.warning(f"Failed to open tabix file {vcf_path}: {e}")
         return None
+
 
 def _parse_info_field(info: str) -> Dict[str, str]:
     """Parse VCF INFO field into dict."""
@@ -90,8 +95,10 @@ def _parse_info_field(info: str) -> Dict[str, str]:
             result[item] = "true"
     return result
 
+
 def _extract_af(info_dict: Dict[str, str], alt_idx: int = 0) -> Dict:
     """Extract allele frequencies from gnomAD INFO fields."""
+
     def _get_af(key):
         val = info_dict.get(key)
         if val is None:
@@ -110,6 +117,7 @@ def _extract_af(info_dict: Dict[str, str], alt_idx: int = 0) -> Dict:
         "af_nfe": _get_af("AF_nfe"),
         "af_sas": _get_af("AF_sas"),
     }
+
 
 def query_tabix_gnomad(variant: Variant) -> Dict:
     """Query gnomAD via tabix for a single variant.
@@ -177,6 +185,7 @@ def query_tabix_gnomad(variant: Variant) -> Dict:
         logger.warning(f"Tabix query failed for {variant.variant_id}: {e}")
         return {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
 
+
 def get_available_chromosomes() -> List[str]:
     """List which chromosomes have gnomAD VCF files available."""
     vcf_dir = Path(_get_vcf_dir())
@@ -184,10 +193,11 @@ def get_available_chromosomes() -> List[str]:
         return []
     chroms = []
     for f in sorted(vcf_dir.glob("*.vcf.bgz")):
-        m = re.search(r'chr(\w+)', f.name)
+        m = re.search(r"chr(\w+)", f.name)
         if m:
             chroms.append(f"chr{m.group(1)}")
     return chroms
+
 
 def get_db_version() -> Dict:
     """Get gnomAD tabix metadata."""
@@ -202,7 +212,7 @@ def get_db_version() -> Dict:
     # Infer version from filename
     version = "unknown"
     for f in files:
-        m = re.search(r'v(\d+\.\d+)', f.name)
+        m = re.search(r"v(\d+\.\d+)", f.name)
         if m:
             version = m.group(1)
             break
@@ -219,6 +229,7 @@ def get_db_version() -> Dict:
         "chromosomes": len(files),
         "vcf_dir": str(vcf_dir),
     }
+
 
 def close():
     """Close all open tabix files."""

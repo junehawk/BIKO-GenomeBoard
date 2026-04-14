@@ -2,7 +2,6 @@
 import json
 from pathlib import Path
 
-import pytest
 
 from scripts.common.models import Variant
 from scripts.pharma.korean_pgx import check_korean_pgx
@@ -12,6 +11,7 @@ from scripts.pharma.korean_pgx import check_korean_pgx
 # Helper
 # ---------------------------------------------------------------------------
 
+
 def _pgx_table():
     path = Path(__file__).parent.parent / "data" / "korean_pgx_table.json"
     with open(path) as f:
@@ -20,6 +20,7 @@ def _pgx_table():
 
 def _config_genes():
     import yaml
+
     path = Path(__file__).parent.parent / "config.yaml"
     with open(path) as f:
         cfg = yaml.safe_load(f)
@@ -30,6 +31,7 @@ def _config_genes():
 # 1. Table completeness
 # ---------------------------------------------------------------------------
 
+
 def test_pgx_table_has_12_genes():
     data = _pgx_table()
     assert len(data["genes"]) == 12
@@ -38,6 +40,7 @@ def test_pgx_table_has_12_genes():
 # ---------------------------------------------------------------------------
 # 2. New gene phenotypes
 # ---------------------------------------------------------------------------
+
 
 def test_check_korean_pgx_cyp3a5():
     variant = Variant(chrom="chr7", pos=99245146, ref="A", alt="G", gene="CYP3A5")
@@ -107,12 +110,25 @@ def test_check_korean_pgx_cyp1a2():
 # 3. Config completeness
 # ---------------------------------------------------------------------------
 
+
 def test_config_pgx_genes_includes_new():
     genes = _config_genes()
     expected = [
-        "CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A",
-        "NUDT15", "TPMT", "DPYD",
-        "CYP3A5", "UGT1A1", "SLCO1B1", "VKORC1", "CYP1A2", "G6PD", "IFNL3",
+        "CYP2D6",
+        "CYP2C19",
+        "CYP2C9",
+        "HLA-B",
+        "HLA-A",
+        "NUDT15",
+        "TPMT",
+        "DPYD",
+        "CYP3A5",
+        "UGT1A1",
+        "SLCO1B1",
+        "VKORC1",
+        "CYP1A2",
+        "G6PD",
+        "IFNL3",
     ]
     for gene in expected:
         assert gene in genes, f"{gene} missing from config pgx.genes"
@@ -122,6 +138,7 @@ def test_config_pgx_genes_includes_new():
 # ---------------------------------------------------------------------------
 # 4. Existing genes still work
 # ---------------------------------------------------------------------------
+
 
 def test_existing_pgx_genes_still_work_cyp2c19():
     variant = Variant(chrom="chr10", pos=96541616, ref="G", alt="A", gene="CYP2C19")

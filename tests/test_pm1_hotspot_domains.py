@@ -4,6 +4,7 @@ Tests that :func:`collect_additional_evidence` consults
 ``data/pm1_hotspot_domains.json`` so PM1 can fire even when VEP left the
 ``domains`` field empty (ClinGen TP53 VCEP / AMP hotspot-table pathway).
 """
+
 from __future__ import annotations
 
 import pytest
@@ -98,8 +99,8 @@ def test_non_hotspot_gene_without_domain_no_pm1():
     "hgvsp",
     [
         "p.Arg249Met",  # 3-letter substitution
-        "p.R249M",      # 1-letter substitution
-        "p.Arg249fs",   # frameshift — position only
+        "p.R249M",  # 1-letter substitution
+        "p.Arg249fs",  # frameshift — position only
         " p.Arg249Met ",  # whitespace
     ],
 )

@@ -116,12 +116,12 @@ class StructuralVariant:
     start: int
     end: int
     length: int
-    sv_type: str              # DEL, DUP, INV, BND, INS
+    sv_type: str  # DEL, DUP, INV, BND, INS
     sample_id: str
-    acmg_class: int           # 1-5
+    acmg_class: int  # 1-5
     ranking_score: float
     cytoband: str
-    gene_name: str            # "ERBB2" or "TBX1;COMT;HIRA"
+    gene_name: str  # "ERBB2" or "TBX1;COMT;HIRA"
     gene_count: int
     # Gene detail (populated from split rows)
     gene_details: List[Dict] = field(default_factory=list)

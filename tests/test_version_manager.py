@@ -1,24 +1,24 @@
 # tests/test_version_manager.py
 """Tests for the centralized DB version manager (Task 3.5 + v2.2 A3)."""
-import json
-import sqlite3
-from pathlib import Path
 
-import pytest
+import sqlite3
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _make_clinvar_db(db_path: str):
     from scripts.db.build_test_clinvar_db import build_test_db
+
     build_test_db(db_path)
     return db_path
 
 
 def _make_gnomad_db(db_path: str):
     from scripts.db.build_test_gnomad_db import build_test_db
+
     build_test_db(db_path)
     return db_path
 
@@ -26,6 +26,7 @@ def _make_gnomad_db(db_path: str):
 # ---------------------------------------------------------------------------
 # 1. test_get_all_db_versions_with_local_dbs
 # ---------------------------------------------------------------------------
+
 
 def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
     """With both local DBs present, versions report local_db source for ClinVar & gnomAD."""
@@ -66,12 +67,14 @@ def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
     # Reset local DB connections so they pick up new config
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
     from scripts.db.version_manager import get_all_db_versions
+
     versions = get_all_db_versions(skip_api=True)
 
     assert "ClinVar" in versions
@@ -94,6 +97,7 @@ def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 2. test_get_all_db_versions_api_mode
 # ---------------------------------------------------------------------------
+
 
 def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
     """When no local DBs are configured and skip_api=False, versions show api source."""
@@ -125,12 +129,14 @@ def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
 
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
     from scripts.db.version_manager import get_all_db_versions
+
     versions = get_all_db_versions(skip_api=False)
 
     assert versions["ClinVar"]["source"] == "api"
@@ -148,6 +154,7 @@ def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 3. test_get_all_db_versions_skip_api_no_local
 # ---------------------------------------------------------------------------
+
 
 def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
     """skip_api=True with no local DBs → not_available source."""
@@ -179,12 +186,14 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
 
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
     from scripts.db.version_manager import get_all_db_versions
+
     versions = get_all_db_versions(skip_api=True)
 
     assert versions["ClinVar"]["source"] == "not_available"
@@ -200,6 +209,7 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 4. test_get_all_db_versions_includes_krgdb
 # ---------------------------------------------------------------------------
+
 
 def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
     """KRGDB file present → versions includes KRGDB with local_file source."""
@@ -233,12 +243,14 @@ def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
 
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
     from scripts.db.version_manager import get_all_db_versions
+
     versions = get_all_db_versions(skip_api=True)
 
     assert "KRGDB" in versions
@@ -256,6 +268,7 @@ def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 5. test_get_all_db_versions_includes_acmg
 # ---------------------------------------------------------------------------
+
 
 def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
     """ACMG entry is always present in versions dict."""
@@ -286,12 +299,14 @@ def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
 
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
     from scripts.db.version_manager import get_all_db_versions
+
     versions = get_all_db_versions(skip_api=True)
 
     assert "ACMG" in versions
@@ -309,6 +324,7 @@ def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 6. test_report_shows_db_source_type
 # ---------------------------------------------------------------------------
+
 
 def test_report_shows_db_source_type(tmp_path, monkeypatch):
     """Rendered report HTML contains 'Local DB' text when local DBs are used."""
@@ -348,6 +364,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
 
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
@@ -363,9 +380,14 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
         "variants": [],
         "pgx_results": [],
         "summary": {
-            "total": 0, "pathogenic": 0, "likely_pathogenic": 0,
-            "drug_response": 0, "risk_factor": 0, "vus": 0,
-            "likely_benign": 0, "benign": 0,
+            "total": 0,
+            "pathogenic": 0,
+            "likely_pathogenic": 0,
+            "drug_response": 0,
+            "risk_factor": 0,
+            "vus": 0,
+            "likely_benign": 0,
+            "benign": 0,
         },
         "db_versions": db_versions,
         "pipeline": {"skip_api": True, "krgdb_path": ""},
@@ -386,6 +408,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 7. test_report_shows_build_date
 # ---------------------------------------------------------------------------
+
 
 def test_report_shows_build_date(tmp_path, monkeypatch):
     """Rendered report HTML contains the build date from the local ClinVar DB."""
@@ -425,6 +448,7 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
 
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
@@ -444,9 +468,14 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
         "variants": [],
         "pgx_results": [],
         "summary": {
-            "total": 0, "pathogenic": 0, "likely_pathogenic": 0,
-            "drug_response": 0, "risk_factor": 0, "vus": 0,
-            "likely_benign": 0, "benign": 0,
+            "total": 0,
+            "pathogenic": 0,
+            "likely_pathogenic": 0,
+            "drug_response": 0,
+            "risk_factor": 0,
+            "vus": 0,
+            "likely_benign": 0,
+            "benign": 0,
         },
         "db_versions": db_versions,
         "pipeline": {"skip_api": True, "krgdb_path": ""},
@@ -473,6 +502,7 @@ def _write_min_config(tmp_path, monkeypatch, **paths):
     """Tiny config writer with sensible defaults for PM1/CIViC tests."""
     import yaml
     from scripts.common.config import reset
+
     cfg = {
         "paths": {
             "clinvar_db": str(tmp_path / "no_clinvar.sqlite3"),
@@ -497,6 +527,7 @@ def _write_min_config(tmp_path, monkeypatch, **paths):
     # Reset local DB conns so they re-read config
     import scripts.db.query_local_clinvar as cv_mod
     import scripts.db.query_local_gnomad as gn_mod
+
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
@@ -513,6 +544,7 @@ def test_pm1_hotspots_registered(tmp_path, monkeypatch):
     _write_min_config(tmp_path, monkeypatch, pm1_hotspots_json=str(pm1_path))
 
     from scripts.db.version_manager import get_all_db_versions, get_version
+
     versions = get_all_db_versions(skip_api=True)
 
     assert "PM1_Hotspots" in versions
@@ -530,10 +562,12 @@ def test_pm1_hotspots_registered(tmp_path, monkeypatch):
 def test_pm1_hotspots_absent_when_file_missing(tmp_path, monkeypatch):
     """When the JSON does not exist, PM1_Hotspots must not appear."""
     _write_min_config(
-        tmp_path, monkeypatch,
+        tmp_path,
+        monkeypatch,
         pm1_hotspots_json=str(tmp_path / "absent.json"),
     )
     from scripts.db.version_manager import get_all_db_versions, get_version
+
     versions = get_all_db_versions(skip_api=True)
     assert "PM1_Hotspots" not in versions
     assert get_version("PM1_Hotspots") is None
@@ -556,6 +590,7 @@ def test_civic_registered_when_db_present(tmp_path, monkeypatch):
     _write_min_config(tmp_path, monkeypatch, civic_db=str(civic_db))
 
     from scripts.db.version_manager import get_all_db_versions, get_version
+
     versions = get_all_db_versions(skip_api=True)
     assert "CIViC" in versions
     assert versions["CIViC"]["source"] == "local_db"
@@ -575,6 +610,7 @@ def test_cancerhotspots_stub_flagged(tmp_path, monkeypatch):
     _write_min_config(tmp_path, monkeypatch, cancerhotspots_tsv=str(tsv))
 
     from scripts.db.version_manager import get_all_db_versions
+
     versions = get_all_db_versions(skip_api=True)
     assert "cancerhotspots_v2_single" in versions
     meta = versions["cancerhotspots_v2_single"]
@@ -586,4 +622,5 @@ def test_cancerhotspots_stub_flagged(tmp_path, monkeypatch):
 def test_get_version_unknown_source_returns_none(tmp_path, monkeypatch):
     _write_min_config(tmp_path, monkeypatch)
     from scripts.db.version_manager import get_version
+
     assert get_version("not_a_real_source") is None

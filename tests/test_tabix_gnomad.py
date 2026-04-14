@@ -1,8 +1,7 @@
 # tests/test_tabix_gnomad.py
 """Tests for the gnomAD tabix query module (query_tabix_gnomad.py)."""
-import os
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -15,10 +14,12 @@ from scripts.common.models import Variant
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 @pytest.fixture(autouse=True)
 def reset_tabix_state():
     """Reset module-level tabix file cache before each test."""
     import scripts.db.query_tabix_gnomad as qmod
+
     qmod.close()
     yield
     qmod.close()
@@ -27,6 +28,7 @@ def reset_tabix_state():
 # ---------------------------------------------------------------------------
 # 1. test_find_vcf_for_chrom
 # ---------------------------------------------------------------------------
+
 
 def test_find_vcf_for_chrom(tmp_path, monkeypatch):
     """_find_vcf_for_chrom locates files matching the standard gnomAD naming pattern."""
@@ -90,6 +92,7 @@ def test_find_vcf_for_chrom_glob_fallback(tmp_path, monkeypatch):
 # 2. test_parse_info_field
 # ---------------------------------------------------------------------------
 
+
 def test_parse_info_field_basic():
     """_parse_info_field correctly splits key=value pairs."""
     from scripts.db.query_tabix_gnomad import _parse_info_field
@@ -126,6 +129,7 @@ def test_parse_info_field_empty():
 # ---------------------------------------------------------------------------
 # 3. test_extract_af_single_alt
 # ---------------------------------------------------------------------------
+
 
 def test_extract_af_single_alt():
     """_extract_af returns correct AFs for a single-alt variant."""
@@ -164,6 +168,7 @@ def test_extract_af_missing_keys():
 # ---------------------------------------------------------------------------
 # 4. test_extract_af_multi_alt
 # ---------------------------------------------------------------------------
+
 
 def test_extract_af_multi_alt_first():
     """_extract_af picks the first allele frequency for alt_idx=0."""
@@ -208,6 +213,7 @@ def test_extract_af_multi_alt_out_of_bounds():
 # 5. test_get_available_chromosomes
 # ---------------------------------------------------------------------------
 
+
 def test_get_available_chromosomes(tmp_path, monkeypatch):
     """get_available_chromosomes returns chromosomes with VCF files present."""
     import scripts.db.query_tabix_gnomad as qmod
@@ -249,6 +255,7 @@ def test_get_available_chromosomes_no_dir(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 6. test_get_db_version_not_available
 # ---------------------------------------------------------------------------
+
 
 def test_get_db_version_not_available(tmp_path, monkeypatch):
     """get_db_version returns not_available when VCF dir is missing."""
@@ -293,6 +300,7 @@ def test_get_db_version_with_files(tmp_path, monkeypatch):
 # 7. test_query_tabix_gnomad_no_files
 # ---------------------------------------------------------------------------
 
+
 def test_query_tabix_gnomad_no_files(tmp_path, monkeypatch):
     """query_tabix_gnomad returns api_available=False when no VCF files found."""
     import scripts.db.query_tabix_gnomad as qmod
@@ -336,10 +344,18 @@ def test_query_tabix_gnomad_exact_match(tmp_path, monkeypatch):
     tbi_file.touch()
 
     # Build a fake VCF record line (tab-separated)
-    fake_record = "\t".join([
-        "chr17", "7577120", "rs28934578", "G", "A", ".", "PASS",
-        "AF=0.000123;AF_eas=0.001;AF_afr=0.00005;AF_amr=0.0002;AF_nfe=0.0001;AF_sas=0.00003"
-    ])
+    fake_record = "\t".join(
+        [
+            "chr17",
+            "7577120",
+            "rs28934578",
+            "G",
+            "A",
+            ".",
+            "PASS",
+            "AF=0.000123;AF_eas=0.001;AF_afr=0.00005;AF_amr=0.0002;AF_nfe=0.0001;AF_sas=0.00003",
+        ]
+    )
 
     mock_tbx = MagicMock()
     mock_tbx.fetch.return_value = [fake_record]
@@ -379,10 +395,7 @@ def test_query_tabix_gnomad_ref_mismatch(tmp_path, monkeypatch):
     import scripts.db.query_tabix_gnomad as qmod
 
     # Record has ref=C but we query ref=G
-    fake_record = "\t".join([
-        "chr17", "7577120", ".", "C", "A", ".", "PASS",
-        "AF=0.001;AF_eas=0.01"
-    ])
+    fake_record = "\t".join(["chr17", "7577120", ".", "C", "A", ".", "PASS", "AF=0.001;AF_eas=0.01"])
 
     mock_tbx = MagicMock()
     mock_tbx.fetch.return_value = [fake_record]
@@ -402,10 +415,7 @@ def test_query_tabix_gnomad_multi_alt_correct_index(tmp_path, monkeypatch):
     import scripts.db.query_tabix_gnomad as qmod
 
     # Two ALTs: T and C; we want the C allele (alt_idx=1)
-    fake_record = "\t".join([
-        "chr17", "7577120", ".", "G", "T,C", ".", "PASS",
-        "AF=0.001,0.05;AF_eas=0.01,0.09"
-    ])
+    fake_record = "\t".join(["chr17", "7577120", ".", "G", "T,C", ".", "PASS", "AF=0.001,0.05;AF_eas=0.01,0.09"])
 
     mock_tbx = MagicMock()
     mock_tbx.fetch.return_value = [fake_record]
@@ -424,6 +434,7 @@ def test_query_tabix_gnomad_multi_alt_correct_index(tmp_path, monkeypatch):
 # ---------------------------------------------------------------------------
 # 8. test_close
 # ---------------------------------------------------------------------------
+
 
 def test_close_clears_cache(monkeypatch):
     """close() clears the _tabix_files cache without raising."""

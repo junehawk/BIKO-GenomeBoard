@@ -5,6 +5,7 @@ When the Board Chair returns zero valid ``(curated_id, variant_key)`` pairs,
 emits a ``CancerBoardOpinion`` directly from the curator output so the
 clinician still sees the validated therapy table.
 """
+
 from __future__ import annotations
 
 from scripts.clinical_board.models import AgentOpinion, CancerBoardOpinion
@@ -58,11 +59,7 @@ def test_fallback_confidence_is_low():
 def test_fallback_preserves_pmids_in_hydrated():
     from scripts.clinical_board.template_renderer_chair import render_from_curated
 
-    curated = {
-        "12:25:C:T": [
-            _stub_row("Sotorasib", "12:25:C:T", "cid-sot", "A", ["32955176", "35110016"], "NSCLC")
-        ]
-    }
+    curated = {"12:25:C:T": [_stub_row("Sotorasib", "12:25:C:T", "cid-sot", "A", ["32955176", "35110016"], "NSCLC")]}
     opinion = render_from_curated(curated)
     row = opinion.treatment_options[0]
     assert row["curated_id"] == "cid-sot"

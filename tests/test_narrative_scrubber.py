@@ -5,18 +5,19 @@ full ``CancerBoardOpinion`` dataclass and drops any treatment row whose
 ``(curated_id, variant_key)`` pair did not come from the curator output,
 then scrubs banned drug tokens out of every prose field.
 """
+
 from __future__ import annotations
 
 import dataclasses
 import json
 
-import pytest
 
 from scripts.clinical_board.models import AgentOpinion, CancerBoardOpinion
 
 
 def _stub_curated(drug: str, variant_key: str, curated_id: str):
     """Build a tiny stand-in for a CuratedTreatment without importing it."""
+
     class _Row:
         pass
 
@@ -78,10 +79,20 @@ def test_scrub_drops_row_with_fabricated_curated_id():
 
     curated = {"12:25:C:T": [_stub_curated("Sotorasib", "12:25:C:T", "cid-sot")]}
     rows = [
-        {"drug": "Sotorasib", "curated_id": "cid-sot", "variant_key": "12:25:C:T",
-         "evidence_level": "A", "resistance_notes": ""},
-        {"drug": "Futibatinib", "curated_id": "fabricated", "variant_key": "12:25:C:T",
-         "evidence_level": "A", "resistance_notes": ""},
+        {
+            "drug": "Sotorasib",
+            "curated_id": "cid-sot",
+            "variant_key": "12:25:C:T",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
+        {
+            "drug": "Futibatinib",
+            "curated_id": "fabricated",
+            "variant_key": "12:25:C:T",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
     ]
     op = _opinion_with_rows(rows)
     scrub_opinion(op, curated)
@@ -98,8 +109,13 @@ def test_scrub_drops_row_with_mismatched_variant_key():
         "17:76:G:A": [],
     }
     rows = [
-        {"drug": "Osimertinib", "curated_id": "cid-osi", "variant_key": "17:76:G:A",
-         "evidence_level": "A", "resistance_notes": ""},
+        {
+            "drug": "Osimertinib",
+            "curated_id": "cid-osi",
+            "variant_key": "17:76:G:A",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
     ]
     op = _opinion_with_rows(rows)
     scrub_opinion(op, curated)
@@ -111,8 +127,13 @@ def test_scrub_strips_banned_drug_from_prose():
 
     curated = {"12:25:C:T": [_stub_curated("Sotorasib", "12:25:C:T", "cid-sot")]}
     rows = [
-        {"drug": "Futibatinib", "curated_id": "fake", "variant_key": "12:25:C:T",
-         "evidence_level": "A", "resistance_notes": ""},
+        {
+            "drug": "Futibatinib",
+            "curated_id": "fake",
+            "variant_key": "12:25:C:T",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
     ]
     op = CancerBoardOpinion(
         therapeutic_headline="futibatinib is our headline",
@@ -131,8 +152,13 @@ def test_scrub_preserves_allowed_drug_mentioned_in_prose():
 
     curated = {"12:25:C:T": [_stub_curated("Sotorasib", "12:25:C:T", "cid-sot")]}
     rows = [
-        {"drug": "Sotorasib", "curated_id": "cid-sot", "variant_key": "12:25:C:T",
-         "evidence_level": "A", "resistance_notes": ""},
+        {
+            "drug": "Sotorasib",
+            "curated_id": "cid-sot",
+            "variant_key": "12:25:C:T",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
     ]
     op = CancerBoardOpinion(
         therapeutic_headline="Sotorasib candidate",
@@ -156,8 +182,13 @@ def test_scrub_walks_agent_opinions():
         concerns=["Futibatinib side effects"],
     )
     rows = [
-        {"drug": "Futibatinib", "curated_id": "fake", "variant_key": "12:25:C:T",
-         "evidence_level": "A", "resistance_notes": ""},
+        {
+            "drug": "Futibatinib",
+            "curated_id": "fake",
+            "variant_key": "12:25:C:T",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
     ]
     op = CancerBoardOpinion(treatment_options=rows, agent_opinions=[agent_op])
     scrub_opinion(op, curated)
@@ -170,8 +201,13 @@ def test_scrub_empty_curated_drops_all_rows():
 
     curated: dict = {}
     rows = [
-        {"drug": "Osimertinib", "curated_id": "anything", "variant_key": "X:1:A:T",
-         "evidence_level": "A", "resistance_notes": ""},
+        {
+            "drug": "Osimertinib",
+            "curated_id": "anything",
+            "variant_key": "X:1:A:T",
+            "evidence_level": "A",
+            "resistance_notes": "",
+        },
     ]
     op = _opinion_with_rows(rows)
     scrub_opinion(op, curated)

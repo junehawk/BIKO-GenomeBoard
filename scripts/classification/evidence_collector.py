@@ -8,6 +8,7 @@ This module is self-contained: it uses only the Variant dataclass and
 standard library.  It does NOT implement PP3/BP4 (computational
 prediction) — that is handled by the separate in_silico module.
 """
+
 from __future__ import annotations
 
 import json
@@ -82,6 +83,7 @@ def _pm1_hotspot_match(gene: Optional[str], protein_position: Optional[int]) -> 
                 best = "supporting"
     return best
 
+
 # ── Consequence groups ────────────────────────────────────────────────────────
 #
 # Inverse of scripts/intake/parse_annotation.py::format_consequence mapping.
@@ -114,25 +116,33 @@ def _canonicalize_so_term(raw: str) -> str:
     return _FORMATTED_TO_SO.get(key, key)
 
 
-NULL_CONSEQUENCES = frozenset({
-    "stop_gained",
-    "frameshift_variant",
-    "splice_donor_variant",
-    "splice_acceptor_variant",
-})
+NULL_CONSEQUENCES = frozenset(
+    {
+        "stop_gained",
+        "frameshift_variant",
+        "splice_donor_variant",
+        "splice_acceptor_variant",
+    }
+)
 
-MISSENSE_CONSEQUENCES = frozenset({
-    "missense_variant",
-})
+MISSENSE_CONSEQUENCES = frozenset(
+    {
+        "missense_variant",
+    }
+)
 
-INFRAME_CONSEQUENCES = frozenset({
-    "inframe_insertion",
-    "inframe_deletion",
-})
+INFRAME_CONSEQUENCES = frozenset(
+    {
+        "inframe_insertion",
+        "inframe_deletion",
+    }
+)
 
-SYNONYMOUS_CONSEQUENCES = frozenset({
-    "synonymous_variant",
-})
+SYNONYMOUS_CONSEQUENCES = frozenset(
+    {
+        "synonymous_variant",
+    }
+)
 
 
 def _get_consequence(variant: Variant) -> Optional[str]:
@@ -193,10 +203,26 @@ def _extract_aa_change(hgvsp: str) -> Optional[str]:
         return None
 
     AA3_TO_1 = {
-        "Ala": "A", "Arg": "R", "Asn": "N", "Asp": "D", "Cys": "C",
-        "Gln": "Q", "Glu": "E", "Gly": "G", "His": "H", "Ile": "I",
-        "Leu": "L", "Lys": "K", "Met": "M", "Phe": "F", "Pro": "P",
-        "Ser": "S", "Thr": "T", "Trp": "W", "Tyr": "Y", "Val": "V",
+        "Ala": "A",
+        "Arg": "R",
+        "Asn": "N",
+        "Asp": "D",
+        "Cys": "C",
+        "Gln": "Q",
+        "Glu": "E",
+        "Gly": "G",
+        "His": "H",
+        "Ile": "I",
+        "Leu": "L",
+        "Lys": "K",
+        "Met": "M",
+        "Phe": "F",
+        "Pro": "P",
+        "Ser": "S",
+        "Thr": "T",
+        "Trp": "W",
+        "Tyr": "Y",
+        "Val": "V",
         "Ter": "*",
     }
 
@@ -247,6 +273,7 @@ def _has_domain(variant: Variant) -> bool:
 
 # ── Main collector ────────────────────────────────────────────────────────────
 
+
 def collect_additional_evidence(
     variant: Variant,
     gene_info: Optional[Dict] = None,
@@ -291,9 +318,7 @@ def collect_additional_evidence(
     #       upstream annotator dropped DOMAINS.
     if _is_missense(consequence):
         domain_hit = _has_domain(variant)
-        table_hit = _pm1_hotspot_match(
-            variant.gene, extract_protein_position(variant.hgvsp)
-        )
+        table_hit = _pm1_hotspot_match(variant.gene, extract_protein_position(variant.hgvsp))
         if domain_hit or table_hit == "moderate":
             codes.append("PM1")
         elif table_hit == "supporting":
@@ -304,9 +329,7 @@ def collect_additional_evidence(
         codes.append("PM4")
 
     # ── PM5 — Novel missense at position with known pathogenic variant ───
-    if (_is_missense(consequence)
-            and clinvar_pathogenic_positions
-            and variant.hgvsp):
+    if _is_missense(consequence) and clinvar_pathogenic_positions and variant.hgvsp:
         protein_pos = _extract_protein_position(variant.hgvsp)
         if protein_pos is not None and protein_pos in clinvar_pathogenic_positions:
             # PM5 requires a *different* amino acid change at the same position.

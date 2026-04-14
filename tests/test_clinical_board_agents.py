@@ -1,7 +1,5 @@
 """Tests for Clinical Board domain agents and Board Chair."""
 
-import json
-import pytest
 from unittest.mock import MagicMock
 
 from scripts.clinical_board.models import AgentOpinion, BoardOpinion
@@ -421,9 +419,7 @@ def test_all_agents_have_korean_system_prompt():
             f"{agent.agent_name} system prompt must include disclaimer about deterministic classification engine"
         )
         # Check it instructs to respond in Korean
-        assert "한국어" in prompt, (
-            f"{agent.agent_name} system prompt must instruct Korean response"
-        )
+        assert "한국어" in prompt, f"{agent.agent_name} system prompt must instruct Korean response"
 
 
 def test_board_chair_has_korean_system_prompt():
@@ -585,9 +581,7 @@ def test_runner_uses_selector_and_records_metadata(monkeypatch):
     fake_agent = MagicMock()
     fake_agent.agent_name = "FakeAgent"
     fake_agent.domain = "fake_domain"
-    fake_agent.analyze.return_value = AgentOpinion(
-        agent_name="FakeAgent", domain="fake_domain", confidence="high"
-    )
+    fake_agent.analyze.return_value = AgentOpinion(agent_name="FakeAgent", domain="fake_domain", confidence="high")
     monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [fake_agent])
 
     def _fake_build_domain_sheet(domain, mode, variants, report_data):

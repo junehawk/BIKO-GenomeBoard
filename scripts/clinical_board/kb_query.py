@@ -5,6 +5,7 @@ seen variants and renders a compact block of prior board outcomes to
 pass into agents as reference-only context. A bilingual anchoring-bias
 warning is always included so the agents don't over-weight history.
 """
+
 from __future__ import annotations
 
 import os

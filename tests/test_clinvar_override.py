@@ -1,13 +1,13 @@
 # tests/test_clinvar_override.py
 """Tests for ClinVar direct classification override and VUS filtering."""
 
-import pytest
 from pathlib import Path
 
 from scripts.classification.acmg_engine import apply_clinvar_override
 
 
 # ── apply_clinvar_override unit tests ─────────────────────────────────────────
+
 
 def test_override_expert_panel_pathogenic():
     """Expert panel + Pathogenic → Pathogenic override."""
@@ -17,25 +17,22 @@ def test_override_expert_panel_pathogenic():
 
 def test_override_multi_submitter_pathogenic():
     """Multiple submitters (no conflict) + Pathogenic → Likely Pathogenic."""
-    result = apply_clinvar_override(
-        "VUS", "Pathogenic", "criteria provided, multiple submitters, no conflicts"
-    )
+    result = apply_clinvar_override("VUS", "Pathogenic", "criteria provided, multiple submitters, no conflicts")
     assert result == "Likely Pathogenic"
 
 
 def test_override_single_submitter_no_change():
     """Single submitter — no override regardless of ClinVar significance."""
-    result = apply_clinvar_override(
-        "VUS", "Pathogenic", "criteria provided, single submitter"
-    )
+    result = apply_clinvar_override("VUS", "Pathogenic", "criteria provided, single submitter")
     assert result == "VUS"
 
 
 def test_override_conflicting_no_change():
     """Conflicting interpretations — no override."""
     result = apply_clinvar_override(
-        "VUS", "Conflicting classifications of pathogenicity",
-        "criteria provided, multiple submitters, conflicting interpretations"
+        "VUS",
+        "Conflicting classifications of pathogenicity",
+        "criteria provided, multiple submitters, conflicting interpretations",
     )
     assert result == "VUS"
 
@@ -80,9 +77,7 @@ def test_override_empty_review_status_no_change():
 
 def test_override_likely_pathogenic_multi():
     """Likely pathogenic with multi submitters → Likely Pathogenic."""
-    result = apply_clinvar_override(
-        "VUS", "Likely pathogenic", "criteria provided, multiple submitters, no conflicts"
-    )
+    result = apply_clinvar_override("VUS", "Likely pathogenic", "criteria provided, multiple submitters, no conflicts")
     assert result == "Likely Pathogenic"
 
 

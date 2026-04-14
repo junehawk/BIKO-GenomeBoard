@@ -2,7 +2,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 from jinja2 import Environment, FileSystemLoader
 
 from scripts.common.gene_knowledge import get_gene_info
@@ -46,10 +46,12 @@ def _linkify_pmids(text):
     """Convert PMID references in text to PubMed links."""
     if not text:
         return text
+
     def _replace_pmid(match):
         pmid = match.group(1)
         return f'<a href="https://pubmed.ncbi.nlm.nih.gov/{pmid}/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">PMID:{pmid}</a>'
-    return re.sub(r'PMID:\s*(\d+)', _replace_pmid, text)
+
+    return re.sub(r"PMID:\s*(\d+)", _replace_pmid, text)
 
 
 def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
@@ -154,9 +156,9 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
 
         # Convert PMID references to clickable HTML links (safe — we control this text)
         # Guard against double-linkifying if already processed (e.g. called twice on same dict)
-        if v.get("treatment_strategies") and '<a href=' not in v["treatment_strategies"]:
+        if v.get("treatment_strategies") and "<a href=" not in v["treatment_strategies"]:
             v["treatment_strategies"] = _linkify_pmids(v["treatment_strategies"])
-        if v.get("finding_summary") and '<a href=' not in v["finding_summary"]:
+        if v.get("finding_summary") and "<a href=" not in v["finding_summary"]:
             v["finding_summary"] = _linkify_pmids(v["finding_summary"])
 
     for pgx in report_data.get("pgx_results", []):

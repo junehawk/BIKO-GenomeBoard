@@ -27,11 +27,7 @@ def fetch_genreviews_info(gene_symbol: str) -> Optional[Dict]:
     key_param = f"&api_key={api_key}" if api_key else ""
 
     # Search PubMed for GeneReviews entries mentioning this gene
-    search_url = (
-        f"{ESEARCH}?db=pubmed"
-        f"&term={gene_symbol}[Title]+AND+GeneReviews[Book]"
-        f"&retmode=json&retmax=1{key_param}"
-    )
+    search_url = f"{ESEARCH}?db=pubmed&term={gene_symbol}[Title]+AND+GeneReviews[Book]&retmode=json&retmax=1{key_param}"
     search_data = fetch_with_retry(search_url)
     if not search_data:
         return None

@@ -23,6 +23,7 @@ Proxies and known gaps
 
 Reference: _workspace/variant-selector/00_clinical_review.md
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -36,41 +37,114 @@ from scripts.db.query_civic import extract_protein_position, is_hotspot
 # conservative partial list covering highly actionable cardiac, cancer, and
 # metabolic conditions. VUS in these genes are silently excluded from the
 # rare-disease MAY list until an explicit SF opt-in flow is modeled.
-_ACMG_SF_V32 = frozenset({
-    "BRCA1", "BRCA2", "PALB2", "TP53", "STK11", "MLH1", "MSH2", "MSH6", "PMS2", "EPCAM",
-    "APC", "MUTYH", "BMPR1A", "SMAD4", "VHL", "MEN1", "RET", "NF2", "TSC1", "TSC2", "PTEN",
-    "DICER1", "RB1", "SDHAF2", "SDHB", "SDHC", "SDHD", "MAX", "TMEM127", "WT1",
-    "KCNQ1", "KCNH2", "SCN5A", "RYR2", "CASQ2", "TRDN", "CALM1", "CALM2", "CALM3",
-    "MYH7", "MYBPC3", "TNNI3", "TNNT2", "TPM1", "MYL2", "MYL3", "ACTC1", "PLN",
-    "LMNA", "DSP", "PKP2", "DSG2", "DSC2", "TMEM43", "FBN1", "TGFBR1", "TGFBR2",
-    "SMAD3", "ACTA2", "MYH11", "COL3A1", "LDLR", "APOB", "PCSK9",
-    "RYR1", "CACNA1S", "ATP7B", "BTD", "OTC", "GAA", "HNF1A", "GLA", "TTR",
-})
+_ACMG_SF_V32 = frozenset(
+    {
+        "BRCA1",
+        "BRCA2",
+        "PALB2",
+        "TP53",
+        "STK11",
+        "MLH1",
+        "MSH2",
+        "MSH6",
+        "PMS2",
+        "EPCAM",
+        "APC",
+        "MUTYH",
+        "BMPR1A",
+        "SMAD4",
+        "VHL",
+        "MEN1",
+        "RET",
+        "NF2",
+        "TSC1",
+        "TSC2",
+        "PTEN",
+        "DICER1",
+        "RB1",
+        "SDHAF2",
+        "SDHB",
+        "SDHC",
+        "SDHD",
+        "MAX",
+        "TMEM127",
+        "WT1",
+        "KCNQ1",
+        "KCNH2",
+        "SCN5A",
+        "RYR2",
+        "CASQ2",
+        "TRDN",
+        "CALM1",
+        "CALM2",
+        "CALM3",
+        "MYH7",
+        "MYBPC3",
+        "TNNI3",
+        "TNNT2",
+        "TPM1",
+        "MYL2",
+        "MYL3",
+        "ACTC1",
+        "PLN",
+        "LMNA",
+        "DSP",
+        "PKP2",
+        "DSG2",
+        "DSC2",
+        "TMEM43",
+        "FBN1",
+        "TGFBR1",
+        "TGFBR2",
+        "SMAD3",
+        "ACTA2",
+        "MYH11",
+        "COL3A1",
+        "LDLR",
+        "APOB",
+        "PCSK9",
+        "RYR1",
+        "CACNA1S",
+        "ATP7B",
+        "BTD",
+        "OTC",
+        "GAA",
+        "HNF1A",
+        "GLA",
+        "TTR",
+    }
+)
 
-_TSG_LOF_CONSEQUENCES = frozenset({
-    "stop_gained",
-    "frameshift_variant",
-    "splice_donor_variant",
-    "splice_acceptor_variant",
-    "start_lost",
-})
+_TSG_LOF_CONSEQUENCES = frozenset(
+    {
+        "stop_gained",
+        "frameshift_variant",
+        "splice_donor_variant",
+        "splice_acceptor_variant",
+        "start_lost",
+    }
+)
 
-_INFRAME_INDEL_CONSEQUENCES = frozenset({
-    "inframe_insertion",
-    "inframe_deletion",
-})
+_INFRAME_INDEL_CONSEQUENCES = frozenset(
+    {
+        "inframe_insertion",
+        "inframe_deletion",
+    }
+)
 
-_PROTEIN_IMPACTING_CONSEQUENCES = frozenset({
-    "missense_variant",
-    "stop_gained",
-    "stop_lost",
-    "frameshift_variant",
-    "splice_donor_variant",
-    "splice_acceptor_variant",
-    "start_lost",
-    "inframe_insertion",
-    "inframe_deletion",
-})
+_PROTEIN_IMPACTING_CONSEQUENCES = frozenset(
+    {
+        "missense_variant",
+        "stop_gained",
+        "stop_lost",
+        "frameshift_variant",
+        "splice_donor_variant",
+        "splice_acceptor_variant",
+        "start_lost",
+        "inframe_insertion",
+        "inframe_deletion",
+    }
+)
 
 # Inverse of scripts/intake/parse_annotation.py::format_consequence. The real
 # pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
@@ -104,12 +178,15 @@ def _canonical_consequence(raw: str) -> str:
         key = key.split("&", 1)[0].strip()
     return _FORMATTED_TO_SO.get(key, key)
 
+
 # v2.2 B1: splice-region / synonymous variants are rescued (admitted) only when
 # SpliceAI delta_max >= 0.2, per Tavtigian et al. 2023 PP3-moderate threshold.
-_SPLICE_RESCUE_CONSEQUENCES = frozenset({
-    "synonymous_variant",
-    "splice_region_variant",
-})
+_SPLICE_RESCUE_CONSEQUENCES = frozenset(
+    {
+        "synonymous_variant",
+        "splice_region_variant",
+    }
+)
 _SPLICEAI_RESCUE_THRESHOLD = 0.2
 
 # v2.2 B2: MMR/Lynch panel carve-out — protein-impacting VUS in any of these
@@ -207,24 +284,16 @@ def select_board_variants(
     total_input = len(variants)
 
     if mode == "cancer":
-        selected, must_n, may_n, excluded_n, truncated, n_dropped = _select_cancer(
-            variants, overrides
-        )
-        empty_reason = (
-            "no Tier I/II variants, no ClinVar P/LP, no qualifying hotspot/driver VUS"
-        )
+        selected, must_n, may_n, excluded_n, truncated, n_dropped = _select_cancer(variants, overrides)
+        empty_reason = "no Tier I/II variants, no ClinVar P/LP, no qualifying hotspot/driver VUS"
         criteria_summary = (
             "P/LP + AMP Tier I/II + Tier III hotspot/OncoKB-gene "
             "+ VUS hotspot/TSG-LoF/indel-hotspot (soft caps, no fallback)"
         )
     elif mode == "rare-disease":
-        selected, must_n, may_n, excluded_n, truncated, n_dropped = _select_rare_disease(
-            variants, overrides
-        )
+        selected, must_n, may_n, excluded_n, truncated, n_dropped = _select_rare_disease(variants, overrides)
         empty_reason = "no P/LP variants, no HPO-matched VUS above threshold"
-        criteria_summary = (
-            "ACMG P/LP + HPO-matched rare VUS (SF genes excluded, soft caps, no fallback)"
-        )
+        criteria_summary = "ACMG P/LP + HPO-matched rare VUS (SF genes excluded, soft caps, no fallback)"
     else:
         raise ValueError(f"Unknown mode: {mode!r} (expected 'cancer' or 'rare-disease')")
 
@@ -266,9 +335,7 @@ def select_board_variants(
 # ---------------------------------------------------------------------------
 
 
-def _select_cancer(
-    variants: list[dict], overrides: dict
-) -> tuple[list[dict], int, int, int, bool, int]:
+def _select_cancer(variants: list[dict], overrides: dict) -> tuple[list[dict], int, int, int, bool, int]:
     max_total = int(
         overrides.get(
             "max_cancer_board_variants",
@@ -322,9 +389,7 @@ def _select_cancer(
     n_dropped = dropped_by_may_cap + dropped_by_total_cap
 
     combined = must + may_kept
-    combined.sort(
-        key=lambda v: (_REASON_PRIORITY[v["selection_reason"]],)
-    )
+    combined.sort(key=lambda v: (_REASON_PRIORITY[v["selection_reason"]],))
     return combined, len(must), len(may_kept), excluded, truncated, n_dropped
 
 
@@ -378,18 +443,10 @@ def _cancer_may_reason(v: dict) -> Optional[str]:
     if gene in _MMR_LYNCH_GENES:
         return "VUS_MMR_Lynch"
 
-    if (
-        v.get("cancer_gene_type", "") == "TSG"
-        and consequence in _TSG_LOF_CONSEQUENCES
-    ):
+    if v.get("cancer_gene_type", "") == "TSG" and consequence in _TSG_LOF_CONSEQUENCES:
         return "VUS_TSG_LoF"
 
-    if (
-        consequence in _INFRAME_INDEL_CONSEQUENCES
-        and gene
-        and is_cancer_gene(gene)
-        and hotspot_hit
-    ):
+    if consequence in _INFRAME_INDEL_CONSEQUENCES and gene and is_cancer_gene(gene) and hotspot_hit:
         return "VUS_indel_hotspot"
 
     # NOTE: generic "protein-impacting consequence alone" is explicitly REJECTED
@@ -402,9 +459,7 @@ def _cancer_may_reason(v: dict) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 
-def _select_rare_disease(
-    variants: list[dict], overrides: dict
-) -> tuple[list[dict], int, int, int, bool, int]:
+def _select_rare_disease(variants: list[dict], overrides: dict) -> tuple[list[dict], int, int, int, bool, int]:
     max_total = int(
         overrides.get(
             "max_rare_disease_board_variants",

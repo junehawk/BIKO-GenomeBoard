@@ -1,5 +1,4 @@
 import json
-import pytest
 
 
 def test_build_from_civic_local(tmp_path, monkeypatch):
@@ -9,8 +8,9 @@ def test_build_from_civic_local(tmp_path, monkeypatch):
     # Mock CIViC gene summary
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.get_gene_summary",
-        lambda gene: {"gene": gene, "description": f"{gene} is a key cancer gene.", "aliases": ""}
-        if gene == "BRAF" else None,
+        lambda gene: (
+            {"gene": gene, "description": f"{gene} is a key cancer gene.", "aliases": ""} if gene == "BRAF" else None
+        ),
     )
     # Mock NCBI Gene (fallback)
     monkeypatch.setattr(
@@ -35,8 +35,14 @@ def test_build_from_civic_local(tmp_path, monkeypatch):
     # Mock CIViC evidence for refs
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.get_variant_evidence",
-        lambda gene, variant=None: [{"pmid": "20979469", "citation": "Chapman 2011",
-         "evidence_type": "Predictive", "significance": "Sensitivity"}],
+        lambda gene, variant=None: [
+            {
+                "pmid": "20979469",
+                "citation": "Chapman 2011",
+                "evidence_type": "Predictive",
+                "significance": "Sensitivity",
+            }
+        ],
     )
 
     output = str(tmp_path / "knowledge.json")
@@ -60,9 +66,17 @@ def test_build_ncbi_fallback(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_gene_summary",
-        lambda gene: {"gene": gene, "entrez_id": "999", "full_name": "novel gene",
-                      "summary": "This gene is involved in cell signaling.", "aliases": ""}
-        if gene == "NOVELGENE" else None,
+        lambda gene: (
+            {
+                "gene": gene,
+                "entrez_id": "999",
+                "full_name": "novel gene",
+                "summary": "This gene is involved in cell signaling.",
+                "aliases": "",
+            }
+            if gene == "NOVELGENE"
+            else None
+        ),
     )
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_genreviews_info",
@@ -96,13 +110,24 @@ def test_build_cpic_priority(tmp_path, monkeypatch):
 
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_cpic_gene",
-        lambda gene: {"gene": gene, "full_name": "CYP2C19 enzyme",
-                      "finding_summary": "CPIC curated", "content_status": "curated-cpic",
-                      "references": [{"pmid": "34216116", "source": "CPIC"}],
-                      "treatment_strategies": "CPIC guidelines", "frequency_prognosis": "",
-                      "function_summary": "", "clinical_significance": "",
-                      "associated_conditions": [], "korean_specific_note": None, "hgvs": {}}
-        if gene == "CYP2C19" else None,
+        lambda gene: (
+            {
+                "gene": gene,
+                "full_name": "CYP2C19 enzyme",
+                "finding_summary": "CPIC curated",
+                "content_status": "curated-cpic",
+                "references": [{"pmid": "34216116", "source": "CPIC"}],
+                "treatment_strategies": "CPIC guidelines",
+                "frequency_prognosis": "",
+                "function_summary": "",
+                "clinical_significance": "",
+                "associated_conditions": [],
+                "korean_specific_note": None,
+                "hgvs": {},
+            }
+            if gene == "CYP2C19"
+            else None
+        ),
     )
     # Mock others to return data (should be ignored for PGx genes)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_summary", lambda g: None)
@@ -147,16 +172,36 @@ def test_build_genreviews_adds_reference(tmp_path, monkeypatch):
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_summary", lambda g: None)
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_gene_summary",
-        lambda g: {"gene": g, "entrez_id": "7157", "full_name": "tumor protein p53",
-                    "summary": "Encodes a tumor suppressor.", "aliases": ""} if g == "TP53" else None,
+        lambda g: (
+            {
+                "gene": g,
+                "entrez_id": "7157",
+                "full_name": "tumor protein p53",
+                "summary": "Encodes a tumor suppressor.",
+                "aliases": "",
+            }
+            if g == "TP53"
+            else None
+        ),
     )
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_genreviews_info",
-        lambda g: {"gene": g, "pmid": "20301371", "title": "Li-Fraumeni Syndrome",
-                    "nbk_id": "NBK1311", "url": "https://www.ncbi.nlm.nih.gov/books/NBK1311/"}
-        if g == "TP53" else None,
+        lambda g: (
+            {
+                "gene": g,
+                "pmid": "20301371",
+                "title": "Li-Fraumeni Syndrome",
+                "nbk_id": "NBK1311",
+                "url": "https://www.ncbi.nlm.nih.gov/books/NBK1311/",
+            }
+            if g == "TP53"
+            else None
+        ),
     )
-    monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_gene_validity_local", lambda g, **kw: "Definitive" if g == "TP53" else None)
+    monkeypatch.setattr(
+        "scripts.tools.build_gene_knowledge.get_gene_validity_local",
+        lambda g, **kw: "Definitive" if g == "TP53" else None,
+    )
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.fetch_cpic_gene", lambda g: None)
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_treatment_summary", lambda g, v=None: "")
     monkeypatch.setattr("scripts.tools.build_gene_knowledge.get_variant_evidence", lambda g, v=None: [])

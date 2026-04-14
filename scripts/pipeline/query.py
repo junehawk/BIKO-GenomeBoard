@@ -57,6 +57,7 @@ def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
         except Exception as e:
             logger.warning(f"PGx check failed for {variant.variant_id}: {e}")
     else:
+
         def _run_clinvar():
             try:
                 if annotation_source == "local":

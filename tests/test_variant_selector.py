@@ -9,11 +9,10 @@ corrections from _workspace/variant-selector/00_clinical_review.md:
 4. Soft caps — never truncate MUST items
 5. ACMG SF v3.2 VUS silently excluded in rare-disease mode
 """
+
 from __future__ import annotations
 
 from unittest.mock import patch
-
-import pytest
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +160,7 @@ def test_cancer_may_vus_hotspot():
             f"GENE{i}",
             classification="VUS",
             tier="Tier IV",
-            hgvsp=f"p.Arg{100+i}Lys",
+            hgvsp=f"p.Arg{100 + i}Lys",
         )
         for i in range(15)
     ]
@@ -230,10 +229,7 @@ def test_cancer_soft_cap_never_truncates_must():
     from scripts.clinical_board.variant_selector import select_board_variants
 
     # 35 Tier I variants → soft cap 30, but MUST never truncated
-    variants = [
-        _mk_snv(f"GENE{i}", classification="VUS", tier="Tier I")
-        for i in range(35)
-    ]
+    variants = [_mk_snv(f"GENE{i}", classification="VUS", tier="Tier I") for i in range(35)]
     with _patch_clinical():
         selected, meta = select_board_variants(variants, mode="cancer")
 
@@ -263,9 +259,7 @@ def test_cancer_tmb_high_footnote():
     variants = [_mk_snv("TP53", classification="Pathogenic")]
     report_data = {"tmb": {"score": 15.0}}
     with _patch_clinical():
-        _, meta = select_board_variants(
-            variants, mode="cancer", report_data=report_data
-        )
+        _, meta = select_board_variants(variants, mode="cancer", report_data=report_data)
 
     assert meta["tmb_high_footnote"] is True
 
@@ -437,9 +431,7 @@ def test_rare_soft_cap_never_truncates_p_lp():
     from scripts.clinical_board.variant_selector import select_board_variants
 
     # 25 P/LP → exceeds default cap 20, but MUST never truncated
-    variants = [
-        _mk_snv(f"G{i}", classification="Pathogenic") for i in range(25)
-    ]
+    variants = [_mk_snv(f"G{i}", classification="Pathogenic") for i in range(25)]
     with _patch_clinical():
         selected, meta = select_board_variants(variants, mode="rare-disease")
 
@@ -543,16 +535,14 @@ def test_config_overrides():
             f"GENE{i}",
             classification="VUS",
             tier="Tier IV",
-            hgvsp=f"p.Arg{100+i}Lys",
+            hgvsp=f"p.Arg{100 + i}Lys",
         )
         for i in range(5)
     ]
     hotspots = {(f"GENE{i}", 100 + i) for i in range(5)}
     overrides = {"max_cancer_may_include": 2}
     with _patch_clinical(hotspot_positions=hotspots):
-        selected, meta = select_board_variants(
-            variants, mode="cancer", config_overrides=overrides
-        )
+        selected, meta = select_board_variants(variants, mode="cancer", config_overrides=overrides)
 
     assert len([v for v in selected if v["selection_reason"] == "VUS_hotspot"]) == 2
     assert meta["n_dropped"] == 3
@@ -579,7 +569,7 @@ def test_reads_config_overrides(monkeypatch):
             f"GENE{i}",
             classification="VUS",
             tier="Tier IV",
-            hgvsp=f"p.Arg{100+i}Lys",
+            hgvsp=f"p.Arg{100 + i}Lys",
         )
         for i in range(8)
     ]

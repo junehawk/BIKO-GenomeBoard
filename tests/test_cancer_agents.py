@@ -1,4 +1,5 @@
 """Tests for Cancer-mode AI Board agents and models."""
+
 import json
 from unittest.mock import MagicMock
 
@@ -74,10 +75,7 @@ def test_therapeutic_target_analyst_properties():
     agent = TherapeuticTargetAnalyst(client=_mock_client())
     assert agent.agent_name == "Therapeutic Target Analyst"
     assert agent.domain == "therapeutic_target"
-    assert (
-        "druggable" in agent.system_prompt.lower()
-        or "drug" in agent.system_prompt.lower()
-    )
+    assert "druggable" in agent.system_prompt.lower() or "drug" in agent.system_prompt.lower()
 
 
 def test_tumor_genomics_specialist_properties():
@@ -140,6 +138,7 @@ def test_render_cancer_board_opinion():
     """CancerBoardOpinion renders treatment-focused HTML."""
     from scripts.clinical_board.render import render_board_opinion_html
     from scripts.clinical_board.models import AgentOpinion
+
     opinion = CancerBoardOpinion(
         therapeutic_implications="EGFR L858R — TKI sensitive",
         therapeutic_evidence="CIViC Level A",
@@ -160,6 +159,7 @@ def test_render_cancer_board_opinion():
 def test_render_board_opinion_backward_compatible():
     """Existing BoardOpinion still renders correctly."""
     from scripts.clinical_board.render import render_board_opinion_html
+
     opinion = BoardOpinion(primary_diagnosis="Li-Fraumeni")
     html = render_board_opinion_html(opinion, language="en")
     assert "Li-Fraumeni" in html
@@ -168,6 +168,7 @@ def test_render_board_opinion_backward_compatible():
 def test_render_includes_selection_metadata_cancer():
     """CancerBoardOpinion with selection_metadata renders the pre-analytic filter caption."""
     from scripts.clinical_board.render import render_board_opinion_html
+
     opinion = CancerBoardOpinion(
         therapeutic_implications="EGFR L858R — TKI sensitive",
         therapeutic_evidence="CIViC Level A",
@@ -199,6 +200,7 @@ def test_render_includes_selection_metadata_rare_disease():
     """BoardOpinion with selection_metadata renders the pre-analytic filter caption,
     including the truncation note when truncated."""
     from scripts.clinical_board.render import render_board_opinion_html
+
     opinion = BoardOpinion(
         primary_diagnosis="Noonan syndrome",
         selection_metadata={
@@ -279,6 +281,7 @@ def test_agent_panel_normal_when_findings_present():
 def test_render_omits_metadata_when_none():
     """When selection_metadata is None, the caption block is silently skipped."""
     from scripts.clinical_board.render import render_board_opinion_html
+
     cancer = CancerBoardOpinion(therapeutic_implications="Test")
     rare = BoardOpinion(primary_diagnosis="Test")
     assert cancer.selection_metadata is None
@@ -423,7 +426,7 @@ def test_render_cancer_headline_and_body():
     assert headline_idx != -1 and body_idx != -1
     # The body paragraph must come after the headline, not be the same element.
     assert body_idx > headline_idx
-    between = html[headline_idx + len(headline):body_idx]
+    between = html[headline_idx + len(headline) : body_idx]
     assert "</div>" in between, "headline and body should live in separate <div>s"
 
     # Body must be styled as a readable paragraph, not a 15px bold title.

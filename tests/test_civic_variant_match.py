@@ -1,6 +1,3 @@
-import sqlite3
-import tempfile
-import os
 import pytest
 from scripts.db.build_civic_db import build_db
 from scripts.db.query_civic import reset_civic_connection
@@ -51,6 +48,7 @@ def civic_db(tmp_path, monkeypatch):
 def test_get_predictive_evidence_variant_match(civic_db):
     """Variant-specific 매치 시 match_level='variant' 반환."""
     from scripts.db.query_civic import get_predictive_evidence_for_tier
+
     result = get_predictive_evidence_for_tier("BRAF", "p.Val600Glu")
     assert result["match_level"] == "variant"
     assert len(result["evidence"]) >= 1
@@ -61,6 +59,7 @@ def test_get_predictive_evidence_variant_match(civic_db):
 def test_get_predictive_evidence_gene_fallback(civic_db):
     """Variant 못 찾으면 gene-level fallback, match_level='gene'."""
     from scripts.db.query_civic import get_predictive_evidence_for_tier
+
     result = get_predictive_evidence_for_tier("BRAF", "p.Lys601Glu")
     assert result["match_level"] == "gene"
 
@@ -68,6 +67,7 @@ def test_get_predictive_evidence_gene_fallback(civic_db):
 def test_get_predictive_evidence_no_match(civic_db):
     """CIViC에 없는 유전자는 match_level='none'."""
     from scripts.db.query_civic import get_predictive_evidence_for_tier
+
     result = get_predictive_evidence_for_tier("FAKEGENE", "p.Ala1Val")
     assert result["match_level"] == "none"
     assert result["evidence"] == []
@@ -76,6 +76,7 @@ def test_get_predictive_evidence_no_match(civic_db):
 def test_predictive_only_no_prognostic(civic_db):
     """Predictive evidence만 반환, Prognostic 제외."""
     from scripts.db.query_civic import get_predictive_evidence_for_tier
+
     result = get_predictive_evidence_for_tier("BRAF", "p.Val600Glu")
     for e in result["evidence"]:
         assert e["evidence_type"] == "Predictive"

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Build local HPO gene-phenotype SQLite database from HPO annotation file."""
 
-import csv
 import sqlite3
 import logging
 from pathlib import Path
@@ -68,6 +67,7 @@ def build_db(tsv_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("tsv_path", nargs="?", default="data/db/genes_to_phenotype.txt")

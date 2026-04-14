@@ -1,4 +1,5 @@
 """Tests for scripts/tools/rerender_report.py — rebuild HTML from cached JSON."""
+
 from __future__ import annotations
 
 import json
@@ -28,9 +29,7 @@ def _minimal_cancer_report_json() -> dict:
         "clinical_board": {
             "therapeutic_implications": "EGFR L858R — EGFR TKI sensitive",
             "therapeutic_evidence": "CIViC Level A",
-            "treatment_options": [
-                {"drug": "Erlotinib", "evidence_level": "A", "resistance_notes": "T790M risk"}
-            ],
+            "treatment_options": [{"drug": "Erlotinib", "evidence_level": "A", "resistance_notes": "T790M risk"}],
             "actionable_findings": ["Activating EGFR mutation"],
             "clinical_actions": ["Start erlotinib"],
             "immunotherapy_eligibility": "TMB-low",

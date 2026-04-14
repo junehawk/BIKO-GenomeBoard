@@ -1,30 +1,35 @@
 import json
-import pytest
+
 
 def test_fetch_cpic_gene_info(monkeypatch):
     """CPIC API에서 유전자 정보를 가져올 수 있어야 함."""
     from scripts.tools.build_gene_knowledge import fetch_cpic_gene
 
-    mock_response = [{
-        "symbol": "CYP2C19",
-        "name": "cytochrome P450 family 2 subfamily C member 19",
-        "cpicPgxGene": True,
-        "url": "https://cpicpgx.org/genes-drugs/cyp2c19/",
-        "functionExampleSubstratesDrugs": "clopidogrel, voriconazole",
-    }]
+    mock_response = [
+        {
+            "symbol": "CYP2C19",
+            "name": "cytochrome P450 family 2 subfamily C member 19",
+            "cpicPgxGene": True,
+            "url": "https://cpicpgx.org/genes-drugs/cyp2c19/",
+            "functionExampleSubstratesDrugs": "clopidogrel, voriconazole",
+        }
+    ]
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_with_retry",
         lambda url, **kw: mock_response,
     )
     # Also mock the guidelines call
-    mock_guidelines = [{
-        "drugname": "clopidogrel",
-        "cpicLevel": "A",
-        "pgkbLevel": "1A",
-        "guideline": {"name": "CPIC CYP2C19 Clopidogrel 2022", "url": "https://..."},
-    }]
+    mock_guidelines = [
+        {
+            "drugname": "clopidogrel",
+            "cpicLevel": "A",
+            "pgkbLevel": "1A",
+            "guideline": {"name": "CPIC CYP2C19 Clopidogrel 2022", "url": "https://..."},
+        }
+    ]
     original_fetch = None
     call_count = [0]
+
     def mock_fetch(url, **kw):
         call_count[0] += 1
         if "gene?" in url:
@@ -32,6 +37,7 @@ def test_fetch_cpic_gene_info(monkeypatch):
         if "pair?" in url:
             return mock_guidelines
         return None
+
     monkeypatch.setattr(
         "scripts.tools.build_gene_knowledge.fetch_with_retry",
         mock_fetch,
@@ -42,6 +48,7 @@ def test_fetch_cpic_gene_info(monkeypatch):
     assert result["gene"] == "CYP2C19"
     assert result["content_status"] == "curated-cpic"
     assert any("CPIC" in r.get("source", "") for r in result["references"])
+
 
 def test_build_gene_knowledge_merges(tmp_path, monkeypatch):
     """CYP2C19 (PGx 유전자)는 CPIC 우선으로 빌드됨."""
@@ -55,9 +62,13 @@ def test_build_gene_knowledge_merges(tmp_path, monkeypatch):
                 "finding_summary": "CPIC curated",
                 "content_status": "curated-cpic",
                 "references": [{"pmid": "34216116", "source": "CPIC 2022"}],
-                "treatment_strategies": "CPIC guidelines", "frequency_prognosis": "",
-                "function_summary": "", "clinical_significance": "",
-                "associated_conditions": [], "korean_specific_note": None, "hgvs": {},
+                "treatment_strategies": "CPIC guidelines",
+                "frequency_prognosis": "",
+                "function_summary": "",
+                "clinical_significance": "",
+                "associated_conditions": [],
+                "korean_specific_note": None,
+                "hgvs": {},
             }
         return None
 

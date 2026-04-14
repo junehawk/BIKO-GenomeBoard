@@ -6,6 +6,7 @@ API continues to serve variant-coordinate callers (clinvar/gnomad), while new
 via a `namespace` column. OncoKB/CIViC and other per-source caches live here
 rather than spinning up parallel cache trees.
 """
+
 import json
 import sqlite3
 import threading
@@ -38,9 +39,7 @@ def _migrate_namespace_column(conn: sqlite3.Connection) -> None:
     cols = _column_names(conn, "cache")
     if "namespace" in cols:
         return
-    conn.execute(
-        f"ALTER TABLE cache ADD COLUMN namespace TEXT NOT NULL DEFAULT '{DEFAULT_NAMESPACE}'"
-    )
+    conn.execute(f"ALTER TABLE cache ADD COLUMN namespace TEXT NOT NULL DEFAULT '{DEFAULT_NAMESPACE}'")
     # Carry existing source labels forward into namespace so they stay queryable.
     conn.execute("UPDATE cache SET namespace = source WHERE namespace = ?", (DEFAULT_NAMESPACE,))
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cache_namespace ON cache(namespace)")
@@ -91,9 +90,7 @@ def get_cached(chrom: str, pos: int, ref: str, alt: str, source: str) -> Optiona
     ttl = get("cache.ttl_seconds", DEFAULT_TTL_SECONDS)
     key = _make_key(chrom, pos, ref, alt, source)
 
-    cursor = conn.execute(
-        "SELECT value, created_at FROM cache WHERE key = ?", (key,)
-    )
+    cursor = conn.execute("SELECT value, created_at FROM cache WHERE key = ?", (key,))
     row = cursor.fetchone()
     if row is None:
         return None
@@ -114,8 +111,7 @@ def set_cached(chrom: str, pos: int, ref: str, alt: str, source: str, data: Dict
     key = _make_key(chrom, pos, ref, alt, source)
 
     conn.execute(
-        "INSERT OR REPLACE INTO cache (key, value, source, created_at, namespace) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO cache (key, value, source, created_at, namespace) VALUES (?, ?, ?, ?, ?)",
         (key, json.dumps(data, default=str), source, time.time(), source),
     )
     conn.commit()
@@ -159,8 +155,7 @@ def set_cached_ns(namespace: str, key: str, value: Any) -> None:
     conn = _get_connection()
     composite = _make_ns_key(namespace, key)
     conn.execute(
-        "INSERT OR REPLACE INTO cache (key, value, source, created_at, namespace) "
-        "VALUES (?, ?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO cache (key, value, source, created_at, namespace) VALUES (?, ?, ?, ?, ?)",
         (composite, json.dumps(value, default=str), namespace, time.time(), namespace),
     )
     conn.commit()

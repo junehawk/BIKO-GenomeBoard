@@ -1,4 +1,5 @@
 """Tests for clinical note input handling."""
+
 from scripts.clinical_board.case_briefing import build_case_briefing
 
 

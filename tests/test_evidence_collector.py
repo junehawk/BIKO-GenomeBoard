@@ -1,6 +1,5 @@
 # tests/test_evidence_collector.py
 """Tests for ACMG evidence collector module."""
-import pytest
 
 from scripts.common.models import Variant
 from scripts.classification.evidence_collector import collect_additional_evidence
@@ -14,6 +13,7 @@ def _make_variant(**kwargs) -> Variant:
 
 
 # ── PVS1 ─────────────────────────────────────────────────────────────────────
+
 
 def test_pvs1_stop_gained_lof_intolerant():
     """stop_gained + pLI >= 0.9 -> PVS1"""
@@ -70,6 +70,7 @@ def test_pvs1_boundary_0_5():
 
 # ── PM1 ──────────────────────────────────────────────────────────────────────
 
+
 def test_pm1_domain_missense():
     """missense + DOMAINS present -> PM1"""
     v = _make_variant(consequence="missense_variant", gene="TP53")
@@ -96,6 +97,7 @@ def test_pm1_not_missense():
 
 # ── PM4 ──────────────────────────────────────────────────────────────────────
 
+
 def test_pm4_inframe_deletion():
     """inframe_deletion -> PM4"""
     v = _make_variant(consequence="inframe_deletion", gene="ERBB2")
@@ -119,10 +121,12 @@ def test_pm4_not_frameshift():
 
 # ── PM5 ──────────────────────────────────────────────────────────────────────
 
+
 def test_pm5_novel_at_pathogenic_position():
     """Different AA at same pos as ClinVar pathogenic -> PM5"""
     v = _make_variant(
-        consequence="missense_variant", gene="TP53",
+        consequence="missense_variant",
+        gene="TP53",
         hgvsp="p.Arg248Leu",  # Novel change at position 248
     )
     # Position 248 has known pathogenic variant (e.g., R248W)
@@ -133,7 +137,8 @@ def test_pm5_novel_at_pathogenic_position():
 def test_pm5_no_clinvar_positions():
     """No ClinVar position data -> no PM5"""
     v = _make_variant(
-        consequence="missense_variant", gene="TP53",
+        consequence="missense_variant",
+        gene="TP53",
         hgvsp="p.Arg248Leu",
     )
     codes = collect_additional_evidence(v)
@@ -143,7 +148,8 @@ def test_pm5_no_clinvar_positions():
 def test_pm5_position_not_in_clinvar():
     """Variant position not in ClinVar pathogenic set -> no PM5"""
     v = _make_variant(
-        consequence="missense_variant", gene="TP53",
+        consequence="missense_variant",
+        gene="TP53",
         hgvsp="p.Arg100Leu",
     )
     codes = collect_additional_evidence(v, clinvar_pathogenic_positions={248, 273})
@@ -151,6 +157,7 @@ def test_pm5_position_not_in_clinvar():
 
 
 # ── PP2 ──────────────────────────────────────────────────────────────────────
+
 
 def test_pp2_missense_constrained():
     """missense + missense_z >= 3.09 -> PP2"""
@@ -175,6 +182,7 @@ def test_pp2_boundary():
 
 # ── BP1 ──────────────────────────────────────────────────────────────────────
 
+
 def test_bp1_missense_lof_tolerant():
     """missense + pLI < 0.1 -> BP1"""
     v = _make_variant(consequence="missense_variant", gene="FAKE")
@@ -190,6 +198,7 @@ def test_bp1_not_triggered_high_pli():
 
 
 # ── BP7 ──────────────────────────────────────────────────────────────────────
+
 
 def test_bp7_synonymous_no_splice():
     """synonymous + no SpliceAI data -> BP7"""
@@ -223,6 +232,7 @@ def test_bp7_not_synonymous():
 
 # ── Edge cases ───────────────────────────────────────────────────────────────
 
+
 def test_no_gene_info():
     """gene_info=None -> only consequence-based codes (PM4, BP7 etc.)"""
     v = _make_variant(consequence="inframe_deletion", gene="ERBB2")
@@ -250,7 +260,8 @@ def test_no_consequence_none():
 def test_combined_evidence():
     """Variant matching multiple rules -> all codes returned."""
     v = _make_variant(
-        consequence="missense_variant", gene="TP53",
+        consequence="missense_variant",
+        gene="TP53",
         hgvsp="p.Arg248Leu",
     )
     v.domains = "Pfam:PF00870"
@@ -272,7 +283,8 @@ def test_combined_evidence():
 def test_multi_consequence_string():
     """VEP multi-consequence like 'missense_variant&splice_region_variant' uses first term."""
     v = _make_variant(
-        consequence="missense_variant&splice_region_variant", gene="TP53",
+        consequence="missense_variant&splice_region_variant",
+        gene="TP53",
     )
     v.domains = "Pfam:PF00870"
     codes = collect_additional_evidence(v)

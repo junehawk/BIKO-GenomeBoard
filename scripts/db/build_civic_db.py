@@ -30,18 +30,21 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
     gene_file = Path(civic_dir) / "GeneSummaries.tsv"
     if gene_file.exists():
         with open(gene_file) as f:
-            reader = csv.DictReader(f, delimiter='\t')
+            reader = csv.DictReader(f, delimiter="\t")
             conn.execute("DELETE FROM genes")
             for row in reader:
                 if row.get("feature_type") != "Gene":
                     continue
-                conn.execute("INSERT OR REPLACE INTO genes VALUES (?,?,?,?,?)", (
-                    row.get("feature_id"),
-                    row.get("name", ""),
-                    row.get("description", ""),
-                    row.get("feature_aliases", ""),
-                    row.get("entrez_id", ""),
-                ))
+                conn.execute(
+                    "INSERT OR REPLACE INTO genes VALUES (?,?,?,?,?)",
+                    (
+                        row.get("feature_id"),
+                        row.get("name", ""),
+                        row.get("description", ""),
+                        row.get("feature_aliases", ""),
+                        row.get("entrez_id", ""),
+                    ),
+                )
 
     # === Variants table ===
     conn.execute("""CREATE TABLE IF NOT EXISTS variants (
@@ -60,24 +63,27 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
     variant_file = Path(civic_dir) / "VariantSummaries.tsv"
     if variant_file.exists():
         with open(variant_file) as f:
-            reader = csv.DictReader(f, delimiter='\t')
+            reader = csv.DictReader(f, delimiter="\t")
             conn.execute("DELETE FROM variants")
             for row in reader:
                 chrom = row.get("chromosome", "")
                 if chrom and not chrom.startswith("chr"):
                     chrom = f"chr{chrom}" if chrom else ""
-                conn.execute("INSERT OR REPLACE INTO variants VALUES (?,?,?,?,?,?,?,?,?,?)", (
-                    row.get("variant_id"),
-                    row.get("feature_name", ""),
-                    row.get("variant", ""),
-                    row.get("variant_types", ""),
-                    chrom,
-                    int(row["start"]) if row.get("start") and row["start"].isdigit() else None,
-                    int(row["stop"]) if row.get("stop") and row["stop"].isdigit() else None,
-                    row.get("reference_bases", ""),
-                    row.get("variant_bases", ""),
-                    row.get("entrez_id", ""),
-                ))
+                conn.execute(
+                    "INSERT OR REPLACE INTO variants VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (
+                        row.get("variant_id"),
+                        row.get("feature_name", ""),
+                        row.get("variant", ""),
+                        row.get("variant_types", ""),
+                        chrom,
+                        int(row["start"]) if row.get("start") and row["start"].isdigit() else None,
+                        int(row["stop"]) if row.get("stop") and row["stop"].isdigit() else None,
+                        row.get("reference_bases", ""),
+                        row.get("variant_bases", ""),
+                        row.get("entrez_id", ""),
+                    ),
+                )
 
     # === Evidence table ===
     conn.execute("""CREATE TABLE IF NOT EXISTS evidence (
@@ -116,7 +122,7 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
     evidence_file = Path(civic_dir) / "ClinicalEvidenceSummaries.tsv"
     if evidence_file.exists():
         with open(evidence_file) as f:
-            reader = csv.DictReader(f, delimiter='\t')
+            reader = csv.DictReader(f, delimiter="\t")
             conn.execute("DELETE FROM evidence")
             for row in reader:
                 # Extract gene from molecular_profile (e.g., "KRAS G12D" -> "KRAS")
@@ -165,7 +171,7 @@ def build_db(civic_dir: str = "data/db/civic", db_path: str = DEFAULT_DB_PATH):
     hotspot_map = {}  # (gene, position) -> [variant_names]
     for gene, variant_name in cursor:
         # Match patterns like V600E, G12D, R249M, etc.
-        m = re.match(r'^([A-Z])(\d+)([A-Z*]|del|ins|fs)', variant_name)
+        m = re.match(r"^([A-Z])(\d+)([A-Z*]|del|ins|fs)", variant_name)
         if m:
             pos = int(m.group(2))
             key = (gene, pos)

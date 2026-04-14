@@ -329,8 +329,16 @@ def apply_clinvar_override(engine_classification: str, clinvar_significance: str
     review_lower = review_status.lower().strip()
 
     # Skip non-classifiable ClinVar entries
-    skip_sigs = {"not found", "drug response", "risk factor", "other",
-                 "not provided", "no classification for the single variant", "-", ""}
+    skip_sigs = {
+        "not found",
+        "drug response",
+        "risk factor",
+        "other",
+        "not provided",
+        "no classification for the single variant",
+        "-",
+        "",
+    }
     if sig_lower in skip_sigs:
         return engine_classification
 

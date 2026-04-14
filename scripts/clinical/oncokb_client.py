@@ -9,6 +9,7 @@ Any transient network failure (HTTP 429, 5xx, connection-refused, timeout)
 raises :class:`OncoKBUnavailable` — the curator catches this and degrades
 to CIViC-only rather than letting a network blip fail the whole board run.
 """
+
 from __future__ import annotations
 
 import logging
@@ -29,8 +30,7 @@ class OncoKBUnavailable(Exception):
 
 
 def _base_url() -> str:
-    return get("clinical_board.curated_treatments.oncokb_base_url",
-               "https://www.oncokb.org/api/v1")
+    return get("clinical_board.curated_treatments.oncokb_base_url", "https://www.oncokb.org/api/v1")
 
 
 def _timeout_s() -> float:
@@ -71,10 +71,9 @@ def _parse_response(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
     treatments = payload.get("treatments") or []
     for t in treatments:
         drugs = t.get("drugs") or []
-        drug_names = ", ".join(
-            d.get("drugName") or d.get("name") or ""
-            for d in drugs if isinstance(d, dict)
-        ).strip(", ")
+        drug_names = ", ".join(d.get("drugName") or d.get("name") or "" for d in drugs if isinstance(d, dict)).strip(
+            ", "
+        )
         if not drug_names and isinstance(t.get("drug"), str):
             drug_names = t["drug"]  # Some free-tier shims emit flat {drug: ...}
         if not drug_names:
@@ -87,15 +86,17 @@ def _parse_response(payload: Dict[str, Any]) -> List[Dict[str, Any]]:
             pmids = [str(p) for p in pmids_raw if p]
 
         level = _normalise_level(t.get("level") or t.get("levelOfEvidence"))
-        out.append({
-            "drug": drug_names,
-            "level": level,
-            "pmids": pmids,
-            "disease": t.get("indication") or t.get("tumorType") or "",
-            "significance": "sensitivity" if "R" not in str(t.get("level", "")).upper() else "resistance",
-            "therapy_ids": "",  # free tier doesn't expose stable therapy IDs
-            "raw_row": t,
-        })
+        out.append(
+            {
+                "drug": drug_names,
+                "level": level,
+                "pmids": pmids,
+                "disease": t.get("indication") or t.get("tumorType") or "",
+                "significance": "sensitivity" if "R" not in str(t.get("level", "")).upper() else "resistance",
+                "therapy_ids": "",  # free tier doesn't expose stable therapy IDs
+                "raw_row": t,
+            }
+        )
     return out
 
 
@@ -148,9 +149,7 @@ def annotate_protein_change(
         raise OncoKBUnavailable(f"OncoKB HTTP {status} for {gene} {alteration}")
     if status is not None and status >= 400:
         # 4xx other than 429 — treat as "no hit" rather than crash the run
-        logger.warning(
-            "[oncokb_client] HTTP %s for %s %s — treating as empty", status, gene, alteration
-        )
+        logger.warning("[oncokb_client] HTTP %s for %s %s — treating as empty", status, gene, alteration)
         set_cached_ns(_NAMESPACE, cache_key, [])
         return []
 

@@ -14,6 +14,7 @@ runs the selector itself so direct/unit-test invocations still work.
 The briefing is capped at ~3 000 tokens (roughly 12 000 characters) to
 stay within efficient LLM context windows.
 """
+
 from __future__ import annotations
 
 from typing import Optional
@@ -48,6 +49,7 @@ def build_case_briefing(report_data: dict, mode: str) -> str:
     selection_metadata = report_data.get("_board_selection_metadata")
     if filtered_variants is None or selection_metadata is None:
         from scripts.clinical_board.variant_selector import select_board_variants
+
         filtered_variants, selection_metadata = select_board_variants(
             report_data.get("variants", []) or [],
             mode,
@@ -112,13 +114,10 @@ def build_case_briefing(report_data: dict, mode: str) -> str:
 
 # ── Section Builders ─────────────────────────────────────────────────────────
 
+
 def _minimal_briefing(mode: str) -> str:
     """Return a minimal briefing when report_data is empty."""
-    return (
-        "= CASE BRIEFING =\n\n"
-        f"Mode: {mode}\n"
-        "No variant data available for analysis."
-    )
+    return f"= CASE BRIEFING =\n\nMode: {mode}\nNo variant data available for analysis."
 
 
 def _build_clinical_note_section(data: dict) -> Optional[str]:
@@ -175,13 +174,10 @@ def _build_selection_section(selection_metadata: dict) -> str:
     lines.append(f"Excluded: {meta.get('excluded', 0)}")
     if meta.get("truncated"):
         lines.append(
-            f"⚠ Truncated: {meta.get('n_dropped', 0)} MAY-list variant(s) "
-            "dropped to stay within the soft cap."
+            f"⚠ Truncated: {meta.get('n_dropped', 0)} MAY-list variant(s) dropped to stay within the soft cap."
         )
     if meta.get("tmb_high_footnote"):
-        lines.append(
-            "⚠ TMB-high case — cap may undercount; review full annotated VCF."
-        )
+        lines.append("⚠ TMB-high case — cap may undercount; review full annotated VCF.")
     if meta.get("empty"):
         lines.append(f"Empty selection: {meta.get('empty_reason', '')}")
     by_reason = meta.get("by_selection_reason") or {}
@@ -340,8 +336,8 @@ def _build_hpo_section(data: dict) -> Optional[str]:
         # Warn about non-specific broad HPO terms
         if len(genes) > 500:
             lines.append(f"    ⚠ WARNING: This HPO term is extremely broad ({len(genes)} genes).")
-            lines.append(f"      HPO matches for this term have LOW specificity.")
-            lines.append(f"      Do NOT use this match alone to support gene-disease correlation.")
+            lines.append("      HPO matches for this term have LOW specificity.")
+            lines.append("      Do NOT use this match alone to support gene-disease correlation.")
     lines.append("")
     return "\n".join(lines)
 
@@ -353,12 +349,14 @@ def _build_omim_section(data: dict) -> Optional[str]:
         omim_phenos = v.get("omim_phenotypes", [])
         inheritance = v.get("inheritance", "")
         if omim_phenos or inheritance:
-            omim_entries.append({
-                "gene": v.get("gene", "Unknown"),
-                "phenotypes": omim_phenos,
-                "inheritance": inheritance,
-                "mim": v.get("omim_mim", ""),
-            })
+            omim_entries.append(
+                {
+                    "gene": v.get("gene", "Unknown"),
+                    "phenotypes": omim_phenos,
+                    "inheritance": inheritance,
+                    "mim": v.get("omim_mim", ""),
+                }
+            )
 
     if not omim_entries:
         return None

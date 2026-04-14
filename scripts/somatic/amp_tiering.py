@@ -7,10 +7,11 @@ Supports three strategies:
 
 Reference: Li MM et al. J Mol Diagn. 2017;19(1):4-23.
 """
+
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-from scripts.clinical.oncokb import get_cancer_gene_info, is_cancer_gene
+from scripts.clinical.oncokb import get_cancer_gene_info
 from scripts.db.query_civic import is_hotspot, extract_protein_position
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,7 @@ class TierResult:
     civic_evidence: List[Dict] = field(default_factory=list)
 
 
-def _make_result(tier: int, source: str, civic_match: str = "none",
-                 civic_ev: List[Dict] = None) -> TierResult:
+def _make_result(tier: int, source: str, civic_match: str = "none", civic_ev: List[Dict] = None) -> TierResult:
     return TierResult(
         tier=tier,
         tier_label=AMP_TIER_LABELS.get(tier, "Unknown"),

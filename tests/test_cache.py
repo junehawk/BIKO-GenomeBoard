@@ -1,5 +1,6 @@
 # tests/test_cache.py
 """Tests for SQLite variant cache (scripts/common/cache.py)."""
+
 import time
 import pytest
 from unittest.mock import patch
@@ -17,10 +18,13 @@ def isolated_cache(tmp_path):
 
     # Point cache at a temp file so tests don't pollute each other
     tmp_db = str(tmp_path / "test_cache.sqlite3")
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         yield cache_mod
 
     # Cleanup after test
@@ -47,16 +51,20 @@ def test_cache_miss_returns_none(isolated_cache):
 def test_cache_expired_returns_none(tmp_path):
     """Entry stored with TTL=0 should be treated as immediately expired."""
     import scripts.common.cache as cache_mod
+
     cache_mod.close()
     cache_mod._conn = None
 
     tmp_db = str(tmp_path / "expired_cache.sqlite3")
 
     # Store with normal TTL
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
         cache_mod.set_cached("chr1", 12345, "A", "T", "clinvar", {"clinvar_significance": "Benign"})
 
@@ -64,10 +72,13 @@ def test_cache_expired_returns_none(tmp_path):
     cache_mod._conn = None
 
     # Retrieve with TTL=0 (everything is expired)
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 0,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 0,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
         result = cache_mod.get_cached("chr1", 12345, "A", "T", "clinvar")
 
@@ -89,15 +100,19 @@ def test_clear_cache(isolated_cache):
 def test_purge_expired(tmp_path):
     """Entries older than TTL should be purged."""
     import scripts.common.cache as cache_mod
+
     cache_mod.close()
     cache_mod._conn = None
 
     tmp_db = str(tmp_path / "purge_cache.sqlite3")
 
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
         # Insert one fresh entry
         cache_mod.set_cached("chr1", 100, "A", "T", "clinvar", {"val": "fresh"})
@@ -141,6 +156,7 @@ def test_cache_key_format(isolated_cache):
 
 
 # === Namespace cache (v2.2 — A1-db-2) ===
+
 
 def test_ns_set_and_get(isolated_cache):
     cache = isolated_cache
@@ -191,24 +207,31 @@ def test_ns_empty_inputs(isolated_cache):
 def test_ns_expired_returns_none(tmp_path):
     """Namespaced entries honour cache.ttl_seconds."""
     import scripts.common.cache as cache_mod
+
     cache_mod.close()
     cache_mod._conn = None
     tmp_db = str(tmp_path / "ns_expired.sqlite3")
 
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
         cache_mod.set_cached_ns("oncokb", "BRAF:V600E", {"v": 1})
 
     cache_mod.close()
     cache_mod._conn = None
 
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 0,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 0,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
         assert cache_mod.get_cached_ns("oncokb", "BRAF:V600E") is None
 
@@ -235,6 +258,7 @@ def test_namespace_migration_preserves_existing_rows(tmp_path):
     without losing clinvar/gnomad rows. Simulates a legacy cache file."""
     import sqlite3
     import time as t
+
     tmp_db = str(tmp_path / "legacy_cache.sqlite3")
 
     # Create a legacy cache schema (no namespace column)
@@ -260,13 +284,17 @@ def test_namespace_migration_preserves_existing_rows(tmp_path):
 
     # Point cache module at the legacy DB and open it — should migrate in-place.
     import scripts.common.cache as cache_mod
+
     cache_mod.close()
     cache_mod._conn = None
 
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
 
         # Existing clinvar/gnomad rows must still be readable.
@@ -299,15 +327,19 @@ def test_namespace_migration_preserves_existing_rows(tmp_path):
 def test_clinvar_uses_cache(tmp_path, mocker):
     """Second call to query_clinvar should hit cache and not call the API."""
     import scripts.common.cache as cache_mod
+
     cache_mod.close()
     cache_mod._conn = None
 
     tmp_db = str(tmp_path / "clinvar_cache.sqlite3")
 
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
 
         mock_search = mocker.patch(
@@ -324,6 +356,7 @@ def test_clinvar_uses_cache(tmp_path, mocker):
         mocker.patch("scripts.clinical.query_clinvar.set_cached", side_effect=cache_mod.set_cached)
 
         from scripts.clinical.query_clinvar import query_clinvar
+
         variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
 
         # First call — API hit
@@ -343,15 +376,19 @@ def test_clinvar_uses_cache(tmp_path, mocker):
 def test_gnomad_uses_cache(tmp_path, mocker):
     """Second call to query_gnomad should hit cache and not call the API."""
     import scripts.common.cache as cache_mod
+
     cache_mod.close()
     cache_mod._conn = None
 
     tmp_db = str(tmp_path / "gnomad_cache.sqlite3")
 
-    with patch("scripts.common.cache.get", side_effect=lambda key, default=None: {
-        "cache.path": tmp_db,
-        "cache.ttl_seconds": 604800,
-    }.get(key, default)):
+    with patch(
+        "scripts.common.cache.get",
+        side_effect=lambda key, default=None: {
+            "cache.path": tmp_db,
+            "cache.ttl_seconds": 604800,
+        }.get(key, default),
+    ):
         cache_mod._conn = None
 
         mock_graphql = mocker.patch(
@@ -374,6 +411,7 @@ def test_gnomad_uses_cache(tmp_path, mocker):
         mocker.patch("scripts.korean_pop.query_gnomad.set_cached", side_effect=cache_mod.set_cached)
 
         from scripts.korean_pop.query_gnomad import query_gnomad
+
         variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
 
         # First call — API hit

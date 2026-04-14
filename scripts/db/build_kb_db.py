@@ -6,6 +6,7 @@ AI Clinical Board v2 to persist and aggregate per-variant board outcomes.
 Usage:
     python scripts/db/build_kb_db.py [db_path]
 """
+
 import sqlite3
 import sys
 from datetime import datetime, timezone
@@ -45,22 +46,10 @@ def build_kb_db(db_path: str = DEFAULT_DB_PATH) -> dict:
         )
     """)
 
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_bd_variant "
-        "ON board_decisions(gene, variant, mode)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_bd_gene "
-        "ON board_decisions(gene, mode)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_bd_date "
-        "ON board_decisions(date)"
-    )
-    cursor.execute(
-        "CREATE INDEX IF NOT EXISTS idx_bd_hgvsp "
-        "ON board_decisions(gene, hgvsp, mode)"
-    )
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_bd_variant ON board_decisions(gene, variant, mode)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_bd_gene ON board_decisions(gene, mode)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_bd_date ON board_decisions(date)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_bd_hgvsp ON board_decisions(gene, hgvsp, mode)")
 
     cursor.execute("DROP VIEW IF EXISTS variant_stats")
     cursor.execute("""
@@ -84,18 +73,14 @@ def build_kb_db(db_path: str = DEFAULT_DB_PATH) -> dict:
             value TEXT
         )
     """)
-    cursor.execute(
-        "INSERT OR REPLACE INTO metadata VALUES ('schema', 'board_decisions_v1')"
-    )
+    cursor.execute("INSERT OR REPLACE INTO metadata VALUES ('schema', 'board_decisions_v1')")
     cursor.execute(
         "INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)",
         (datetime.now(timezone.utc).isoformat(),),
     )
 
     conn.commit()
-    count = cursor.execute(
-        "SELECT COUNT(*) FROM board_decisions"
-    ).fetchone()[0]
+    count = cursor.execute("SELECT COUNT(*) FROM board_decisions").fetchone()[0]
     conn.close()
 
     return {"db_path": db_path, "records": count}

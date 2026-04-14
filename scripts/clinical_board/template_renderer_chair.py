@@ -6,6 +6,7 @@ curator rows when the Board Chair LLM response contains zero valid
 table populated even when the LLM synthesiser mis-formats its JSON or
 hallucinates the whole block.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -41,33 +42,30 @@ def render_from_curated(
             drug = _row_get(row, "drug", "")
             if not drug:
                 continue
-            treatment_rows.append({
-                "drug": drug,
-                "curated_id": _row_get(row, "curated_id", ""),
-                "variant_key": variant_key,
-                "evidence_level": _row_get(row, "evidence_level", "D"),
-                "resistance_notes": "",
-                "_hydrated": {
+            treatment_rows.append(
+                {
                     "drug": drug,
-                    "target": _row_get(row, "target", ""),
-                    "pmids": list(_row_get(row, "pmids", []) or []),
-                    "disease_context": _row_get(row, "disease_context", ""),
-                    "source": _row_get(row, "source", ""),
-                    "significance": _row_get(row, "significance", "sensitivity"),
-                },
-            })
+                    "curated_id": _row_get(row, "curated_id", ""),
+                    "variant_key": variant_key,
+                    "evidence_level": _row_get(row, "evidence_level", "D"),
+                    "resistance_notes": "",
+                    "_hydrated": {
+                        "drug": drug,
+                        "target": _row_get(row, "target", ""),
+                        "pmids": list(_row_get(row, "pmids", []) or []),
+                        "disease_context": _row_get(row, "disease_context", ""),
+                        "source": _row_get(row, "source", ""),
+                        "significance": _row_get(row, "significance", "sensitivity"),
+                    },
+                }
+            )
 
     # Preserve AMP level ranking (A > B > C > D) in the fallback table
     _rank = {"A": 0, "B": 1, "C": 2, "D": 3}
-    treatment_rows.sort(
-        key=lambda r: (_rank.get(r.get("evidence_level", "D"), 9), r.get("drug", "").lower())
-    )
+    treatment_rows.sort(key=lambda r: (_rank.get(r.get("evidence_level", "D"), 9), r.get("drug", "").lower()))
 
     if treatment_rows:
-        headline = (
-            f"{len(treatment_rows)} curated therapy option(s) — "
-            "LLM synthesis unavailable"
-        )
+        headline = f"{len(treatment_rows)} curated therapy option(s) — LLM synthesis unavailable"
         implications = (
             "Deterministic fallback: the Board Chair LLM response did not "
             "produce any valid (curated_id, variant_key) pair. The treatment "

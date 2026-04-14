@@ -20,7 +20,9 @@ from typing import Dict, List, Optional
 from scripts.common.api_utils import fetch_with_retry
 from scripts.common.config import get
 from scripts.db.query_civic import (
-    get_gene_summary, get_treatment_summary, get_variant_evidence,
+    get_gene_summary,
+    get_treatment_summary,
+    get_variant_evidence,
 )
 from scripts.tools.sources.ncbi_gene import fetch_gene_summary
 from scripts.tools.sources.genreviews import fetch_genreviews_info
@@ -32,9 +34,18 @@ logger = logging.getLogger(__name__)
 
 CPIC_API = "https://api.cpicpgx.org/v1"
 CPIC_PGX_GENES = [
-    "CYP2D6", "CYP2C19", "CYP2C9", "CYP3A5", "DPYD",
-    "NUDT15", "TPMT", "UGT1A1", "SLCO1B1", "VKORC1",
-    "HLA-B", "HLA-A",
+    "CYP2D6",
+    "CYP2C19",
+    "CYP2C9",
+    "CYP3A5",
+    "DPYD",
+    "NUDT15",
+    "TPMT",
+    "UGT1A1",
+    "SLCO1B1",
+    "VKORC1",
+    "HLA-B",
+    "HLA-A",
 ]
 
 
@@ -58,18 +69,26 @@ def fetch_cpic_gene(gene: str) -> Optional[Dict]:
                 drugs.append(drug)
             gl = g.get("guideline")
             if gl and isinstance(gl, dict) and gl.get("name"):
-                refs.append({"source": f"CPIC Guideline: {gl['name']}",
-                             "note": f"CPIC Level {g.get('cpicLevel', 'N/A')}", "pmid": ""})
+                refs.append(
+                    {
+                        "source": f"CPIC Guideline: {gl['name']}",
+                        "note": f"CPIC Level {g.get('cpicLevel', 'N/A')}",
+                        "pmid": "",
+                    }
+                )
 
     treatment = f"CPIC guidelines available for: {', '.join(drugs)}." if drugs else ""
     return {
-        "gene": gene, "full_name": record.get("name", ""),
+        "gene": gene,
+        "full_name": record.get("name", ""),
         "function_summary": record.get("functionExampleSubstratesDrugs", ""),
         "clinical_significance": "Pharmacogenomically relevant gene with CPIC guidelines.",
         "associated_conditions": [f"{d} response" for d in drugs[:5]],
-        "treatment_strategies": treatment, "frequency_prognosis": "",
+        "treatment_strategies": treatment,
+        "frequency_prognosis": "",
         "finding_summary": f"{gene} is a pharmacogene with CPIC-level evidence for drug dosing.",
-        "korean_specific_note": None, "hgvs": record.get("hgvs", {}),
+        "korean_specific_note": None,
+        "hgvs": record.get("hgvs", {}),
         "references": refs or [{"source": "CPIC (cpicpgx.org)", "pmid": "", "note": "Auto-sourced"}],
         "content_status": "curated-cpic",
     }
@@ -79,6 +98,7 @@ def _try_clingen_validity(gene: str) -> Optional[str]:
     """Try local ClinGen DB for gene validity."""
     try:
         from scripts.db.query_local_clingen import get_gene_validity_local
+
         return get_gene_validity_local(gene)
     except Exception:
         return None
@@ -120,11 +140,15 @@ def _build_gene_entry(gene: str) -> Dict:
     if civic_evidence:
         for e in civic_evidence[:5]:
             if e.get("pmid"):
-                refs.append({"pmid": e["pmid"], "source": e.get("citation", ""),
-                             "note": f"{e.get('evidence_type', '')} — {e.get('significance', '')}"})
+                refs.append(
+                    {
+                        "pmid": e["pmid"],
+                        "source": e.get("citation", ""),
+                        "note": f"{e.get('evidence_type', '')} — {e.get('significance', '')}",
+                    }
+                )
     if genreviews:
-        refs.append({"pmid": genreviews["pmid"], "source": "GeneReviews",
-                      "note": genreviews.get("title", "")})
+        refs.append({"pmid": genreviews["pmid"], "source": "GeneReviews", "note": genreviews.get("title", "")})
 
     # 8. Orphanet prevalence → frequency_prognosis
     orphanet_text = get_prevalence_text(gene)
@@ -133,8 +157,9 @@ def _build_gene_entry(gene: str) -> Dict:
     genreviews_local = get_genreviews_for_gene_local(gene)
     if genreviews_local and not genreviews:
         genreviews = genreviews_local
-        refs.append({"pmid": genreviews_local["pmid"], "source": "GeneReviews",
-                      "note": genreviews_local.get("title", "")})
+        refs.append(
+            {"pmid": genreviews_local["pmid"], "source": "GeneReviews", "note": genreviews_local.get("title", "")}
+        )
 
     # 10. OMIM MIM mapping
     omim = get_mim_for_gene(gene)
@@ -147,6 +172,7 @@ def _build_gene_entry(gene: str) -> Dict:
     if not associated_conditions:
         try:
             from scripts.db.query_orphanet import get_disease_names
+
             associated_conditions = get_disease_names(gene)
         except Exception:
             pass
@@ -175,9 +201,11 @@ def _build_gene_entry(gene: str) -> Dict:
     elif civic:
         full_name = civic.get("aliases", "")
 
-    logger.info(f"  {gene}: {source_label}" +
-                (f" + GeneReviews" if genreviews else "") +
-                (f" + ClinGen:{clingen}" if clingen else ""))
+    logger.info(
+        f"  {gene}: {source_label}"
+        + (" + GeneReviews" if genreviews else "")
+        + (f" + ClinGen:{clingen}" if clingen else "")
+    )
 
     return {
         "gene": gene,
@@ -221,6 +249,7 @@ def build_knowledge(
 def _load_gene_list_from_vcf(vcf_path: str) -> List[str]:
     """Extract unique gene symbols from a VCF file."""
     from scripts.intake.parse_vcf import parse_vcf
+
     variants = parse_vcf(vcf_path)
     return sorted(set(v.gene for v in variants if v.gene))
 
@@ -238,6 +267,7 @@ def _load_oncokb_genes() -> List[str]:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser(description="Build gene_knowledge.json from curated sources")
     parser.add_argument("--genes", help="Comma-separated gene list")

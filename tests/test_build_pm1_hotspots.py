@@ -3,11 +3,11 @@
 Exercises the three-layer merge (cancerhotspots + ClinGen baseline + overrides),
 JSON schema invariants, idempotency, and exclusions handling.
 """
+
 from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
 
 import pytest
 
@@ -68,9 +68,7 @@ def test_every_entry_valid_strength_and_range(tmp_path):
 
     for gene, entries in payload["genes"].items():
         for entry in entries:
-            assert entry["strength"] in ALLOWED_STRENGTHS, (
-                f"{gene} {entry['range']}: strength={entry['strength']!r}"
-            )
+            assert entry["strength"] in ALLOWED_STRENGTHS, f"{gene} {entry['range']}: strength={entry['strength']!r}"
             rng = entry["range"]
             assert isinstance(rng, list) and len(rng) == 2
             assert isinstance(rng[0], int) and isinstance(rng[1], int)
@@ -169,9 +167,7 @@ exclusions:
         output_path=output,
     )
     tp53 = payload["genes"].get("TP53", [])
-    assert not any(e["range"] == [999, 999] for e in tp53), (
-        "TP53 999 should be excluded by the overrides YAML"
-    )
+    assert not any(e["range"] == [999, 999] for e in tp53), "TP53 999 should be excluded by the overrides YAML"
     # Baseline TP53 entries (175, 245-249, 273, 282) must remain untouched.
     assert any(e["range"] == [175, 175] for e in tp53)
     assert any(e["range"] == [245, 249] for e in tp53)
@@ -218,16 +214,12 @@ def test_validate_rejects_missing_pmid():
 
 def test_validate_rejects_bad_strength():
     with pytest.raises(ValueError, match="strength must be one of"):
-        bph._validate({
-            "FOO": [{"range": [1, 1], "strength": "strong", "source": "PMID 1"}]
-        })
+        bph._validate({"FOO": [{"range": [1, 1], "strength": "strong", "source": "PMID 1"}]})
 
 
 def test_validate_rejects_reversed_range():
     with pytest.raises(ValueError, match="start > end"):
-        bph._validate({
-            "FOO": [{"range": [10, 5], "strength": "moderate", "source": "PMID 1"}]
-        })
+        bph._validate({"FOO": [{"range": [10, 5], "strength": "moderate", "source": "PMID 1"}]})
 
 
 # ── Coverage assertion (clinical-advisor 2026-04-14) ─────────────────────────
@@ -258,14 +250,16 @@ def test_assert_coverage_rejects_missing_residue():
 def test_assert_coverage_rejects_missing_gene():
     """A gene with zero entries must fail the coverage check."""
     with pytest.raises(ValueError, match="KRAS:12"):
-        bph._assert_coverage({
-            "TP53": [
-                {"range": [175, 175], "strength": "moderate", "source": "PMID 30224644"},
-                {"range": [245, 249], "strength": "moderate", "source": "PMID 30224644"},
-                {"range": [273, 273], "strength": "moderate", "source": "PMID 30224644"},
-                {"range": [282, 282], "strength": "moderate", "source": "PMID 30224644"},
-            ],
-        })
+        bph._assert_coverage(
+            {
+                "TP53": [
+                    {"range": [175, 175], "strength": "moderate", "source": "PMID 30224644"},
+                    {"range": [245, 249], "strength": "moderate", "source": "PMID 30224644"},
+                    {"range": [273, 273], "strength": "moderate", "source": "PMID 30224644"},
+                    {"range": [282, 282], "strength": "moderate", "source": "PMID 30224644"},
+                ],
+            }
+        )
 
 
 def test_source_refs_excludes_cancerhotspots_when_stub(tmp_path):

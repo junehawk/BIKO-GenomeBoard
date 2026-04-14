@@ -79,14 +79,10 @@ def validate_config(config: dict) -> list[str]:
         if expected_type is float:
             if not isinstance(value, (int, float)):
                 messages.append(
-                    f"WARNING: '{dotted_key}' should be {expected_type.__name__}, "
-                    f"got {type(value).__name__}"
+                    f"WARNING: '{dotted_key}' should be {expected_type.__name__}, got {type(value).__name__}"
                 )
         elif not isinstance(value, expected_type):
-            messages.append(
-                f"WARNING: '{dotted_key}' should be {expected_type.__name__}, "
-                f"got {type(value).__name__}"
-            )
+            messages.append(f"WARNING: '{dotted_key}' should be {expected_type.__name__}, got {type(value).__name__}")
 
     # 2. Warn on unknown top-level keys
     for key in config:

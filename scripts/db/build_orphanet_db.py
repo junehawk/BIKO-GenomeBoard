@@ -39,10 +39,12 @@ def build_db(xml_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
         for ga in disorder.iter("DisorderGeneAssociation"):
             gene_el = ga.find("Gene")
             if gene_el is not None:
-                genes.append({
-                    "symbol": gene_el.findtext("Symbol", ""),
-                    "name": gene_el.findtext("Name", ""),
-                })
+                genes.append(
+                    {
+                        "symbol": gene_el.findtext("Symbol", ""),
+                        "name": gene_el.findtext("Name", ""),
+                    }
+                )
 
         # Extract prevalence data
         for prev in disorder.iter("Prevalence"):
@@ -60,12 +62,19 @@ def build_db(xml_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
             if pg is not None:
                 geo = pg.findtext("Name", "")
 
-            for gene in (genes or [{"symbol": "", "name": ""}]):
+            for gene in genes or [{"symbol": "", "name": ""}]:
                 conn.execute(
                     "INSERT INTO prevalence VALUES (?,?,?,?,?,?,?,?)",
-                    (orpha, name, gene["symbol"], gene["name"],
-                     prev_type, prev_class,
-                     float(val_moy) if val_moy else None, geo),
+                    (
+                        orpha,
+                        name,
+                        gene["symbol"],
+                        gene["name"],
+                        prev_type,
+                        prev_class,
+                        float(val_moy) if val_moy else None,
+                        geo,
+                    ),
                 )
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_prev_gene ON prevalence(gene_symbol)")
@@ -76,9 +85,9 @@ def build_db(xml_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('source', 'Orphanet (orphadata.com)')")
     count = conn.execute("SELECT COUNT(*) FROM prevalence").fetchone()[0]
-    gene_count = conn.execute(
-        "SELECT COUNT(DISTINCT gene_symbol) FROM prevalence WHERE gene_symbol != ''"
-    ).fetchone()[0]
+    gene_count = conn.execute("SELECT COUNT(DISTINCT gene_symbol) FROM prevalence WHERE gene_symbol != ''").fetchone()[
+        0
+    ]
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('row_count', ?)", (str(count),))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('gene_count', ?)", (str(gene_count),))
 
@@ -90,6 +99,7 @@ def build_db(xml_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("xml_path", nargs="?", default="data/db/en_product9_prev.xml")

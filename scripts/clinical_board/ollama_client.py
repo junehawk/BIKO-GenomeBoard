@@ -1,8 +1,8 @@
 """Ollama REST API client for Clinical Board."""
+
 import json
 import logging
 import time
-from typing import Optional
 
 import requests
 
@@ -47,8 +47,7 @@ class OllamaClient:
             resp.raise_for_status()
             data = resp.json()
             return [m["name"] for m in data.get("models", [])]
-        except (requests.ConnectionError, requests.Timeout, OSError,
-                requests.HTTPError, KeyError, ValueError):
+        except (requests.ConnectionError, requests.Timeout, OSError, requests.HTTPError, KeyError, ValueError):
             logger.debug("Failed to list Ollama models")
             return []
 
@@ -96,7 +95,9 @@ class OllamaClient:
             try:
                 logger.debug(
                     "Ollama generate: model=%s prompt_len=%d attempt=%d",
-                    model, len(prompt), attempt,
+                    model,
+                    len(prompt),
+                    attempt,
                 )
                 resp = requests.post(
                     f"{self.base_url}/api/generate",
@@ -109,7 +110,9 @@ class OllamaClient:
                 elapsed = time.time() - t0
                 logger.debug(
                     "Ollama response: model=%s response_len=%d elapsed=%.1fs",
-                    model, len(response_text), elapsed,
+                    model,
+                    len(response_text),
+                    elapsed,
                 )
                 return response_text
 
@@ -125,7 +128,7 @@ class OllamaClient:
 
             # Exponential backoff before retry
             if attempt < max_retries:
-                backoff = 2 ** attempt
+                backoff = 2**attempt
                 logger.debug("Retrying in %ds...", backoff)
                 time.sleep(backoff)
 
@@ -159,7 +162,8 @@ class OllamaClient:
         try:
             logger.debug(
                 "Ollama generate_json: model=%s prompt_len=%d",
-                model, len(prompt),
+                model,
+                len(prompt),
             )
             resp = requests.post(
                 f"{self.base_url}/api/generate",
@@ -172,7 +176,9 @@ class OllamaClient:
             elapsed = time.time() - t0
             logger.debug(
                 "Ollama JSON response: model=%s response_len=%d elapsed=%.1fs",
-                model, len(response_text), elapsed,
+                model,
+                len(response_text),
+                elapsed,
             )
 
             # Parse the response as JSON

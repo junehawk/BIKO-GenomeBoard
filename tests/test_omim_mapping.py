@@ -20,6 +20,7 @@ def _create_sample_mim2gene(path):
 
 def test_build_omim_mapping(tmp_path):
     from scripts.db.build_omim_mapping import build_db
+
     txt_path = str(tmp_path / "mim2gene.txt")
     db_path = str(tmp_path / "omim_mapping.sqlite3")
     _create_sample_mim2gene(txt_path)
@@ -33,6 +34,7 @@ def test_build_omim_mapping(tmp_path):
 
 def test_get_mim_for_gene(tmp_omim_db):
     from scripts.db.query_omim_mapping import get_mim_for_gene
+
     result = get_mim_for_gene("TP53", tmp_omim_db)
     assert result is not None
     assert result["mim_number"] == "191170"
@@ -41,6 +43,7 @@ def test_get_mim_for_gene(tmp_omim_db):
 
 def test_get_mim_unknown_gene(tmp_omim_db):
     from scripts.db.query_omim_mapping import get_mim_for_gene
+
     assert get_mim_for_gene("FAKEGENE", tmp_omim_db) is None
 
 
@@ -55,6 +58,7 @@ def test_phenotype_entries_excluded(tmp_omim_db):
 @pytest.fixture
 def tmp_omim_db(tmp_path):
     from scripts.db.build_omim_mapping import build_db
+
     txt_path = str(tmp_path / "mim2gene.txt")
     db_path = str(tmp_path / "omim_mapping.sqlite3")
     _create_sample_mim2gene(txt_path)

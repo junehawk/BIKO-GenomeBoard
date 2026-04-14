@@ -9,10 +9,9 @@ This module provides:
   - parse_intervar(path)          → dict mapping variant_key to evidence list
   - get_intervar_evidence(v, d)   → evidence list for a single Variant object
 """
+
 from __future__ import annotations
 
-import codecs
-import csv
 import logging
 from pathlib import Path
 from typing import Dict, List
@@ -24,12 +23,33 @@ logger = logging.getLogger(__name__)
 # Ordered ACMG evidence codes expected in InterVar output columns.
 EVIDENCE_CODES = [
     "PVS1",
-    "PS1", "PS2", "PS3", "PS4",
-    "PM1", "PM2", "PM3", "PM4", "PM5", "PM6",
-    "PP1", "PP2", "PP3", "PP4", "PP5",
+    "PS1",
+    "PS2",
+    "PS3",
+    "PS4",
+    "PM1",
+    "PM2",
+    "PM3",
+    "PM4",
+    "PM5",
+    "PM6",
+    "PP1",
+    "PP2",
+    "PP3",
+    "PP4",
+    "PP5",
     "BA1",
-    "BS1", "BS2", "BS3", "BS4",
-    "BP1", "BP2", "BP3", "BP4", "BP5", "BP6", "BP7",
+    "BS1",
+    "BS2",
+    "BS3",
+    "BS4",
+    "BP1",
+    "BP2",
+    "BP3",
+    "BP4",
+    "BP5",
+    "BP6",
+    "BP7",
 ]
 
 
@@ -111,8 +131,7 @@ def parse_intervar(path: str) -> Dict[str, List[str]]:
 
             fields = line.split("\t")
             # Guard against truncated lines.
-            max_needed = max(chr_col, start_col, ref_col, alt_col,
-                             max(idx for _, idx in code_indices)) + 1
+            max_needed = max(chr_col, start_col, ref_col, alt_col, max(idx for _, idx in code_indices)) + 1
             if len(fields) < max_needed:
                 logger.debug("Skipping truncated line %d (%d fields)", line_no, len(fields))
                 continue

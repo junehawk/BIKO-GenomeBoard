@@ -1,10 +1,10 @@
 # tests/test_references.py
 """Tests for PMID reference infrastructure and AI-generated content watermarking."""
+
 import json
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
-import pytest
 
 from scripts.counselor.generate_pdf import generate_report_html
 from scripts.tools.fetch_references import (
@@ -113,8 +113,7 @@ def test_fetch_gene_references_deduplicates():
 def test_fetch_gene_references_max_eight():
     """fetch_gene_references caps results at 8 entries."""
     many_articles = [
-        {"pmid": str(i), "title": f"Article {i}", "source": "Journal", "year": "2020"}
-        for i in range(1, 12)
+        {"pmid": str(i), "title": f"Article {i}", "source": "Journal", "year": "2020"} for i in range(1, 12)
     ]
     with patch("scripts.tools.fetch_references.search_pubmed", return_value=many_articles):
         results = fetch_gene_references("TP53")
@@ -146,8 +145,14 @@ def test_gene_knowledge_has_content_status():
     path = Path(__file__).parent.parent / "data" / "gene_knowledge.json"
     data = json.loads(path.read_text())
     valid_statuses = {
-        "ai-generated", "ai-generated-with-references", "verified",
-        "curated-civic", "curated-ncbi", "curated-cpic", "curated-genreviews", "auto-minimal",
+        "ai-generated",
+        "ai-generated-with-references",
+        "verified",
+        "curated-civic",
+        "curated-ncbi",
+        "curated-cpic",
+        "curated-genreviews",
+        "auto-minimal",
     }
     for entry in data["genes"]:
         gene = entry["gene"]

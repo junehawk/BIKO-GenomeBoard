@@ -7,6 +7,7 @@ file into an in-memory dict with thread-safe singleton caching.
 
 TSV format: chrom  pos  ref  alt  frequency
 """
+
 import threading
 from typing import Optional
 from scripts.common.models import Variant

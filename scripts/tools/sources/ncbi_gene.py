@@ -31,10 +31,7 @@ def fetch_gene_summary(gene_symbol: str) -> Optional[Dict]:
     key_param = f"&api_key={api_key}" if api_key else ""
 
     # Step 1: Search for gene ID
-    search_url = (
-        f"{ESEARCH}?db=gene&term={gene_symbol}[Gene Name]"
-        f"+AND+Homo+sapiens[Organism]&retmode=json{key_param}"
-    )
+    search_url = f"{ESEARCH}?db=gene&term={gene_symbol}[Gene Name]+AND+Homo+sapiens[Organism]&retmode=json{key_param}"
     search_data = fetch_with_retry(search_url)
     if not search_data:
         return None

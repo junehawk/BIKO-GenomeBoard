@@ -108,9 +108,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
                 logger.warning(msg)
 
         if errors:
-            raise ValueError(
-                "Config validation failed:\n" + "\n".join(errors)
-            )
+            raise ValueError("Config validation failed:\n" + "\n".join(errors))
 
         if config_path is None:
             _config = config

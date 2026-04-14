@@ -1,11 +1,11 @@
 """Collect and manage database version metadata for reports."""
+
 import json
-import os
 import sqlite3
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
@@ -20,6 +20,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     # ClinVar local DB
     try:
         from scripts.db.query_local_clinvar import get_db_version as get_clinvar_version
+
         clinvar_meta = get_clinvar_version()
         if clinvar_meta.get("source") != "not available":
             versions["ClinVar"] = {
@@ -37,7 +38,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
         versions["ClinVar"] = {
             "source": "api",
             "release": f"E-utilities (queried {datetime.now(timezone.utc).strftime('%Y-%m-%d')})",
-            "build_date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            "build_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "assembly": "GRCh38",
         }
     elif "ClinVar" not in versions:
@@ -46,6 +47,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     # gnomAD tabix (VCF.bgz) — checked first, takes priority over SQLite
     try:
         from scripts.db.query_tabix_gnomad import get_db_version as get_tabix_version
+
         tabix_meta = get_tabix_version()
         if tabix_meta.get("source") != "not_available":
             versions["gnomAD"] = tabix_meta
@@ -56,6 +58,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     if "gnomAD" not in versions:
         try:
             from scripts.db.query_local_gnomad import get_db_version as get_gnomad_version
+
             gnomad_meta = get_gnomad_version()
             if gnomad_meta.get("source") != "not available":
                 versions["gnomAD"] = {
@@ -72,7 +75,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
         versions["gnomAD"] = {
             "source": "api",
             "version": "v4.1 (r4) / v2.1 (r2_1 fallback)",
-            "build_date": datetime.now(timezone.utc).strftime('%Y-%m-%d'),
+            "build_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
             "assembly": "GRCh38/GRCh37",
         }
     elif "gnomAD" not in versions:
@@ -85,7 +88,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
         versions["KRGDB"] = {
             "source": "local_file",
             "path": str(krgdb_path),
-            "modified": datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d'),
+            "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d"),
             "size_bytes": stat.st_size,
         }
     else:
@@ -109,7 +112,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
         versions["Gene Knowledge"] = {
             "source": gk_path,
             "content_status": "ai-generated-with-references",
-            "modified": datetime.fromtimestamp(Path(gk_path).stat().st_mtime).strftime('%Y-%m-%d'),
+            "modified": datetime.fromtimestamp(Path(gk_path).stat().st_mtime).strftime("%Y-%m-%d"),
         }
 
     # PM1 Hotspots — curated ACMG PM1 table (v2.2 A3)

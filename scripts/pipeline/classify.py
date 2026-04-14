@@ -1,9 +1,8 @@
 """ACMG classification, variant record assembly, and summary generation."""
 
 import logging
-from typing import Optional
 
-from scripts.common.models import AcmgEvidence, FrequencyData
+from scripts.common.models import AcmgEvidence
 from scripts.classification.acmg_engine import (
     classify_variant,
     check_clinvar_conflict,
@@ -27,16 +26,19 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
     # Lazy imports for optional modules
     try:
         from scripts.classification.in_silico import parse_in_silico_from_csq, generate_pp3_bp4
+
         _has_in_silico = True
     except ImportError:
         _has_in_silico = False
     try:
         from scripts.classification.evidence_collector import collect_additional_evidence
+
         _has_evidence_collector = True
     except ImportError:
         _has_evidence_collector = False
     try:
         from scripts.intake.parse_intervar import get_intervar_evidence
+
         _has_intervar = True
     except ImportError:
         _has_intervar = False
@@ -54,9 +56,7 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
 
         # In silico PP3/BP4 evidence
         if _has_in_silico and variant.in_silico:
-            pp3_bp4_codes = generate_pp3_bp4(
-                parse_in_silico_from_csq(variant.in_silico)
-            )
+            pp3_bp4_codes = generate_pp3_bp4(parse_in_silico_from_csq(variant.in_silico))
             for code in pp3_bp4_codes:
                 evidences.append(AcmgEvidence(code=code, source="in_silico", description=""))
 
@@ -98,9 +98,7 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
         if classification.clinvar_override_reason:
             final_classification = original_classification
         else:
-            final_classification = apply_clinvar_override(
-                original_classification, clinvar_sig, review_status
-            )
+            final_classification = apply_clinvar_override(original_classification, clinvar_sig, review_status)
         if final_classification != original_classification:
             classification.classification = final_classification
             classification.clinvar_override = True
@@ -114,8 +112,7 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
     return classification_results
 
 
-def build_variant_records(variants, db_results, freq_results, classification_results,
-                          mode, hpo_results):
+def build_variant_records(variants, db_results, freq_results, classification_results, mode, hpo_results):
     """Build the variant_records list from per-variant results."""
     from scripts.somatic.amp_tiering import amp_assign_tier
     from scripts.db.query_civic import get_predictive_evidence_for_tier
@@ -192,8 +189,11 @@ def build_variant_records(variants, db_results, freq_results, classification_res
             civic_evidence = None
 
         tier_result = amp_assign_tier(
-            classification=cls, gene=gene, hgvsp=hgvsp,
-            strategy=tiering_strategy, civic_evidence=civic_evidence,
+            classification=cls,
+            gene=gene,
+            hgvsp=hgvsp,
+            strategy=tiering_strategy,
+            civic_evidence=civic_evidence,
         )
         v_result["tier"] = tier_result.tier
         v_result["tier_label"] = tier_result.tier_label
@@ -264,18 +264,28 @@ def sv_to_dict(sv) -> dict:
     """Convert StructuralVariant to template-friendly dict."""
     return {
         "annotsv_id": sv.annotsv_id,
-        "chrom": sv.chrom, "start": sv.start, "end": sv.end,
-        "length": sv.length, "sv_type": sv.sv_type,
+        "chrom": sv.chrom,
+        "start": sv.start,
+        "end": sv.end,
+        "length": sv.length,
+        "sv_type": sv.sv_type,
         "sample_id": sv.sample_id,
-        "acmg_class": sv.acmg_class, "acmg_label": sv.acmg_label,
+        "acmg_class": sv.acmg_class,
+        "acmg_label": sv.acmg_label,
         "ranking_score": sv.ranking_score,
-        "cytoband": sv.cytoband, "gene_name": sv.gene_name,
-        "gene_count": sv.gene_count, "gene_details": sv.gene_details,
+        "cytoband": sv.cytoband,
+        "gene_name": sv.gene_name,
+        "gene_count": sv.gene_count,
+        "gene_details": sv.gene_details,
         "size_display": sv.size_display,
-        "phenotypes": sv.phenotypes, "evidence_source": sv.evidence_source,
-        "p_gain_phen": sv.p_gain_phen, "p_loss_phen": sv.p_loss_phen,
-        "p_gain_hpo": sv.p_gain_hpo, "p_loss_hpo": sv.p_loss_hpo,
-        "b_gain_af_max": sv.b_gain_af_max, "b_loss_af_max": sv.b_loss_af_max,
+        "phenotypes": sv.phenotypes,
+        "evidence_source": sv.evidence_source,
+        "p_gain_phen": sv.p_gain_phen,
+        "p_loss_phen": sv.p_loss_phen,
+        "p_gain_hpo": sv.p_gain_hpo,
+        "p_loss_hpo": sv.p_loss_hpo,
+        "b_gain_af_max": sv.b_gain_af_max,
+        "b_loss_af_max": sv.b_loss_af_max,
         "omim_morbid": sv.omim_morbid,
         "is_pathogenic": sv.is_pathogenic,
     }
@@ -293,8 +303,9 @@ def split_variants_for_display(variant_records, hide_vus):
 
     if hide_vus:
         _significant = {"pathogenic", "likely pathogenic", "drug response", "risk factor"}
-        detailed_variants = [v for v in variant_records
-                             if v.get("tier") in (1, 2) or v.get("classification", "").lower() in _significant]
+        detailed_variants = [
+            v for v in variant_records if v.get("tier") in (1, 2) or v.get("classification", "").lower() in _significant
+        ]
         omitted_variants = [v for v in variant_records if v not in detailed_variants]
     else:
         detailed_variants = list(variant_records)
@@ -302,11 +313,17 @@ def split_variants_for_display(variant_records, hide_vus):
 
     # Sort detail pages by tier then classification rank
     _tier_sort = {1: 0, 2: 1, 3: 2, 4: 3}
-    _cls_sort = {"pathogenic": 0, "likely pathogenic": 1, "drug response": 2, "risk factor": 3,
-                 "vus": 4, "likely benign": 5, "benign": 6}
-    detailed_variants.sort(key=lambda v: (
-        _tier_sort.get(v.get("tier", 4), 4),
-        _cls_sort.get(v.get("classification", "VUS").lower(), 4)
-    ))
+    _cls_sort = {
+        "pathogenic": 0,
+        "likely pathogenic": 1,
+        "drug response": 2,
+        "risk factor": 3,
+        "vus": 4,
+        "likely benign": 5,
+        "benign": 6,
+    }
+    detailed_variants.sort(
+        key=lambda v: (_tier_sort.get(v.get("tier", 4), 4), _cls_sort.get(v.get("classification", "VUS").lower(), 4))
+    )
 
     return tier1_variants, tier2_variants, tier3_variants, tier4_count, detailed_variants, omitted_variants

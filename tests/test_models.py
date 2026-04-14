@@ -52,11 +52,20 @@ def test_pgx_result():
 
 def test_structural_variant_creation():
     from scripts.common.models import StructuralVariant
+
     sv = StructuralVariant(
         annotsv_id="CNV_ERBB2_AMP",
-        chrom="chr17", start=37844393, end=37884925, length=40532,
-        sv_type="DUP", sample_id="Sample1", acmg_class=5, ranking_score=0.99,
-        cytoband="17q12", gene_name="ERBB2", gene_count=1,
+        chrom="chr17",
+        start=37844393,
+        end=37884925,
+        length=40532,
+        sv_type="DUP",
+        sample_id="Sample1",
+        acmg_class=5,
+        ranking_score=0.99,
+        cytoband="17q12",
+        gene_name="ERBB2",
+        gene_count=1,
     )
     assert sv.sv_type == "DUP"
     assert sv.acmg_class == 5
@@ -67,10 +76,20 @@ def test_structural_variant_creation():
 
 def test_structural_variant_dosage_sensitive_del():
     from scripts.common.models import StructuralVariant
+
     sv = StructuralVariant(
-        annotsv_id="test", chrom="chr17", start=1, end=100000, length=100000,
-        sv_type="DEL", sample_id="S1", acmg_class=3, ranking_score=0.2,
-        cytoband="17q21", gene_name="BRCA1", gene_count=1,
+        annotsv_id="test",
+        chrom="chr17",
+        start=1,
+        end=100000,
+        length=100000,
+        sv_type="DEL",
+        sample_id="S1",
+        acmg_class=3,
+        ranking_score=0.2,
+        cytoband="17q21",
+        gene_name="BRCA1",
+        gene_count=1,
     )
     sv.gene_details = [{"gene": "BRCA1", "hi": 3, "ts": 0, "pli": 0.98}]
     assert sv.is_dosage_sensitive(mode="cancer")
@@ -78,10 +97,20 @@ def test_structural_variant_dosage_sensitive_del():
 
 def test_structural_variant_not_dosage_sensitive():
     from scripts.common.models import StructuralVariant
+
     sv = StructuralVariant(
-        annotsv_id="test", chrom="chr1", start=1, end=100, length=100,
-        sv_type="DUP", sample_id="S1", acmg_class=3, ranking_score=0.1,
-        cytoband="1p36", gene_name="GENE1", gene_count=1,
+        annotsv_id="test",
+        chrom="chr1",
+        start=1,
+        end=100,
+        length=100,
+        sv_type="DUP",
+        sample_id="S1",
+        acmg_class=3,
+        ranking_score=0.1,
+        cytoband="1p36",
+        gene_name="GENE1",
+        gene_count=1,
     )
     sv.gene_details = [{"gene": "GENE1", "hi": 0, "ts": 0, "pli": 0.05}]
     assert not sv.is_dosage_sensitive(mode="cancer")

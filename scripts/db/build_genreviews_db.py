@@ -47,9 +47,7 @@ def build_db(genes_path: str, titles_path: str, db_path: str = DEFAULT_DB_PATH) 
             title_info = titles.get(shortname, {})
             conn.execute(
                 "INSERT INTO genreviews VALUES (?,?,?,?,?,?)",
-                (gene, nbk_id, shortname, disease,
-                 title_info.get("title", disease),
-                 title_info.get("pmid", "")),
+                (gene, nbk_id, shortname, disease, title_info.get("title", disease), title_info.get("pmid", "")),
             )
 
     conn.execute("CREATE INDEX IF NOT EXISTS idx_gr_gene ON genreviews(gene_symbol)")
@@ -70,6 +68,7 @@ def build_db(genes_path: str, titles_path: str, db_path: str = DEFAULT_DB_PATH) 
 
 if __name__ == "__main__":
     import argparse
+
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("--genes", default="data/db/GRshortname_NBKid_genesymbol_dzname.txt")

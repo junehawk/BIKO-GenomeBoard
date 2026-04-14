@@ -1,4 +1,5 @@
 """Query local gnomAD SQLite database."""
+
 import sqlite3
 import logging
 from typing import Dict, Optional
@@ -43,7 +44,7 @@ def query_local_gnomad(variant: Variant) -> Dict:
     # Strategy 1: exact match
     cursor = conn.execute(
         "SELECT * FROM variants WHERE chrom = ? AND pos = ? AND ref = ? AND alt = ? LIMIT 1",
-        (variant.chrom, variant.pos, variant.ref, variant.alt)
+        (variant.chrom, variant.pos, variant.ref, variant.alt),
     )
     row = cursor.fetchone()
 

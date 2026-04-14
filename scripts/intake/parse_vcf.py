@@ -81,9 +81,17 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                     variant.polyphen = annotation.get("polyphen") or None
                     # In silico prediction scores (from VEP dbNSFP plugin)
                     _in_silico = {}
-                    for _isf in ("revel_score", "cadd_phred", "am_class", "am_pathogenicity",
-                                 "spliceai_pred_ds_ag", "spliceai_pred_ds_al",
-                                 "spliceai_pred_ds_dg", "spliceai_pred_ds_dl", "domains"):
+                    for _isf in (
+                        "revel_score",
+                        "cadd_phred",
+                        "am_class",
+                        "am_pathogenicity",
+                        "spliceai_pred_ds_ag",
+                        "spliceai_pred_ds_al",
+                        "spliceai_pred_ds_dg",
+                        "spliceai_pred_ds_dl",
+                        "domains",
+                    ):
                         _val = annotation.get(_isf)
                         if _val:
                             _in_silico[_isf] = _val

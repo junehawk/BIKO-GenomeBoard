@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_fetch_gene_summary_known_gene(monkeypatch):
     """TP53 gene summary 조회."""
     from scripts.tools.sources.ncbi_gene import fetch_gene_summary
@@ -8,15 +5,20 @@ def test_fetch_gene_summary_known_gene(monkeypatch):
     # Mock esearch response
     mock_search = {"esearchresult": {"idlist": ["7157"]}}
     # Mock esummary response
-    mock_summary = {"result": {"7157": {
-        "uid": "7157",
-        "name": "TP53",
-        "description": "tumor protein p53",
-        "summary": "This gene encodes a tumor protein that responds to diverse cellular stresses.",
-        "otheraliases": "p53, LFS1",
-    }}}
+    mock_summary = {
+        "result": {
+            "7157": {
+                "uid": "7157",
+                "name": "TP53",
+                "description": "tumor protein p53",
+                "summary": "This gene encodes a tumor protein that responds to diverse cellular stresses.",
+                "otheraliases": "p53, LFS1",
+            }
+        }
+    }
 
     call_count = [0]
+
     def mock_fetch(url, **kw):
         call_count[0] += 1
         if "esearch" in url:

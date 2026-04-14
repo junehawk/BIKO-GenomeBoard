@@ -17,8 +17,7 @@ def get_mim_for_gene(gene: str, db_path: Optional[str] = None) -> Optional[Dict]
     try:
         conn = sqlite3.connect(path)
         row = conn.execute(
-            "SELECT mim_number, entry_type, entrez_id, ensembl_id "
-            "FROM mim2gene WHERE gene_symbol = ? LIMIT 1",
+            "SELECT mim_number, entry_type, entrez_id, ensembl_id FROM mim2gene WHERE gene_symbol = ? LIMIT 1",
             (gene,),
         ).fetchone()
         conn.close()

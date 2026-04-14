@@ -9,8 +9,12 @@ logger = logging.getLogger(__name__)
 
 # Classification strength ranking (highest first)
 _RANK = {
-    "Definitive": 0, "Strong": 1, "Moderate": 2,
-    "Limited": 3, "Disputed": 4, "Refuted": 5,
+    "Definitive": 0,
+    "Strong": 1,
+    "Moderate": 2,
+    "Limited": 3,
+    "Disputed": 4,
+    "Refuted": 5,
 }
 
 
@@ -18,9 +22,7 @@ def _get_db_path(db_path: Optional[str] = None) -> str:
     return db_path or get("paths.clingen_db") or "data/db/clingen.sqlite3"
 
 
-def get_gene_validity_local(
-    gene: str, db_path: Optional[str] = None
-) -> Optional[str]:
+def get_gene_validity_local(gene: str, db_path: Optional[str] = None) -> Optional[str]:
     """Get strongest ClinGen validity classification for a gene."""
     path = _get_db_path(db_path)
     try:
@@ -40,9 +42,7 @@ def get_gene_validity_local(
         return None
 
 
-def get_gene_disease_pairs(
-    gene: str, db_path: Optional[str] = None
-) -> List[Dict]:
+def get_gene_disease_pairs(gene: str, db_path: Optional[str] = None) -> List[Dict]:
     """Get all gene-disease validity pairs."""
     path = _get_db_path(db_path)
     try:

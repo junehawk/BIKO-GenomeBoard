@@ -53,9 +53,15 @@ def calculate_tmb(
         intermediate_threshold: TMB-Intermediate cutoff (default: 6.0 mut/Mb)
         counted_consequences: Which consequence types to count
     """
-    panel_size = panel_size_mb or float(get("somatic.tmb_default_panel_size_mb", DEFAULT_PANEL_SIZE_MB) or DEFAULT_PANEL_SIZE_MB)
-    high_thresh = high_threshold or float(get("somatic.tmb_high_threshold", DEFAULT_HIGH_THRESHOLD) or DEFAULT_HIGH_THRESHOLD)
-    int_thresh = intermediate_threshold or float(get("somatic.tmb_intermediate_threshold", DEFAULT_INTERMEDIATE_THRESHOLD) or DEFAULT_INTERMEDIATE_THRESHOLD)
+    panel_size = panel_size_mb or float(
+        get("somatic.tmb_default_panel_size_mb", DEFAULT_PANEL_SIZE_MB) or DEFAULT_PANEL_SIZE_MB
+    )
+    high_thresh = high_threshold or float(
+        get("somatic.tmb_high_threshold", DEFAULT_HIGH_THRESHOLD) or DEFAULT_HIGH_THRESHOLD
+    )
+    int_thresh = intermediate_threshold or float(
+        get("somatic.tmb_intermediate_threshold", DEFAULT_INTERMEDIATE_THRESHOLD) or DEFAULT_INTERMEDIATE_THRESHOLD
+    )
     consequences = counted_consequences or get("somatic.tmb_counted_consequences") or DEFAULT_COUNTED_CONSEQUENCES
 
     # Build normalized lookup set (lowercase) for matching both

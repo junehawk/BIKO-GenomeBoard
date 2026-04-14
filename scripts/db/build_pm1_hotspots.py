@@ -51,6 +51,7 @@ Invariants (enforced by this script and by `tests/test_build_pm1_hotspots.py`):
 - `record_count` equals the total number of entries across all genes.
 - `source_hash` is deterministic over the `genes` payload.
 """
+
 from __future__ import annotations
 
 import csv
@@ -111,72 +112,87 @@ REQUIRED_COVERAGE: dict[str, list[int]] = {
 # when overrides are missing or empty, guaranteeing a known-good minimum set.
 CLINGEN_BASELINE: dict[str, list[dict[str, Any]]] = {
     "TP53": [
-        {"range": [175, 175], "domain": "DBD β-sandwich (R175 structural hotspot)",
-         "strength": "moderate", "source": "PMID 30224644"},
-        {"range": [245, 249], "domain": "DBD L3 loop (aa 245-254)",
-         "strength": "moderate", "source": "PMID 30224644"},
-        {"range": [273, 273], "domain": "DBD DNA-contact surface (R273)",
-         "strength": "moderate", "source": "PMID 30224644"},
-        {"range": [282, 282], "domain": "DBD L3 loop-adjacent (R282)",
-         "strength": "moderate", "source": "PMID 30224644"},
+        {
+            "range": [175, 175],
+            "domain": "DBD β-sandwich (R175 structural hotspot)",
+            "strength": "moderate",
+            "source": "PMID 30224644",
+        },
+        {"range": [245, 249], "domain": "DBD L3 loop (aa 245-254)", "strength": "moderate", "source": "PMID 30224644"},
+        {
+            "range": [273, 273],
+            "domain": "DBD DNA-contact surface (R273)",
+            "strength": "moderate",
+            "source": "PMID 30224644",
+        },
+        {
+            "range": [282, 282],
+            "domain": "DBD L3 loop-adjacent (R282)",
+            "strength": "moderate",
+            "source": "PMID 30224644",
+        },
     ],
     "KRAS": [
-        {"range": [12, 13], "domain": "G-domain P-loop / switch I",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [61, 61], "domain": "G-domain switch II",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [117, 117], "domain": "G-domain nucleotide binding",
-         "strength": "supporting", "source": "PMID 27993330"},
-        {"range": [146, 146], "domain": "G-domain nucleotide binding",
-         "strength": "supporting", "source": "PMID 27993330"},
+        {"range": [12, 13], "domain": "G-domain P-loop / switch I", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [61, 61], "domain": "G-domain switch II", "strength": "moderate", "source": "PMID 27993330"},
+        {
+            "range": [117, 117],
+            "domain": "G-domain nucleotide binding",
+            "strength": "supporting",
+            "source": "PMID 27993330",
+        },
+        {
+            "range": [146, 146],
+            "domain": "G-domain nucleotide binding",
+            "strength": "supporting",
+            "source": "PMID 27993330",
+        },
     ],
     "NRAS": [
-        {"range": [12, 13], "domain": "G-domain P-loop / switch I",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [61, 61], "domain": "G-domain switch II",
-         "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [12, 13], "domain": "G-domain P-loop / switch I", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [61, 61], "domain": "G-domain switch II", "strength": "moderate", "source": "PMID 27993330"},
     ],
     "HRAS": [
-        {"range": [12, 13], "domain": "G-domain P-loop / switch I",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [61, 61], "domain": "G-domain switch II",
-         "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [12, 13], "domain": "G-domain P-loop / switch I", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [61, 61], "domain": "G-domain switch II", "strength": "moderate", "source": "PMID 27993330"},
     ],
     "BRAF": [
-        {"range": [600, 600], "domain": "Kinase activation loop (V600)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [601, 601], "domain": "Kinase activation loop (adjacent to V600)",
-         "strength": "supporting", "source": "PMID 27993330"},
+        {
+            "range": [600, 600],
+            "domain": "Kinase activation loop (V600)",
+            "strength": "moderate",
+            "source": "PMID 27993330",
+        },
+        {
+            "range": [601, 601],
+            "domain": "Kinase activation loop (adjacent to V600)",
+            "strength": "supporting",
+            "source": "PMID 27993330",
+        },
     ],
     "PIK3CA": [
-        {"range": [542, 542], "domain": "Helical domain (E542)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [545, 545], "domain": "Helical domain (E545)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [1047, 1047], "domain": "Kinase domain (H1047)",
-         "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [542, 542], "domain": "Helical domain (E542)", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [545, 545], "domain": "Helical domain (E545)", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [1047, 1047], "domain": "Kinase domain (H1047)", "strength": "moderate", "source": "PMID 27993330"},
     ],
     "EGFR": [
-        {"range": [719, 719], "domain": "ATP-binding P-loop (G719)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [746, 750], "domain": "Exon 19 deletion region",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [790, 790], "domain": "Gatekeeper T790M (resistance)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [858, 858], "domain": "Activation loop (L858R)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [861, 861], "domain": "Activation loop (L861Q)",
-         "strength": "supporting", "source": "PMID 27993330"},
+        {"range": [719, 719], "domain": "ATP-binding P-loop (G719)", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [746, 750], "domain": "Exon 19 deletion region", "strength": "moderate", "source": "PMID 27993330"},
+        {
+            "range": [790, 790],
+            "domain": "Gatekeeper T790M (resistance)",
+            "strength": "moderate",
+            "source": "PMID 27993330",
+        },
+        {"range": [858, 858], "domain": "Activation loop (L858R)", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [861, 861], "domain": "Activation loop (L861Q)", "strength": "supporting", "source": "PMID 27993330"},
     ],
     "IDH1": [
-        {"range": [132, 132], "domain": "Active site (R132)",
-         "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [132, 132], "domain": "Active site (R132)", "strength": "moderate", "source": "PMID 27993330"},
     ],
     "IDH2": [
-        {"range": [140, 140], "domain": "Active site (R140)",
-         "strength": "moderate", "source": "PMID 27993330"},
-        {"range": [172, 172], "domain": "Active site (R172)",
-         "strength": "supporting", "source": "PMID 27993330"},
+        {"range": [140, 140], "domain": "Active site (R140)", "strength": "moderate", "source": "PMID 27993330"},
+        {"range": [172, 172], "domain": "Active site (R172)", "strength": "supporting", "source": "PMID 27993330"},
     ],
 }
 
@@ -220,12 +236,14 @@ def _load_cancerhotspots(tsv_path: Path) -> dict[str, list[dict[str, Any]]]:
             if not gene or not pos_raw.isdigit():
                 continue
             pos = int(pos_raw)
-            entries.setdefault(gene, []).append({
-                "range": [pos, pos],
-                "domain": f"cancerhotspots v2 single ({gene} {pos})",
-                "strength": "supporting",
-                "source": "PMID 29247016",  # cancerhotspots.org v2 reference
-            })
+            entries.setdefault(gene, []).append(
+                {
+                    "range": [pos, pos],
+                    "domain": f"cancerhotspots v2 single ({gene} {pos})",
+                    "strength": "supporting",
+                    "source": "PMID 29247016",  # cancerhotspots.org v2 reference
+                }
+            )
     except csv.Error as e:
         logger.warning("cancerhotspots TSV parse failed: %s — skipping layer", e)
         return {}
@@ -328,21 +346,16 @@ def _validate(genes: dict[str, list[dict[str, Any]]]) -> None:
             raise ValueError(f"Gene {gene} has no entries after merge")
         for entry in entries:
             rng = entry.get("range")
-            if (not isinstance(rng, list) or len(rng) != 2
-                    or not all(isinstance(x, int) for x in rng)):
+            if not isinstance(rng, list) or len(rng) != 2 or not all(isinstance(x, int) for x in rng):
                 raise ValueError(f"{gene}: range must be [start, end] integers, got {rng!r}")
             if rng[0] > rng[1]:
                 raise ValueError(f"{gene}: range {rng} has start > end")
             strength = entry.get("strength")
             if strength not in ALLOWED_STRENGTHS:
-                raise ValueError(
-                    f"{gene} range {rng}: strength must be one of {ALLOWED_STRENGTHS}, got {strength!r}"
-                )
+                raise ValueError(f"{gene} range {rng}: strength must be one of {ALLOWED_STRENGTHS}, got {strength!r}")
             source = entry.get("source", "")
             if not PMID_PATTERN.search(source):
-                raise ValueError(
-                    f"{gene} range {rng}: source {source!r} does not contain a PMID reference"
-                )
+                raise ValueError(f"{gene} range {rng}: source {source!r} does not contain a PMID reference")
 
 
 def _assert_coverage(genes: dict[str, list[dict[str, Any]]]) -> None:
@@ -421,7 +434,10 @@ def build_pm1_hotspots(
 
     logger.info(
         "PM1 hotspot JSON built: %d entries across %d genes → %s (hash=%s)",
-        record_count, len(genes), output_path, source_hash[:18],
+        record_count,
+        len(genes),
+        output_path,
+        source_hash[:18],
     )
     return payload
 

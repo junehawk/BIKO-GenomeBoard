@@ -13,6 +13,7 @@ variants to the agents erodes the clinical criteria applied in the selector.
 ``runner.py`` is responsible for calling the selector once and passing the
 filtered list to every ``build_domain_sheet`` invocation.
 """
+
 from __future__ import annotations
 
 from typing import Callable
@@ -78,9 +79,7 @@ def _rd_variant_pathologist(variants: list, report_data: dict) -> str:
         lines.append(f"- {gene} {hgvsp}".rstrip())
         lines.append(f"    Classification: {classification}")
         lines.append(f"    ClinVar: {clinvar_sig} (review: {review})")
-        lines.append(
-            f"    In silico: REVEL={revel}, CADD={cadd}, SpliceAI={spliceai}"
-        )
+        lines.append(f"    In silico: REVEL={revel}, CADD={cadd}, SpliceAI={spliceai}")
         evidence = v.get("acmg_evidence") or v.get("evidence_codes") or []
         if evidence:
             lines.append(f"    ACMG codes: {', '.join(map(str, evidence))}")
@@ -105,15 +104,12 @@ def _rd_disease_geneticist(variants: list, report_data: dict) -> str:
         lines.append(f"    Inheritance: {inheritance}")
         if omim_phenotypes:
             phen_strs = [
-                p if isinstance(p, str) else f"{p.get('phenotype', p.get('name', '?'))}"
-                for p in omim_phenotypes
+                p if isinstance(p, str) else f"{p.get('phenotype', p.get('name', '?'))}" for p in omim_phenotypes
             ]
             lines.append(f"    OMIM phenotypes: {'; '.join(phen_strs)}")
         if matching_hpo:
             hpo_strs = [
-                h if isinstance(h, str)
-                else f"{h.get('id', '?')} {h.get('name', '')}".strip()
-                for h in matching_hpo
+                h if isinstance(h, str) else f"{h.get('id', '?')} {h.get('name', '')}".strip() for h in matching_hpo
             ]
             lines.append(f"    Matching HPO: {', '.join(hpo_strs)}")
         if gene_reviews:
@@ -164,9 +160,7 @@ def _rd_literature_analyst(variants: list, report_data: dict) -> str:
                 drug = ev.get("drug", "")
                 level = ev.get("level", "")
                 direction = ev.get("direction", "")
-                lines.append(
-                    f"    CIViC: {drug} (level {level}, {direction})".rstrip()
-                )
+                lines.append(f"    CIViC: {drug} (level {level}, {direction})".rstrip())
         if clingen:
             lines.append(f"    ClinGen validity: {clingen}")
         if gene_reviews:
@@ -217,9 +211,7 @@ def _cancer_therapeutic_target(variants: list, report_data: dict) -> str:
                 drug = ev.get("drug", "")
                 level = ev.get("level", "")
                 direction = ev.get("direction", "")
-                lines.append(
-                    f"    CIViC drug: {drug} (level {level}, {direction})".rstrip()
-                )
+                lines.append(f"    CIViC drug: {drug} (level {level}, {direction})".rstrip())
         resistance = v.get("resistance_notes") or v.get("resistance", "")
         if resistance:
             lines.append(f"    Resistance: {resistance}")
@@ -282,9 +274,7 @@ def _cancer_clinical_evidence(variants: list, report_data: dict) -> str:
                 level = ev.get("level", "")
                 direction = ev.get("direction", "")
                 disease = ev.get("disease", "")
-                lines.append(
-                    f"    CIViC: {drug} — {disease} (level {level}, {direction})".rstrip()
-                )
+                lines.append(f"    CIViC: {drug} — {disease} (level {level}, {direction})".rstrip())
             if trials:
                 lines.append(f"    Trial markers: {', '.join(map(str, trials[:5]))}")
             lines.append("")
@@ -308,10 +298,7 @@ def _cancer_clinical_evidence(variants: list, report_data: dict) -> str:
             # Include guidelines that mention any of the gene symbols, plus the
             # first available guideline as fallback context.
             content_upper = content.upper()
-            include = (
-                not gene_set
-                or any(g in content_upper for g in gene_set)
-            )
+            include = not gene_set or any(g in content_upper for g in gene_set)
             if include:
                 lines.append(f"### {fname}")
                 lines.append(content.strip())

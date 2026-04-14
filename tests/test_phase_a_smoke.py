@@ -12,6 +12,7 @@ v2.2 plan review (`_workspace/v22-plan/reviews/qa_engineer_review.md`).
 
 Fixtures 4 and 5 are marked xfail until Phase B lands.
 """
+
 from __future__ import annotations
 
 import dataclasses
@@ -25,6 +26,7 @@ import pytest
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _opinion_to_json(opinion: Any) -> str:
     """Serialise a CancerBoardOpinion (or dict) to a deep JSON string.
@@ -51,6 +53,7 @@ def _build_cancer_report_data(variants: list[dict], sample_id: str = "PHASE-A-SM
 # ---------------------------------------------------------------------------
 # Fixture 1 — KRAS G12D futibatinib hallucination blocked
 # ---------------------------------------------------------------------------
+
 
 def test_smoke_fixture_1_kras_futibatinib_hallucination_blocked(monkeypatch):
     """F1-audit regression: even if MedGemma emits 'futibatinib' for KRAS G12D,
@@ -131,9 +134,7 @@ def test_smoke_fixture_1_kras_futibatinib_hallucination_blocked(monkeypatch):
     fake_client.generate_json.return_value = fake_chair
     fake_client.is_available.return_value = True
     fake_client.has_model.return_value = True
-    monkeypatch.setattr(
-        runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False
-    )
+    monkeypatch.setattr(runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False)
     monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [], raising=False)
 
     report_data = _build_cancer_report_data(
@@ -167,14 +168,13 @@ def test_smoke_fixture_1_kras_futibatinib_hallucination_blocked(monkeypatch):
     )
 
     # Positive: sotorasib (real curated row) must remain.
-    assert "sotorasib" in serialised, (
-        "narrative_scrubber stripped legitimate curated row — false positive"
-    )
+    assert "sotorasib" in serialised, "narrative_scrubber stripped legitimate curated row — false positive"
 
 
 # ---------------------------------------------------------------------------
 # Fixture 2 — EGFR→TP53 cross-variant paste-attack
 # ---------------------------------------------------------------------------
+
 
 def test_smoke_fixture_2_cross_variant_curated_id_paste_attack(monkeypatch):
     """A valid curated_id for EGFR L858R must not survive if the LLM sneaks it
@@ -250,9 +250,7 @@ def test_smoke_fixture_2_cross_variant_curated_id_paste_attack(monkeypatch):
     fake_client.generate_json.return_value = fake_chair
     fake_client.is_available.return_value = True
     fake_client.has_model.return_value = True
-    monkeypatch.setattr(
-        runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False
-    )
+    monkeypatch.setattr(runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False)
     monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [], raising=False)
 
     report_data = _build_cancer_report_data(
@@ -306,8 +304,7 @@ def test_smoke_fixture_2_cross_variant_curated_id_paste_attack(monkeypatch):
         cid = row.get("curated_id", "")
         if cid == "oncokb_egfr_l858r_osi":
             pytest.fail(
-                "narrative_scrubber allowed EGFR curated_id through despite "
-                f"variant_key mismatch (row={row!r})."
+                f"narrative_scrubber allowed EGFR curated_id through despite variant_key mismatch (row={row!r})."
             )
 
 
@@ -315,16 +312,17 @@ def test_smoke_fixture_2_cross_variant_curated_id_paste_attack(monkeypatch):
 # Fixture 3 — TP53 R249M PM1 hotspot + ClinVar override
 # ---------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     "hgvsp,expect_pm1",
     [
         ("ENSP00000269305.4:p.Arg249Met", True),
         ("p.Arg249Met", True),
         ("p.R249M", True),
-        ("p.Arg100Gln", False),   # outside DBD hotspot range
-        ("p.Met1?", False),        # Met-init — not missense
-        ("p.Arg249fs", False),     # frameshift, not missense
-        ("", False),               # empty hgvsp must not raise
+        ("p.Arg100Gln", False),  # outside DBD hotspot range
+        ("p.Met1?", False),  # Met-init — not missense
+        ("p.Arg249fs", False),  # frameshift, not missense
+        ("", False),  # empty hgvsp must not raise
     ],
 )
 def test_smoke_fixture_3a_tp53_pm1_hotspot_hgvs_fuzz(hgvsp, expect_pm1):
@@ -339,14 +337,9 @@ def test_smoke_fixture_3a_tp53_pm1_hotspot_hgvs_fuzz(hgvsp, expect_pm1):
 
     from scripts.common.config import get as config_get
 
-    pm1_path = config_get("paths.pm1_hotspot_domains", None) or os.path.join(
-        "data", "pm1_hotspot_domains.json"
-    )
+    pm1_path = config_get("paths.pm1_hotspot_domains", None) or os.path.join("data", "pm1_hotspot_domains.json")
     if not os.path.exists(pm1_path):
-        pytest.skip(
-            f"pm1_hotspot_domains.json not yet built ({pm1_path}) — "
-            "blocked by tasks #5/#6"
-        )
+        pytest.skip(f"pm1_hotspot_domains.json not yet built ({pm1_path}) — blocked by tasks #5/#6")
 
     collector = pytest.importorskip(
         "scripts.classification.evidence_collector",
@@ -361,10 +354,7 @@ def test_smoke_fixture_3a_tp53_pm1_hotspot_hgvs_fuzz(hgvsp, expect_pm1):
     except (OSError, TypeError):
         collector_src = ""
     if "pm1_hotspot" not in collector_src.lower():
-        pytest.skip(
-            "evidence_collector does not yet reference pm1_hotspot_domains "
-            "(A3-core task #6 pending)"
-        )
+        pytest.skip("evidence_collector does not yet reference pm1_hotspot_domains (A3-core task #6 pending)")
 
     Variant = pytest.importorskip("scripts.common.models").Variant  # type: ignore[attr-defined]
 
@@ -395,13 +385,9 @@ def test_smoke_fixture_3a_tp53_pm1_hotspot_hgvs_fuzz(hgvsp, expect_pm1):
         codes = set(codes or [])
 
     if expect_pm1:
-        assert "PM1" in codes, (
-            f"PM1 should fire for TP53 hgvsp={hgvsp!r} via pm1_hotspot_domains.json"
-        )
+        assert "PM1" in codes, f"PM1 should fire for TP53 hgvsp={hgvsp!r} via pm1_hotspot_domains.json"
     else:
-        assert "PM1" not in codes, (
-            f"PM1 must NOT fire for TP53 hgvsp={hgvsp!r}"
-        )
+        assert "PM1" not in codes, f"PM1 must NOT fire for TP53 hgvsp={hgvsp!r}"
 
 
 def test_smoke_fixture_3b_tp53_r249m_clinvar_override_reason_field_exists():
@@ -431,10 +417,7 @@ def test_smoke_fixture_3b_tp53_r249m_clinvar_override_reason_field_exists():
 
     field_names = {f.name for f in dc.fields(ClassificationResult)}
     if "clinvar_override_reason" not in field_names:
-        pytest.skip(
-            "ClassificationResult.clinvar_override_reason not yet added "
-            "(A4 task #7 reshape pending)"
-        )
+        pytest.skip("ClassificationResult.clinvar_override_reason not yet added (A4 task #7 reshape pending)")
 
     # New-contract smoke: constructing ClassificationResult with the new
     # field must succeed and the reader attribute access must work.
@@ -452,10 +435,15 @@ def test_smoke_fixture_3b_tp53_r249m_clinvar_override_reason_field_exists():
     except TypeError:
         # Other required fields exist — construct via defaults map.
         defaults = {
-            f.name: (f.default if f.default is not dc.MISSING else (
-                f.default_factory() if f.default_factory is not dc.MISSING  # type: ignore[misc]
-                else ""
-            ))
+            f.name: (
+                f.default
+                if f.default is not dc.MISSING
+                else (
+                    f.default_factory()
+                    if f.default_factory is not dc.MISSING  # type: ignore[misc]
+                    else ""
+                )
+            )
             for f in dc.fields(ClassificationResult)
         }
         defaults["classification"] = "Likely Pathogenic"
@@ -476,6 +464,7 @@ def test_smoke_fixture_3b_tp53_r249m_clinvar_override_reason_field_exists():
 # ---------------------------------------------------------------------------
 # Fixture 4 — Phase B scope (render-layer Tier III consequence gate)
 # ---------------------------------------------------------------------------
+
 
 def test_smoke_fixture_4_render_tier3_excludes_intronic():
     """Render-layer Tier III consequence gate — v2.2 Phase B B1.
@@ -499,6 +488,7 @@ def test_smoke_fixture_4_render_tier3_excludes_intronic():
 # ---------------------------------------------------------------------------
 # Fixture 5 — Phase B scope (PHI non-persistence)
 # ---------------------------------------------------------------------------
+
 
 @pytest.mark.xfail(
     reason="Phase B (B4) scope — persist_patient_metadata flag lands in v2.2 Phase B",

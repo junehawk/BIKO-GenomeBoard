@@ -6,10 +6,10 @@ Run manually to update gene_knowledge.json with PubMed references:
 
 This script is NOT part of the automated pipeline.
 """
+
 import json
 import time
 import logging
-from pathlib import Path
 from typing import List, Dict, Optional
 
 from scripts.common.api_utils import fetch_with_retry
@@ -38,16 +38,36 @@ KNOWN_REFERENCES: Dict[str, List[Dict]] = {
         {"pmid": "17206810", "source": "J Med Genet 2007", "note": "CFTR mutation spectrum"},
     ],
     "CYP2C19": [
-        {"pmid": "34216116", "source": "Clin Pharmacol Ther 2022", "note": "CPIC guideline for CYP2C19 and clopidogrel"},
+        {
+            "pmid": "34216116",
+            "source": "Clin Pharmacol Ther 2022",
+            "note": "CPIC guideline for CYP2C19 and clopidogrel",
+        },
         {"pmid": "25741868", "source": "Genet Med 2015", "note": "ACMG/AMP standards"},
     ],
     "HLA-B": [
-        {"pmid": "22378157", "source": "Clin Pharmacol Ther 2012", "note": "CPIC guideline for HLA-B*5701 and abacavir"},
-        {"pmid": "24561393", "source": "Clin Pharmacol Ther 2014", "note": "CPIC guideline for HLA-B*5801 and allopurinol"},
+        {
+            "pmid": "22378157",
+            "source": "Clin Pharmacol Ther 2012",
+            "note": "CPIC guideline for HLA-B*5701 and abacavir",
+        },
+        {
+            "pmid": "24561393",
+            "source": "Clin Pharmacol Ther 2014",
+            "note": "CPIC guideline for HLA-B*5801 and allopurinol",
+        },
     ],
     "NUDT15": [
-        {"pmid": "25270285", "source": "Nat Genet 2014", "note": "NUDT15 and thiopurine-induced leukopenia (Yang et al.)"},
-        {"pmid": "30447069", "source": "Clin Pharmacol Ther 2019", "note": "CPIC guideline for thiopurines and TPMT/NUDT15"},
+        {
+            "pmid": "25270285",
+            "source": "Nat Genet 2014",
+            "note": "NUDT15 and thiopurine-induced leukopenia (Yang et al.)",
+        },
+        {
+            "pmid": "30447069",
+            "source": "Clin Pharmacol Ther 2019",
+            "note": "CPIC guideline for thiopurines and TPMT/NUDT15",
+        },
     ],
     "MUTYH": [
         {"pmid": "22703879", "source": "GeneReviews", "note": "MUTYH-Associated Polyposis"},

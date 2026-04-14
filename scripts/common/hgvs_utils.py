@@ -5,16 +5,33 @@ generic protein-position extractor that tolerates 1-letter / 3-letter forms,
 start-lost (``p.Met1?``), frameshift (``p.Arg249fs``), empty, and whitespace-
 wrapped strings.
 """
+
 from __future__ import annotations
 
 import re
 from typing import Optional
 
 AA3TO1 = {
-    "Ala": "A", "Arg": "R", "Asn": "N", "Asp": "D", "Cys": "C",
-    "Glu": "E", "Gln": "Q", "Gly": "G", "His": "H", "Ile": "I",
-    "Leu": "L", "Lys": "K", "Met": "M", "Phe": "F", "Pro": "P",
-    "Ser": "S", "Thr": "T", "Trp": "W", "Tyr": "Y", "Val": "V",
+    "Ala": "A",
+    "Arg": "R",
+    "Asn": "N",
+    "Asp": "D",
+    "Cys": "C",
+    "Glu": "E",
+    "Gln": "Q",
+    "Gly": "G",
+    "His": "H",
+    "Ile": "I",
+    "Leu": "L",
+    "Lys": "K",
+    "Met": "M",
+    "Phe": "F",
+    "Pro": "P",
+    "Ser": "S",
+    "Thr": "T",
+    "Trp": "W",
+    "Tyr": "Y",
+    "Val": "V",
     "Ter": "*",
 }
 

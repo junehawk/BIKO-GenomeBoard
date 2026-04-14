@@ -63,20 +63,20 @@ def build_db(vcf_paths: list, db_path: str = DEFAULT_DB_PATH, version: str = "4.
         count = 0
         batch = []
 
-        open_func = gzip.open if str(vcf_path).endswith('.gz') else open
-        mode = 'rt' if str(vcf_path).endswith('.gz') else 'r'
+        open_func = gzip.open if str(vcf_path).endswith(".gz") else open
+        mode = "rt" if str(vcf_path).endswith(".gz") else "r"
 
         with open_func(vcf_path, mode) as f:
             for line in f:
-                if line.startswith('#'):
+                if line.startswith("#"):
                     continue
 
-                fields = line.strip().split('\t')
+                fields = line.strip().split("\t")
                 if len(fields) < 8:
                     continue
 
                 chrom = fields[0]
-                if not chrom.startswith('chr'):
+                if not chrom.startswith("chr"):
                     chrom = f"chr{chrom}"
 
                 try:
@@ -84,14 +84,14 @@ def build_db(vcf_paths: list, db_path: str = DEFAULT_DB_PATH, version: str = "4.
                 except ValueError:
                     continue
 
-                rsid = fields[2] if fields[2] != '.' else None
+                rsid = fields[2] if fields[2] != "." else None
                 ref = fields[3]
                 alt_field = fields[4]
                 filter_status = fields[6]
                 info = fields[7]
 
                 # Parse multiple ALT alleles
-                for alt_idx, alt in enumerate(alt_field.split(',')):
+                for alt_idx, alt in enumerate(alt_field.split(",")):
                     # Parse INFO field for frequencies
                     af_global = None
                     af_eas = None
@@ -102,60 +102,79 @@ def build_db(vcf_paths: list, db_path: str = DEFAULT_DB_PATH, version: str = "4.
                     an = None
                     ac = None
 
-                    for item in info.split(';'):
-                        if '=' not in item:
+                    for item in info.split(";"):
+                        if "=" not in item:
                             continue
-                        key, val = item.split('=', 1)
+                        key, val = item.split("=", 1)
 
                         # Handle multi-allelic: pick the value for this alt allele
-                        vals = val.split(',')
+                        vals = val.split(",")
                         v = vals[alt_idx] if alt_idx < len(vals) else vals[0]
 
                         try:
-                            if key == 'AF':
+                            if key == "AF":
                                 af_global = float(v)
-                            elif key == 'AF_eas':
+                            elif key == "AF_eas":
                                 af_eas = float(v)
-                            elif key == 'AF_afr':
+                            elif key == "AF_afr":
                                 af_afr = float(v)
-                            elif key == 'AF_amr':
+                            elif key == "AF_amr":
                                 af_amr = float(v)
-                            elif key == 'AF_nfe':
+                            elif key == "AF_nfe":
                                 af_nfe = float(v)
-                            elif key == 'AF_sas':
+                            elif key == "AF_sas":
                                 af_sas = float(v)
-                            elif key == 'AN':
+                            elif key == "AN":
                                 an = int(v)
-                            elif key == 'AC':
+                            elif key == "AC":
                                 ac = int(vals[alt_idx] if alt_idx < len(vals) else vals[0])
                         except (ValueError, IndexError):
                             pass
 
-                    batch.append((
-                        chrom, pos, ref, alt, rsid,
-                        af_global, af_eas, af_afr, af_amr, af_nfe, af_sas,
-                        an, ac, filter_status
-                    ))
+                    batch.append(
+                        (
+                            chrom,
+                            pos,
+                            ref,
+                            alt,
+                            rsid,
+                            af_global,
+                            af_eas,
+                            af_afr,
+                            af_amr,
+                            af_nfe,
+                            af_sas,
+                            an,
+                            ac,
+                            filter_status,
+                        )
+                    )
                     count += 1
 
                 if len(batch) >= 10000:
-                    conn.executemany("""
+                    conn.executemany(
+                        """
                         INSERT INTO variants (chrom, pos, ref, alt, rsid,
                             af_global, af_eas, af_afr, af_amr, af_nfe, af_sas,
                             an, ac, filter_status)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    """, batch)
+                    """,
+                        batch,
+                    )
                     batch = []
                     if count % 500000 == 0:
                         logger.info(f"  {count:,} variants...")
 
         if batch:
-            conn.executemany("""
+            conn.executemany(
+                """
                 INSERT INTO variants (chrom, pos, ref, alt, rsid,
                     af_global, af_eas, af_afr, af_amr, af_nfe, af_sas,
                     an, ac, filter_status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, batch)
+            """,
+                batch,
+            )
 
         total_count += count
         logger.info(f"  {vcf_path}: {count:,} variants")
@@ -186,13 +205,13 @@ if __name__ == "__main__":
         print("Usage: python build_gnomad_db.py <vcf1.gz> [vcf2.gz ...] [--version 4.1] [--output path]")
         sys.exit(1)
 
-    vcf_paths = [p for p in sys.argv[1:] if not p.startswith('--')]
+    vcf_paths = [p for p in sys.argv[1:] if not p.startswith("--")]
     version = "4.1"
     db_path = DEFAULT_DB_PATH
     for i, arg in enumerate(sys.argv):
-        if arg == '--version' and i + 1 < len(sys.argv):
+        if arg == "--version" and i + 1 < len(sys.argv):
             version = sys.argv[i + 1]
-        if arg == '--output' and i + 1 < len(sys.argv):
+        if arg == "--output" and i + 1 < len(sys.argv):
             db_path = sys.argv[i + 1]
 
     build_db(vcf_paths, db_path, version)

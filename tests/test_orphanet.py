@@ -6,7 +6,7 @@ from pathlib import Path
 
 def _create_sample_orphanet_xml(path):
     """Minimal Orphanet Product 9 XML for testing."""
-    Path(path).write_text('''<?xml version="1.0" encoding="UTF-8"?>
+    Path(path).write_text("""<?xml version="1.0" encoding="UTF-8"?>
 <JDBOR date="2025-12-01" version="1.0">
   <DisorderList count="2">
     <Disorder id="1">
@@ -48,11 +48,12 @@ def _create_sample_orphanet_xml(path):
       </PrevalenceList>
     </Disorder>
   </DisorderList>
-</JDBOR>''')
+</JDBOR>""")
 
 
 def test_build_orphanet_db(tmp_path):
     from scripts.db.build_orphanet_db import build_db
+
     xml_path = str(tmp_path / "orphanet.xml")
     db_path = str(tmp_path / "orphanet.sqlite3")
     _create_sample_orphanet_xml(xml_path)
@@ -66,6 +67,7 @@ def test_build_orphanet_db(tmp_path):
 
 def test_query_prevalence_by_gene(tmp_orphanet_db):
     from scripts.db.query_orphanet import get_prevalence_by_gene
+
     result = get_prevalence_by_gene("CFTR", tmp_orphanet_db)
     assert len(result) >= 1
     assert result[0]["disease_name"] == "Cystic fibrosis"
@@ -74,6 +76,7 @@ def test_query_prevalence_by_gene(tmp_orphanet_db):
 
 def test_get_prevalence_text(tmp_orphanet_db):
     from scripts.db.query_orphanet import get_prevalence_text
+
     text = get_prevalence_text("CFTR", tmp_orphanet_db)
     assert "Cystic fibrosis" in text
     assert "1-5 / 10 000" in text
@@ -81,6 +84,7 @@ def test_get_prevalence_text(tmp_orphanet_db):
 
 def test_query_unknown_gene(tmp_orphanet_db):
     from scripts.db.query_orphanet import get_prevalence_by_gene
+
     result = get_prevalence_by_gene("FAKEGENE", tmp_orphanet_db)
     assert result == []
 
@@ -88,6 +92,7 @@ def test_query_unknown_gene(tmp_orphanet_db):
 @pytest.fixture
 def tmp_orphanet_db(tmp_path):
     from scripts.db.build_orphanet_db import build_db
+
     xml_path = str(tmp_path / "orphanet.xml")
     db_path = str(tmp_path / "orphanet.sqlite3")
     _create_sample_orphanet_xml(xml_path)

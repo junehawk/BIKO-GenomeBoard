@@ -1,4 +1,5 @@
 """Data models for Clinical Board system."""
+
 from dataclasses import dataclass, field
 from typing import List, Optional
 
@@ -15,19 +16,21 @@ BOARD_DISCLAIMER = (
 @dataclass
 class AgentOpinion:
     """Single domain agent's analysis opinion."""
-    agent_name: str           # e.g., "Variant Pathologist"
-    domain: str               # e.g., "variant_pathology"
-    findings: List[dict] = field(default_factory=list)      # [{finding: str, evidence: str, confidence: str}]
+
+    agent_name: str  # e.g., "Variant Pathologist"
+    domain: str  # e.g., "variant_pathology"
+    findings: List[dict] = field(default_factory=list)  # [{finding: str, evidence: str, confidence: str}]
     recommendations: List[str] = field(default_factory=list)
     concerns: List[str] = field(default_factory=list)
-    references: List[str] = field(default_factory=list)     # PMIDs or citations
+    references: List[str] = field(default_factory=list)  # PMIDs or citations
     confidence: str = "moderate"  # high/moderate/low
-    raw_response: str = ""        # Original LLM response for debugging
+    raw_response: str = ""  # Original LLM response for debugging
 
 
 @dataclass
 class BoardOpinion:
     """Synthesized opinion from the full Clinical Board."""
+
     primary_diagnosis: str = ""
     primary_diagnosis_evidence: str = ""
     differential_diagnoses: List[dict] = field(default_factory=list)  # [{diagnosis, likelihood, evidence}]
@@ -48,6 +51,7 @@ class BoardOpinion:
 @dataclass
 class CancerBoardOpinion:
     """Synthesized opinion from Cancer Clinical Board — treatment-focused."""
+
     therapeutic_headline: str = ""
     """Short (<= 120 chars) headline summarising the therapeutic stance, rendered as
     the section title. Empty when the Board Chair prompt is running against an older

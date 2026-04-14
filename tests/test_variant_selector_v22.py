@@ -10,11 +10,10 @@ Scope:
 All tests mock ``is_hotspot`` / ``is_cancer_gene`` to isolate the
 selector logic from CIViC DB availability.
 """
+
 from __future__ import annotations
 
 from unittest.mock import patch
-
-import pytest
 
 
 def _mk_snv(
@@ -333,7 +332,11 @@ def test_all_mmr_lynch_genes_covered():
         selected, _ = select_board_variants(variants, mode="cancer")
 
     assert {v["gene"] for v in selected} == {
-        "MLH1", "MSH2", "MSH6", "PMS2", "EPCAM",
+        "MLH1",
+        "MSH2",
+        "MSH6",
+        "PMS2",
+        "EPCAM",
     }
     assert all(v["selection_reason"] == "VUS_MMR_Lynch" for v in selected)
 
@@ -414,5 +417,3 @@ def test_mmr_lynch_hotspot_takes_higher_priority_reason():
 
     assert len(selected) == 1
     assert selected[0]["selection_reason"] == "VUS_hotspot"
-
-

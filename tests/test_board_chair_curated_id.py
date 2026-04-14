@@ -6,15 +6,14 @@ section the LLM can cite by ``curated_id``, and the runner-level narrative
 scrubber must reject any row whose ``(curated_id, variant_key)`` pair was not
 emitted by the curator.
 """
+
 from __future__ import annotations
 
 import inspect
 from unittest.mock import MagicMock
 
-import pytest
 
 from scripts.clinical_board.agents.board_chair import BoardChair
-from scripts.clinical_board.models import AgentOpinion
 
 
 def _stub(drug, variant_key, cid):
@@ -56,6 +55,7 @@ def test_prompt_includes_curated_evidence_block():
 def test_prompt_requires_curated_id_in_schema():
     """The CANCER system prompt JSON schema must mention curated_id + variant_key."""
     from scripts.clinical_board.agents.board_chair import CANCER_SYSTEM_PROMPT
+
     assert "curated_id" in CANCER_SYSTEM_PROMPT
     assert "variant_key" in CANCER_SYSTEM_PROMPT
 
@@ -77,11 +77,8 @@ def test_cross_variant_binding_rejected_by_scrubber():
     opinion = CancerBoardOpinion(
         therapeutic_headline="TP53 R249M + EGFR L858R",
         treatment_options=[
-            {"drug": "Osimertinib", "curated_id": "cid-osi",
-             "variant_key": "17:76:G:A", "evidence_level": "A"},
+            {"drug": "Osimertinib", "curated_id": "cid-osi", "variant_key": "17:76:G:A", "evidence_level": "A"},
         ],
     )
     scrub_opinion(opinion, curated)
-    assert opinion.treatment_options == [], (
-        "cross-variant paste attack not caught by narrative_scrubber"
-    )
+    assert opinion.treatment_options == [], "cross-variant paste attack not caught by narrative_scrubber"

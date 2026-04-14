@@ -1,4 +1,5 @@
 """ClinGen gene-disease validity lookup — local DB with static fallback."""
+
 import logging
 from typing import Optional
 
@@ -22,6 +23,7 @@ def get_gene_validity(gene: str) -> Optional[str]:
     """
     try:
         from scripts.db.query_local_clingen import get_gene_validity_local
+
         result = get_gene_validity_local(gene)
         if result:
             return result

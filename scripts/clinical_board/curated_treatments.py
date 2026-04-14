@@ -14,6 +14,7 @@ Patient-safety guarantees enforced here:
 * Every ``CuratedTreatment`` gets a stable 12-char ``curated_id`` the
   narrator cites back.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -71,8 +72,8 @@ class CuratedTreatment:
     curated_id: str = ""
     drug: str = ""
     target: str = ""
-    evidence_level: str = "D"      # Normalised AMP: A/B/C/D
-    source: str = ""               # "oncokb" | "civic" | "both"
+    evidence_level: str = "D"  # Normalised AMP: A/B/C/D
+    source: str = ""  # "oncokb" | "civic" | "both"
     variant_key: str = ""
     pmids: List[str] = field(default_factory=list)
     disease_context: str = ""
@@ -153,10 +154,7 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
     try:
         conn = sqlite3.connect(db_path, check_same_thread=False)
         conn.row_factory = sqlite3.Row
-        has_therapy_ids = any(
-            row[1] == "therapy_ids"
-            for row in conn.execute("PRAGMA table_info(evidence)").fetchall()
-        )
+        has_therapy_ids = any(row[1] == "therapy_ids" for row in conn.execute("PRAGMA table_info(evidence)").fetchall())
         cols_common = (
             "gene, variant, disease, therapies, evidence_type, evidence_level, "
             "significance, evidence_statement, citation_id"
@@ -164,17 +162,21 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
         cols = cols_common + (", therapy_ids" if has_therapy_ids else "")
         rows: List[sqlite3.Row] = []
         if variant_name:
-            rows = list(conn.execute(
-                f"SELECT {cols} FROM evidence WHERE gene = ? AND variant = ? "
-                "AND evidence_type = 'Predictive' ORDER BY evidence_level",
-                (gene, variant_name),
-            ))
+            rows = list(
+                conn.execute(
+                    f"SELECT {cols} FROM evidence WHERE gene = ? AND variant = ? "
+                    "AND evidence_type = 'Predictive' ORDER BY evidence_level",
+                    (gene, variant_name),
+                )
+            )
         if not rows:
-            rows = list(conn.execute(
-                f"SELECT {cols} FROM evidence WHERE gene = ? AND evidence_type = 'Predictive' "
-                "ORDER BY evidence_level",
-                (gene,),
-            ))
+            rows = list(
+                conn.execute(
+                    f"SELECT {cols} FROM evidence WHERE gene = ? AND evidence_type = 'Predictive' "
+                    "ORDER BY evidence_level",
+                    (gene,),
+                )
+            )
         conn.close()
     except sqlite3.Error as e:
         logger.debug("[curated_treatments] CIViC query error for %s: %s", gene, e)
@@ -185,15 +187,17 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
         therapy_ids = r["therapy_ids"] if has_therapy_ids else ""
         pmids_str = r["citation_id"] or ""
         pmids = [p.strip() for p in pmids_str.split(",") if p.strip()]
-        out.append({
-            "drug": r["therapies"] or "",
-            "level": (r["evidence_level"] or "D").upper(),
-            "pmids": pmids,
-            "disease": r["disease"] or "",
-            "significance": (r["significance"] or "sensitivity").lower(),
-            "therapy_ids": therapy_ids or "",
-            "raw_row": dict(r),
-        })
+        out.append(
+            {
+                "drug": r["therapies"] or "",
+                "level": (r["evidence_level"] or "D").upper(),
+                "pmids": pmids,
+                "disease": r["disease"] or "",
+                "significance": (r["significance"] or "sensitivity").lower(),
+                "therapy_ids": therapy_ids or "",
+                "raw_row": dict(r),
+            }
+        )
     return out
 
 
@@ -240,38 +244,45 @@ def _merge(
                 (ok.get("level") or "D", civ.get("level") or "D"),
                 key=lambda lv: _LEVEL_RANK.get(lv, 9),
             )
-            merged.append(CuratedTreatment(
-                curated_id=_curated_id(variant_key, drug_label, "both"),
-                variant_key=variant_key,
-                drug=drug_label,
-                target="",
-                evidence_level=level,
-                source="both",
-                pmids=pmids,
-                disease_context=civ.get("disease") or ok.get("disease") or "",
-                significance=ok.get("significance") or civ.get("significance") or "sensitivity",
-                therapy_ids=",".join(sorted(ok_therapy_ids | _therapy_id_set(civ.get("therapy_ids", "")))),
-                raw_row={"oncokb": ok.get("raw_row", {}), "civic": civ.get("raw_row", {})},
-            ))
+            merged.append(
+                CuratedTreatment(
+                    curated_id=_curated_id(variant_key, drug_label, "both"),
+                    variant_key=variant_key,
+                    drug=drug_label,
+                    target="",
+                    evidence_level=level,
+                    source="both",
+                    pmids=pmids,
+                    disease_context=civ.get("disease") or ok.get("disease") or "",
+                    significance=ok.get("significance") or civ.get("significance") or "sensitivity",
+                    therapy_ids=",".join(sorted(ok_therapy_ids | _therapy_id_set(civ.get("therapy_ids", "")))),
+                    raw_row={"oncokb": ok.get("raw_row", {}), "civic": civ.get("raw_row", {})},
+                )
+            )
         else:
-            merged.append(CuratedTreatment(
-                curated_id=_curated_id(variant_key, ok_drug, "oncokb"),
-                variant_key=variant_key,
-                drug=ok_drug,
-                target="",
-                evidence_level=ok.get("level") or "D",
-                source="oncokb",
-                pmids=list(ok.get("pmids", [])),
-                disease_context=ok.get("disease", ""),
-                significance=ok.get("significance") or "sensitivity",
-                therapy_ids=",".join(sorted(ok_therapy_ids)),
-                raw_row=ok.get("raw_row", {}),
-            ))
+            merged.append(
+                CuratedTreatment(
+                    curated_id=_curated_id(variant_key, ok_drug, "oncokb"),
+                    variant_key=variant_key,
+                    drug=ok_drug,
+                    target="",
+                    evidence_level=ok.get("level") or "D",
+                    source="oncokb",
+                    pmids=list(ok.get("pmids", [])),
+                    disease_context=ok.get("disease", ""),
+                    significance=ok.get("significance") or "sensitivity",
+                    therapy_ids=",".join(sorted(ok_therapy_ids)),
+                    raw_row=ok.get("raw_row", {}),
+                )
+            )
             # Near-match logging for fuzzy drug-name misses
             for civ in civic_rows:
                 civ_canon = _canon_drug(civ.get("drug"))
-                if civ_canon and ok_canon and civ_canon != ok_canon and (
-                    civ_canon.startswith(ok_canon[:4]) or ok_canon.startswith(civ_canon[:4])
+                if (
+                    civ_canon
+                    and ok_canon
+                    and civ_canon != ok_canon
+                    and (civ_canon.startswith(ok_canon[:4]) or ok_canon.startswith(civ_canon[:4]))
                 ):
                     _log_unmerged(variant_key, ok_drug, civ.get("drug") or "")
                     break
@@ -280,19 +291,21 @@ def _merge(
         if idx in civic_consumed:
             continue
         civ_drug = civ.get("drug") or ""
-        merged.append(CuratedTreatment(
-            curated_id=_curated_id(variant_key, civ_drug, "civic"),
-            variant_key=variant_key,
-            drug=civ_drug,
-            target="",
-            evidence_level=(civ.get("level") or "D").upper()[:1] if civ.get("level") else "D",
-            source="civic",
-            pmids=list(civ.get("pmids", [])),
-            disease_context=civ.get("disease", ""),
-            significance=civ.get("significance") or "sensitivity",
-            therapy_ids=civ.get("therapy_ids", "") or "",
-            raw_row=civ.get("raw_row", {}),
-        ))
+        merged.append(
+            CuratedTreatment(
+                curated_id=_curated_id(variant_key, civ_drug, "civic"),
+                variant_key=variant_key,
+                drug=civ_drug,
+                target="",
+                evidence_level=(civ.get("level") or "D").upper()[:1] if civ.get("level") else "D",
+                source="civic",
+                pmids=list(civ.get("pmids", [])),
+                disease_context=civ.get("disease", ""),
+                significance=civ.get("significance") or "sensitivity",
+                therapy_ids=civ.get("therapy_ids", "") or "",
+                raw_row=civ.get("raw_row", {}),
+            )
+        )
 
     # Normalise civic-only level letters (CIViC uses A..E; clamp unknown → D)
     for row in merged:

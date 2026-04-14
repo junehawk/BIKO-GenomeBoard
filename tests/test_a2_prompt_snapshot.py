@@ -10,6 +10,7 @@ assert the structural invariants qa-engineer's review requires:
    ``curated_id`` and the forbidden verb ("invent"/"발명")
 4. Forbidden block preserves the 반드시 한국어로 응답하세요 constraint
 """
+
 from __future__ import annotations
 
 from unittest.mock import MagicMock

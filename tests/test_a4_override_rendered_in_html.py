@@ -10,11 +10,11 @@ file-map correction (override rendering lives in the Jinja template, NOT in
 `scripts/clinical_board/render.py`). The render seam uses a dedicated
 `templates/macros/override.html` macro imported from the cancer template.
 """
+
 from __future__ import annotations
 
 import re
 
-import pytest
 
 from scripts.classification.acmg_engine import ClassificationResult
 from scripts.common.models import Variant
@@ -154,9 +154,7 @@ def test_override_notice_rendered_in_variant_card_when_reason_present():
 def test_override_notice_absent_when_reason_empty():
     """Negative case: no `.override-notice` block when reason is blank."""
     html = _render_cancer(_build_records(reason=""))
-    assert not _override_notice_blocks(html), (
-        "override-notice must not render when clinvar_override_reason is empty"
-    )
+    assert not _override_notice_blocks(html), "override-notice must not render when clinvar_override_reason is empty"
 
 
 def test_override_notice_has_page_break_inside_avoid():
@@ -219,10 +217,6 @@ def test_override_notice_truncation_tail_when_over_200_chars():
     blocks = _override_notice_blocks(html)
     assert blocks, "Expected an override-notice block even when reason is long"
     combined = " ".join(blocks)
-    assert "full reason in methodology" in combined, (
-        "Long reason must render the English truncation tail"
-    )
+    assert "full reason in methodology" in combined, "Long reason must render the English truncation tail"
     # The excess tail text must NOT appear verbatim in the notice (it was cut).
-    assert "exercise the tail" not in combined, (
-        "Text beyond the 200-char cap must be truncated from the notice body"
-    )
+    assert "exercise the tail" not in combined, "Text beyond the 200-char cap must be truncated from the notice body"

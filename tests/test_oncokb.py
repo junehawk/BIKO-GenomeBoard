@@ -1,5 +1,6 @@
 # tests/test_oncokb.py
 """Tests for OncoKB cancer gene tiering."""
+
 from pathlib import Path
 
 import pytest

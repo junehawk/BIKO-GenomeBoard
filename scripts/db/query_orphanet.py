@@ -23,8 +23,13 @@ def get_prevalence_by_gene(gene: str, db_path: Optional[str] = None) -> List[Dic
         ).fetchall()
         conn.close()
         return [
-            {"disease_name": r[0], "prevalence_type": r[1],
-             "prevalence_class": r[2], "val_moy": r[3], "geographic": r[4]}
+            {
+                "disease_name": r[0],
+                "prevalence_type": r[1],
+                "prevalence_class": r[2],
+                "val_moy": r[3],
+                "geographic": r[4],
+            }
             for r in rows
         ]
     except Exception as e:
