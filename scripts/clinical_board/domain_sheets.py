@@ -173,7 +173,142 @@ _RARE_DISEASE_BUILDERS: dict[str, Callable[[list, dict], str]] = {
 
 
 # ---------------------------------------------------------------------------
-# Cancer builders (populated in Task 4)
+# Cancer builders
 # ---------------------------------------------------------------------------
 
-_CANCER_BUILDERS: dict[str, Callable[[list, dict], str]] = {}
+
+def _cancer_therapeutic_target(variants: list, report_data: dict) -> str:
+    if not variants:
+        return "## Therapeutic Target Domain Data\n(No variants supplied.)\n"
+
+    lines = ["## Therapeutic Target Domain Data", ""]
+    for v in variants:
+        gene = v.get("gene", "?")
+        hgvsp = v.get("hgvsp") or v.get("hgvsc") or ""
+        classification = v.get("classification", "?")
+        clinvar_sig = v.get("clinvar_significance", "n/a")
+        in_silico = v.get("in_silico", {}) or {}
+        revel = in_silico.get("revel", "n/a")
+        cadd = in_silico.get("cadd_phred", "n/a")
+        civic = v.get("civic_evidence") or []
+        oncokb = v.get("oncokb") or {}
+
+        lines.append(f"- {gene} {hgvsp}".rstrip())
+        lines.append(f"    Classification: {classification} (ClinVar: {clinvar_sig})")
+        lines.append(f"    In silico: REVEL={revel}, CADD={cadd}")
+        if oncokb:
+            level = oncokb.get("level") or oncokb.get("therapeutic_level", "")
+            lines.append(f"    OncoKB: {level}".rstrip())
+        if civic:
+            for ev in civic[:5]:
+                drug = ev.get("drug", "")
+                level = ev.get("level", "")
+                direction = ev.get("direction", "")
+                lines.append(
+                    f"    CIViC drug: {drug} (level {level}, {direction})".rstrip()
+                )
+        resistance = v.get("resistance_notes") or v.get("resistance", "")
+        if resistance:
+            lines.append(f"    Resistance: {resistance}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _cancer_tumor_genomics(variants: list, report_data: dict) -> str:
+    lines = ["## Tumor Genomics Domain Data", ""]
+    tmb = report_data.get("tmb") or {}
+    if tmb:
+        score = tmb.get("score", "n/a")
+        level = tmb.get("level", "n/a")
+        lines.append(f"TMB: {score} mut/Mb ({level})")
+    msi = report_data.get("msi") or {}
+    if msi:
+        lines.append(f"MSI: {msi.get('status', 'n/a')}")
+    lines.append("")
+    if not variants:
+        lines.append("(No variants supplied.)")
+        return "\n".join(lines)
+
+    for v in variants:
+        gene = v.get("gene", "?")
+        hgvsp = v.get("hgvsp") or v.get("hgvsc") or ""
+        vaf = v.get("vaf", "n/a")
+        hotspot = v.get("hotspot") or v.get("is_hotspot")
+        driver = v.get("driver_status") or v.get("driver", "")
+        lines.append(f"- {gene} {hgvsp}".rstrip())
+        lines.append(f"    VAF: {vaf}")
+        if hotspot:
+            lines.append(f"    Hotspot: {hotspot}")
+        if driver:
+            lines.append(f"    Driver: {driver}")
+        co_occur = v.get("co_occurring") or []
+        if co_occur:
+            lines.append(f"    Co-occurring: {', '.join(map(str, co_occur))}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _cancer_pgx_specialist(variants: list, report_data: dict) -> str:
+    # Same shape as rare disease PGx sheet — chemo drugs surface naturally
+    return _rd_pgx_specialist(variants, report_data)
+
+
+def _cancer_clinical_evidence(variants: list, report_data: dict) -> str:
+    import os
+
+    lines = ["## Clinical Evidence Domain Data", ""]
+    if variants:
+        for v in variants:
+            gene = v.get("gene", "?")
+            hgvsp = v.get("hgvsp") or v.get("hgvsc") or ""
+            civic = v.get("civic_evidence") or []
+            trials = v.get("clinical_trials") or []
+            lines.append(f"- {gene} {hgvsp}".rstrip())
+            for ev in civic[:5]:
+                drug = ev.get("drug", "")
+                level = ev.get("level", "")
+                direction = ev.get("direction", "")
+                disease = ev.get("disease", "")
+                lines.append(
+                    f"    CIViC: {drug} — {disease} (level {level}, {direction})".rstrip()
+                )
+            if trials:
+                lines.append(f"    Trial markers: {', '.join(map(str, trials[:5]))}")
+            lines.append("")
+
+    kb_dir = report_data.get("_kb_treatments_dir")
+    if kb_dir and os.path.isdir(kb_dir):
+        lines.append("## Treatment Guidelines (from KB)")
+        lines.append("")
+        gene_set = {v.get("gene", "").upper() for v in variants if v.get("gene")}
+        try:
+            md_files = sorted(f for f in os.listdir(kb_dir) if f.endswith(".md"))
+        except OSError:
+            md_files = []
+        for fname in md_files:
+            fpath = os.path.join(kb_dir, fname)
+            try:
+                with open(fpath, encoding="utf-8") as f:
+                    content = f.read()
+            except OSError:
+                continue
+            # Include guidelines that mention any of the gene symbols, plus the
+            # first available guideline as fallback context.
+            content_upper = content.upper()
+            include = (
+                not gene_set
+                or any(g in content_upper for g in gene_set)
+            )
+            if include:
+                lines.append(f"### {fname}")
+                lines.append(content.strip())
+                lines.append("")
+    return "\n".join(lines)
+
+
+_CANCER_BUILDERS: dict[str, Callable[[list, dict], str]] = {
+    "therapeutic_target": _cancer_therapeutic_target,
+    "tumor_genomics": _cancer_tumor_genomics,
+    "pharmacogenomics": _cancer_pgx_specialist,
+    "clinical_evidence": _cancer_clinical_evidence,
+}

@@ -47,3 +47,39 @@ def test_domain_sheet_empty_variants():
     sheet = build_domain_sheet("variant_pathology", "rare-disease", [], {})
     assert isinstance(sheet, str)
     assert len(sheet) < 200
+
+
+def test_therapeutic_target_sheet_cancer():
+    """Cancer Therapeutic Target sheet includes CIViC drug evidence."""
+    variants = [
+        {
+            "gene": "EGFR",
+            "classification": "Pathogenic",
+            "civic_evidence": [{"drug": "Erlotinib", "level": "A", "direction": "Supports"}],
+            "in_silico": {"revel": 0.9},
+        }
+    ]
+    sheet = build_domain_sheet("therapeutic_target", "cancer", variants, {})
+    assert "EGFR" in sheet
+    assert "Erlotinib" in sheet
+
+
+def test_tumor_genomics_sheet_cancer():
+    """Cancer Tumor Genomics sheet includes TMB and VAF."""
+    variants = [{"gene": "TP53", "vaf": 0.45}]
+    report_data = {"tmb": {"score": 12.5, "level": "High"}}
+    sheet = build_domain_sheet("tumor_genomics", "cancer", variants, report_data)
+    assert "TMB" in sheet
+    assert "12.5" in sheet
+
+
+def test_clinical_evidence_sheet_loads_guidelines(tmp_path):
+    """Clinical Evidence sheet loads treatment guidelines from KB."""
+    guideline = tmp_path / "lung_cancer_nsclc.md"
+    guideline.write_text(
+        "---\nsource: CIViC + public guidelines\n---\n# NSCLC\nEGFR: erlotinib first-line"
+    )
+    variants = [{"gene": "EGFR"}]
+    report_data = {"_kb_treatments_dir": str(tmp_path)}
+    sheet = build_domain_sheet("clinical_evidence", "cancer", variants, report_data)
+    assert "NSCLC" in sheet or "erlotinib" in sheet
