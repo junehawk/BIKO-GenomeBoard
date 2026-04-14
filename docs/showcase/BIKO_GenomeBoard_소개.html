@@ -6,9 +6,11 @@
 <title>BIKO GenomeBoard — 한국인 맞춤형 유전체 변이 해석 파이프라인</title>
 <style>
   :root {
+    --biko-green: #00754A;
+    --biko-green-dark: #005C3A;
+    --biko-green-light: #E8F5EF;
+    --biko-gray: #54565A;
     --navy: #1E293B;
-    --blue: #2563EB;
-    --sky: #0EA5E9;
     --teal: #0D9488;
     --red: #DC2626;
     --amber: #D97706;
@@ -26,36 +28,65 @@
   }
   .container { max-width: 960px; margin: 0 auto; padding: 40px 32px; }
 
-  /* Hero */
-  .hero {
-    background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 50%, #0D4A6B 100%);
-    color: #fff;
-    padding: 64px 32px;
-    text-align: center;
+  /* ── Header Bar ── */
+  .header-bar {
+    background: #fff;
+    border-bottom: 3px solid var(--biko-green);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin-bottom: 12px; }
-  .hero .subtitle { font-size: 18px; color: #94A3B8; font-weight: 400; margin-bottom: 24px; }
-  .hero .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-  .hero .badge {
-    display: inline-block; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px; padding: 4px 16px; font-size: 13px; font-weight: 600; color: #CBD5E1;
+  .header-logos {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .header-logos img { height: 32px; }
+  .header-logos .separator {
+    width: 1px; height: 28px; background: var(--border);
+  }
+  .header-right {
+    font-size: 12px; color: var(--gray);
+    text-align: right;
   }
 
-  /* Section */
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, var(--biko-green-dark) 0%, var(--biko-green) 40%, #2D8B5E 100%);
+    color: #fff;
+    padding: 56px 32px 48px;
+    text-align: center;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--biko-green), #2D8B5E, var(--teal));
+  }
+  .hero h1 { font-size: 40px; font-weight: 800; letter-spacing: -1px; margin-bottom: 10px; }
+  .hero .subtitle { font-size: 17px; color: rgba(255,255,255,0.8); font-weight: 400; margin-bottom: 24px; }
+  .hero .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .hero .badge {
+    display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px; padding: 4px 16px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.9);
+  }
+
+  /* ── Sections ── */
   .section { margin: 48px 0; }
   .section-title {
-    font-size: 24px; font-weight: 700; color: var(--navy);
-    border-left: 4px solid var(--blue); padding-left: 16px; margin-bottom: 20px;
+    font-size: 22px; font-weight: 700; color: var(--navy);
+    border-left: 4px solid var(--biko-green); padding-left: 16px; margin-bottom: 20px;
   }
   .section-desc { color: var(--gray); margin-bottom: 24px; font-size: 15px; }
 
-  /* Cards */
+  /* ── Cards ── */
   .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
   .card {
     background: var(--light); border: 1px solid var(--border); border-radius: 12px;
     padding: 24px; transition: box-shadow 0.2s;
   }
-  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,117,74,0.08); }
   .card-icon { font-size: 28px; margin-bottom: 8px; }
   .card h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--navy); }
   .card p { font-size: 13.5px; color: var(--gray); line-height: 1.6; }
@@ -65,63 +96,46 @@
   }
   .tag-cancer { background: #FEF2F2; color: #991B1B; }
   .tag-rare { background: #EFF6FF; color: #1E40AF; }
-  .tag-both { background: #F0FDF4; color: #166534; }
+  .tag-both { background: var(--biko-green-light); color: var(--biko-green-dark); }
 
-  /* Pipeline flow */
-  .flow {
-    display: flex; align-items: center; gap: 0; overflow-x: auto;
-    padding: 20px 0; justify-content: center; flex-wrap: wrap;
-  }
+  /* ── Pipeline Flow ── */
   .flow-step {
     background: var(--light); border: 2px solid var(--border); border-radius: 10px;
-    padding: 14px 18px; text-align: center; min-width: 130px; position: relative;
+    padding: 14px 18px; text-align: center; min-width: 130px;
   }
   .flow-step .step-num {
-    font-size: 11px; font-weight: 700; color: #fff; background: var(--blue);
+    font-size: 11px; font-weight: 700; color: #fff; background: var(--biko-green);
     border-radius: 50%; width: 22px; height: 22px; display: inline-flex;
     align-items: center; justify-content: center; margin-bottom: 6px;
   }
   .flow-step .step-label { font-size: 12.5px; font-weight: 600; color: var(--navy); }
   .flow-step .step-detail { font-size: 11px; color: var(--gray); margin-top: 4px; }
-  .flow-arrow { font-size: 20px; color: var(--blue); padding: 0 6px; font-weight: 700; }
+  .flow-arrow { font-size: 20px; color: var(--biko-green); font-weight: 700; }
 
-  /* Tables */
+  /* ── Tables ── */
   table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13.5px; }
-  th { background: #F1F5F9; text-align: left; padding: 10px 14px; font-weight: 600; color: var(--navy); border-bottom: 2px solid var(--border); }
+  th { background: var(--biko-green-light); text-align: left; padding: 10px 14px; font-weight: 600; color: var(--biko-green-dark); border-bottom: 2px solid #B7E4CE; }
   td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: #334155; }
   tr:hover td { background: #FAFBFD; }
 
-  /* Feature list */
-  .feature-list { list-style: none; padding: 0; }
-  .feature-list li {
-    padding: 10px 0; border-bottom: 1px solid var(--border);
-    display: flex; gap: 12px; align-items: flex-start;
-  }
-  .feature-list li:last-child { border-bottom: none; }
-  .feature-bullet {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--blue);
-    margin-top: 7px; flex-shrink: 0;
-  }
-  .feature-list strong { color: var(--navy); }
-
-  /* Highlight box */
+  /* ── Highlight ── */
   .highlight {
-    background: linear-gradient(135deg, #EFF6FF, #F0F9FF);
-    border: 1px solid #BFDBFE; border-radius: 12px;
+    background: linear-gradient(135deg, var(--biko-green-light), #F0FDF8);
+    border: 1px solid #A7D7BE; border-radius: 12px;
     padding: 24px; margin: 24px 0;
   }
-  .highlight h4 { color: var(--blue); margin-bottom: 8px; font-size: 15px; }
+  .highlight h4 { color: var(--biko-green); margin-bottom: 8px; font-size: 15px; }
 
-  /* Stats */
-  .stats { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; margin: 32px 0; }
+  /* ── Stats ── */
+  .stats { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin: 32px 0; }
   .stat {
-    text-align: center; padding: 20px 28px; background: var(--light);
-    border: 1px solid var(--border); border-radius: 12px; min-width: 140px;
+    text-align: center; padding: 18px 8px; background: var(--light);
+    border: 1px solid var(--border); border-radius: 12px;
   }
-  .stat-num { font-size: 32px; font-weight: 800; color: var(--blue); }
+  .stat-num { font-size: 26px; font-weight: 800; color: var(--biko-green); }
   .stat-label { font-size: 12px; color: var(--gray); margin-top: 4px; font-weight: 500; }
 
-  /* Mode comparison */
+  /* ── Mode Comparison ── */
   .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
   .mode-box { border-radius: 12px; padding: 28px; }
   .mode-cancer { background: #FEF2F2; border: 1px solid #FECACA; }
@@ -130,14 +144,22 @@
   .mode-box ul { padding-left: 18px; font-size: 13.5px; color: #475569; }
   .mode-box li { margin-bottom: 6px; }
 
-  /* Footer */
-  .footer { text-align: center; padding: 40px 0; color: var(--gray); font-size: 13px; border-top: 1px solid var(--border); margin-top: 48px; }
+  /* ── Footer ── */
+  .footer {
+    text-align: center; padding: 32px 0; color: var(--gray); font-size: 13px;
+    border-top: 3px solid var(--biko-green); margin-top: 48px;
+  }
+  .footer-logos {
+    display: flex; align-items: center; justify-content: center; gap: 24px;
+    margin-bottom: 16px;
+  }
+  .footer-logos img { height: 28px; opacity: 0.7; }
+  .footer-logos .separator { width: 1px; height: 24px; background: var(--border); }
 
   @media (max-width: 700px) {
     .mode-grid { grid-template-columns: 1fr; }
     .hero h1 { font-size: 28px; }
-    .flow { flex-direction: column; }
-    .flow-arrow { transform: rotate(90deg); }
+    .header-bar { flex-direction: column; gap: 8px; }
   }
   @media print {
     .hero { padding: 32px; }
@@ -148,6 +170,18 @@
 </head>
 <body>
 
+<!-- ========== HEADER BAR ========== -->
+<div class="header-bar">
+  <div class="header-logos">
+    <a href="https://biobigdata.kr/bbd" target="_blank"><img src="assets/bbd_logo.svg" alt="BioBigData" style="height:28px;"></a>
+    <div class="separator"></div>
+    <a href="https://www.kisti.re.kr" target="_blank"><img src="assets/kisti_logo.png" alt="KISTI 한국과학기술정보연구원"></a>
+  </div>
+  <div class="header-right">
+    BioBigData.kr &middot; 국가통합바이오빅데이터구축사업
+  </div>
+</div>
+
 <!-- ========== HERO ========== -->
 <div class="hero">
   <h1>BIKO GenomeBoard</h1>
@@ -157,6 +191,7 @@
     <span class="badge">AMP/ASCO/CAP 2017</span>
     <span class="badge">ClinGen SVI 2022</span>
     <span class="badge">한국인 3종 빈도 DB</span>
+    <span class="badge">AI Clinical Board</span>
     <span class="badge">Offline Ready</span>
   </div>
 </div>
@@ -211,13 +246,13 @@
       <div class="step-label">VCF 파싱</div>
       <div class="step-detail">VEP/SnpEff 주석<br>SNV + Indel</div>
     </div>
-    <div style="text-align:center;font-size:20px;color:var(--blue);font-weight:700;">&rarr;</div>
+    <div style="text-align:center;" class="flow-arrow">&rarr;</div>
     <div class="flow-step">
       <div class="step-num">2</div>
       <div class="step-label">DB 조회</div>
       <div class="step-detail">ClinVar, gnomAD<br>KRGDB, Korea4K, NARD2</div>
     </div>
-    <div style="text-align:center;font-size:20px;color:var(--blue);font-weight:700;">&rarr;</div>
+    <div style="text-align:center;" class="flow-arrow">&rarr;</div>
     <div class="flow-step">
       <div class="step-num">3</div>
       <div class="step-label">빈도 비교</div>
@@ -226,7 +261,7 @@
   </div>
   <div style="display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr;max-width:700px;margin:4px auto;">
     <div></div><div></div><div></div><div></div>
-    <div style="text-align:center;font-size:20px;color:var(--blue);font-weight:700;">&#x2193;</div>
+    <div style="text-align:center;font-size:20px;color:var(--biko-green);font-weight:700;">&#x2193;</div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr;align-items:center;gap:0;max-width:700px;margin:0 auto;">
     <div class="flow-step">
@@ -234,13 +269,13 @@
       <div class="step-label">리포트 생성</div>
       <div class="step-detail">HTML / PDF<br>Jinja2 + WeasyPrint</div>
     </div>
-    <div style="text-align:center;font-size:20px;color:var(--blue);font-weight:700;">&larr;</div>
+    <div style="text-align:center;" class="flow-arrow">&larr;</div>
     <div class="flow-step">
       <div class="step-num">5</div>
       <div class="step-label">ACMG 분류</div>
       <div class="step-detail">결정적 규칙 엔진<br>ClinVar Override</div>
     </div>
-    <div style="text-align:center;font-size:20px;color:var(--blue);font-weight:700;">&larr;</div>
+    <div style="text-align:center;" class="flow-arrow">&larr;</div>
     <div class="flow-step">
       <div class="step-num">4</div>
       <div class="step-label">Evidence 수집</div>
@@ -329,7 +364,7 @@
     <div class="card">
       <div class="card-icon">&#x1F4C8;</div>
       <h3>TMB (Tumor Mutational Burden)</h3>
-      <p>Nonsynonymous coding variants / panel Mb. FDA FoundationOne CDx 방법론 기반. High(&ge;10) / Intermediate(6~10) / Low(&lt;6) 자동 분류. BED 파일 또는 수동 패널 크기 입력. Methodology 섹션에 방법 기록.</p>
+      <p>Nonsynonymous coding variants / panel Mb. FDA FoundationOne CDx 방법론 기반. High(&ge;10) / Intermediate(6~10) / Low(&lt;6) 자동 분류. BED 파일 또는 수동 패널 크기 입력.</p>
       <span class="tag tag-cancer">Cancer</span>
     </div>
 
@@ -357,7 +392,7 @@
     <div class="card">
       <div class="card-icon">&#x1F4D6;</div>
       <h3>Gene Knowledge (유전자 지식)</h3>
-      <p>6개 공인 출처 우선순위 체인: <strong>CPIC</strong>(PGx) &rarr; <strong>CIViC</strong>(암) &rarr; <strong>NCBI Gene</strong>(일반) &rarr; minimal. Orphanet 유병률, GeneReviews 문헌, OMIM MIM 번호 자동 통합. LLM 생성 콘텐츠 완전 폐기.</p>
+      <p>6개 공인 출처 우선순위 체인: <strong>CPIC</strong>(PGx) &rarr; <strong>CIViC</strong>(암) &rarr; <strong>NCBI Gene</strong>(일반) &rarr; minimal. Orphanet 유병률, GeneReviews 문헌, OMIM MIM 번호 자동 통합.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
@@ -368,19 +403,12 @@
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
-    <div class="card">
-      <div class="card-icon">&#x1F4E6;</div>
-      <h3>배치 처리</h3>
-      <p>디렉토리 또는 CSV manifest 기반 다중 샘플 처리. 샘플 간 변이 중복 제거 후 일괄 주석. ThreadPoolExecutor(주석) + ProcessPoolExecutor(리포트 생성) 병렬 처리. 진행률 표시.</p>
-      <span class="tag tag-both">Cancer + Rare Disease</span>
-    </div>
-
-    <div class="card" style="border:2px solid #99F6E4;background:linear-gradient(135deg,#F0FDFA,#F8FAFC);">
+    <div class="card" style="border:2px solid #A7D7BE;background:linear-gradient(135deg,var(--biko-green-light),#F8FAFC);">
       <div class="card-icon">&#x1F9E0;</div>
       <h3>AI Clinical Board</h3>
       <p><strong>Google MedGemma 27B</strong> 기반 다전문가 임상 Board 시스템. 4명의 도메인 전문 Agent(변이 병리, 질환 유전학, 약물유전체, 문헌 분석)가 독립 분석 후, Board Chair가 종합 진단 의견을 도출. 감별진단 목록, 권고사항, 추적 계획 포함. 결정적 분류 엔진 결과를 변경하지 않으며, 모든 출력에 AI-Generated 태그 표시. MedGemma는 임상 등급이 아니며, 연구 보조 목적으로만 사용됩니다.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
-      <span class="tag" style="background:#F0FDFA;color:#0D9488;margin-left:4px;">Ollama (온프레미스)</span>
+      <span class="tag" style="background:var(--biko-green-light);color:var(--teal);margin-left:4px;">Ollama (온프레미스)</span>
     </div>
 
   </div>
@@ -391,7 +419,7 @@
   <h2 class="section-title">로컬 데이터베이스</h2>
   <p class="section-desc">
     모든 핵심 DB를 로컬에 구축하여 <strong>인터넷 없이 온프레미스 환경에서 완전한 분석이 가능</strong>합니다.
-    API fallback은 선택적이며, <code>--skip-api</code> 옵션으로 완전 오프라인 실행을 지원합니다.
+    <code>bash scripts/setup_databases.sh</code> 로 자동 다운로드 및 빌드할 수 있습니다.
   </p>
   <table>
     <thead>
@@ -405,7 +433,7 @@
       <tr><td><strong>ClinGen</strong></td><td>SQLite</td><td>유전자-질환 유효성 평가</td><td>Definitive ~ Refuted</td></tr>
       <tr><td><strong>Orphanet</strong></td><td>SQLite</td><td>희귀질환 유병률</td><td>Product 9 XML 기반</td></tr>
       <tr><td><strong>GeneReviews</strong></td><td>SQLite</td><td>유전자 문헌 참조 (NBK ID, PMID)</td><td>NCBI FTP 기반</td></tr>
-      <tr><td><strong>OMIM genemap2</strong></td><td>SQLite</td><td>유전자-질환-유전패턴 매핑</td><td>~4,500 유전자 (승인 후 확장)</td></tr>
+      <tr><td><strong>OMIM genemap2</strong></td><td>SQLite</td><td>유전자-질환-유전패턴 매핑</td><td>~4,500 유전자</td></tr>
       <tr><td><strong>OMIM mim2gene</strong></td><td>SQLite</td><td>MIM 번호 ↔ 유전자 매핑</td><td>mim2gene.txt 기반</td></tr>
       <tr><td><strong>KRGDB</strong></td><td>TSV (in-memory)</td><td>한국인 대립유전자 빈도</td><td>Korea Reference Genome DB</td></tr>
       <tr><td><strong>Korea4K</strong></td><td>TSV (in-memory)</td><td>한국인 대립유전자 빈도</td><td>10,000 Genomes Project</td></tr>
@@ -480,11 +508,11 @@
       <tr><td><strong>VCF 파싱</strong></td><td>텍스트 기반 파서 + VEP CSQ/SnpEff ANN 지원</td></tr>
       <tr><td><strong>gnomAD 조회</strong></td><td>pysam TabixFile (VCF.bgz 직접 쿼리)</td></tr>
       <tr><td><strong>로컬 DB</strong></td><td>SQLite (thread-safe, 멱등 빌드)</td></tr>
+      <tr><td><strong>AI Clinical Board</strong></td><td>Ollama + Google MedGemma 27B (로컬 LLM)</td></tr>
       <tr><td><strong>리포트 엔진</strong></td><td>Jinja2 (HTML) + WeasyPrint (PDF)</td></tr>
       <tr><td><strong>병렬 처리</strong></td><td>ThreadPoolExecutor (DB 쿼리) + ProcessPoolExecutor (리포트)</td></tr>
       <tr><td><strong>설정</strong></td><td>YAML + 스키마 검증 (로드 시점)</td></tr>
-      <tr><td><strong>테스트</strong></td><td>pytest (599개, CI: Python 3.10/3.11/3.12)</td></tr>
-      <tr><td><strong>린팅</strong></td><td>Ruff (120 char, E/F/W rules)</td></tr>
+      <tr><td><strong>테스트</strong></td><td>pytest (638개)</td></tr>
       <tr><td><strong>배포</strong></td><td>Docker + docker-compose / CLI 직접 실행</td></tr>
     </tbody>
   </table>
@@ -493,7 +521,9 @@
 <!-- ========== CLI 사용법 ========== -->
 <div class="section">
   <h2 class="section-title">CLI 사용법</h2>
-  <div style="background:#1E293B;border-radius:10px;padding:24px;color:#E2E8F0;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.8;overflow-x:auto;">
+  <div style="background:var(--biko-gray);border-radius:10px;padding:24px;color:#E2E8F0;font-family:'SF Mono','Fira Code',monospace;font-size:13px;line-height:1.8;overflow-x:auto;">
+    <span style="color:#94A3B8;"># 데이터베이스 자동 셋업</span><br>
+    bash scripts/setup_databases.sh<br><br>
     <span style="color:#94A3B8;"># 암 모드 (기본)</span><br>
     python scripts/orchestrate.py sample.vcf -o report.html --skip-api<br><br>
     <span style="color:#94A3B8;"># 희귀질환 모드 + HPO 표현형</span><br>
@@ -506,10 +536,7 @@
     python scripts/orchestrate.py sample.vcf -o report.html \<br>
     &nbsp;&nbsp;--clinical-board --board-lang en<br><br>
     <span style="color:#94A3B8;"># 배치 처리 (8 workers)</span><br>
-    python scripts/orchestrate.py --batch vcf_dir/ --output-dir output/ --workers 8<br><br>
-    <span style="color:#94A3B8;"># Docker</span><br>
-    docker run -v ./input:/app/input -v ./output:/app/output \<br>
-    &nbsp;&nbsp;genomeboard /app/input/sample.vcf -o /app/output/report.html
+    python scripts/orchestrate.py --batch vcf_dir/ --output-dir reports/ --workers 8
   </div>
 </div>
 
@@ -518,22 +545,21 @@
   <h2 class="section-title">모듈 구조</h2>
   <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:24px;font-family:'SF Mono','Fira Code',monospace;font-size:12.5px;line-height:1.8;color:#334155;">
     scripts/<br>
-    ├── <strong>orchestrate.py</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— CLI 진입점 + run_pipeline (400줄)</span><br>
+    ├── <strong>orchestrate.py</strong>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— CLI 진입점 + run_pipeline</span><br>
     ├── pipeline/<br>
     │&nbsp;&nbsp; ├── query.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— DB 쿼리 오케스트레이션</span><br>
     │&nbsp;&nbsp; ├── classify.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ACMG 분류 + variant 조립</span><br>
     │&nbsp;&nbsp; └── batch.py&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 배치 처리 (변이 중복제거)</span><br>
-    ├── clinical_board/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— AI Clinical Board (Ollama LLM 연동)</span><br>
+    ├── clinical_board/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— AI Clinical Board (Ollama LLM)</span><br>
     │&nbsp;&nbsp; └── agents/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 4 전문의 + Board Chair</span><br>
     ├── intake/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— VCF, AnnotSV, InterVar 파싱</span><br>
-    ├── classification/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ACMG 엔진, In Silico, Evidence Collector</span><br>
+    ├── classification/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ACMG 엔진, In Silico, Evidence</span><br>
     ├── somatic/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— AMP Tiering, TMB</span><br>
     ├── clinical/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ClinVar, OncoKB, HPO, OMIM, ClinGen</span><br>
-    ├── korean_pop/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— KRGDB, Korea4K, NARD2, gnomAD, 빈도 비교</span><br>
-    ├── db/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 10 build + 9 query 모듈 (SQLite)</span><br>
+    ├── korean_pop/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— KRGDB, Korea4K, NARD2, gnomAD</span><br>
+    ├── db/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 10 build + 9 query 모듈</span><br>
     ├── pharma/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— Korean PGx, PharmGKB</span><br>
-    ├── counselor/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— Jinja2 HTML + WeasyPrint PDF</span><br>
-    └── tools/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— Gene Knowledge 빌더 (6개 출처)</span><br>
+    └── counselor/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— Jinja2 HTML + WeasyPrint PDF</span><br>
     <br>
     templates/<br>
     ├── cancer/report.html&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 암 리포트 (AMP Tier I-IV)</span><br>
@@ -544,8 +570,18 @@
 
 <!-- ========== Footer ========== -->
 <div class="footer">
+  <div class="footer-logos">
+    <a href="https://biobigdata.kr/bbd" target="_blank"><img src="assets/bbd_logo.svg" alt="BioBigData" style="height:24px;"></a>
+    <div class="separator"></div>
+    <a href="https://www.kisti.re.kr" target="_blank"><img src="assets/kisti_logo.png" alt="KISTI"></a>
+  </div>
   <p><strong>BIKO GenomeBoard</strong> &mdash; Korean Population-Aware Genomic Variant Interpretation Pipeline</p>
-  <p style="margin-top:6px;">Python &ge; 3.10 &middot; 599 Tests &middot; Docker Ready &middot; Offline Capable</p>
+  <p style="margin-top:6px;">Python &ge; 3.10 &middot; 638 Tests &middot; Docker Ready &middot; Offline Capable</p>
+  <p style="margin-top:8px;font-size:11px;color:#94A3B8;">
+    AI Clinical Board powered by <a href="https://ai.google.dev/gemma/docs/medgemma" style="color:#94A3B8;">Google MedGemma</a> under
+    <a href="https://ai.google.dev/gemma/docs/medgemma/terms" style="color:#94A3B8;">MedGemma Terms of Use</a>.
+    Research use only.
+  </p>
 </div>
 
 </div><!-- /container -->
