@@ -128,13 +128,11 @@ def test_build_briefing_with_pgx(tmp_path):
         assert "CPIC Level: A" in briefing
 
 
-# ── Truncation ───────────────────────────────────────────────────────────────
+# ── Board variant selection ─────────────────────────────────────────────────
 
-def test_build_briefing_truncation():
-    """More than 20 variants → only top 20 shown."""
-    # Build synthetic report data with 30 variants
+def _passenger_vus_report(n: int = 30) -> dict:
     variants = []
-    for i in range(30):
+    for i in range(n):
         variants.append({
             "variant": f"chr1:{1000 + i}:A>T",
             "gene": f"GENE{i}",
@@ -147,26 +145,161 @@ def test_build_briefing_truncation():
             "in_silico": {},
             "sift": "",
             "polyphen": "",
-            "tier": "III",
+            "tier": "Tier IV",
             "tier_label": "VUS",
             "tier_evidence_source": "",
+            "hpo_score": 0,
+            "gnomad_af": None,
         })
-    report_data = {
-        "sample_id": "TEST_TRUNC",
-        "date": "2026-04-09",
+    return {
+        "sample_id": "TEST_SELECT",
+        "date": "2026-04-14",
         "variants": variants,
-        "summary": {"total": 30, "pathogenic": 0, "likely_pathogenic": 0,
-                     "vus": 30, "likely_benign": 0, "benign": 0,
-                     "drug_response": 0, "risk_factor": 0},
+        "summary": {"total": n, "pathogenic": 0, "likely_pathogenic": 0,
+                    "vus": n, "likely_benign": 0, "benign": 0,
+                    "drug_response": 0, "risk_factor": 0},
         "pgx_results": [],
     }
 
-    briefing = build_case_briefing(report_data, "cancer")
 
-    # Only 20 variants should be rendered
-    assert "Variant 20:" in briefing
-    assert "Variant 21:" not in briefing
-    assert "10 additional lower-priority variants omitted" in briefing
+def test_build_briefing_selection_section_present():
+    """Briefing contains the BOARD VARIANT SELECTION audit section."""
+    report_data = _passenger_vus_report(5)
+    briefing = build_case_briefing(report_data, "cancer")
+    assert "== BOARD VARIANT SELECTION ==" in briefing
+    assert "Criteria:" in briefing
+    assert "Input variants: 5" in briefing
+
+
+def test_build_briefing_passes_fail_selector():
+    """Pure passenger VUS (no hotspot, no TSG LoF) are excluded — empty board."""
+    report_data = _passenger_vus_report(30)
+    briefing = build_case_briefing(report_data, "cancer")
+    # None of the passenger GENEn should appear in the board variant list
+    assert "--- Variant 1:" not in briefing
+    assert "No variants selected for the board." in briefing
+    # Empty-reason surfaces in the selection section
+    assert "Empty selection:" in briefing
+
+
+def test_build_briefing_mixed_pass_fail_selection():
+    """Mixed fixture: only P/LP + Tier I/II survive; passengers are dropped."""
+    variants = [
+        # Passes: P/LP
+        {
+            "variant": "chr17:7675088:C>A",
+            "gene": "TP53",
+            "classification": "Pathogenic",
+            "clinvar_significance": "Pathogenic",
+            "hgvsc": "c.524G>T",
+            "hgvsp": "p.Arg175Leu",
+            "consequence": "missense_variant",
+            "acmg_codes": ["PVS1", "PM2"],
+            "tier": "Tier I",
+            "tier_label": "Strong",
+            "tier_evidence_source": "Tier I (AMP)",
+            "in_silico": {},
+        },
+        # Passes: Tier II
+        {
+            "variant": "chr7:55191822:T>A",
+            "gene": "EGFR",
+            "classification": "VUS",
+            "clinvar_significance": "Not Found",
+            "hgvsc": "c.2369C>T",
+            "hgvsp": "p.Thr790Met",
+            "consequence": "missense_variant",
+            "acmg_codes": [],
+            "tier": "Tier II",
+            "tier_label": "Potential",
+            "tier_evidence_source": "Tier II (AMP)",
+            "in_silico": {},
+        },
+        # Fails: passenger VUS
+        {
+            "variant": "chr1:100:A>T",
+            "gene": "PASSENGER",
+            "classification": "VUS",
+            "clinvar_significance": "Not Found",
+            "hgvsc": "c.50A>T",
+            "hgvsp": "",
+            "consequence": "missense_variant",
+            "acmg_codes": [],
+            "tier": "Tier IV",
+            "tier_label": "VUS",
+            "tier_evidence_source": "",
+            "in_silico": {},
+        },
+    ]
+    report_data = {
+        "sample_id": "MIXED",
+        "date": "2026-04-14",
+        "variants": variants,
+        "summary": {
+            "total": 3, "pathogenic": 1, "likely_pathogenic": 0,
+            "vus": 2, "likely_benign": 0, "benign": 0,
+            "drug_response": 0, "risk_factor": 0,
+        },
+        "pgx_results": [],
+    }
+    briefing = build_case_briefing(report_data, "cancer")
+    assert "TP53" in briefing
+    assert "EGFR" in briefing
+    # PASSENGER is in the raw list, but the selector should drop it before
+    # the CLASSIFIED VARIANTS section is rendered.
+    assert "--- Variant 3: PASSENGER ---" not in briefing
+    assert "Selection Reason: P_LP" in briefing
+    assert "Selection Reason: Tier_II" in briefing
+
+
+def test_build_briefing_consumes_precomputed_selection():
+    """If runner attaches _board_variants, the selector is NOT re-run."""
+    pre_filtered = [
+        {
+            "variant": "chr17:1:G>T",
+            "gene": "PRECOMPUTED_GENE",
+            "classification": "Pathogenic",
+            "hgvsc": "c.1G>T",
+            "hgvsp": "",
+            "consequence": "missense_variant",
+            "acmg_codes": ["PVS1"],
+            "tier": "Tier I",
+            "tier_label": "Strong",
+            "tier_evidence_source": "Tier I (AMP)",
+            "in_silico": {},
+            "selection_reason": "P_LP",
+        }
+    ]
+    meta = {
+        "mode": "cancer",
+        "total_input": 100,  # runner claims 100 → briefing must echo it
+        "selected": 1,
+        "must_included": 1,
+        "may_included": 0,
+        "excluded": 99,
+        "truncated": False,
+        "n_dropped": 0,
+        "hard_cap_applied": False,
+        "empty": False,
+        "empty_reason": "",
+        "tmb_high_footnote": False,
+        "criteria_summary": "precomputed test criteria",
+        "by_selection_reason": {"P_LP": 1},
+    }
+    report_data = {
+        "sample_id": "PRE",
+        "date": "2026-04-14",
+        "variants": [{"gene": "SHOULD_NOT_APPEAR", "classification": "Pathogenic"}],
+        "_board_variants": pre_filtered,
+        "_board_selection_metadata": meta,
+        "summary": {"total": 1},
+        "pgx_results": [],
+    }
+    briefing = build_case_briefing(report_data, "cancer")
+    assert "PRECOMPUTED_GENE" in briefing
+    assert "SHOULD_NOT_APPEAR" not in briefing
+    assert "precomputed test criteria" in briefing
+    assert "Input variants: 100" in briefing
 
 
 # ── Empty data ───────────────────────────────────────────────────────────────

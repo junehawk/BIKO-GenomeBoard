@@ -4,6 +4,13 @@ Converts run_pipeline() output into a well-formatted text document that
 reads like a clinical case presentation.  LLM agents reason about this
 briefing — it is NOT JSON but human-readable markdown-like text.
 
+Variant selection is delegated to
+``scripts.clinical_board.variant_selector.select_board_variants``. If the
+caller (usually ``runner.py``) has already computed the filtered list, it
+should attach it to ``report_data["_board_variants"]`` and the metadata to
+``report_data["_board_selection_metadata"]``; otherwise the briefing builder
+runs the selector itself so direct/unit-test invocations still work.
+
 The briefing is capped at ~3 000 tokens (roughly 12 000 characters) to
 stay within efficient LLM context windows.
 """
@@ -13,18 +20,6 @@ from typing import Optional
 
 from scripts.common.config import get
 
-# Classification priority for sorting variants (lower = more significant)
-_CLASSIFICATION_PRIORITY = {
-    "Pathogenic": 0,
-    "Likely Pathogenic": 1,
-    "Drug Response": 2,
-    "Risk Factor": 3,
-    "VUS": 4,
-    "Likely Benign": 5,
-    "Benign": 6,
-}
-
-MAX_VARIANTS = 20
 MAX_CHARS = 12_000  # ~3 000 tokens
 
 
@@ -46,6 +41,19 @@ def build_case_briefing(report_data: dict, mode: str) -> str:
     if not report_data:
         return _minimal_briefing(mode)
 
+    # Resolve the board-filtered variant list. Prefer pre-computed values
+    # attached by runner.py; otherwise run the selector inline so that
+    # direct unit-test invocations of build_case_briefing keep working.
+    filtered_variants = report_data.get("_board_variants")
+    selection_metadata = report_data.get("_board_selection_metadata")
+    if filtered_variants is None or selection_metadata is None:
+        from scripts.clinical_board.variant_selector import select_board_variants
+        filtered_variants, selection_metadata = select_board_variants(
+            report_data.get("variants", []) or [],
+            mode,
+            report_data=report_data,
+        )
+
     sections: list[str] = []
 
     # 1. Case Overview
@@ -56,8 +64,11 @@ def build_case_briefing(report_data: dict, mode: str) -> str:
     if clinical_section:
         sections.append(clinical_section)
 
-    # 2. Classified Variants
-    sections.append(_build_variants_section(report_data, mode))
+    # 2. Board Variant Selection Summary (audit trail for the filter)
+    sections.append(_build_selection_section(selection_metadata))
+
+    # 3. Classified Variants (already filtered + priority-ordered by selector)
+    sections.append(_build_variants_section(filtered_variants, mode))
 
     # 3. HPO Phenotype Matches (rare disease)
     if mode == "rare-disease":
@@ -144,27 +155,50 @@ def _build_overview(data: dict, mode: str) -> str:
     return "\n".join(lines)
 
 
-def _build_variants_section(data: dict, mode: str) -> str:
-    variants = data.get("variants", [])
-    if not variants:
-        return "== CLASSIFIED VARIANTS ==\n\nNo variants found."
+def _build_selection_section(selection_metadata: dict) -> str:
+    """Render the variant-selector audit summary.
 
-    # Sort by classification priority, then by tier if available
-    sorted_variants = sorted(
-        variants,
-        key=lambda v: (
-            _CLASSIFICATION_PRIORITY.get(v.get("classification", "VUS"), 99),
-            v.get("tier", "IV"),
-        ),
+    Lets the LLM agents see *why* the displayed variant list is what it is,
+    so they can flag cases where the selection criteria may have hidden
+    something clinically relevant.
+    """
+    meta = selection_metadata or {}
+    lines = ["== BOARD VARIANT SELECTION ==", ""]
+    lines.append(f"Mode: {meta.get('mode', 'unknown')}")
+    lines.append(f"Criteria: {meta.get('criteria_summary', '(n/a)')}")
+    lines.append(
+        f"Input variants: {meta.get('total_input', 0)} → "
+        f"selected: {meta.get('selected', 0)} "
+        f"(MUST: {meta.get('must_included', 0)}, "
+        f"MAY: {meta.get('may_included', 0)})"
     )
+    lines.append(f"Excluded: {meta.get('excluded', 0)}")
+    if meta.get("truncated"):
+        lines.append(
+            f"⚠ Truncated: {meta.get('n_dropped', 0)} MAY-list variant(s) "
+            "dropped to stay within the soft cap."
+        )
+    if meta.get("tmb_high_footnote"):
+        lines.append(
+            "⚠ TMB-high case — cap may undercount; review full annotated VCF."
+        )
+    if meta.get("empty"):
+        lines.append(f"Empty selection: {meta.get('empty_reason', '')}")
+    by_reason = meta.get("by_selection_reason") or {}
+    if by_reason:
+        reasons_str = ", ".join(f"{k}:{v}" for k, v in sorted(by_reason.items()))
+        lines.append(f"By reason: {reasons_str}")
+    return "\n".join(lines)
 
-    # Take top N most significant
-    display_variants = sorted_variants[:MAX_VARIANTS]
-    omitted = len(sorted_variants) - len(display_variants)
+
+def _build_variants_section(variants: list, mode: str) -> str:
+    """Render the already board-filtered, priority-ordered variant list."""
+    if not variants:
+        return "== CLASSIFIED VARIANTS ==\n\nNo variants selected for the board."
 
     lines = ["== CLASSIFIED VARIANTS ==", ""]
 
-    for i, v in enumerate(display_variants, 1):
+    for i, v in enumerate(variants, 1):
         gene = v.get("gene", "Unknown")
         variant_id = v.get("variant", "")
         classification = v.get("classification", "VUS")
@@ -187,6 +221,10 @@ def _build_variants_section(data: dict, mode: str) -> str:
 
         lines.append(f"  Classification: {classification}")
         lines.append(f"  Evidence Codes: {codes_str}")
+
+        selection_reason = v.get("selection_reason", "")
+        if selection_reason:
+            lines.append(f"  Selection Reason: {selection_reason}")
 
         # Tier (cancer mode)
         if mode == "cancer":
@@ -279,10 +317,6 @@ def _build_variants_section(data: dict, mode: str) -> str:
                         hpo_strs.append(str(h))
                 lines.append(f"  Matching HPO: {'; '.join(hpo_strs)}")
 
-        lines.append("")
-
-    if omitted > 0:
-        lines.append(f"[{omitted} additional lower-priority variants omitted]")
         lines.append("")
 
     return "\n".join(lines)

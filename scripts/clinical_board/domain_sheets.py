@@ -4,6 +4,14 @@ Each builder consumes the variants/report_data already collected by the
 pipeline and formats a focused, human-readable text section for one agent.
 No new DB queries are issued here — the pipeline has already collected the
 relevant fields.
+
+**Caller contract:** ``variants`` MUST be the board-selected variant list
+produced by ``scripts.clinical_board.variant_selector.select_board_variants``,
+not the raw ``report_data["variants"]`` from the pipeline. The domain sheets
+are fed directly to per-domain LLM agents, and showing unfiltered passenger
+variants to the agents erodes the clinical criteria applied in the selector.
+``runner.py`` is responsible for calling the selector once and passing the
+filtered list to every ``build_domain_sheet`` invocation.
 """
 from __future__ import annotations
 
