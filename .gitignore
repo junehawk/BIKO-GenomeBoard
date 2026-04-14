@@ -5,10 +5,13 @@ __pycache__/
 dist/
 build/
 node_modules/
-data/pglite/
 .pytest_cache/
 htmlcov/
 .ruff_cache/
+.DS_Store
+.omc/
+
+# Database files (built by scripts/setup_databases.sh)
 data/db/*.sqlite3
 !data/db/clinvar_test.sqlite3
 !data/db/gnomad_test.sqlite3
@@ -24,9 +27,13 @@ data/db/GRtitle_shortname_NBKid.txt
 data/db/clingen_gene_validity.csv
 data/db/civic/
 data/cache/
+
+# Generated output
+output/
 input/
-output/*.html
-output/*.json
-output/*.pdf
-.DS_Store
-.omc/
+
+# Paperclip (legacy, removed)
+paperclip.log
+paperclip-config/
+package.json
+package-lock.json

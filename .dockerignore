@@ -2,9 +2,6 @@
 .github
 .claude
 .omc
-node_modules
-package-lock.json
-package.json
 __pycache__
 *.pyc
 .pytest_cache
@@ -15,6 +12,5 @@ data/cache/
 data/db/*.sqlite3
 tests/
 docs/
-paperclip-config/
 *.md
 !templates/**/*.md
