@@ -96,10 +96,15 @@ def _rd_disease_geneticist(variants: list, report_data: dict) -> str:
         lines.append(f"- {gene}")
         lines.append(f"    Inheritance: {inheritance}")
         if omim_phenotypes:
-            lines.append(f"    OMIM phenotypes: {'; '.join(omim_phenotypes)}")
+            phen_strs = [
+                p if isinstance(p, str) else f"{p.get('phenotype', p.get('name', '?'))}"
+                for p in omim_phenotypes
+            ]
+            lines.append(f"    OMIM phenotypes: {'; '.join(phen_strs)}")
         if matching_hpo:
             hpo_strs = [
-                f"{h.get('id', '?')} {h.get('name', '')}".strip()
+                h if isinstance(h, str)
+                else f"{h.get('id', '?')} {h.get('name', '')}".strip()
                 for h in matching_hpo
             ]
             lines.append(f"    Matching HPO: {', '.join(hpo_strs)}")

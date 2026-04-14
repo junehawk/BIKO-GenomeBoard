@@ -35,6 +35,22 @@ def test_disease_geneticist_sheet_rare_disease():
     assert "AR" in sheet
 
 
+def test_disease_geneticist_sheet_accepts_str_hpo_and_phenotypes():
+    """Real pipeline emits matching_hpo/omim_phenotypes as plain strings; builder must not crash."""
+    variants = [
+        {
+            "gene": "TP53",
+            "omim_phenotypes": ["Li-Fraumeni syndrome"],
+            "inheritance": "AD",
+            "matching_hpo": ["HP:0001263", "HP:0001250"],
+        }
+    ]
+    sheet = build_domain_sheet("disease_genetics", "rare-disease", variants, {})
+    assert "TP53" in sheet
+    assert "HP:0001263" in sheet
+    assert "Li-Fraumeni" in sheet
+
+
 def test_domain_sheet_respects_char_limit():
     """Domain sheet is truncated to MAX_DOMAIN_CHARS."""
     variants = [{"gene": f"GENE{i}", "classification": "VUS"} for i in range(100)]

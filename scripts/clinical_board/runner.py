@@ -160,26 +160,44 @@ def run_clinical_board(
     if get("knowledge_base.enabled", False):
         try:
             kb = KnowledgeBase(kb_db, kb_path)
+            saved_genes: set[str] = set()
+            skipped = 0
             for v in report_data.get("variants", [])[:20]:
-                kb.save_decision(
-                    sample_id=report_data.get("sample_id", "unknown"),
-                    mode=mode,
-                    gene=v.get("gene", ""),
-                    variant=v.get("variant", ""),
-                    hgvsp=v.get("hgvsp", ""),
-                    classification=v.get("classification", ""),
-                    board_diagnosis=getattr(
-                        board_opinion,
-                        "primary_diagnosis",
-                        getattr(board_opinion, "therapeutic_implications", ""),
-                    ),
-                    board_confidence=board_opinion.confidence,
-                    clinical_context_summary=_summarize_context(report_data),
-                    agent_consensus=board_opinion.agent_consensus,
-                    raw_opinion_json=json.dumps(board_opinion.__dict__, default=str),
-                )
-                kb.generate_gene_wiki(v.get("gene", ""), mode)
-            kb.update_log(report_data.get("sample_id"), mode)
+                gene = v.get("gene") or ""
+                variant_id = v.get("variant") or ""
+                if not gene or not variant_id:
+                    skipped += 1
+                    continue
+                try:
+                    kb.save_decision(
+                        sample_id=report_data.get("sample_id", "unknown"),
+                        mode=mode,
+                        gene=gene,
+                        variant=variant_id,
+                        hgvsp=v.get("hgvsp", ""),
+                        classification=v.get("classification", ""),
+                        board_diagnosis=getattr(
+                            board_opinion,
+                            "primary_diagnosis",
+                            getattr(board_opinion, "therapeutic_implications", ""),
+                        ),
+                        board_confidence=board_opinion.confidence,
+                        clinical_context_summary=_summarize_context(report_data),
+                        agent_consensus=board_opinion.agent_consensus,
+                        raw_opinion_json=json.dumps(board_opinion.__dict__, default=str),
+                    )
+                    saved_genes.add(gene)
+                except Exception as row_err:
+                    logger.warning(
+                        f"[Clinical Board] KB save skipped {gene}/{variant_id}: {row_err}"
+                    )
+                    skipped += 1
+            for gene in saved_genes:
+                kb.generate_gene_wiki(gene, mode)
+            if saved_genes:
+                kb.update_log(report_data.get("sample_id"), mode)
+            if skipped:
+                logger.info(f"[Clinical Board] KB: {len(saved_genes)} genes saved, {skipped} rows skipped")
         except Exception as e:
             logger.warning(f"[Clinical Board] KB save failed: {e}")
 
