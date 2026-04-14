@@ -14,6 +14,7 @@ from scripts.clinical_board.models import (
 )
 from scripts.clinical_board.ollama_client import OllamaClient
 from scripts.clinical_board.case_briefing import build_case_briefing
+from scripts.clinical_board.curated_treatments import curate_treatments
 from scripts.clinical_board.domain_sheets import build_domain_sheet
 from scripts.clinical_board.kb_query import query_prior_knowledge
 from scripts.clinical_board.knowledge_base import KnowledgeBase
@@ -127,6 +128,23 @@ def run_clinical_board(
         f"{selection_metadata['selected']} variants "
         f"({selection_metadata['criteria_summary']})"
     )
+
+    # v2.2 · Curate-then-narrate — deterministic treatment resolver.
+    # Cancer mode only; rare-disease bypasses the OncoKB/CIViC curator.
+    if mode == "cancer":
+        try:
+            curated = curate_treatments(
+                board_variants,
+                offline_mode=get("clinical_board.curated_treatments.offline_mode", False),
+            )
+            report_data["_curated_treatments"] = curated
+            total_rows = sum(len(rows) for rows in curated.values())
+            logger.info(
+                f"[Clinical Board] Curated treatments: {len(curated)} variants → {total_rows} rows"
+            )
+        except Exception as curator_err:
+            logger.warning(f"[Clinical Board] Curator failed: {curator_err}")
+            report_data["_curated_treatments"] = {}
 
     # Step 1: Build case briefing
     logger.info("[Clinical Board] Building case briefing...")
