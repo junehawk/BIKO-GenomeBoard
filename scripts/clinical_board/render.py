@@ -65,7 +65,21 @@ def _render_selection_metadata_caption(selection_metadata) -> list[str]:
     ]
 
 
-def _render_agent_opinions_section(agent_opinions) -> list[str]:
+_NO_FINDINGS_MESSAGES = {
+    "en": "No specific findings identified for this case.",
+    "ko": "이 케이스에서 특별한 소견은 확인되지 않았습니다.",
+}
+
+
+def _no_findings_placeholder_html(language: str) -> str:
+    msg = _NO_FINDINGS_MESSAGES.get(language, _NO_FINDINGS_MESSAGES["en"])
+    return (
+        f'<div style="font-style:italic;color:#94A3B8;font-size:10px;'
+        f'line-height:1.6;">{msg}</div>'
+    )
+
+
+def _render_agent_opinions_section(agent_opinions, language: str = "en") -> list[str]:
     parts: list[str] = []
     if not agent_opinions:
         return parts
@@ -73,10 +87,16 @@ def _render_agent_opinions_section(agent_opinions) -> list[str]:
     parts.append('<div style="font-size:10px;font-weight:700;color:#94A3B8;margin-bottom:6px;">Domain Specialist Opinions</div>')
     for agent_op in agent_opinions:
         c_color = "#059669" if agent_op.confidence == "high" else "#D97706" if agent_op.confidence == "moderate" else "#DC2626"
-        findings_html = ""
-        for f in agent_op.findings[:3]:
-            ft = f.get("finding", f) if isinstance(f, dict) else str(f)
-            findings_html += f'<li style="margin-bottom:2px;">{ft}</li>'
+        if agent_op.findings:
+            findings_items = ""
+            for f in agent_op.findings[:3]:
+                ft = f.get("finding", f) if isinstance(f, dict) else str(f)
+                findings_items += f'<li style="margin-bottom:2px;">{ft}</li>'
+            findings_block = (
+                f'<ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;">{findings_items}</ul>'
+            )
+        else:
+            findings_block = _no_findings_placeholder_html(language)
 
         refs_html = ""
         if agent_op.references:
@@ -89,7 +109,7 @@ def _render_agent_opinions_section(agent_opinions) -> list[str]:
             <span style="float:right;color:{c_color};font-size:9px;font-weight:600;">{agent_op.confidence.upper()} &middot; {len(agent_op.findings)} findings</span>
           </summary>
           <div style="padding:8px 10px;font-size:10px;color:#475569;">
-            <ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;">{findings_html}</ul>
+            {findings_block}
             {refs_html}
           </div>
         </details>
@@ -214,33 +234,7 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
         html_parts.append('</div>')
 
     # Domain Specialist Opinions (collapsible, compact)
-    if opinion.agent_opinions:
-        html_parts.append('<div style="margin-top:8px;">')
-        html_parts.append('<div style="font-size:10px;font-weight:700;color:#94A3B8;margin-bottom:6px;">Domain Specialist Opinions</div>')
-        for agent_op in opinion.agent_opinions:
-            c_color = "#059669" if agent_op.confidence == "high" else "#D97706" if agent_op.confidence == "moderate" else "#DC2626"
-            findings_html = ""
-            for f in agent_op.findings[:3]:
-                ft = f.get("finding", f) if isinstance(f, dict) else str(f)
-                findings_html += f'<li style="margin-bottom:2px;">{ft}</li>'
-
-            refs_html = ""
-            if agent_op.references:
-                refs_html = f'<div style="font-size:9px;color:#94A3B8;margin-top:4px;">Refs: {", ".join(agent_op.references[:3])}</div>'
-
-            html_parts.append(f"""
-            <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
-              <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
-                <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> {agent_op.agent_name}
-                <span style="float:right;color:{c_color};font-size:9px;font-weight:600;">{agent_op.confidence.upper()} &middot; {len(agent_op.findings)} findings</span>
-              </summary>
-              <div style="padding:8px 10px;font-size:10px;color:#475569;">
-                <ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;">{findings_html}</ul>
-                {refs_html}
-              </div>
-            </details>
-            """)
-        html_parts.append('</div>')
+    html_parts.extend(_render_agent_opinions_section(opinion.agent_opinions, language))
 
     # Pre-analytic filtering caption (footer)
     html_parts.extend(_render_selection_metadata_caption(opinion.selection_metadata))
@@ -357,7 +351,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
         html_parts.append('</div>')
 
     # Domain Specialist Opinions
-    html_parts.extend(_render_agent_opinions_section(opinion.agent_opinions))
+    html_parts.extend(_render_agent_opinions_section(opinion.agent_opinions, language))
 
     # Pre-analytic filtering caption (footer)
     html_parts.extend(_render_selection_metadata_caption(opinion.selection_metadata))

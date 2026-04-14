@@ -225,6 +225,57 @@ def test_render_includes_selection_metadata_rare_disease():
     assert "truncated" in html.lower()
 
 
+def test_agent_panel_placeholder_when_findings_empty():
+    """AgentOpinion panels with empty findings render a grey italic placeholder."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    from scripts.clinical_board.models import AgentOpinion
+
+    empty_agent = AgentOpinion(
+        agent_name="Variant Pathologist",
+        domain="variant_pathology",
+        findings=[],
+        confidence="moderate",
+    )
+
+    cancer = CancerBoardOpinion(
+        therapeutic_implications="Test",
+        agent_opinions=[empty_agent],
+    )
+    cancer_html = render_board_opinion_html(cancer, language="en")
+    assert "No specific findings identified for this case." in cancer_html
+
+    rare = BoardOpinion(
+        primary_diagnosis="Test",
+        agent_opinions=[empty_agent],
+    )
+    rare_html = render_board_opinion_html(rare, language="en")
+    assert "No specific findings identified for this case." in rare_html
+
+    # Korean variant
+    rare_ko = render_board_opinion_html(rare, language="ko")
+    assert "이 케이스에서 특별한 소견은 확인되지 않았습니다." in rare_ko
+
+
+def test_agent_panel_normal_when_findings_present():
+    """AgentOpinion panels with findings do NOT emit the placeholder message."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    from scripts.clinical_board.models import AgentOpinion
+
+    agent = AgentOpinion(
+        agent_name="Variant Pathologist",
+        domain="variant_pathology",
+        findings=[{"finding": "BRCA2 truncating"}],
+        confidence="high",
+    )
+    cancer = CancerBoardOpinion(
+        therapeutic_implications="Test",
+        agent_opinions=[agent],
+    )
+    html = render_board_opinion_html(cancer, language="en")
+    assert "BRCA2 truncating" in html
+    assert "No specific findings identified for this case." not in html
+
+
 def test_render_omits_metadata_when_none():
     """When selection_metadata is None, the caption block is silently skipped."""
     from scripts.clinical_board.render import render_board_opinion_html
