@@ -14,6 +14,15 @@ data/db/*.sqlite3
 !data/db/gnomad_test.sqlite3
 data/db/gnomad_vcf/
 data/db/variant_summary.txt.gz
+data/db/genes_to_phenotype.txt
+data/db/mim2gene.txt
+data/db/genemap2.txt
+data/db/en_product6.xml
+data/db/en_product9_prev.xml
+data/db/GRshortname_NBKid_genesymbol_dzname.txt
+data/db/GRtitle_shortname_NBKid.txt
+data/db/clingen_gene_validity.csv
+data/db/civic/
 data/cache/
 input/
 output/*.html
