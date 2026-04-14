@@ -46,3 +46,13 @@ data/knowledge_base/index.md
 
 # Session-scoped working artifacts (not committed)
 _workspace/
+
+# Internal design plans — kept local, not published in the public repo.
+# These contain draft designs, review comments, and occasional PHI
+# references copied from audit materials. Treat as private-only.
+docs/superpowers/plans/
+
+# Deprecated external-API key documentation — BIKO uses local
+# MedGemma via Ollama and needs no external LLM keys. NCBI_API_KEY
+# is optional for rate-limit relief only and should live in .env.
+docs/API_KEYS.md

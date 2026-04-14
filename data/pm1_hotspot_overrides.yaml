@@ -22,8 +22,7 @@
 #         reason: <str>              # why this residue is excluded from PM1
 #
 # Reviewed: 2026-04-14 by clinical-advisor
-# Plan ref: docs/superpowers/plans/2026-04-14-ai-board-v2.2.md §A3
-# Review ref: _workspace/v22-phaseA/artifacts/00_clinical_review.md §1
+# Design rationale: CLAUDE.md (PM1 hotspot table section)
 
 version: "1.0"
 review_date: "2026-04-14"
