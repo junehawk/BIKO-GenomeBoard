@@ -78,6 +78,49 @@ def test_fallback_empty_curated_returns_no_findings_opinion():
     assert opinion.confidence == "low"
 
 
+def test_fallback_headline_does_not_imply_recommended_therapies():
+    """Regression: the fallback headline must not read like 'N treatment
+    options are recommended'. The user reported that '211 curated therapy
+    option(s) — LLM synthesis unavailable' was being mis-read as 'we have
+    211 recommended treatments' on the codegen showcase. The headline must
+    explicitly disclaim that the table is an evidence library, not a list
+    of recommended treatments."""
+    from scripts.clinical_board.template_renderer_chair import render_from_curated
+
+    curated = {
+        "12:25:C:T": [
+            _stub_row(f"Drug{i}", "12:25:C:T", f"cid-{i}", "A") for i in range(50)
+        ]
+    }
+    opinion = render_from_curated(curated)
+
+    # Forbidden phrasing from the pre-fix headline
+    assert "curated therapy option" not in opinion.therapeutic_headline.lower()
+    assert "treatment option" not in opinion.therapeutic_headline.lower()
+
+    # Required framing
+    assert "no variant-specific treatment recommendation" in opinion.therapeutic_headline.lower()
+    assert "evidence library" in opinion.therapeutic_headline.lower()
+
+    # Body must tell the reader these rows are NOT recommended treatments
+    body = opinion.therapeutic_implications.lower()
+    assert "not" in body and ("recommended treatment" in body or "research reference" in body)
+    assert "qualified oncologist" in body or "clinical interpretation" in body
+
+    # Evidence field must also carry the disclaimer
+    assert "not" in opinion.therapeutic_evidence.lower()
+    assert "research reference" in opinion.therapeutic_evidence.lower() or "evidence" in opinion.therapeutic_evidence.lower()
+
+
+def test_fallback_empty_curated_has_no_matched_messaging():
+    from scripts.clinical_board.template_renderer_chair import render_from_curated
+
+    opinion = render_from_curated({})
+    assert opinion.treatment_options == []
+    assert "no matched" in opinion.therapeutic_headline.lower()
+    assert "clinical interpretation" in opinion.therapeutic_implications.lower()
+
+
 def test_fallback_carries_agent_opinions_through():
     from scripts.clinical_board.template_renderer_chair import render_from_curated
 

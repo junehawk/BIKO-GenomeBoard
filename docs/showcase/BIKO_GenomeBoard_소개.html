@@ -211,30 +211,26 @@
   </p>
 
   <div class="highlight">
-    <h4>분류는 결정적(Deterministic) — 진단 종합은 AI Board</h4>
+    <h4>분류는 결정적(Deterministic) — 진단 종합은 AI Board — 연구 참고용 문서</h4>
     <p style="font-size:13.5px;color:#475569;">
       BIKO GenomeBoard의 <strong>변이 분류(ACMG/AMP)</strong>는 LLM을 사용하지 않는 100% <strong>결정적 Python 규칙 엔진</strong>으로 동작합니다.
-      ACMG/AMP evidence code 조합, AMP tiering 우선순위, In silico threshold 판정 등
-      모든 분류 경로는 국제 가이드라인에 기반하며, 실행할 때마다 동일한 결과를 보장합니다.
+      ACMG/AMP evidence code 조합, AMP tiering 우선순위, In silico threshold 판정 등 모든 분류 경로는 국제 가이드라인에 기반하며, 실행할 때마다 동일한 결과를 보장합니다.
     </p>
     <p style="font-size:13.5px;color:#475569;margin-top:8px;">
-      이 분류 결과 위에, <strong>AI Clinical Board</strong>(로컬 LLM 기반 다전문가 시스템)가
-      감별진단, 권고사항, 문헌 근거 등 <strong>종합 진단 추론</strong>을 제공합니다.
-      AI Board는 분류 결과를 <strong>입력으로만 사용</strong>하며 변경하지 않고,
-      모든 출력에 <strong>[AI-Generated]</strong> 태그를 표시합니다.
-      환자 데이터는 <strong>로컬 LLM(Ollama)</strong>으로 처리되어 외부로 전송되지 않습니다.
-      AI Board는 <strong>Google MedGemma</strong> 모델을 사용하며, MedGemma는 임상 등급(clinical-grade)이 아닙니다.
-      AI Board 출력은 진단 목적이 아닌 <strong>연구 보조 자료</strong>로만 활용되어야 합니다.
+      이 분류 결과 위에 <strong>AI Clinical Board</strong>(로컬 MedGemma 27B 기반)가 치료 전략·감별진단·문헌 근거 등 <strong>종합 추론</strong>을 제공합니다. AI Board는 분류 결과를 <strong>입력으로만 사용</strong>하며 변경하지 않고, 환자 데이터는 외부 전송 없이 <strong>온프레미스 Ollama</strong>에서 처리됩니다. MedGemma는 임상 등급이 아니며, 모든 출력에 [AI-Generated] 태그가 붙습니다.
+    </p>
+    <p style="font-size:13.5px;color:#991B1B;margin-top:8px;font-weight:600;">
+      이 리포트는 임상의가 참고할 수 있는 <strong>연구 자료</strong>이며, 임상적 의사결정 도구가 아닙니다. 모든 해석은 자격을 갖춘 임상의의 검토를 거쳐야 합니다.
     </p>
   </div>
 
   <div class="stats">
     <div class="stat"><div class="stat-num">2</div><div class="stat-label">분석 모드 (암 / 희귀질환)</div></div>
-    <div class="stat"><div class="stat-num">10+</div><div class="stat-label">로컬 데이터베이스</div></div>
+    <div class="stat"><div class="stat-num">11+</div><div class="stat-label">로컬 데이터베이스</div></div>
     <div class="stat"><div class="stat-num">100%</div><div class="stat-label">오프라인 분석 지원</div></div>
     <div class="stat"><div class="stat-num">4</div><div class="stat-label">In Silico 예측 도구</div></div>
     <div class="stat"><div class="stat-num">12</div><div class="stat-label">약물유전체 유전자</div></div>
-    <div class="stat"><div class="stat-num">5</div><div class="stat-label">AI Board 전문의</div></div>
+    <div class="stat"><div class="stat-num">899</div><div class="stat-label">Pytest 테스트</div></div>
   </div>
 </div>
 
@@ -330,7 +326,7 @@
     <div class="card">
       <div class="card-icon">&#x1F9EC;</div>
       <h3>ACMG/AMP 2015 변이 분류</h3>
-      <p>28개 evidence code 기반 결정적(deterministic) 규칙 엔진. PVS1, PS1~4, PM1~6, PP1~5, BA1, BS1~4, BP1~7 조합 규칙으로 5단계 분류. ClinVar expert panel / multi-submitter override 지원.</p>
+      <p>28개 evidence code 기반 결정적 규칙 엔진. 5단계 분류(P/LP/VUS/LB/B). v2.2에서 <strong>narrow ClinVar conflict override</strong>(engine ≥LP + Conflicting + PM1 hotspot + PM5 4-조건 게이트) 추가.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
@@ -372,7 +368,7 @@
     <div class="card">
       <div class="card-icon">&#x1F52C;</div>
       <h3>ACMG Evidence 자동 수집</h3>
-      <p>VEP consequence + gnomAD constraint + ClinVar에서 자동 evidence 수집. <strong>PVS1</strong>(null variant + LOF intolerance), <strong>PM1</strong>(functional domain), <strong>PM4</strong>(in-frame indel), <strong>PM5</strong>(known pathogenic position), <strong>PP2, BP1, BP7</strong>.</p>
+      <p>VEP consequence + gnomAD constraint + ClinVar로부터 자동 수집: <strong>PVS1, PM1, PM4, PM5, PP2, BP1, BP7</strong>. v2.2 A3에서 <strong>PM1 hotspot table</strong>(TP53/KRAS/NRAS/BRAF/EGFR/IDH1-2 등 9 유전자 · PMID 인용 포함)이 추가되어 VEP DOMAINS가 비어있어도 PM1을 발화합니다.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
@@ -406,33 +402,30 @@
 
     <div class="card" style="border:2px solid #A7D7BE;background:linear-gradient(135deg,var(--biko-green-light),#F8FAFC);">
       <div class="card-icon">&#x1F9E0;</div>
-      <h3>AI Clinical Board v2 (모드별 전문의 분리)</h3>
-      <p><strong>Google MedGemma 27B</strong> 기반 다전문가 임상 Board 시스템. <strong>모드별로 전문의 구성이 다릅니다</strong>: 희귀질환 모드는 변이 병리·질환 유전학·약물유전체·문헌 분석 4인, 암 모드는 치료 표적 분석·Tumor Genomics·약물유전체·임상 근거 분석 4인. 각 전문의는 <strong>Grounded Prompting</strong> 방식으로 ClinVar/OncoKB/CIViC/HPO/OMIM/CPIC 도메인 시트를 주입받아 자유 추론 대신 근거 정리를 수행합니다. Board Chair는 모드별로 다른 출력 스키마를 사용합니다 — 희귀질환은 감별진단 중심의 <code>BoardOpinion</code>, 암은 치료 전략 중심의 <code>CancerBoardOpinion</code>(치료 옵션 + PMID, 면역치료 적합성, 모니터링 계획). Temperature 0.1로 일관성을 강화하고, 결정적 분류 엔진은 절대 변경하지 않습니다. 모든 출력에 AI-Generated 태그와 고정 disclaimer가 포함됩니다. MedGemma는 임상 등급이 아니며, 연구 보조 목적으로만 사용됩니다.</p>
+      <h3>AI Clinical Board v2.2</h3>
+      <p><strong>Google MedGemma 27B</strong> 기반 로컬 다전문가 시스템. 모드별 4인 전문의 + Board Chair 구성, Grounded Prompting으로 ClinVar/OncoKB/CIViC 근거를 주입받아 자유 추론 대신 근거 정리를 수행합니다. <strong>결정적 분류 엔진은 절대 변경하지 않고</strong>, 모든 출력에 AI-Generated 태그가 붙습니다.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
       <span class="tag" style="background:var(--biko-green-light);color:var(--teal);margin-left:4px;">Ollama (온프레미스)</span>
     </div>
 
+    <div class="card" style="border:2px solid #A7D7BE;background:linear-gradient(135deg,#ECFDF5,#F8FAFC);">
+      <div class="card-icon">&#x1F48A;</div>
+      <h3>Curate-then-Narrate (v2.2 A1/A2)</h3>
+      <p>치료 권고는 <strong>OncoKB + CIViC</strong>에서 결정적으로 큐레이션된 후에만 LLM이 <em>설명</em>할 수 있습니다. Board Chair는 (curated_id, variant_key) 쌍이 없는 행은 생성할 수 없으며, LLM이 schema를 지키지 않으면 <strong>deterministic template fallback</strong>이 발화하여 환각을 차단합니다. <code>narrative_scrubber</code>는 CancerBoardOpinion 전체 텍스트를 훑어 큐레이션된 약물 외 언급을 제거합니다.</p>
+      <span class="tag tag-cancer">Cancer</span>
+    </div>
+
     <div class="card" style="border:2px solid #A7D7BE;background:linear-gradient(135deg,#FFF7ED,#F8FAFC);">
       <div class="card-icon">&#x1F3AF;</div>
-      <h3>Variant Selector — 임상 기반 전처리 필터</h3>
-      <p>AI Board에 전달할 변이를 <strong>AMP/ASCO/CAP 2017</strong>과 <strong>ACMG/AMP 2015</strong>에 따라 선별하는 결정적 필터. 777개 원시 WGS 변이가 2개의 Board 제시 변이로 축약된 <a href="sample_codegen_777_report_v2.html">codegen showcase</a>에서 동작을 확인할 수 있습니다.</p>
-      <p style="margin-top:8px;">
-        <strong>MUST-include(암)</strong>: ClinVar P/LP, Tier I/II, 그리고 Cancer Hotspots 재발 잔기 또는 OncoKB oncogenic(COSMIC CGC Tier 1 유전자)인 Tier III 변이.<br>
-        <strong>MUST-include(희귀질환)</strong>: ClinVar P/LP, ACMG P/LP, CNV/SV Class 4–5.<br>
-        <strong>MAY-include VUS(암)</strong>: Cancer Hotspots / OncoKB oncogenic / CGC Tier 1 TSG 절단 변이. 최대 10개.<br>
-        <strong>MAY-include VUS(희귀질환)</strong>: HPO 표현형 매칭 threshold 이상. <strong>ACMG SF v3.2 유전자</strong>는 명시적 opt-in 경로가 모델링되기 전까지 자동 포함에서 제외됩니다.<br>
-        <strong>Soft caps</strong>: 암 30 / 희귀질환 20. MUST-include 항목은 절대 잘리지 않으며, MAY-include가 초과하면 <code>truncated=True</code> 및 <code>n_dropped</code> 메타데이터가 기록됩니다.<br>
-        <strong>Top-k fallback 없음</strong>: 조건을 만족하는 변이가 없을 때, 상위 3개를 억지로 surface하지 않고 <code>empty_reason</code>과 함께 빈 선택을 반환합니다. 리포트에는 "보고 가능한 소견 없음" 문구가 렌더링되며 TMB·커버리지·방법론 섹션은 정상 출력됩니다.<br>
-        <strong>감사 추적</strong>: 선별된 모든 변이에 <code>selection_reason</code> 태그(<code>P/LP</code>, <code>Tier_I</code>, <code>Tier_III_hotspot</code>, <code>VUS_hotspot</code>, <code>VUS_TSG_LoF</code>, <code>VUS_HPO_match</code> 등)가 부여됩니다.
-      </p>
-      <p style="margin-top:8px;">임상 기준 검토 결과는 <code>_workspace/variant-selector/00_clinical_review.md</code>에 기록되어 있으며, AMP 2017 (PMID 27993330), ACMG/AMP 2015 (PMID 25741868), ACMG SF v3.2 (PMID 37347242), Schwaederle 2015, Harris 2016 (iCAT) 문헌에 근거합니다.</p>
+      <h3>Variant Selector (v2.2 B1/B2)</h3>
+      <p>Board에 전달할 변이를 <strong>AMP 2017 + ACMG/AMP 2015</strong> 기준으로 선별하는 결정적 필터. 777개 원시 WGS 변이가 소수의 Board-presented 변이로 축약되는 과정을 <a href="sample_codegen_777_report.html">codegen showcase</a>에서 확인할 수 있습니다. v2.2에서 <strong>protein-impacting consequence gate</strong>로 intronic/UTR/upstream VUS를 제외하고, MMR/Lynch 유전자(MLH1/MSH2/MSH6/PMS2/EPCAM)의 VUS는 hotspot 여부와 무관하게 admit합니다. <strong>Top-k fallback 없음</strong> — 조건 미충족 시 "보고 가능한 소견 없음"으로 렌더링합니다.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
     <div class="card">
       <div class="card-icon">&#x1F4DD;</div>
-      <h3>임상 노트 입력 + Knowledge Base</h3>
-      <p><strong>--clinical-note</strong> / <strong>--clinical-note-file</strong>: 환자의 자유 텍스트 임상 이력(한/영, 최대 1500자)을 AI Board 브리핑에 주입합니다. 결정적 분류 엔진에는 영향을 주지 않으며, 리포트 HTML에는 원문이 포함되지 않습니다(재식별 방지). <strong>Knowledge Base</strong>는 Board의 과거 판단을 <code>kb.sqlite3</code>에 저장하고, 동일 변이 재분석 시 "이전 N건의 판단 이력"을 Prior Knowledge 구간으로 주입합니다. Wiki 페이지는 코드가 SQLite에서 자동 생성하며 LLM이 편집하지 않습니다(hallucination 방지). anti-anchoring 가드레일 포함.</p>
+      <h3>임상 노트 + Knowledge Base</h3>
+      <p><code>--clinical-note</code>로 환자 이력을 Board 브리핑에 주입(리포트 HTML에는 포함되지 않아 재식별 차단). <strong>Knowledge Base</strong>는 과거 Board 판단을 <code>kb.sqlite3</code>에 기록하고 동일 변이 재분석 시 Prior Knowledge로 참조합니다. anti-anchoring 가드레일 포함.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
@@ -544,7 +537,7 @@
       <tr><td><strong>리포트 엔진</strong></td><td>Jinja2 (HTML) + WeasyPrint (PDF)</td></tr>
       <tr><td><strong>병렬 처리</strong></td><td>ThreadPoolExecutor (DB 쿼리) + ProcessPoolExecutor (리포트)</td></tr>
       <tr><td><strong>설정</strong></td><td>YAML + 스키마 검증 (로드 시점)</td></tr>
-      <tr><td><strong>테스트</strong></td><td>pytest (673+개)</td></tr>
+      <tr><td><strong>테스트</strong></td><td>pytest (899개, CI 녹색)</td></tr>
       <tr><td><strong>배포</strong></td><td>Docker + docker-compose / CLI 직접 실행</td></tr>
     </tbody>
   </table>
@@ -608,7 +601,7 @@
     <a href="https://www.kisti.re.kr" target="_blank"><img src="assets/kisti_logo.png" alt="KISTI"></a>
   </div>
   <p><strong>BIKO GenomeBoard</strong> &mdash; Korean Population-Aware Genomic Variant Interpretation Pipeline</p>
-  <p style="margin-top:6px;">Python &ge; 3.10 &middot; 673+ Tests &middot; Docker Ready &middot; Offline Capable</p>
+  <p style="margin-top:6px;">Python &ge; 3.10 &middot; 899 Tests &middot; Docker Ready &middot; Offline Capable &middot; v2.2</p>
   <p style="margin-top:8px;font-size:11px;color:#94A3B8;">
     AI Clinical Board powered by <a href="https://ai.google.dev/gemma/docs/medgemma" style="color:#94A3B8;">Google MedGemma</a> under
     <a href="https://ai.google.dev/gemma/docs/medgemma/terms" style="color:#94A3B8;">MedGemma Terms of Use</a>.

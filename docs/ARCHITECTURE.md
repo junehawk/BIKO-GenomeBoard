@@ -1,8 +1,10 @@
 # BIKO GenomeBoard Architecture
 
+> **v2.2 note (2026-04-14)** — The AI Clinical Board layer now follows a **curate-then-narrate** pattern (A1/A2): treatment options are deterministically curated from OncoKB + local CIViC and the Board Chair LLM may only narrate curated rows by `(curated_id, variant_key)`. A `narrative_scrubber` strips any drug mention outside the curated set and a `template_renderer_chair` deterministic fallback fires when the LLM cannot produce valid curated pairs. On top of this, the ACMG engine ships a PMID-cited PM1 hotspot table (`data/pm1_hotspot_domains.json`, A3) and a narrow ClinVar-conflict override (`apply_hotspot_conflict_reconciliation`, A4). The variant selector tightens Tier III admission via a protein-impacting consequence gate (B1) and an MMR/Lynch carve-out (B2). See [`superpowers/plans/2026-04-14-ai-board-v2.2.md`](superpowers/plans/2026-04-14-ai-board-v2.2.md) for the full specification. This document describes the stable pipeline layer; v2.2-specific details live in the plan.
+
 ## Design Principle
 
-> All variant classification and database queries run as deterministic Python scripts. No LLM is involved in classification logic.
+> All variant classification and database queries run as deterministic Python scripts. No LLM is involved in classification logic. The AI Clinical Board provides interpretive synthesis over the deterministic classification result; it never alters it.
 
 This ensures reproducibility: the same VCF always produces the same ACMG codes, tier, and classification.
 

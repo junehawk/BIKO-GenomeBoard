@@ -43,3 +43,6 @@ data/knowledge_base/kb.sqlite3
 data/knowledge_base/*/genes/
 data/knowledge_base/log.md
 data/knowledge_base/index.md
+
+# Session-scoped working artifacts (not committed)
+_workspace/

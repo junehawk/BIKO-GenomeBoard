@@ -64,25 +64,37 @@ def render_from_curated(
     _rank = {"A": 0, "B": 1, "C": 2, "D": 3}
     treatment_rows.sort(key=lambda r: (_rank.get(r.get("evidence_level", "D"), 9), r.get("drug", "").lower()))
 
-    if treatment_rows:
-        headline = f"{len(treatment_rows)} curated therapy option(s) — LLM synthesis unavailable"
+    n = len(treatment_rows)
+    if n > 0:
+        headline = "No variant-specific treatment recommendations — evidence library only"
         implications = (
-            "Deterministic fallback: the Board Chair LLM response did not "
-            "produce any valid (curated_id, variant_key) pair. The treatment "
-            "options below are drawn directly from the OncoKB/CIViC curator "
-            "output. No LLM narrative is included."
+            "The AI Board was unable to produce variant-specific treatment "
+            "recommendations for this sample. The table below lists "
+            f"{n} evidence rows retrieved from CIViC and OncoKB for the "
+            "selected variants; none have been narrowed to therapy "
+            "recommendations tied to the specific variants identified. "
+            "Treat the table as a research reference library, not a list "
+            "of recommended treatments. Clinical interpretation by a "
+            "qualified oncologist is required."
+        )
+        evidence = (
+            f"Research reference library: {n} gene-level CIViC/OncoKB "
+            "evidence rows. These are NOT recommended treatments for this "
+            "patient's specific variants."
         )
     else:
-        headline = "No curated therapy options"
+        headline = "No matched treatment evidence for this variant set"
         implications = (
-            "No curated therapy rows are available for the selected variants "
-            "and the Board Chair synthesis failed validation."
+            "No curated therapy evidence was retrieved for the selected "
+            "variants. The AI Board did not produce a treatment narrative. "
+            "Clinical interpretation by a qualified oncologist is required."
         )
+        evidence = "No curator rows available."
 
     return CancerBoardOpinion(
         therapeutic_headline=headline,
         therapeutic_implications=implications,
-        therapeutic_evidence="Curated rows rendered without LLM narrative.",
+        therapeutic_evidence=evidence,
         treatment_options=treatment_rows,
         actionable_findings=[],
         clinical_actions=[],

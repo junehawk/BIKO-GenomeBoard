@@ -1,5 +1,7 @@
 # BIKO GenomeBoard Variant Tiering Principles
 
+> **v2.2 보강 (2026-04-14)** — Cancer 모드 ACMG engine에 PMID 기반 PM1 hotspot table(`data/pm1_hotspot_domains.json`, TP53/KRAS/NRAS/BRAF/PIK3CA/EGFR/IDH1-2 등)이 추가되어 VEP `DOMAINS`가 비어 있어도 PM1이 발화합니다. 좁은 4-조건 ClinVar override(`engine ≥ LP` + ClinVar Conflicting + PM1 + PM5)가 post-classify seam에 배치되어 canonical hotspot이 Conflicting submitters 때문에 VUS로 떨어지는 것을 방지합니다. Variant Selector는 v2.2 B1에서 protein-impacting consequence gate(P/LP bypass + SpliceAI ≥ 0.2 rescue)를, B2에서 MMR/Lynch carve-out을 도입했습니다. 상세 명세: [`superpowers/plans/2026-04-14-ai-board-v2.2.md`](superpowers/plans/2026-04-14-ai-board-v2.2.md).
+
 ## 개요
 
 BIKO GenomeBoard는 두 가지 분석 모드에 따라 서로 다른 분류 체계를 사용한다.
