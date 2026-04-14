@@ -3,9 +3,13 @@
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Optional
+from typing import Optional, Union
 
-from scripts.clinical_board.models import AgentOpinion, BoardOpinion
+from scripts.clinical_board.models import (
+    AgentOpinion,
+    BoardOpinion,
+    CancerBoardOpinion,
+)
 from scripts.clinical_board.ollama_client import OllamaClient
 from scripts.clinical_board.case_briefing import build_case_briefing
 from scripts.common.config import get
@@ -13,16 +17,33 @@ from scripts.common.config import get
 logger = logging.getLogger(__name__)
 
 
-def _load_agents(client: OllamaClient, model: str, language: str):
-    """Lazy-load domain agents to avoid import errors if not installed."""
+def _load_agents(
+    client: OllamaClient,
+    model: str,
+    language: str,
+    mode: str = "rare-disease",
+):
+    """Lazy-load domain agents for the given mode."""
+    if mode == "cancer":
+        from scripts.clinical_board.agents.therapeutic_target import TherapeuticTargetAnalyst
+        from scripts.clinical_board.agents.tumor_genomics import TumorGenomicsSpecialist
+        from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
+        from scripts.clinical_board.agents.clinical_evidence import ClinicalEvidenceAnalyst
+        return [
+            TherapeuticTargetAnalyst(client=client, model=model, language=language),
+            TumorGenomicsSpecialist(client=client, model=model, language=language),
+            PGxSpecialist(client=client, model=model, language=language),
+            ClinicalEvidenceAnalyst(client=client, model=model, language=language),
+        ]
+
     from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
-    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist as PgxSpecialist
+    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
     return [
         VariantPathologist(client=client, model=model, language=language),
         DiseaseGeneticist(client=client, model=model, language=language),
-        PgxSpecialist(client=client, model=model, language=language),
+        PGxSpecialist(client=client, model=model, language=language),
         LiteratureAnalyst(client=client, model=model, language=language),
     ]
 
@@ -39,7 +60,7 @@ def run_clinical_board(
     agent_model: str = None,
     chair_model: str = None,
     language: str = None,
-) -> Optional[BoardOpinion]:
+) -> Optional[Union[BoardOpinion, CancerBoardOpinion]]:
     """Run the full Clinical Board analysis.
 
     Args:
@@ -76,7 +97,7 @@ def run_clinical_board(
 
     # Step 2: Run domain agents in parallel
     logger.info("[Clinical Board] Running domain agents...")
-    agents = _load_agents(client, agent_model, language)
+    agents = _load_agents(client, agent_model, language, mode=mode)
     opinions: list[AgentOpinion] = []
 
     # Run agents sequentially on single GPU to avoid resource contention
@@ -98,12 +119,19 @@ def run_clinical_board(
     # Step 3: Board Chair synthesis
     logger.info("[Clinical Board] Board Chair synthesizing opinions...")
     chair = _load_chair(client, chair_model, language)
-    board_opinion = chair.synthesize(briefing, opinions)
+    board_opinion = chair.synthesize(briefing, opinions, mode=mode)
     board_opinion.agent_opinions = opinions
 
     elapsed = time.time() - start
-    logger.info(f"[Clinical Board] Complete in {elapsed:.1f}s — "
-                f"Primary diagnosis: {board_opinion.primary_diagnosis} "
-                f"({board_opinion.confidence} confidence)")
+    if isinstance(board_opinion, CancerBoardOpinion):
+        summary = board_opinion.therapeutic_implications
+        label = "Therapeutic implications"
+    else:
+        summary = board_opinion.primary_diagnosis
+        label = "Primary diagnosis"
+    logger.info(
+        f"[Clinical Board] Complete in {elapsed:.1f}s — "
+        f"{label}: {summary} ({board_opinion.confidence} confidence)"
+    )
 
     return board_opinion

@@ -520,3 +520,33 @@ def test_build_prompt_with_prior_knowledge():
     )
     assert "PRIOR BOARD KNOWLEDGE" in prompt
     assert "3 prior cases" in prompt
+
+
+# ---------------------------------------------------------------------------
+# Runner mode-based agent selection (Task 7)
+# ---------------------------------------------------------------------------
+
+
+def test_runner_loads_cancer_agents():
+    """Cancer mode loads therapeutic target, tumor genomics, pgx, clinical evidence."""
+    from scripts.clinical_board.runner import _load_agents
+
+    client = MagicMock()
+    agents = _load_agents(client, "test-model", "en", mode="cancer")
+    names = [a.agent_name for a in agents]
+    assert "Therapeutic Target Analyst" in names
+    assert "Tumor Genomics Specialist" in names
+    assert "Clinical Evidence Analyst" in names
+    assert len(agents) == 4
+
+
+def test_runner_loads_rare_disease_agents_default():
+    """Default mode loads rare disease agents (backward compatible)."""
+    from scripts.clinical_board.runner import _load_agents
+
+    client = MagicMock()
+    agents = _load_agents(client, "test-model", "en", mode="rare-disease")
+    names = [a.agent_name for a in agents]
+    assert "Variant Pathologist" in names
+    assert "Disease Geneticist" in names
+    assert len(agents) == 4
