@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BIKO GenomeBoard — Rare Disease Report — RARE_DISEASE_DEMO</title>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+    /* ── CSS Variables — Clinical/Academic palette ── */
+    :root {
+      --teal:    #0F766E;
+      --teal-lt: #CCFBF1;
+      --navy:    #0F172A;
+      --slate:   #475569;
+      --text:    #1e293b;
+      --muted:   #64748b;
+      --border:  #cbd5e1;
+      --surface: #f8fafc;
+      --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --font-mono: 'Courier New', Courier, monospace;
+    }
+
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ── */
+    body {
+      font-family: var(--font-sans);
+      font-size: 9.5pt;
+      line-height: 1.6;
+      color: var(--text);
+      background: #ffffff;
+    }
+
+    /* ── Page shell ── */
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 0;
+      position: relative;
+      background: #ffffff;
+    }
+
+    /* ── Teal accent bar (top of every page) ── */
+    .page-header-bar {
+      background: var(--teal);
+      height: 5px;
+      width: 100%;
+      display: block;
+    }
+
+    /* ── Page inner content padding ── */
+    .page-body {
+      padding: 12mm 16mm 20mm 16mm;
+    }
+
+    /* ── Masthead (logo row) ── */
+    .masthead {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 9px;
+      padding-bottom: 7px;
+      border-bottom: 1px solid var(--navy);
+    }
+
+    .masthead-logo {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .masthead-brand {
+      font-family: var(--font-sans);
+      font-size: 16pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+
+    .masthead-brand span {
+      color: var(--teal);
+    }
+
+    .masthead-tagline {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      margin-top: 3px;
+    }
+
+    .masthead-meta {
+      font-family: var(--font-sans);
+      font-size: 8.5pt;
+      color: var(--slate);
+      text-align: right;
+      line-height: 1.65;
+    }
+
+    .masthead-meta strong {
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    /* ── Info block grid (page 1 two-column) ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      margin: 9px 0;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+    }
+
+    .info-block {
+      padding: 9px 12px;
+      border-right: 1px solid var(--border);
+    }
+
+    .info-block:last-child {
+      border-right: none;
+    }
+
+    .info-block-title {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+      background: var(--teal);
+      padding: 4px 10px;
+      margin: -9px -12px 9px -12px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 6px;
+      font-size: 9pt;
+      margin-bottom: 3px;
+      font-family: var(--font-sans);
+    }
+
+    .info-label {
+      color: var(--muted);
+      font-size: 8pt;
+      font-weight: 500;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* ── Summary counts strip ── */
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin: 10px 0;
+    }
+
+    .summary-card {
+      border-radius: 2px;
+      padding: 10px 8px 9px;
+      text-align: center;
+      font-family: var(--font-sans);
+      border-top: 2px solid transparent;
+    }
+
+    .summary-card .count {
+      font-size: 24pt;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -1px;
+    }
+
+    .summary-card .label {
+      font-size: 7.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+      opacity: 0.8;
+    }
+
+    .card-total  { background: #f0fdf9; color: var(--teal);  border-top-color: var(--teal); }
+    .card-path   { background: #FEF2F2; color: #991B1B;      border-top-color: #991B1B; }
+    .card-vus    { background: #F3F4F6; color: #374151;      border-top-color: #9ca3af; }
+    .card-benign { background: #ECFDF5; color: #065F46;      border-top-color: #10b981; }
+
+    /* ── Section header (teal badge style) ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 14px 0 8px 0;
+    }
+
+    .section-badge {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: #ffffff;
+      background: var(--teal);
+      padding: 3px 10px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+
+    .section-badge.badge-navy  { background: var(--navy); }
+    .section-badge.badge-blue  { background: #1E40AF; }
+    .section-badge.badge-purple { background: #5B21B6; }
+
+    .section-rule {
+      flex: 1;
+      height: 1px;
+      background: var(--teal);
+    }
+
+    .section-rule.rule-navy   { background: var(--navy); }
+    .section-rule.rule-blue   { background: #1E40AF; }
+    .section-rule.rule-purple { background: #5B21B6; }
+
+    /* ── HPO Phenotype list ── */
+    .hpo-list {
+      background: #f5f3ff;
+      border: 1px solid #ddd6fe;
+      border-radius: 2px;
+      padding: 10px 14px;
+      margin: 6px 0 10px 0;
+    }
+
+    .hpo-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid #ede9fe;
+      font-family: var(--font-sans);
+      font-size: 9pt;
+    }
+
+    .hpo-item:last-child { border-bottom: none; }
+
+    .hpo-id {
+      font-family: var(--font-mono);
+      font-size: 8pt;
+      color: #5B21B6;
+      font-weight: 700;
+      min-width: 100px;
+      flex-shrink: 0;
+    }
+
+    .hpo-name {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .hpo-gene-count {
+      font-size: 7.5pt;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* ── Candidate ranking table ── */
+    .candidate-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px 0;
+      font-size: 8.5pt;
+      font-family: var(--font-sans);
+    }
+
+    .candidate-table thead th {
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      background: #5B21B6;
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    .candidate-table tbody tr { border-bottom: 1px solid #e2e8f0; }
+    .candidate-table tbody tr:last-child { border-bottom: none; }
+    .candidate-table tbody tr:nth-child(odd)  { background: #ffffff; }
+    .candidate-table tbody tr:nth-child(even) { background: #faf5ff; }
+
+    .candidate-table tbody td {
+      padding: 6px 10px;
+      vertical-align: top;
+      line-height: 1.5;
+    }
+
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 8pt;
+      font-weight: 800;
+      font-family: var(--font-sans);
+    }
+
+    .rank-badge.rank-1 { background: #991B1B; }
+    .rank-badge.rank-2 { background: #92400E; }
+    .rank-badge.rank-3 { background: var(--teal); }
+
+    .hpo-score-pill {
+      display: inline-block;
+      background: #f5f3ff;
+      color: #5B21B6;
+      border: 1px solid #ddd6fe;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 8pt;
+      font-weight: 700;
+      font-family: var(--font-sans);
+    }
+
+    .hpo-score-pill.score-high {
+      background: #ede9fe;
+      border-color: #c4b5fd;
+      color: #4C1D95;
+    }
+
+    .clingen-badge {
+      display: inline-block;
+      padding: 1px 7px;
+      border-radius: 2px;
+      font-size: 7pt;
+      font-weight: 700;
+      font-family: var(--font-sans);
+    }
+
+    .clingen-definitive { background: #FEF2F2; color: #991B1B; border: 1px solid #fecaca; }
+    .clingen-strong     { background: #FFF7ED; color: #92400E; border: 1px solid #fed7aa; }
+    .clingen-moderate   { background: #F3F4F6; color: #374151; border: 1px solid #d1d5db; }
+    .clingen-limited    { background: #ECFDF5; color: #065F46; border: 1px solid #a7f3d0; }
+    .clingen-none       { background: #F3F4F6; color: #6b7280; border: 1px solid #e5e7eb; }
+
+    /* ── Findings panels ── */
+    .findings-two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 0 0 10px 0;
+    }
+
+    .findings-panel {
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .findings-panel-title {
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 5px 10px;
+      color: #ffffff;
+    }
+
+    .findings-panel-title.title-path   { background: #7f1d1d; }
+    .findings-panel-title.title-vus    { background: var(--navy); }
+
+    .findings-panel-body { padding: 7px 10px; }
+
+    .finding-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #f1f5f9;
+      font-family: var(--font-sans);
+      font-size: 9pt;
+    }
+
+    .finding-row:last-child { border-bottom: none; }
+
+    .finding-gene {
+      font-weight: 700;
+      color: var(--navy);
+    }
+
+    .finding-variant {
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      color: var(--muted);
+      max-width: 140px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* ── Classification badges ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      white-space: nowrap;
+    }
+
+    .badge-pathogenic        { background: #FEF2F2; color: #991B1B; border: 1px solid #fecaca; }
+    .badge-likely-pathogenic { background: #FFF7ED; color: #92400E; border: 1px solid #fed7aa; }
+    .badge-vus               { background: #F3F4F6; color: #374151; border: 1px solid #d1d5db; }
+    .badge-likely-benign     { background: #ECFDF5; color: #065F46; border: 1px solid #a7f3d0; }
+    .badge-benign            { background: #ECFDF5; color: #065F46; border: 1px solid #6ee7b7; }
+    .badge-drug-response     { background: #EFF6FF; color: #1E40AF; border: 1px solid #bfdbfe; }
+    .badge-risk-factor       { background: #F5F3FF; color: #5B21B6; border: 1px solid #ddd6fe; }
+    .badge-unknown           { background: #F3F4F6; color: #6b7280; border: 1px solid #e5e7eb; }
+    .badge-cpic-a            { background: #F0FDFA; color: #0D9488; border: 1px solid #99F6E4; }
+
+    /* ── ACMG code pills ── */
+    .acmg-code {
+      display: inline-block;
+      background: #f0fdf9;
+      color: var(--teal);
+      border: 1px solid #99f6e4;
+      border-radius: 2px;
+      padding: 1px 5px;
+      font-family: var(--font-mono);
+      font-size: 7pt;
+      margin: 1px 2px 1px 0;
+    }
+
+    /* ── Conflict indicator ── */
+    .conflict-flag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      background: #FFFBEB;
+      color: #92400E;
+      border: 1px solid #fbbf24;
+      border-radius: 2px;
+      padding: 2px 7px;
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
+      font-weight: 700;
+    }
+
+    /* ── Korean flag inline ── */
+    .korean-flag {
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      font-weight: 600;
+      color: #1E40AF;
+    }
+
+    /* ── Variant detail pages ── */
+    .variant-page {
+      page-break-before: always;
+    }
+
+    .variant-block {
+      page-break-inside: avoid;
+      margin-bottom: 8mm;
+      padding-bottom: 6mm;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .variant-block:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .variant-detail-header {
+      margin: 0 0 8px 0;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--navy);
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .variant-gene-name {
+      font-family: var(--font-sans);
+      font-size: 22pt;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      letter-spacing: -0.8px;
+    }
+
+    .variant-header-right {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .variant-alteration {
+      font-family: var(--font-mono);
+      font-size: 8.5pt;
+      color: var(--slate);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .variant-badges {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    /* ── 3-column finding detail grid ── */
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      margin: 6px 0;
+    }
+
+    .detail-col {
+      padding: 8px 10px;
+      border-right: 1px solid var(--border);
+    }
+
+    .detail-col:nth-child(1) { background: #fafcff; }
+    .detail-col:nth-child(2) { background: #f8fffe; }
+    .detail-col:nth-child(3) { background: #fdf8ff; }
+
+    .detail-col:last-child { border-right: none; }
+
+    .detail-col-title {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--teal);
+      padding: 0 0 5px 0;
+      margin-bottom: 5px;
+      border-bottom: 1px solid var(--teal-lt);
+    }
+
+    .detail-col p {
+      font-size: 9pt;
+      line-height: 1.5;
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+
+    .detail-col .detail-label {
+      font-family: var(--font-sans);
+      font-size: 7.5pt;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-top: 7px;
+      margin-bottom: 2px;
+    }
+
+    .detail-col .detail-value {
+      font-size: 9pt;
+      color: #0f172a;
+      margin-bottom: 4px;
+      line-height: 1.5;
+    }
+
+    .detail-col .detail-value.mono {
+      font-family: var(--font-mono);
+      font-size: 8pt;
+    }
+
+    /* ── Frequency stat box ── */
+    .freq-stat {
+      background: var(--surface);
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      padding: 5px 8px;
+      margin: 4px 0;
+      font-family: var(--font-sans);
+    }
+
+    .freq-stat .freq-num {
+      font-size: 11pt;
+      font-weight: 800;
+      color: var(--navy);
+      line-height: 1;
+      letter-spacing: -0.3px;
+    }
+
+    .freq-stat .freq-label {
+      font-size: 7.5pt;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .freq-enrichment {
+      background: #EFF6FF;
+      border: 1px solid #bfdbfe;
+      border-radius: 2px;
+      padding: 4px 8px;
+      margin: 4px 0;
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      color: #1E40AF;
+      font-weight: 700;
+    }
+
+    /* ── Korean callout box ── */
+    .korean-callout {
+      background: #F0F4FF;
+      border-left: 3px solid #1E40AF;
+      padding: 7px 10px;
+      border-radius: 0 2px 2px 0;
+      margin: 8px 0;
+      font-family: var(--font-sans);
+    }
+
+    .korean-callout .korean-callout-title {
+      font-size: 7pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #1E40AF;
+      margin-bottom: 3px;
+    }
+
+    .korean-callout p {
+      font-size: 9pt;
+      font-weight: 500;
+      color: #1e3a5f;
+      line-height: 1.5;
+      margin: 0;
+    }
+
+    /* ── Condition pill tags ── */
+    .condition-pill {
+      display: inline-block;
+      background: #f0f4fa;
+      color: var(--navy);
+      border: 1px solid #c7d6eb;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 7.5pt;
+      font-weight: 500;
+      margin: 1px 2px 1px 0;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+    }
+
+    /* ── HPO matching pill tags ── */
+    .hpo-match-pill {
+      display: inline-block;
+      background: #f5f3ff;
+      color: #5B21B6;
+      border: 1px solid #ddd6fe;
+      border-radius: 10px;
+      padding: 1px 8px;
+      font-size: 7pt;
+      font-weight: 600;
+      margin: 1px 2px 1px 0;
+      font-family: var(--font-sans);
+      white-space: nowrap;
+    }
+
+    /* ── Tables ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0 12px 0;
+      font-size: 9pt;
+      font-family: var(--font-sans);
+    }
+
+    thead th {
+      font-family: var(--font-sans);
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #ffffff;
+      background: var(--teal);
+      padding: 6px 10px;
+      text-align: left;
+    }
+
+    tbody tr { border-bottom: 1px solid #e2e8f0; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:nth-child(odd)  { background: #ffffff; }
+    tbody tr:nth-child(even) { background: #f8fafc; }
+
+    tbody td {
+      padding: 6px 10px;
+      vertical-align: top;
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      font-size: 9pt;
+    }
+
+    /* ── No-report list ── */
+    .no-report-list {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      padding: 10px 14px;
+      margin: 6px 0;
+    }
+
+    .no-report-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      columns: 2;
+      column-gap: 20px;
+    }
+
+    .no-report-list li {
+      font-family: var(--font-sans);
+      font-size: 9pt;
+      padding: 2px 0;
+      color: var(--slate);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .no-report-list li::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    /* ── PGx section ── */
+    .pgx-row {
+      border: 1px solid #e2e8f0;
+      border-radius: 2px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+
+    .pgx-row-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f0fdf9;
+      padding: 7px 12px;
+      border-bottom: 1px solid #ccfbf1;
+    }
+
+    .pgx-gene {
+      font-family: var(--font-sans);
+      font-size: 12pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.3px;
+    }
+
+    .pgx-row-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+    }
+
+    .pgx-cell {
+      padding: 9px 12px;
+      border-right: 1px solid #e2e8f0;
+      font-family: var(--font-sans);
+    }
+
+    .pgx-cell:nth-child(2) { background: #f8fffe; }
+    .pgx-cell:last-child { border-right: none; }
+
+    .pgx-cell-label {
+      font-size: 7pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      margin-bottom: 3px;
+    }
+
+    .pgx-cell-value {
+      font-size: 9.5pt;
+      color: #0f172a;
+      line-height: 1.55;
+    }
+
+    .pgx-korean-note {
+      font-size: 8.5pt;
+      font-weight: 600;
+      color: #1E40AF;
+    }
+
+    .pgx-comparison-box {
+      display: inline-block;
+      border-radius: 2px;
+      padding: 5px 9px;
+      margin-right: 5px;
+      margin-bottom: 3px;
+      min-width: 68px;
+      text-align: center;
+    }
+
+    .pgx-comparison-box.box-korean  { background: #EFF6FF; border: 1px solid #bfdbfe; }
+    .pgx-comparison-box.box-western { background: #F5F3FF; border: 1px solid #ddd6fe; }
+
+    .pgx-comparison-box .box-pct {
+      font-size: 12pt;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.4px;
+    }
+
+    .pgx-comparison-box.box-korean .box-pct  { color: #1E40AF; }
+    .pgx-comparison-box.box-western .box-pct { color: #5B21B6; }
+
+    .pgx-comparison-box .box-lbl {
+      font-size: 7.5pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+      opacity: 0.7;
+    }
+
+    /* ── DB version table ── */
+    .db-table tbody td:first-child {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--slate);
+      width: 160px;
+    }
+
+    /* ── No-data placeholder ── */
+    .no-data {
+      font-style: italic;
+      color: #94a3b8;
+      font-size: 8.5pt;
+    }
+
+    /* ── Variant notes bar ── */
+    .variant-notes-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin: 4px 0 0 0;
+    }
+
+    /* ── Method blocks ── */
+    .method-block {
+      margin: 10px 0;
+    }
+
+    .method-block p {
+      font-size: 9.5pt;
+      line-height: 1.65;
+      margin-bottom: 0.5em;
+    }
+
+    .method-block ul {
+      padding-left: 1.4em;
+      margin-bottom: 0.5em;
+    }
+
+    .method-block li {
+      font-size: 9.5pt;
+      line-height: 1.6;
+      margin-bottom: 0.25em;
+    }
+
+    /* ── Footer (every page) ── */
+    .page-footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 5px 16mm 7mm 16mm;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-family: var(--font-sans);
+    }
+
+    .footer-disclaimer {
+      font-size: 7pt;
+      color: var(--muted);
+      max-width: 76%;
+      line-height: 1.45;
+    }
+
+    .footer-disclaimer strong {
+      color: #b91c1c;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .footer-right {
+      text-align: right;
+      font-size: 7pt;
+      color: #94a3b8;
+    }
+
+    .footer-brand-text {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--teal);
+      font-size: 7.5pt;
+    }
+
+    /* ── Print layout ── */
+    @media print {
+      body { margin: 0; }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        min-height: 0;
+      }
+
+      .page-body {
+        padding: 10mm 14mm 22mm 14mm;
+      }
+
+      .page-footer {
+        padding: 5px 14mm 5mm 14mm;
+      }
+
+      .variant-page   { page-break-before: always; }
+      .variant-block  { page-break-inside: avoid; }
+      .detail-grid    { page-break-inside: avoid; }
+      table           { page-break-inside: avoid; }
+      .pgx-row        { page-break-inside: avoid; }
+
+      @page { size: A4; margin: 0; }
+    }
+
+    /* ── Screen preview spacing ── */
+    @media screen {
+      body { background: #dde3e9; }
+      .page {
+        box-shadow: 0 1px 8px rgba(0,0,0,0.12);
+        margin: 20px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+
+
+
+
+
+
+
+<div class="page" id="page-summary">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Masthead -->
+    <div class="masthead">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-tagline">Rare Disease / Germline Variant Report</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> RARE_DISEASE_DEMO</div>
+        <div><strong>Report Date:</strong> 2026-04-14</div>
+        <div><strong>Report Type:</strong> Rare Disease (Germline)</div>
+      </div>
+    </div>
+
+    <!-- Specimen / Patient info row -->
+    <div class="info-grid">
+      <div class="info-block">
+        <div class="info-block-title">Specimen Information</div>
+        <div class="info-row">
+          <span class="info-label">Sample ID</span>
+          <span class="info-value">RARE_DISEASE_DEMO</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Report Date</span>
+          <span class="info-value">2026-04-14</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Analysis Type</span>
+          <span class="info-value">Germline / Rare Disease Panel</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pipeline</span>
+          <span class="info-value">BIKO GenomeBoard v0.7</span>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="info-block-title">Variant Summary</div>
+        <div class="info-row">
+          <span class="info-label">Total Variants</span>
+          <span class="info-value">5</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Pathogenic / LP</span>
+          <span class="info-value" style="color:#991b1b;font-weight:700;">3</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">VUS</span>
+          <span class="info-value" style="color:#92400e;font-weight:700;">2</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">HPO Terms</span>
+          <span class="info-value" style="color:#5B21B6;font-weight:700;">1</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Benign / LB</span>
+          <span class="info-value" style="color:#166534;font-weight:700;">0</span>
+        </div>
+        
+        <div class="info-row">
+          <span class="info-label">Omitted (VUS/Benign)</span>
+          <span class="info-value">2</span>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- Summary count strip -->
+    <div class="summary-strip">
+      <div class="summary-card card-total">
+        <div class="count">5</div>
+        <div class="label">Total Variants</div>
+      </div>
+      <div class="summary-card card-path">
+        <div class="count">3</div>
+        <div class="label">Pathogenic / LP</div>
+      </div>
+      <div class="summary-card card-vus">
+        <div class="count">2</div>
+        <div class="label">VUS</div>
+      </div>
+      <div class="summary-card" style="background:#EFF6FF;color:#1E40AF;border-top:2px solid #1E40AF;">
+        <div class="count">0</div>
+        <div class="label">Drug Response / Risk</div>
+      </div>
+      <div class="summary-card card-benign">
+        <div class="count">0</div>
+        <div class="label">Benign / LB</div>
+      </div>
+    </div>
+
+    <!-- HPO Phenotypes section -->
+    
+    <div class="section-header">
+      <span class="section-badge badge-purple">Patient Phenotypes (HPO)</span>
+      <div class="section-rule rule-purple"></div>
+    </div>
+    <div class="hpo-list">
+      
+      <div class="hpo-item">
+        <span class="hpo-id">HP:0001263</span>
+        <span class="hpo-name">Global developmental delay</span>
+        
+        <span class="hpo-gene-count">1913 associated genes</span>
+        
+      </div>
+      
+    </div>
+    
+
+    <!-- Candidate Gene Ranking Table -->
+    <div class="section-header">
+      <span class="section-badge badge-purple">Candidate Gene Ranking</span>
+      <div class="section-rule rule-purple"></div>
+    </div>
+
+    <table class="candidate-table">
+      <thead>
+        <tr>
+          <th style="width:40px;">Rank</th>
+          <th>Gene</th>
+          <th>Classification</th>
+          <th style="width:80px;">HPO Score</th>
+          <th>Inheritance</th>
+          <th>ClinGen Validity</th>
+          <th>OMIM Phenotypes</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td>
+            
+              <span class="rank-badge rank-1">1</span>
+            
+          </td>
+          <td><strong>TP53</strong></td>
+          <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          <td>
+            
+            <span class="hpo-score-pill score-high">1</span>
+          </td>
+          <td>
+            
+              <span style="font-size:8.5pt;font-weight:600;color:var(--slate);">AD</span>
+            
+          </td>
+          <td>
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</td>
+          <td>
+            
+              
+                <span class="condition-pill">Li-Fraumeni syndrome</span>
+              
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            
+              <span class="rank-badge rank-2">2</span>
+            
+          </td>
+          <td><strong>CFTR</strong></td>
+          <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          <td>
+            
+            <span class="hpo-score-pill">0</span>
+          </td>
+          <td>
+            
+              <span style="font-size:8.5pt;font-weight:600;color:var(--slate);">AR</span>
+            
+          </td>
+          <td>
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</td>
+          <td>
+            
+              
+                <span class="condition-pill">Cystic fibrosis</span>
+              
+                <span class="condition-pill">CBAVD</span>
+              
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            
+              <span class="rank-badge rank-3">3</span>
+            
+          </td>
+          <td><strong>PTPN11</strong></td>
+          <td>
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+</td>
+          <td>
+            
+            <span class="hpo-score-pill score-high">1</span>
+          </td>
+          <td>
+            
+              <span style="font-size:8.5pt;font-weight:600;color:var(--slate);">AD</span>
+            
+          </td>
+          <td>
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</td>
+          <td>
+            
+              
+                <span class="condition-pill">Noonan syndrome 1</span>
+              
+                <span class="condition-pill">LEOPARD syndrome</span>
+              
+                <span class="condition-pill">Juvenile myelomonocytic leukemia</span>
+              
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            
+              <span class="rank-badge">4</span>
+            
+          </td>
+          <td><strong>MUTYH</strong></td>
+          <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          <td>
+            
+            <span class="hpo-score-pill">0</span>
+          </td>
+          <td>
+            
+              <span style="font-size:8.5pt;font-weight:600;color:var(--slate);">AR</span>
+            
+          </td>
+          <td>
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</td>
+          <td>
+            
+              
+                <span class="condition-pill">MUTYH-associated polyposis</span>
+              
+                <span class="condition-pill">Colorectal adenomas</span>
+              
+            
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+            
+              <span class="rank-badge">5</span>
+            
+          </td>
+          <td><strong>PALB2</strong></td>
+          <td>
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+</td>
+          <td>
+            
+            <span class="hpo-score-pill score-high">1</span>
+          </td>
+          <td>
+            
+              <span style="font-size:8.5pt;font-weight:600;color:var(--slate);">AD/AR</span>
+            
+          </td>
+          <td>
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</td>
+          <td>
+            
+              
+                <span class="condition-pill">Hereditary breast cancer</span>
+              
+                <span class="condition-pill">Fanconi anemia N</span>
+              
+            
+          </td>
+        </tr>
+        
+      </tbody>
+    </table>
+
+    <!-- Genomic Findings panels -->
+    <div class="section-header">
+      <span class="section-badge">Genomic Findings</span>
+      <div class="section-rule"></div>
+    </div>
+
+    
+    
+    
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+      
+      
+        
+      
+    
+
+    <div class="findings-two-col">
+      <!-- Clinically Significant panel -->
+      <div class="findings-panel">
+        <div class="findings-panel-title title-path">Clinically Significant</div>
+        <div class="findings-panel-body">
+          
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">TP53</span>
+                
+                
+                  <span style="display:inline-block;background:#f5f3ff;color:#5B21B6;border:1px solid #ddd6fe;border-radius:2px;padding:1px 6px;font-size:7pt;font-weight:600;margin-left:4px;">AD</span>
+                
+                <br><span class="finding-variant">chr17:7675088:C&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">CFTR</span>
+                
+                  <span class="conflict-flag">&#9888;</span>
+                
+                
+                  <span style="display:inline-block;background:#f5f3ff;color:#5B21B6;border:1px solid #ddd6fe;border-radius:2px;padding:1px 6px;font-size:7pt;font-weight:600;margin-left:4px;">AR</span>
+                
+                <br><span class="finding-variant">chr7:117559590:ATCT&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">MUTYH</span>
+                
+                
+                  <span style="display:inline-block;background:#f5f3ff;color:#5B21B6;border:1px solid #ddd6fe;border-radius:2px;padding:1px 6px;font-size:7pt;font-weight:600;margin-left:4px;">AR</span>
+                
+                <br><span class="finding-variant">chr2:165342465:G&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            </div>
+            
+          
+        </div>
+      </div>
+
+      <!-- VUS / Benign panel -->
+      <div class="findings-panel">
+        <div class="findings-panel-title title-vus">VUS &amp; Benign</div>
+        <div class="findings-panel-body">
+          
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">PTPN11</span>
+                
+                <br><span class="finding-variant">chr12:25225628:C&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+
+            </div>
+            
+            <div class="finding-row">
+              <div>
+                <span class="finding-gene">PALB2</span>
+                
+                  <span class="conflict-flag">&#9888;</span>
+                
+                <br><span class="finding-variant">chr17:72122759:G&gt;A</span>
+              </div>
+              
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+
+            </div>
+            
+          
+        </div>
+      </div>
+    </div>
+
+    <!-- Korean Population Findings callout -->
+    
+    
+      
+      
+      
+        
+      
+    
+      
+      
+      
+        
+      
+    
+      
+      
+      
+        
+      
+    
+      
+      
+      
+        
+      
+    
+      
+      
+      
+        
+      
+    
+
+    <div class="section-header">
+      <span class="section-badge badge-blue">Korean Population Findings</span>
+      <div class="section-rule rule-blue"></div>
+    </div>
+    
+    <div class="korean-callout">
+      <div class="korean-callout-title">Korean-Specific Annotations</div>
+      <p>The following variants carry population-specific annotations relevant to the Korean genome cohort (KRGDB):</p>
+      <table style="margin:8px 0 0 0;">
+        <thead>
+          <tr>
+            <th>Gene</th>
+            <th>Variant</th>
+            <th>Korean Population Note</th>
+            <th>Classification</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          
+          <tr>
+            <td><strong>TP53</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr17:7675088:C&gt;A</td>
+            <td><span class="korean-flag">Rare variant | Korean-specific variant (KRGDB/Korea4K/NARD2 only)</span></td>
+            <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>CFTR</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr7:117559590:ATCT&gt;A</td>
+            <td><span class="korean-flag">Common variant | Korean frequency much lower than global</span></td>
+            <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>PTPN11</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr12:25225628:C&gt;A</td>
+            <td><span class="korean-flag">Rare variant | Korean-specific variant (KRGDB/Korea4K/NARD2 only)</span></td>
+            <td>
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>MUTYH</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr2:165342465:G&gt;A</td>
+            <td><span class="korean-flag">Rare variant | Korean-specific variant (KRGDB/Korea4K only)</span></td>
+            <td>
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+</td>
+          </tr>
+          
+          
+          <tr>
+            <td><strong>PALB2</strong></td>
+            <td style="font-family:'Courier New',monospace;font-size:8pt;">chr17:72122759:G&gt;A</td>
+            <td><span class="korean-flag">Rare variant | Korean-specific variant (KRGDB only)</span></td>
+            <td>
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+</td>
+          </tr>
+          
+        </tbody>
+      </table>
+    </div>
+    
+
+    <!-- PGx summary -->
+    
+
+    <!-- Variants with no reportable therapeutic options -->
+    <div class="section-header">
+      <span class="section-badge badge-navy">Variants — No Reportable Therapeutic Options</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+    <div class="no-report-list">
+      
+      
+        
+        
+      
+        
+        
+      
+        
+        
+          
+        
+      
+        
+        
+      
+        
+        
+          
+        
+      
+      
+      <ul>
+        
+        <li>
+          <strong>PTPN11</strong>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:var(--muted);">chr12:25225628:C&gt;A</span>&nbsp;
+          
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+
+        </li>
+        
+        <li>
+          <strong>PALB2</strong>&nbsp;
+          <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:var(--muted);">chr17:72122759:G&gt;A</span>&nbsp;
+          
+  
+  
+    <span class="badge badge-vus">VUS</span>
+  
+
+        </li>
+        
+      </ul>
+      
+    </div>
+
+    
+
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong><br>
+      This report is generated for research purposes only. Findings have not been validated
+      in a CLIA-certified laboratory and must not be used to guide patient care without
+      independent clinical confirmation.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Page 1</div>
+    </div>
+  </div>
+</div><!-- /page-summary -->
+
+
+
+<div class="page" id="page-ai-board">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+    
+    <style>
+      details[open] > summary .board-arrow { transform: rotate(90deg); display: inline-block; transition: transform 0.2s; }
+      .board-arrow { display: inline-block; transition: transform 0.2s; }
+    </style>
+    
+
+    <!-- AI Clinical Board Header -->
+    <div class="section-header">
+      <span class="section-badge" style="background:#115E59;">AI Clinical Board</span>
+      <div class="section-rule" style="background:linear-gradient(90deg,#115E59,#0D9488);height:2px;"></div>
+    </div>
+
+    <!-- AI Disclaimer -->
+    <div style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:6px;padding:8px 14px;margin-bottom:16px;font-size:10px;color:#92400E;line-height:1.5;">
+      <strong style="font-size:10px;">&#9888; AI-Generated</strong> &mdash; This opinion was generated by a local multi-specialist system powered by Google MedGemma. Final clinical judgment must be made by the attending clinician. Variant classification (ACMG/AMP) was performed by a deterministic engine and is not altered by this opinion. MedGemma is not clinical-grade; this output is for research assistance only, not for diagnostic purposes.
+    </div>
+    
+
+    <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="font-size:9px;font-weight:700;color:#115E59;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Primary Diagnosis</div>
+      <div style="font-size:15px;font-weight:700;color:#1E1B4B;margin-bottom:4px;">Undetermined genetic etiology for Global Developmental Delay</div>
+      <div style="font-size:11px;color:#0F766E;line-height:1.5;">The patient presents with global developmental delay (GDD), a broad phenotype. Three pathogenic variants have been identified in TP53, CFTR, and MUTYH genes. While these genes are associated with distinct genetic disorders (Li-Fraumeni syndrome, Cystic Fibrosis, MUTYH-associated polyposis, respectively), the specific contribution of each variant to the patient's GDD is unclear. The HPO term for GDD is extremely broad and non-specific. Zygosity information for CFTR and MUTYH is unavailable, preventing definitive diagnosis of the associated autosomal recessive conditions. The presence of multiple pathogenic variants complicates the interpretation, and prior cases with similar findings often remain undiagnosed.</div>
+      <div style="margin-top:8px;">
+        <span style="display:inline-block;background:#D97706;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: MODERATE</span>
+        <span style="display:inline-block;background:#0D9488;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: unanimous</span>
+      </div>
+    </div>
+    
+<div style="display:flex;gap:16px;margin-bottom:16px;">
+<div style="flex:1;">
+<div style="font-size:11px;font-weight:700;color:#1E293B;margin-bottom:6px;border-bottom:1px solid #E2E8F0;padding-bottom:4px;">Key Findings</div>
+<ul style="margin:0;padding-left:16px;font-size:10.5px;color:#334155;line-height:1.7;">
+<li>Patient presents with global developmental delay (GDD).</li>
+<li>Three pathogenic variants identified in TP53, CFTR, and MUTYH genes.</li>
+<li>HPO term for GDD is very broad and non-specific.</li>
+<li>Zygosity information for CFTR and MUTYH variants is unavailable.</li>
+<li>The identified variants are associated with distinct genetic disorders with different inheritance patterns (AD, AR).</li>
+<li>Prior cases with similar findings often result in an undetermined diagnosis.</li>
+</ul>
+</div>
+<div style="flex:1;">
+<div style="font-size:11px;font-weight:700;color:#1E293B;margin-bottom:6px;border-bottom:1px solid #E2E8F0;padding-bottom:4px;">Differential Diagnoses</div>
+<table style="width:100%;border-collapse:collapse;font-size:10px;">
+<thead><tr style="background:#F8FAFC;"><th style="text-align:left;padding:4px 8px;font-weight:600;border-bottom:1px solid #E2E8F0;">Diagnosis</th><th style="text-align:center;padding:4px 6px;font-weight:600;border-bottom:1px solid #E2E8F0;width:60px;">Likelihood</th></tr></thead><tbody>
+<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">Li-Fraumeni syndrome (due to TP53 variant)</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:#D97706;font-weight:600;font-size:9px;">moderate</td></tr>
+<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">Cystic Fibrosis (due to CFTR variant)</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:#D97706;font-weight:600;font-size:9px;">moderate</td></tr>
+<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">MUTYH-associated polyposis (due to MUTYH variant)</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:#D97706;font-weight:600;font-size:9px;">moderate</td></tr>
+<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">Other genetic syndromes causing GDD</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:#D97706;font-weight:600;font-size:9px;">moderate</td></tr>
+<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">Non-genetic causes of GDD</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:#9CA3AF;font-weight:600;font-size:9px;">low</td></tr>
+</tbody></table>
+</div>
+</div>
+<div style="margin-bottom:12px;">
+<div style="font-size:11px;font-weight:700;color:#1E293B;margin-bottom:6px;border-bottom:1px solid #E2E8F0;padding-bottom:4px;">Recommendations</div>
+<ol style="margin:0;padding-left:18px;font-size:10.5px;color:#334155;line-height:1.7;">
+<li>Determine the zygosity status for the CFTR and MUTYH variants through parental testing or family history analysis.</li>
+<li>Perform a detailed clinical evaluation to assess for specific features associated with Li-Fraumeni syndrome, Cystic Fibrosis, and MUTYH-associated polyposis.</li>
+<li>Consider genetic counseling to discuss the implications of multiple pathogenic variants and potential risks.</li>
+<li>Evaluate the patient for potential cancer predisposition given the TP53 variant.</li>
+<li>If clinical features remain unclear or atypical, consider functional studies or broader genetic testing (e.g., WES/WGS).</li>
+</ol></div>
+<div style="display:flex;gap:16px;margin-bottom:12px;">
+<div style="flex:1;">
+<div style="font-size:10px;font-weight:700;color:#64748B;margin-bottom:4px;">Follow-up</div>
+<ul style="margin:0;padding-left:16px;font-size:10px;color:#64748B;line-height:1.6;">
+<li>Await zygosity results for CFTR and MUTYH.</li>
+<li>Re-evaluate diagnosis based on clinical findings and zygosity results.</li>
+<li>Monitor for development of features associated with Li-Fraumeni syndrome, Cystic Fibrosis, or MUTYH-associated polyposis.</li>
+<li>Consider reclassification of variants if new information becomes available.</li>
+</ul></div>
+</div>
+<div style="margin-top:8px;">
+<div style="font-size:10px;font-weight:700;color:#94A3B8;margin-bottom:6px;">Domain Specialist Opinions</div>
+
+            <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
+              <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
+                <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> Variant Pathologist
+                <span style="float:right;color:#D97706;font-size:9px;font-weight:600;">MODERATE &middot; 6 findings</span>
+              </summary>
+              <div style="padding:8px 10px;font-size:10px;color:#475569;">
+                <ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;"><li style="margin-bottom:2px;">Three pathogenic variants have been identified in TP53, CFTR, and MUTYH genes in a pediatric patient presenting with global developmental delay.</li><li style="margin-bottom:2px;">The identified variants are associated with distinct genetic syndromes and inheritance patterns.</li><li style="margin-bottom:2px;">The clinical presentation of global developmental delay is a broad phenotype.</li></ul>
+                
+              </div>
+            </details>
+            
+
+            <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
+              <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
+                <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> Disease Geneticist
+                <span style="float:right;color:#D97706;font-size:9px;font-weight:600;">MODERATE &middot; 7 findings</span>
+              </summary>
+              <div style="padding:8px 10px;font-size:10px;color:#475569;">
+                <ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;"><li style="margin-bottom:2px;">The patient carries three pathogenic variants in TP53, CFTR, and MUTYH genes.</li><li style="margin-bottom:2px;">The clinical presentation includes global developmental delay (GDD).</li><li style="margin-bottom:2px;">The identified variants are associated with distinct genetic disorders.</li></ul>
+                <div style="font-size:9px;color:#94A3B8;margin-top:4px;">Refs: ACMG/AMP guidelines for variant interpretation, OMIM database, HPO database</div>
+              </div>
+            </details>
+            
+
+            <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
+              <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
+                <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> PGx Specialist
+                <span style="float:right;color:#D97706;font-size:9px;font-weight:600;">MODERATE &middot; 6 findings</span>
+              </summary>
+              <div style="padding:8px 10px;font-size:10px;color:#475569;">
+                <ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;"><li style="margin-bottom:2px;">The patient carries three pathogenic variants in TP53, CFTR, and MUTYH genes.</li><li style="margin-bottom:2px;">The identified variants are associated with distinct genetic syndromes.</li><li style="margin-bottom:2px;">The clinical presentation of global developmental delay is broad and overlaps with the phenotypes associated with these genes, but is not specific.</li></ul>
+                
+              </div>
+            </details>
+            
+
+            <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
+              <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
+                <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> Literature Analyst
+                <span style="float:right;color:#D97706;font-size:9px;font-weight:600;">MODERATE &middot; 7 findings</span>
+              </summary>
+              <div style="padding:8px 10px;font-size:10px;color:#475569;">
+                <ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;"><li style="margin-bottom:2px;">The patient has three identified pathogenic variants in TP53, CFTR, and MUTYH genes.</li><li style="margin-bottom:2px;">The identified variants are associated with distinct genetic conditions.</li><li style="margin-bottom:2px;">The patient presents with global developmental delay (GDD), a broad phenotype.</li></ul>
+                
+              </div>
+            </details>
+            
+</div>
+<div style="margin-top:12px;padding-top:8px;border-top:1px solid #E2E8F0;font-size:9px;color:#94A3B8;line-height:1.5;"><div style="font-weight:600;color:#64748B;">Pre-analytic filtering: 5 variants &rarr; 3 presented to Board</div><div>Criteria: ACMG P/LP + HPO-matched rare VUS (SF genes excluded, soft caps, no fallback)</div></div>
+  </div>
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong><br>
+      AI-generated diagnostic synthesis. Requires clinician review.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Page 2</div>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Page-level section header -->
+    <div class="section-header" style="margin-top:0;margin-bottom:6px;">
+      <span class="section-badge">Genomic Findings — Rare Disease</span>
+      <div class="section-rule"></div>
+      <div style="font-family:var(--font-sans);font-size:8pt;color:var(--muted);white-space:nowrap;">
+        <strong style="color:var(--navy);">RARE_DISEASE_DEMO</strong> &nbsp;|&nbsp; 2026-04-14
+      </div>
+    </div>
+
+
+    <!-- ── Variant block ── -->
+    <div class="variant-block">
+
+      <!-- Identity header: gene name + HGVS + badges -->
+      <div class="variant-detail-header">
+        <div class="variant-gene-name">TP53</div>
+        <div class="variant-header-right">
+          <div class="variant-alteration">
+            
+              chr17:7675088:C&gt;A
+            
+            
+          </div>
+          
+            <div style="font-size:8pt;color:var(--muted);margin-top:1px;">tumor protein p53</div>
+          
+          <div class="variant-badges">
+            
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            
+              <span style="font-size:7pt;color:#0F766E;" title="Classification upgraded by ClinVar evidence">ClinVar&#8593;</span>
+            
+            
+              
+                <span class="acmg-code">PS1</span>
+              
+                <span class="acmg-code">PP5</span>
+              
+                <span class="acmg-code">PM2_Supporting</span>
+              
+            
+            
+              <span class="hpo-score-pill score-high">HPO: 1</span>
+            
+            
+              <span style="display:inline-block;background:#f5f3ff;color:#5B21B6;border:1px solid #ddd6fe;border-radius:2px;padding:2px 7px;font-size:7pt;font-weight:700;">AD</span>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-column detail grid -->
+      <div class="detail-grid">
+
+        <!-- Column 1: Clinical Significance -->
+        <div class="detail-col">
+          <div class="detail-col-title">Clinical Significance</div>
+
+          
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">Pathogenic <span style="font-size:7.5pt;color:var(--muted);">(VCV000000012374)</span></div>
+          
+
+          
+            <div class="detail-label">ClinGen Validity</div>
+            <div class="detail-value">
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</div>
+          
+
+          
+            <div class="detail-label">OMIM Phenotypes</div>
+            <div class="detail-value" style="margin-top:2px;">
+              
+                <span class="condition-pill">Li-Fraumeni syndrome</span>
+              
+              
+                <span style="font-size:7pt;color:var(--muted);display:block;margin-top:2px;">MIM #191170</span>
+              
+            </div>
+          
+
+          
+            <div class="detail-label">Inheritance Pattern</div>
+            <div class="detail-value">AD</div>
+          
+
+          
+
+          
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">reviewed by expert panel</div>
+          
+        </div>
+
+        <!-- Column 2: Frequency & Korean Population -->
+        <div class="detail-col">
+          <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+          
+
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">5e-05</div>
+              <div class="freq-label">KRGDB Korean AF</div>
+            </div>
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">8e-05</div>
+              <div class="freq-label">Korea4K AF</div>
+            </div>
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">6e-05</div>
+              <div class="freq-label">NARD2 AF</div>
+            </div>
+          
+
+          
+
+          
+            <div class="detail-label" style="margin-top:5px;">Frequency Note</div>
+            <div class="detail-value">Adrenocortical carcinoma (prevalence: 1-9 / 1 000 000). Adult hepatocellular carcinoma (prevalence: 1-9 / 100 000). Alveolar rhabdomyosarcoma (prevalence: &lt;1 / 1 000 000).</div>
+          
+
+          
+        </div>
+
+        <!-- Column 3: Finding Summary & HPO Matches -->
+        <div class="detail-col">
+          <div class="detail-col-title">Finding Summary</div>
+
+          
+            <p style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;">TP53 mutations are universal across cancer types. The loss of a tumor suppressor is most often through large deleterious events, such as frameshift mutations, or premature stop codons. In TP53 however, many of the observed mutations in cancer are found to be single nucleotide missense variants. These variants are broadly distributed throughout the gene, but with the majority localizing in the DNA binding domain. There is no single hotspot in the DNA binding domain, but a majority of mutations oc</p>
+          
+
+          
+
+          
+
+          
+            <div class="detail-label" style="margin-top:7px;">Matching HPO Terms</div>
+            <div style="margin-top:3px;">
+              
+                <span class="hpo-match-pill">HP:0001263 (Global developmental delay)</span>
+              
+            </div>
+          
+
+          
+            <div class="detail-label" style="margin-top:7px;">ACMG Codes</div>
+            <div>
+              
+                <span class="acmg-code">PS1</span>
+              
+                <span class="acmg-code">PP5</span>
+              
+                <span class="acmg-code">PM2_Supporting</span>
+              
+            </div>
+          
+
+          
+          <div style="margin-top:8px;padding-top:6px;border-top:1px solid #e2e8f0;">
+            <span style="font-size:7.5pt;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">References</span>
+            <div style="font-size:7.5pt;color:#64748b;line-height:1.4;margin-top:2px;">
+              
+              <a href="https://pubmed.ncbi.nlm.nih.gov/26837699/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:26837699]</a> Prognostic — Poor Outcome &mdash; <em>Nadeu et al., 2016</em>; 
+              
+              <a href="https://pubmed.ncbi.nlm.nih.gov/20697090/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:20697090]</a> Prognostic — Poor Outcome &mdash; <em>Zenz et al., 2010</em>; 
+              
+              <a href="https://pubmed.ncbi.nlm.nih.gov/24943832/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:24943832]</a> Prognostic — Poor Outcome &mdash; <em>Baliakas et al., 2015</em>; 
+              
+              <a href="https://pubmed.ncbi.nlm.nih.gov/28453411/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:28453411]</a> Prognostic — N/A &mdash; <em>Shepherd et al., 2017</em>; 
+              
+              <a href="https://pubmed.ncbi.nlm.nih.gov/28545823/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:28545823]</a> Prognostic — Poor Outcome &mdash; <em>Schwalbe et al., 2017</em>
+              
+            </div>
+          </div>
+          
+
+          
+        </div>
+
+      </div><!-- /detail-grid -->
+
+      <!-- Bottom notes bar: conflict + Korean note -->
+      
+      
+      <div class="variant-notes-bar">
+        
+        
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; Rare variant | Korean-specific variant (KRGDB/Korea4K/NARD2 only)</span>
+        
+      </div>
+      
+
+    </div><!-- /variant-block -->
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- ── Variant block ── -->
+    <div class="variant-block">
+
+      <!-- Identity header: gene name + HGVS + badges -->
+      <div class="variant-detail-header">
+        <div class="variant-gene-name">MUTYH</div>
+        <div class="variant-header-right">
+          <div class="variant-alteration">
+            
+              chr2:165342465:G&gt;A
+            
+            
+          </div>
+          
+          <div class="variant-badges">
+            
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            
+              <span style="font-size:7pt;color:#0F766E;" title="Classification upgraded by ClinVar evidence">ClinVar&#8593;</span>
+            
+            
+              
+                <span class="acmg-code">PS1</span>
+              
+                <span class="acmg-code">PP5</span>
+              
+                <span class="acmg-code">PM2_Supporting</span>
+              
+            
+            
+            
+              <span style="display:inline-block;background:#f5f3ff;color:#5B21B6;border:1px solid #ddd6fe;border-radius:2px;padding:2px 7px;font-size:7pt;font-weight:700;">AR</span>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-column detail grid -->
+      <div class="detail-grid">
+
+        <!-- Column 1: Clinical Significance -->
+        <div class="detail-col">
+          <div class="detail-col-title">Clinical Significance</div>
+
+          
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">Pathogenic <span style="font-size:7.5pt;color:var(--muted);">(VCV000000194555)</span></div>
+          
+
+          
+            <div class="detail-label">ClinGen Validity</div>
+            <div class="detail-value">
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</div>
+          
+
+          
+            <div class="detail-label">OMIM Phenotypes</div>
+            <div class="detail-value" style="margin-top:2px;">
+              
+                <span class="condition-pill">MUTYH-associated polyposis</span>
+              
+                <span class="condition-pill">Colorectal adenomas</span>
+              
+              
+                <span style="font-size:7pt;color:var(--muted);display:block;margin-top:2px;">MIM #604933</span>
+              
+            </div>
+          
+
+          
+            <div class="detail-label">Inheritance Pattern</div>
+            <div class="detail-value">AR</div>
+          
+
+          
+
+          
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">reviewed by expert panel</div>
+          
+        </div>
+
+        <!-- Column 2: Frequency & Korean Population -->
+        <div class="detail-col">
+          <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+          
+
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">0.0001</div>
+              <div class="freq-label">KRGDB Korean AF</div>
+            </div>
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">9e-05</div>
+              <div class="freq-label">Korea4K AF</div>
+            </div>
+          
+
+          
+
+          
+
+          
+            <div class="detail-label" style="margin-top:5px;">Frequency Note</div>
+            <div class="detail-value">Korean: Rare variant | Korean-specific variant (KRGDB/Korea4K only). KRGDB Korean AF: 0.0001.</div>
+          
+
+          
+        </div>
+
+        <!-- Column 3: Finding Summary & HPO Matches -->
+        <div class="detail-col">
+          <div class="detail-col-title">Finding Summary</div>
+
+          
+
+          
+
+          
+            <p class="no-data">Extended summary pending consilium analysis.</p>
+          
+
+          
+            <div class="detail-label" style="margin-top:7px;">HPO Phenotype Match</div>
+            <div class="detail-value no-data">No HPO overlap detected for MUTYH</div>
+          
+
+          
+            <div class="detail-label" style="margin-top:7px;">ACMG Codes</div>
+            <div>
+              
+                <span class="acmg-code">PS1</span>
+              
+                <span class="acmg-code">PP5</span>
+              
+                <span class="acmg-code">PM2_Supporting</span>
+              
+            </div>
+          
+
+          
+
+          
+        </div>
+
+      </div><!-- /detail-grid -->
+
+      <!-- Bottom notes bar: conflict + Korean note -->
+      
+      
+      <div class="variant-notes-bar">
+        
+        
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; Rare variant | Korean-specific variant (KRGDB/Korea4K only)</span>
+        
+      </div>
+      
+
+    </div><!-- /variant-block -->
+
+
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Page 3</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <!-- Page-level section header -->
+    <div class="section-header" style="margin-top:0;margin-bottom:6px;">
+      <span class="section-badge">Genomic Findings — Rare Disease</span>
+      <div class="section-rule"></div>
+      <div style="font-family:var(--font-sans);font-size:8pt;color:var(--muted);white-space:nowrap;">
+        <strong style="color:var(--navy);">RARE_DISEASE_DEMO</strong> &nbsp;|&nbsp; 2026-04-14
+      </div>
+    </div>
+
+
+    <!-- ── Variant block ── -->
+    <div class="variant-block">
+
+      <!-- Identity header: gene name + HGVS + badges -->
+      <div class="variant-detail-header">
+        <div class="variant-gene-name">CFTR</div>
+        <div class="variant-header-right">
+          <div class="variant-alteration">
+            
+              chr7:117559590:ATCT&gt;A
+            
+            
+          </div>
+          
+            <div style="font-size:8pt;color:var(--muted);margin-top:1px;">CF transmembrane conductance regulator</div>
+          
+          <div class="variant-badges">
+            
+  
+  
+    <span class="badge badge-pathogenic">Pathogenic</span>
+  
+
+            
+              <span style="font-size:7pt;color:#0F766E;" title="Classification upgraded by ClinVar evidence">ClinVar&#8593;</span>
+            
+            
+              
+                <span class="acmg-code">PS1</span>
+              
+                <span class="acmg-code">PP5</span>
+              
+                <span class="acmg-code">BS1</span>
+              
+            
+            
+            
+              <span style="display:inline-block;background:#f5f3ff;color:#5B21B6;border:1px solid #ddd6fe;border-radius:2px;padding:2px 7px;font-size:7pt;font-weight:700;">AR</span>
+            
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-column detail grid -->
+      <div class="detail-grid">
+
+        <!-- Column 1: Clinical Significance -->
+        <div class="detail-col">
+          <div class="detail-col-title">Clinical Significance</div>
+
+          
+            <div class="detail-label">ClinVar</div>
+            <div class="detail-value">Pathogenic <span style="font-size:7.5pt;color:var(--muted);">(VCV000000007105)</span></div>
+          
+
+          
+            <div class="detail-label">ClinGen Validity</div>
+            <div class="detail-value">
+  
+    <span class="clingen-badge clingen-definitive">Definitive</span>
+  
+</div>
+          
+
+          
+            <div class="detail-label">OMIM Phenotypes</div>
+            <div class="detail-value" style="margin-top:2px;">
+              
+                <span class="condition-pill">Cystic fibrosis</span>
+              
+                <span class="condition-pill">CBAVD</span>
+              
+              
+                <span style="font-size:7pt;color:var(--muted);display:block;margin-top:2px;">MIM #602421</span>
+              
+            </div>
+          
+
+          
+            <div class="detail-label">Inheritance Pattern</div>
+            <div class="detail-value">AR</div>
+          
+
+          
+
+          
+            <div class="detail-label">Review Status</div>
+            <div class="detail-value">practice guideline</div>
+          
+        </div>
+
+        <!-- Column 2: Frequency & Korean Population -->
+        <div class="detail-col">
+          <div class="detail-col-title">Frequency &amp; Korean Population</div>
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">1.2353e-02</div>
+              <div class="freq-label">gnomAD Global AF</div>
+            </div>
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">2.5238e-05</div>
+              <div class="freq-label">gnomAD East Asian AF</div>
+            </div>
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">3e-05</div>
+              <div class="freq-label">KRGDB Korean AF</div>
+            </div>
+          
+
+          
+            <div class="freq-stat">
+              <div class="freq-num">5e-05</div>
+              <div class="freq-label">Korea4K AF</div>
+            </div>
+          
+
+          
+
+          
+
+          
+            <div class="detail-label" style="margin-top:5px;">Frequency Note</div>
+            <div class="detail-value">Aquagenic palmoplantar keratoderma (prevalence: Unknown). Congenital bilateral absence of vas deferens (prevalence: 1-5 / 10 000). Cystic fibrosis (prevalence: 1-5 / 10 000).</div>
+          
+
+          
+        </div>
+
+        <!-- Column 3: Finding Summary & HPO Matches -->
+        <div class="detail-col">
+          <div class="detail-col-title">Finding Summary</div>
+
+          
+            <p style="overflow:hidden;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;">This gene encodes a member of the ATP-binding cassette (ABC) transporter superfamily. The encoded protein functions as a chloride channel, making it unique among members of this protein family, and controls ion and water secretion and absorption in epithelial tissues. Channel activation is mediated by cycles of regulatory domain phosphorylation, ATP-binding by the nucleotide-binding domains, and ATP hydrolysis. Mutations in this gene cause cystic fibrosis, the most common lethal genetic disorder</p>
+          
+
+          
+
+          
+
+          
+            <div class="detail-label" style="margin-top:7px;">HPO Phenotype Match</div>
+            <div class="detail-value no-data">No HPO overlap detected for CFTR</div>
+          
+
+          
+            <div class="detail-label" style="margin-top:7px;">ACMG Codes</div>
+            <div>
+              
+                <span class="acmg-code">PS1</span>
+              
+                <span class="acmg-code">PP5</span>
+              
+                <span class="acmg-code">BS1</span>
+              
+            </div>
+          
+
+          
+          <div style="margin-top:8px;padding-top:6px;border-top:1px solid #e2e8f0;">
+            <span style="font-size:7.5pt;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;">References</span>
+            <div style="font-size:7.5pt;color:#64748b;line-height:1.4;margin-top:2px;">
+              
+              <a href="https://pubmed.ncbi.nlm.nih.gov/20301428/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">[PMID:20301428]</a> Cystic Fibrosis &mdash; <em>GeneReviews</em>
+              
+            </div>
+          </div>
+          
+
+          
+        </div>
+
+      </div><!-- /detail-grid -->
+
+      <!-- Bottom notes bar: conflict + Korean note -->
+      
+      
+      <div class="variant-notes-bar">
+        
+          
+          <span class="conflict-flag">&#9888; ClinVar Override: Engine=VUS &rarr; Pathogenic (based on ClinVar Pathogenic)</span>
+          
+        
+        
+          <span style="display:inline-flex;align-items:center;gap:4px;background:#F0F4FF;border:1px solid #bfdbfe;border-radius:2px;padding:2px 8px;font-size:7.5pt;font-weight:600;color:#1E40AF;font-family:var(--font-sans);">&#127472;&#127479; Common variant | Korean frequency much lower than global</span>
+        
+      </div>
+      
+
+    </div><!-- /variant-block -->
+
+
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Page 4</div>
+    </div>
+  </div>
+</div><!-- /variant-page -->
+
+
+
+
+
+
+
+
+<div class="page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+    <div class="section-header">
+      <span class="section-badge">Additional Variants — Statistical Summary</span>
+    </div>
+
+    <p style="font-size:9pt;color:#64748b;margin-bottom:16px;">
+      2 additional variants were identified but are not reported in detail.
+      Full variant data is available in the JSON output.
+    </p>
+
+    <!-- Classification breakdown -->
+    <div style="display:flex;gap:24px;margin-bottom:16px;">
+      <div>
+        <strong style="font-size:9pt;">By Classification</strong>
+        <table style="width:auto;margin-top:4px;">
+          <tbody>
+          
+          
+            
+            
+          
+            
+            
+          
+          
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">VUS</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">2</td>
+          </tr>
+          
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <strong style="font-size:9pt;">By Consequence Type</strong>
+        <table style="width:auto;margin-top:4px;">
+          <tbody>
+          
+          
+            
+            
+          
+            
+            
+          
+          
+          
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;"></td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">2</td>
+          </tr>
+          
+          
+          </tbody>
+        </table>
+      </div>
+
+      <div>
+        <strong style="font-size:9pt;">Data Sources</strong>
+        <table style="width:auto;margin-top:4px;">
+          <tbody>
+          
+          
+            
+            
+          
+            
+            
+          
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">With gnomAD data</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">0 / 2</td>
+          </tr>
+          <tr>
+            <td style="padding:2px 12px 2px 0;font-size:8.5pt;">With ClinVar data</td>
+            <td style="padding:2px 0;font-size:8.5pt;font-weight:600;">2 / 2</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+  <div class="page-footer">
+    <div class="footer-disclaimer"><strong>Research Use Only — Not for clinical decision making.</strong></div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Page 5</div>
+      
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="page variant-page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="masthead" style="margin-bottom:12px;">
+      <div class="masthead-logo">
+        <div class="masthead-brand">Genome<span>Board</span></div>
+        <div class="masthead-tagline">Rare Disease / Germline Variant Report</div>
+      </div>
+      <div class="masthead-meta">
+        <div><strong>Sample ID:</strong> RARE_DISEASE_DEMO</div>
+        <div><strong>Report Date:</strong> 2026-04-14</div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Methodology &amp; Database Versions</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    
+    <table class="db-table" style="width:auto;min-width:540px;margin-bottom:20px;">
+      <thead>
+        <tr>
+          <th>Database</th>
+          <th>Source</th>
+          <th>Version / Release</th>
+          <th>Build Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        
+        <tr>
+          <td><strong>ClinVar</strong></td>
+          <td>
+            
+              
+                <span style="color:#065F46;">Local DB</span>
+              
+            
+          </td>
+          <td>
+            
+              unknown
+            
+          </td>
+          <td>
+            
+              2026-03-24T01:36:19.343373
+            
+          </td>
+        </tr>
+        
+        
+        
+        <tr>
+          <td><strong>gnomAD</strong></td>
+          <td>
+            
+              
+                tabix
+              
+            
+          </td>
+          <td>
+            
+              —
+            
+          </td>
+          <td>
+            
+              2026-03-24
+            
+          </td>
+        </tr>
+        
+        
+        
+        <tr>
+          <td><strong>KRGDB</strong></td>
+          <td>
+            
+              
+                <span style="color:#065F46;">Local File</span>
+              
+            
+          </td>
+          <td>
+            
+              —
+            
+          </td>
+          <td>
+            
+              2026-03-23
+            
+          </td>
+        </tr>
+        
+        
+        
+        <tr>
+          <td><strong>ACMG</strong></td>
+          <td>
+            
+              
+                <span style="color:#065F46;">Local File</span>
+              
+            
+          </td>
+          <td>
+            
+              ACMG/AMP 2015 + ClinGen SVI updates
+            
+          </td>
+          <td>
+            
+              —
+            
+          </td>
+        </tr>
+        
+        
+        
+        <tr>
+          <td><strong>CPIC/PGx</strong></td>
+          <td>
+            
+              
+                <span style="color:#065F46;">Local File</span>
+              
+            
+          </td>
+          <td>
+            
+              —
+            
+          </td>
+          <td>
+            
+              —
+            
+          </td>
+        </tr>
+        
+        
+        
+        <tr>
+          <td><strong>Gene Knowledge</strong></td>
+          <td>
+            
+              
+                <span style="color:#065F46;">Local File</span>
+              
+            
+          </td>
+          <td>
+            
+              —
+            
+          </td>
+          <td>
+            
+              2026-03-28
+            
+          </td>
+        </tr>
+        
+        
+        
+        
+      </tbody>
+    </table>
+    
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Pipeline Description</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <div class="method-block">
+      <p>
+        The BIKO GenomeBoard Rare Disease pipeline performs germline variant interpretation
+        integrating ACMG/AMP 2015 classification criteria with HPO phenotype matching,
+        OMIM gene-disease associations, ClinGen gene-disease validity curation, and
+        Korean population-specific frequency data from KRGDB, Korea4K, and NARD2.
+      </p>
+      <ul>
+        <li><strong>HPO Phenotype Matching</strong> — resolves patient HPO terms to associated gene lists; HPO score = number of patient phenotypes linked to each candidate gene</li>
+        <li><strong>Candidate Ranking</strong> — variants sorted by classification tier (Pathogenic first) then HPO score (descending)</li>
+        <li><strong>OMIM Integration</strong> — gene-disease associations and inheritance patterns from OMIM genemap2 database</li>
+        <li><strong>ClinGen Gene Validity</strong> — curated gene-disease validity classifications (Definitive &rarr; Refuted)</li>
+        <li><strong>Korean Population Frequency</strong> — compares allele frequencies across KRGDB, Korea4K, NARD2, and gnomAD (EAS/global); highest Korean frequency used for BA1/BS1/PM2</li>
+        <li><strong>In Silico Predictions</strong> — REVEL, CADD, AlphaMissense, SpliceAI scores from VEP annotations; PP3/BP4 evidence generated per ClinGen SVI 2022 recommendations (REVEL primary for missense, SpliceAI for splice variants)</li>
+        <li><strong>ACMG Evidence Collection</strong> — automated PVS1 (null variant + LOF intolerance), PM1 (functional domain), PM4 (in-frame indel), PP2 (constrained gene), BP7 (synonymous) in addition to ClinVar and frequency-based codes</li>
+        <li><strong>Pharmacogenomics</strong> — cross-references CPIC and PharmGKB guidelines with Korean-specific prevalence adjustments</li>
+      </ul>
+    </div>
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Limitations</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <div class="method-block">
+      <ul>
+        <li>This report is generated for <strong>research purposes only</strong> and has not been validated in a CLIA-certified or CAP-accredited laboratory.</li>
+        <li>HPO gene associations are derived from the Monarch Initiative and JAX HPO database; completeness varies by phenotype.</li>
+        <li>OMIM data reflects static curated entries; dynamic API lookup requires an OMIM API key.</li>
+        <li>ClinGen validity classifications reflect the state of curation at time of report generation.</li>
+        <li>KRGDB frequency data reflects the Korean genome cohort; individual ancestry may vary.</li>
+        <li>Variants of uncertain significance (VUS) may be reclassified as new evidence accrues; periodic re-analysis is recommended.</li>
+        <li>This report does not constitute medical advice. Clinical decisions must involve a board-certified clinical geneticist or genetic counselor.</li>
+      </ul>
+    </div>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Page 6</div>
+      
+    </div>
+  </div>
+</div><!-- /methodology page -->
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     APPENDIX: ACMG EVIDENCE CODE REFERENCE
+══════════════════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="page-header-bar"></div>
+  <div class="page-body">
+
+    <div class="section-header">
+      <span class="section-badge badge-navy">Appendix: ACMG/AMP Evidence Code Reference</span>
+      <div class="section-rule rule-navy"></div>
+    </div>
+
+    <p style="font-size:9.5pt;margin-bottom:12px;">
+      The following table describes the ACMG/AMP evidence codes used in this report for variant classification
+      (Richards et al., <em>Genet Med</em> 2015; with ClinGen SVI updates 2018–2020).
+    </p>
+
+    <h3 style="color:#991b1b;margin-top:16px;">Pathogenic Evidence</h3>
+    <table>
+      <thead>
+        <tr><th style="width:120px;">Code</th><th style="width:130px;">Strength</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="acmg-code">PVS1</span></td><td>Very Strong</td><td>Null variant (nonsense, frameshift, canonical splice site, initiation codon, single/multi-exon deletion) in a gene where loss of function is a known mechanism of disease</td></tr>
+        <tr><td><span class="acmg-code">PS1</span></td><td>Strong</td><td>Same amino acid change as a previously established pathogenic variant, regardless of nucleotide change</td></tr>
+        <tr><td><span class="acmg-code">PS3</span></td><td>Strong</td><td>Well-established functional studies show a deleterious effect on the gene product</td></tr>
+        <tr><td><span class="acmg-code">PS4</span></td><td>Strong</td><td>Prevalence of the variant in affected individuals is significantly increased compared to controls</td></tr>
+        <tr><td><span class="acmg-code">PM1</span></td><td>Moderate</td><td>Located in a mutational hotspot and/or critical, well-established functional domain</td></tr>
+        <tr><td><span class="acmg-code">PM2</span></td><td>Moderate</td><td>Absent or extremely low frequency in population databases (gnomAD, KRGDB)</td></tr>
+        <tr><td><span class="acmg-code">PM2_Supporting</span></td><td>Supporting</td><td>Low frequency in population databases — downgraded from Moderate per ClinGen SVI 2020</td></tr>
+        <tr><td><span class="acmg-code">PP5</span></td><td>Supporting</td><td>Reputable source recently reports variant as pathogenic (retained for legacy compatibility)</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:#166534;margin-top:16px;">Benign Evidence</h3>
+    <table>
+      <thead>
+        <tr><th style="width:120px;">Code</th><th style="width:130px;">Strength</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="acmg-code">BA1</span></td><td>Stand-alone</td><td>Allele frequency &gt;5% in any general continental population dataset — classified as Benign</td></tr>
+        <tr><td><span class="acmg-code">BS1</span></td><td>Strong</td><td>Allele frequency greater than expected for the disorder (typically &ge;1%)</td></tr>
+        <tr><td><span class="acmg-code">BP1</span></td><td>Supporting</td><td>Missense variant in a gene for which primarily truncating variants are known to cause disease</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:var(--navy);margin-top:16px;">Classification Criteria (ACMG/AMP 2015 Table 5)</h3>
+    <table>
+      <thead>
+        <tr><th>Classification</th><th>Required Evidence Combinations</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge badge-pathogenic">Pathogenic</span></td><td>PVS1 + &ge;1 Strong (PS); OR 2 Strong (PS); OR 1 Strong + &ge;3 Moderate</td></tr>
+        <tr><td><span class="badge badge-likely-pathogenic">Likely Pathogenic</span></td><td>PVS1 + 1 Moderate (PM); OR 1 Strong + 1–2 Moderate; OR &ge;3 Moderate</td></tr>
+        <tr><td><span class="badge badge-vus">VUS</span></td><td>Criteria for Benign or Pathogenic are not met, or evidence is contradictory</td></tr>
+        <tr><td><span class="badge badge-benign">Benign</span></td><td>BA1 (stand-alone); OR &ge;2 Strong Benign (BS)</td></tr>
+        <tr style="border-bottom:none;"><td><span class="badge badge-drug-response">Drug Response</span></td><td>Pharmacogenomic variant — classified using CPIC guidelines, not ACMG Mendelian framework</td></tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:8.5pt;color:var(--muted);margin-top:12px;">
+      Reference: Richards S, et al. <em>Standards and guidelines for the interpretation of sequence variants.</em>
+      Genet Med. 2015;17(5):405-424. PMID: 25741868.
+    </p>
+
+    <h3 style="color:#1E40AF;margin-top:24px;">CPIC Evidence Levels for Pharmacogenomics (PGx)</h3>
+    <table>
+      <thead>
+        <tr><th style="width:100px;">Level</th><th style="width:180px;">Classification</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-cpic-a">Level A</span></td>
+          <td>Strong evidence</td>
+          <td>Prescribing action recommended. Strong evidence with a published CPIC guideline providing specific dosing or drug selection recommendations.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-likely-pathogenic">Level B</span></td>
+          <td>Moderate evidence</td>
+          <td>Prescribing action may be recommended. Moderate evidence supports changing pharmacotherapy based on genetic information.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-vus">Level C</span></td>
+          <td>Optional evidence</td>
+          <td>Clinical action is optional. Evidence supports a gene-drug association, but the clinical impact is unclear.</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-unknown">Level D</span></td>
+          <td>Informational only</td>
+          <td>No prescribing action recommended. Evidence is insufficient to support changing clinical practice.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p style="font-size:8.5pt;color:var(--muted);margin-top:12px;">
+      Reference: Relling MV, Klein TE. <em>CPIC: Clinical Pharmacogenetics Implementation Consortium.</em>
+      Clin Pharmacol Ther. 2011;89(3):464-467. PMID: 21270786.
+    </p>
+
+    <h3 style="color:var(--navy, #0F172A);margin-top:24px;">Abbreviations and Terminology</h3>
+    <table>
+      <thead>
+        <tr><th style="width:140px;">Abbreviation</th><th>Meaning</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>AD</strong></td><td>Autosomal Dominant — one copy of the variant (from either parent) is sufficient to cause the condition</td></tr>
+        <tr><td><strong>AR</strong></td><td>Autosomal Recessive — two copies of the variant (one from each parent) are required to cause the condition</td></tr>
+        <tr><td><strong>XL</strong></td><td>X-Linked — variant is on the X chromosome; males are typically more severely affected</td></tr>
+        <tr><td><strong>AD/AR</strong></td><td>Both inheritance patterns possible depending on the specific condition</td></tr>
+        <tr><td><strong>LP</strong></td><td>Likely Pathogenic — strong but not definitive evidence that the variant causes disease</td></tr>
+        <tr><td><strong>VUS</strong></td><td>Variant of Uncertain Significance — insufficient evidence to classify as pathogenic or benign</td></tr>
+        <tr><td><strong>PGx</strong></td><td>Pharmacogenomics — study of how genetic variants affect drug response</td></tr>
+        <tr><td><strong>CPIC</strong></td><td>Clinical Pharmacogenetics Implementation Consortium — publishes evidence-based PGx guidelines</td></tr>
+        <tr><td><strong>HPO</strong></td><td>Human Phenotype Ontology — standardized vocabulary for describing clinical features</td></tr>
+        <tr><td><strong>OMIM</strong></td><td>Online Mendelian Inheritance in Man — catalog of human genes and genetic disorders</td></tr>
+        <tr><td><strong>HGVS</strong></td><td>Human Genome Variation Society nomenclature — standard notation for describing sequence variants (c. = coding DNA, p. = protein)</td></tr>
+        <tr><td><strong>KRGDB</strong></td><td>Korean Reference Genome Database — Korean population allele frequency resource</td></tr>
+        <tr><td><strong>gnomAD</strong></td><td>Genome Aggregation Database — large-scale population allele frequency database</td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="color:var(--navy, #0F172A);margin-top:16px;">ClinGen Gene-Disease Validity Classifications</h3>
+    <table>
+      <thead>
+        <tr><th style="width:140px;">Classification</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Definitive</strong></td><td>Gene-disease relationship is supported by extensive, replicated evidence from multiple independent studies</td></tr>
+        <tr><td><strong>Strong</strong></td><td>Substantial evidence supports the relationship, approaching definitive level</td></tr>
+        <tr><td><strong>Moderate</strong></td><td>Reasonable evidence exists but additional studies are needed for confirmation</td></tr>
+        <tr><td><strong>Limited</strong></td><td>Preliminary evidence from a small number of studies or families</td></tr>
+        <tr><td><strong>Disputed</strong></td><td>Conflicting evidence — some studies support and others refute the relationship</td></tr>
+        <tr><td><strong>Refuted</strong></td><td>Previously claimed relationship has been disproven by subsequent evidence</td></tr>
+      </tbody>
+    </table>
+
+  </div><!-- /page-body -->
+
+  <div class="page-footer">
+    <div class="footer-disclaimer">
+      <strong>Research Use Only — Not for clinical decision making.</strong>
+      This report is for research purposes only and has not been validated in a CLIA-certified laboratory.
+    </div>
+    <div class="footer-right">
+      <div class="footer-brand-text">BIKO GenomeBoard</div>
+      <div>Appendix</div>
+    </div>
+  </div>
+</div><!-- /appendix page -->
+
+</body>
+</html>
