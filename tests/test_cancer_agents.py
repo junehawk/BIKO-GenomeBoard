@@ -165,6 +165,79 @@ def test_render_board_opinion_backward_compatible():
     assert "Li-Fraumeni" in html
 
 
+def test_render_includes_selection_metadata_cancer():
+    """CancerBoardOpinion with selection_metadata renders the pre-analytic filter caption."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    opinion = CancerBoardOpinion(
+        therapeutic_implications="EGFR L858R — TKI sensitive",
+        therapeutic_evidence="CIViC Level A",
+        treatment_options=[{"drug": "Erlotinib", "evidence_level": "A", "resistance_notes": ""}],
+        selection_metadata={
+            "mode": "cancer",
+            "total_input": 42,
+            "selected": 7,
+            "must_included": 3,
+            "may_included": 4,
+            "excluded": 35,
+            "truncated": False,
+            "n_dropped": 0,
+            "hard_cap_applied": False,
+            "empty": False,
+            "empty_reason": "",
+            "criteria_summary": "Tier I/II + OncoKB 1-2 + ClinVar P/LP",
+            "by_selection_reason": {},
+        },
+    )
+    html = render_board_opinion_html(opinion, language="en")
+    assert "Pre-analytic filtering" in html
+    assert "42" in html
+    assert "7" in html
+    assert "Tier I/II + OncoKB 1-2 + ClinVar P/LP" in html
+
+
+def test_render_includes_selection_metadata_rare_disease():
+    """BoardOpinion with selection_metadata renders the pre-analytic filter caption,
+    including the truncation note when truncated."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    opinion = BoardOpinion(
+        primary_diagnosis="Noonan syndrome",
+        selection_metadata={
+            "mode": "rare-disease",
+            "total_input": 128,
+            "selected": 15,
+            "must_included": 5,
+            "may_included": 10,
+            "excluded": 110,
+            "truncated": True,
+            "n_dropped": 3,
+            "hard_cap_applied": False,
+            "empty": False,
+            "empty_reason": "",
+            "criteria_summary": "P/LP + HPO-match + de novo",
+            "by_selection_reason": {},
+        },
+    )
+    html = render_board_opinion_html(opinion, language="en")
+    assert "Pre-analytic filtering" in html
+    assert "128" in html
+    assert "15" in html
+    assert "P/LP + HPO-match + de novo" in html
+    assert "truncated" in html.lower()
+
+
+def test_render_omits_metadata_when_none():
+    """When selection_metadata is None, the caption block is silently skipped."""
+    from scripts.clinical_board.render import render_board_opinion_html
+    cancer = CancerBoardOpinion(therapeutic_implications="Test")
+    rare = BoardOpinion(primary_diagnosis="Test")
+    assert cancer.selection_metadata is None
+    assert rare.selection_metadata is None
+    cancer_html = render_board_opinion_html(cancer, language="en")
+    rare_html = render_board_opinion_html(rare, language="en")
+    assert "Pre-analytic filtering" not in cancer_html
+    assert "Pre-analytic filtering" not in rare_html
+
+
 def test_orchestrate_format_board_summary_cancer():
     """orchestrate._format_board_summary handles CancerBoardOpinion without AttributeError."""
     from scripts.orchestrate import _format_board_summary

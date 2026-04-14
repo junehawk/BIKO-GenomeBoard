@@ -33,6 +33,38 @@ def _render_header_and_disclaimer(language: str) -> list[str]:
     ]
 
 
+def _render_selection_metadata_caption(selection_metadata) -> list[str]:
+    """Render a small grey caption summarising the pre-analytic variant filter.
+
+    Returns an empty list when metadata is absent so existing opinions render
+    unchanged.
+    """
+    if not selection_metadata:
+        return []
+    total_input = selection_metadata.get("total_input", 0)
+    selected = selection_metadata.get("selected", 0)
+    criteria = selection_metadata.get("criteria_summary", "")
+    truncated = selection_metadata.get("truncated", False)
+    n_dropped = selection_metadata.get("n_dropped", 0)
+
+    lines = [
+        f'<div style="font-weight:600;color:#64748B;">Pre-analytic filtering: '
+        f'{total_input} variants &rarr; {selected} presented to Board</div>',
+    ]
+    if criteria:
+        lines.append(f'<div>Criteria: {criteria}</div>')
+    if truncated:
+        lines.append(
+            f'<div>Note: selection truncated; {n_dropped} lowest-priority '
+            f'variants omitted</div>'
+        )
+    body = "".join(lines)
+    return [
+        f'<div style="margin-top:12px;padding-top:8px;border-top:1px solid #E2E8F0;'
+        f'font-size:9px;color:#94A3B8;line-height:1.5;">{body}</div>'
+    ]
+
+
 def _render_agent_opinions_section(agent_opinions) -> list[str]:
     parts: list[str] = []
     if not agent_opinions:
@@ -210,6 +242,9 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
             """)
         html_parts.append('</div>')
 
+    # Pre-analytic filtering caption (footer)
+    html_parts.extend(_render_selection_metadata_caption(opinion.selection_metadata))
+
     # No closing page div — template handles page wrapper
 
     return "\n".join(html_parts)
@@ -323,5 +358,8 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
 
     # Domain Specialist Opinions
     html_parts.extend(_render_agent_opinions_section(opinion.agent_opinions))
+
+    # Pre-analytic filtering caption (footer)
+    html_parts.extend(_render_selection_metadata_caption(opinion.selection_metadata))
 
     return "\n".join(html_parts)
