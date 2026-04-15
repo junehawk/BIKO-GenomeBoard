@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+# Force JavaScript actions (actions/checkout@v4, actions/setup-python@v5)
+# to run on Node.js 24 instead of the deprecated Node.js 20 runtime.
+# Node.js 20 will be removed from the runner on 2026-09-16; opting in now
+# silences the per-run deprecation warnings and future-proofs the pipeline.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
