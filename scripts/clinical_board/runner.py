@@ -197,13 +197,20 @@ def run_clinical_board(
 
     # Step 3b (cancer only): narrative_scrubber patient-safety gate.
     # Drops any (curated_id, variant_key) pair the curator did not emit and
-    # strips banned drug tokens out of every prose field. The
-    # template_renderer_chair fallback only fires when the Board Chair LLM
-    # produced *zero* treatment rows at all — i.e. the LLM ignored the
-    # curated block entirely. If the LLM emitted rows but the scrubber
-    # dropped all of them (e.g. cross-variant paste attack), we leave the
-    # table empty: a truncated table is preferable to emitting any
-    # curator row the LLM didn't actually endorse.
+    # strips banned drug tokens out of every prose field.
+    #
+    # The template_renderer_chair fallback fires when, after scrubbing, the
+    # opinion has zero treatment rows AND the curator did emit non-empty
+    # rows. Two separate failure modes both hit this condition:
+    #   (a) the LLM produced zero rows — ignored the curated block entirely.
+    #   (b) the LLM produced rows but every row was dropped by the scrubber
+    #       (invalid curated_id / variant_key pair — schema drift on small
+    #       local models, or cross-variant paste attack).
+    # In both cases the fallback renderer is safer than showing an empty
+    # therapy table because it surfaces the curator's authoritative rows
+    # with an explicit "fallback / research reference library" label and
+    # confidence=low. The fallback never emits a row the LLM endorsed; it
+    # only surfaces what the deterministic curator already produced.
     if mode == "cancer":
         pre_scrub_count = len(getattr(board_opinion, "treatment_options", []) or [])
         curated_nonempty = bool(curated_for_chair and any(rows for rows in curated_for_chair.values()))
@@ -216,10 +223,19 @@ def run_clinical_board(
         except Exception as scrub_err:
             logger.warning(f"[Clinical Board] narrative_scrubber failed: {scrub_err}")
 
-        if curated_nonempty and pre_scrub_count == 0:
+        post_scrub_count = len(getattr(board_opinion, "treatment_options", []) or [])
+        if curated_nonempty and post_scrub_count == 0:
+            if pre_scrub_count == 0:
+                reason = "LLM produced zero treatment rows"
+            else:
+                reason = (
+                    f"LLM produced {pre_scrub_count} rows but scrubber dropped "
+                    f"all of them (schema drift or paste attack)"
+                )
             logger.warning(
-                "[Clinical Board] Board Chair LLM returned zero treatment "
-                "rows — falling back to template_renderer_chair"
+                "[Clinical Board] Board Chair fallback triggered — %s. "
+                "Rendering deterministic curator rows via template_renderer_chair.",
+                reason,
             )
             fallback = render_from_curated(curated_for_chair or {}, agent_opinions=opinions)
             fallback.selection_metadata = selection_metadata

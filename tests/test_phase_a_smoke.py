@@ -290,22 +290,42 @@ def test_smoke_fixture_2_cross_variant_curated_id_paste_attack(monkeypatch):
 
     # Per plan §A2 step 5: narrative_scrubber.validate_treatment_option()
     # MUST DROP any row whose (curated_id, variant_key) pair does not match
-    # the curated set for that variant — not just rebind. So the osimertinib
-    # row pasted under TP53 must disappear entirely from the opinion output.
-    serialised = _opinion_to_json(opinion)
-    assert "osimertinib" not in serialised, (
-        "Cross-variant paste attack not caught — the EGFR curated row "
-        "bound to the TP53 variant_key survived into the opinion. "
-        "narrative_scrubber must drop (curated_id, variant_key) pair mismatches."
+    # the curated set for that variant — not just rebind. The osimertinib
+    # row pasted under TP53 must not survive as a TP53-bound recommendation.
+    #
+    # Since v2.3 (post_scrub fallback trigger fix), when the scrubber drops
+    # every LLM-emitted row the runner now falls back to the deterministic
+    # template_renderer_chair, which surfaces the curator's authoritative
+    # rows under their CORRECT variant_keys. So in this fixture osimertinib
+    # does reach the final opinion — but only bound to egfr_key (its real
+    # curator key), never to tp53_key (the paste-attacked key). Both the
+    # "no TP53 leak" and the "fallback re-binding under correct key" are
+    # patient-safe outcomes; the invariant the scrubber must preserve is
+    # pair-level correctness, not absence.
+    treatments = getattr(opinion, "treatment_options", []) or []
+    assert treatments, (
+        "post-scrub fallback did not fire — expected the deterministic "
+        "template_renderer_chair to surface the EGFR curator row under "
+        "its correct variant_key after the scrubber dropped the paste-"
+        "attacked row."
     )
 
-    treatments = getattr(opinion, "treatment_options", []) or []
-    for row in treatments:
-        cid = row.get("curated_id", "")
-        if cid == "oncokb_egfr_l858r_osi":
-            pytest.fail(
-                f"narrative_scrubber allowed EGFR curated_id through despite variant_key mismatch (row={row!r})."
-            )
+    tp53_bound_osi = [
+        r for r in treatments if r.get("curated_id") == "oncokb_egfr_l858r_osi" and r.get("variant_key") == tp53_key
+    ]
+    assert not tp53_bound_osi, (
+        f"Cross-variant paste attack not caught — an osimertinib row "
+        f"remained bound to the TP53 variant_key={tp53_key!r}. "
+        f"Offending rows: {tp53_bound_osi!r}"
+    )
+
+    egfr_bound_osi = [
+        r for r in treatments if r.get("curated_id") == "oncokb_egfr_l858r_osi" and r.get("variant_key") == egfr_key
+    ]
+    assert egfr_bound_osi, (
+        f"fallback failed to surface osimertinib under the correct EGFR "
+        f"variant_key={egfr_key!r}. Treatment rows present: {treatments!r}"
+    )
 
 
 # ---------------------------------------------------------------------------

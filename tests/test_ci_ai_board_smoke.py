@@ -9,8 +9,9 @@ Ollama and no CIViC DB, so we stub:
       real ``curate_treatments`` deterministic merge path runs end-to-end.
     * ``scripts.clinical_board.agents.board_chair.BoardChair.synthesize`` —
       returns a ``CancerBoardOpinion`` with ``treatment_options=[]`` so the
-      runner's fallback condition (``curated_nonempty and pre_scrub_count == 0``)
-      fires and ``template_renderer_chair.render_from_curated`` is exercised.
+      runner's fallback condition
+      (``curated_nonempty and post_scrub_count == 0``) fires and
+      ``template_renderer_chair.render_from_curated`` is exercised.
     * ``runner.OllamaClient`` / ``runner._load_agents`` — bypass live LLM
       dependency so the whole suite runs in <5s with zero network.
 
@@ -114,8 +115,8 @@ def test_ci_ai_board_curate_then_narrate_fallback(monkeypatch):
     monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [], raising=True)
 
     # 4) Stub BoardChair.synthesize — return a CancerBoardOpinion with an
-    #    EMPTY treatment_options list. This forces ``pre_scrub_count == 0``
-    #    in runner.py:208, which combined with ``curated_nonempty == True``
+    #    EMPTY treatment_options list. This forces ``post_scrub_count == 0``
+    #    in runner.py, which combined with ``curated_nonempty == True``
     #    (from the OncoKB stub above) triggers the
     #    template_renderer_chair.render_from_curated fallback path.
     def _stub_synthesize(self, briefing, opinions, curated_treatments=None, mode="rare-disease"):
@@ -175,3 +176,106 @@ def test_ci_ai_board_curate_then_narrate_fallback(monkeypatch):
 
     # ── Invariant 5: runtime budget for CI ────────────────────────────
     assert elapsed < 5.0, f"CI smoke exceeded 5s budget: {elapsed:.2f}s"
+
+
+def test_ci_ai_board_fallback_when_all_rows_scrubbed(monkeypatch):
+    """CI smoke — the more subtle failure mode: LLM emits N treatment rows
+    but every row has a curated_id / variant_key pair the curator never
+    produced (schema drift on a small local model, or a cross-variant
+    paste attack). The scrubber drops all N rows leaving
+    ``treatment_options == []`` post-scrub.
+
+    Before the v2.3 fallback trigger fix, this scenario produced an empty
+    therapy table because the old condition was ``pre_scrub_count == 0``.
+    After the fix, the condition is ``post_scrub_count == 0`` so the
+    deterministic fallback renderer fires and the user sees the curator
+    rows surfaced with a clear "research reference library" framing
+    instead of a silently-empty table.
+    """
+    from scripts.clinical import oncokb_client
+    from scripts.clinical_board import runner as runner_mod
+    from scripts.clinical_board.agents import board_chair as chair_mod
+    from scripts.clinical_board.models import BOARD_DISCLAIMER, CancerBoardOpinion
+
+    monkeypatch.setattr(
+        oncokb_client,
+        "annotate_protein_change",
+        _oncokb_stub_sotorasib_adagrasib,
+        raising=True,
+    )
+
+    fake_client = MagicMock()
+    fake_client.is_available.return_value = True
+    fake_client.has_model.return_value = True
+    fake_client.generate_json.return_value = {"treatment_options": []}
+    monkeypatch.setattr(runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=True)
+    monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: [], raising=True)
+
+    # Stub chair to return TWO rows, BOTH with curated_id values the
+    # curator never emitted (schema drift — the model appended a "-v2"
+    # suffix). The scrubber must drop both, and the fallback must fire.
+    def _stub_synthesize_schema_drift(self, briefing, opinions, curated_treatments=None, mode="rare-disease"):
+        return CancerBoardOpinion(
+            therapeutic_headline="LLM schema-drifted headline",
+            therapeutic_implications="LLM body that references sotorasib-v2 and adagrasib-v2",
+            therapeutic_evidence="LLM evidence",
+            treatment_options=[
+                # curated_id was "cid-..." in the curator output; LLM invented "cid-...-v2"
+                {
+                    "drug": "Sotorasib",
+                    "curated_id": "cid-sotorasib-v2",
+                    "variant_key": "12:25398284:C:T",
+                    "evidence_level": "A",
+                    "resistance_notes": "",
+                },
+                {
+                    "drug": "Adagrasib",
+                    "curated_id": "cid-adagrasib-v2",
+                    "variant_key": "12:25398284:C:T",
+                    "evidence_level": "A",
+                    "resistance_notes": "",
+                },
+            ],
+            agent_opinions=list(opinions or []),
+            agent_consensus="majority",
+            confidence="moderate",
+            disclaimer=BOARD_DISCLAIMER,
+        )
+
+    monkeypatch.setattr(chair_mod.BoardChair, "synthesize", _stub_synthesize_schema_drift, raising=True)
+
+    report_data = {
+        "sample_id": "CI-SMOKE-KRAS-G12D-SCHEMA-DRIFT",
+        "variants": [_kras_g12d_variant()],
+        "summary": {"total": 1},
+    }
+
+    opinion = runner_mod.run_clinical_board(report_data, mode="cancer")
+
+    assert opinion is not None
+    assert isinstance(opinion, CancerBoardOpinion)
+
+    # ── Invariant: fallback fired despite LLM emitting non-zero rows ────
+    assert opinion.agent_consensus == "fallback", (
+        f"Expected fallback path (post_scrub_count==0), got "
+        f"agent_consensus={opinion.agent_consensus!r}. The v2.3 fallback "
+        f"trigger fix (post_scrub_count instead of pre_scrub_count) did "
+        f"not engage — the LLM's invalid rows must have leaked through."
+    )
+    assert opinion.confidence == "low"
+
+    # ── Invariant: curated rows surface via the fallback ────────────────
+    drugs = {(row.get("drug") or "").lower() for row in opinion.treatment_options}
+    assert drugs & {"sotorasib", "adagrasib"}, f"Fallback did not surface curated rows — drugs={drugs!r}"
+
+    # ── Invariant: the LLM's invented -v2 curated_ids did NOT leak ──────
+    serialised = json.dumps(dataclasses.asdict(opinion), ensure_ascii=False, default=str).lower()
+    assert "-v2" not in serialised, (
+        "Invalid curated_id (-v2 suffix) leaked through — the scrubber "
+        "failed to drop a row with a hallucinated curated_id."
+    )
+
+    # ── Invariant: fallback headline rendered, not the LLM's stub ───────
+    assert "no variant-specific treatment recommendations" in opinion.therapeutic_headline.lower(), (
+        f"LLM stub headline leaked through instead of fallback — headline={opinion.therapeutic_headline!r}"
+    )

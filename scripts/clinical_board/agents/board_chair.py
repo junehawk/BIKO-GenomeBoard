@@ -108,9 +108,25 @@ KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
 ## 중요 · 치료 옵션 결정론적 바인딩 (v2.2 curate-then-narrate)
 **curated_id는 CURATED EVIDENCE 섹션에서만 가져오시오.** 그 섹션에 없는 약물을 발명하지
 마시오. 각 treatment_options 항목은 반드시 아래 4개 키를 모두 포함해야 합니다:
-``curated_id`` (CURATED EVIDENCE에 있는 정확한 ID), ``variant_key``
-(CURATED EVIDENCE에서 해당 curated_id가 소속된 ``{chrom}:{pos}:{ref}:{alt}``),
+``curated_id`` (CURATED EVIDENCE에 있는 정확한 ID — 문자 하나도 바꾸지 마시오),
+``variant_key`` (CURATED EVIDENCE에서 해당 curated_id가 소속된 **정확히 그 줄의**
+``{chrom}:{pos}:{ref}:{alt}`` — 다른 변이의 variant_key를 사용하지 마시오),
 ``drug``, ``evidence_level``. curated_id 없이 약물을 제안하지 마시오.
+
+**검증 규칙**: 출력 후 narrative_scrubber가 모든 treatment row의 ``(curated_id,
+variant_key)`` 쌍이 CURATED EVIDENCE 섹션에 존재하는지 검증합니다. 쌍이 일치하지
+않으면 해당 row는 **조용히 drop됩니다**. 모든 row가 drop되면 LLM 소견은 버려지고
+결정적(template) 폴백 렌더러가 그 자리를 대체합니다. 따라서:
+- 한 curated_id를 다른 variant_key 밑에 붙이면 (paste-attack 패턴) 결과는 빈 표입니다.
+- curated_id를 조금이라도 변형(예: 접두사 제거, 대소문자 변경)하면 drop됩니다.
+- CURATED EVIDENCE가 비어 있으면 treatment_options는 빈 배열 `[]`로 출력하고
+  therapeutic_implications에 "치료 옵션 근거 없음"을 명시하시오. 발명하지 마시오.
+
+**예시 (valid row 형식)**: CURATED EVIDENCE 섹션에
+``- curated_id=civic-abc variant_key=12:25398284:C:T drug=Cetuximab level=A ...``
+행이 있다면, 출력은 반드시
+``{"curated_id": "civic-abc", "variant_key": "12:25398284:C:T", "drug": "Cetuximab", "evidence_level": "A", "resistance_notes": ""}``
+형태여야 합니다. curated_id와 variant_key를 CURATED EVIDENCE에서 **그대로 복사**하시오.
 
 ## 응답 형식 (JSON)
 {
