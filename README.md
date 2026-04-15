@@ -46,13 +46,31 @@ flowchart TD
     F --> G{모드}
     G -->|Cancer| H[Tier I–IV · TMB · PGx]
     G -->|Rare Disease| I[5단계 · HPO 랭킹 · 유전패턴]
-    H --> J[6 · AI Clinical Board<br/>MedGemma 27B · curate-then-narrate<br/>_optional_]
-    I --> J
-    J --> K[HTML / PDF 리포트]
+    H --> J["6 · AI Clinical Board — Cancer
+    ─────────────────────────
+    Therapeutic Target Analyst
+    Tumor Genomics Specialist
+    PGx Specialist
+    Clinical Evidence Analyst
+    ↓
+    Board Chair → CancerBoardOpinion
+    (curate-then-narrate, optional)"]
+    I --> K["6 · AI Clinical Board — Rare Disease
+    ─────────────────────────
+    Variant Pathologist
+    Disease Geneticist
+    PGx Specialist
+    Literature Analyst
+    ↓
+    Board Chair → BoardOpinion
+    (optional)"]
+    J --> L[HTML / PDF 리포트]
+    K --> L
 
     style F fill:#0d7840,stroke:#0a5e32,stroke-width:2px,color:#ffffff
     style J fill:#c2570c,stroke:#9a4309,stroke-width:2px,color:#ffffff
-    style K fill:#1d4ed8,stroke:#172f8a,stroke-width:2px,color:#ffffff
+    style K fill:#c2570c,stroke:#9a4309,stroke-width:2px,color:#ffffff
+    style L fill:#1d4ed8,stroke:#172f8a,stroke-width:2px,color:#ffffff
 ```
 
 ### 두 가지 핵심 원칙
@@ -90,14 +108,16 @@ flowchart TD
 
 ### 샘플 리포트 (직접 보기)
 
-출력물이 어떤 느낌인지 먼저 확인하세요:
+실제 파이프라인이 생성한 HTML 리포트를 GitHub Pages에서 바로 볼 수 있습니다:
+
+**🌐 랜딩 페이지: <https://junehawk.github.io/BIKO-GenomeBoard/>**
 
 | 리포트 | 입력 | 특징 |
 |---|---|---|
-| [Cancer — 합성 데모](docs/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + 치료 큐레이션 |
-| [Cancer — 실제 WGS (777 변이)](docs/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 변이 선별, KRAS G12D 드라이버 |
-| [Rare Disease — HPO 기반](docs/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO 표현형 | HPO 랭킹 + OMIM + ClinGen |
-| [프로젝트 소개 (상세)](docs/showcase/BIKO_GenomeBoard_소개.html) | — | 기능 전체 설명 + 기술 스택 |
+| [Cancer — 합성 데모](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + 치료 큐레이션 |
+| [Cancer — 실제 WGS (777 변이)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 변이 선별, KRAS G12D 드라이버 |
+| [Rare Disease — HPO 기반](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO 표현형 | HPO 랭킹 + OMIM + ClinGen |
+| [프로젝트 소개 (상세)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/BIKO_GenomeBoard_소개.html) | — | 기능 전체 설명 + 기술 스택 |
 
 ## 설치
 

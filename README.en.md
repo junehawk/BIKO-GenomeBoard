@@ -46,13 +46,31 @@ flowchart TD
     F --> G{Mode}
     G -->|Cancer| H[Tier I–IV · TMB · PGx]
     G -->|Rare Disease| I[5-tier · HPO rank · inheritance]
-    H --> J[6 · AI Clinical Board<br/>MedGemma 27B · curate-then-narrate<br/>_optional_]
-    I --> J
-    J --> K[HTML / PDF report]
+    H --> J["6 · AI Clinical Board — Cancer
+    ─────────────────────────
+    Therapeutic Target Analyst
+    Tumor Genomics Specialist
+    PGx Specialist
+    Clinical Evidence Analyst
+    ↓
+    Board Chair → CancerBoardOpinion
+    (curate-then-narrate, optional)"]
+    I --> K["6 · AI Clinical Board — Rare Disease
+    ─────────────────────────
+    Variant Pathologist
+    Disease Geneticist
+    PGx Specialist
+    Literature Analyst
+    ↓
+    Board Chair → BoardOpinion
+    (optional)"]
+    J --> L[HTML / PDF report]
+    K --> L
 
     style F fill:#0d7840,stroke:#0a5e32,stroke-width:2px,color:#ffffff
     style J fill:#c2570c,stroke:#9a4309,stroke-width:2px,color:#ffffff
-    style K fill:#1d4ed8,stroke:#172f8a,stroke-width:2px,color:#ffffff
+    style K fill:#c2570c,stroke:#9a4309,stroke-width:2px,color:#ffffff
+    style L fill:#1d4ed8,stroke:#172f8a,stroke-width:2px,color:#ffffff
 ```
 
 ### Two core principles
@@ -90,14 +108,16 @@ These two principles together mean LLM hallucinations cannot leak into variant c
 
 ### Sample reports (see them first)
 
-Curious what the output looks like?
+Actual pipeline-generated HTML reports, hosted on GitHub Pages:
+
+**🌐 Landing page: <https://junehawk.github.io/BIKO-GenomeBoard/>**
 
 | Report | Input | Notes |
 |---|---|---|
-| [Cancer — synthetic demo](docs/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + curated therapies |
-| [Cancer — real WGS (777 variants)](docs/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 variants selected, KRAS G12D driver |
-| [Rare Disease — HPO-driven](docs/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO phenotypes | HPO ranking + OMIM + ClinGen |
-| [Project overview (detailed)](docs/showcase/BIKO_GenomeBoard_소개.html) | — | Full feature walkthrough + tech stack (Korean) |
+| [Cancer — synthetic demo](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + curated therapies |
+| [Cancer — real WGS (777 variants)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 variants selected, KRAS G12D driver |
+| [Rare Disease — HPO-driven](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO phenotypes | HPO ranking + OMIM + ClinGen |
+| [Project overview (detailed)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/BIKO_GenomeBoard_소개.html) | — | Full feature walkthrough + tech stack (Korean) |
 
 ## Installation
 
