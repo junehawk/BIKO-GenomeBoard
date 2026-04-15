@@ -69,3 +69,76 @@ def tmp_clingen_db(tmp_path):
     db_path = str(tmp_path / "clingen.sqlite3")
     build_db(str(csv_path), db_path)
     return db_path
+
+
+# ── T3 regression: unavailable-DB hardening (log-once, silent per variant) ──
+
+
+def test_missing_clingen_db_returns_none_and_logs_once(tmp_path, caplog):
+    """If `paths.clingen_db` points at a nonexistent file, every query
+    must return None without raising, and the user must see exactly ONE
+    warning per run (not one per variant)."""
+    from scripts.db.query_local_clingen import (
+        get_gene_validity_local,
+        reset_availability_cache,
+    )
+
+    reset_availability_cache()
+    missing_path = str(tmp_path / "definitely_not_built.sqlite3")
+
+    with caplog.at_level("WARNING"):
+        assert get_gene_validity_local("TP53", missing_path) is None
+        assert get_gene_validity_local("BRCA1", missing_path) is None
+        assert get_gene_validity_local("KCNQ3", missing_path) is None
+        assert get_gene_validity_local("ARID1B", missing_path) is None
+
+    not_found_warnings = [r for r in caplog.records if "ClinGen local DB not found" in r.getMessage()]
+    assert len(not_found_warnings) == 1
+
+
+def test_empty_shell_clingen_db_returns_none_and_logs_once(tmp_path, caplog):
+    """If the DB file exists but has no `gene_validity` table (the
+    setup_databases.sh shell-without-CSV case), queries must still return
+    None without raising, and emit exactly ONE warning per run."""
+    import sqlite3 as _sq
+    from scripts.db.query_local_clingen import (
+        get_gene_validity_local,
+        get_gene_disease_pairs,
+        reset_availability_cache,
+    )
+
+    reset_availability_cache()
+    empty_path = str(tmp_path / "empty_shell.sqlite3")
+    _sq.connect(empty_path).close()  # create zero-table shell
+
+    with caplog.at_level("WARNING"):
+        assert get_gene_validity_local("TP53", empty_path) is None
+        assert get_gene_disease_pairs("BRCA1", empty_path) == []
+        assert get_gene_validity_local("ARID1B", empty_path) is None
+
+    shell_warnings = [r for r in caplog.records if "has no `gene_validity` table" in r.getMessage()]
+    assert len(shell_warnings) == 1
+
+
+def test_availability_cache_reset_refires_warning(tmp_path, caplog):
+    """reset_availability_cache() must re-enable the one-shot warning so
+    tests that rotate through multiple DB states can observe each
+    transition."""
+    from scripts.db.query_local_clingen import (
+        get_gene_validity_local,
+        reset_availability_cache,
+    )
+
+    reset_availability_cache()
+    missing = str(tmp_path / "never_built.sqlite3")
+
+    with caplog.at_level("WARNING"):
+        get_gene_validity_local("TP53", missing)
+    first_count = sum(1 for r in caplog.records if "ClinGen local DB not found" in r.getMessage())
+    assert first_count == 1
+
+    reset_availability_cache()
+    with caplog.at_level("WARNING"):
+        get_gene_validity_local("TP53", missing)
+    second_count = sum(1 for r in caplog.records if "ClinGen local DB not found" in r.getMessage())
+    assert second_count == 2

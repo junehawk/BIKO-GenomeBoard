@@ -326,9 +326,35 @@ log_step "8/8  ClinGen Gene Validity"
 CLINGEN_CSV="$DATA_DIR/clingen_gene_validity.csv"
 CLINGEN_DB="$DATA_DIR/clingen.sqlite3"
 
+# An empty DB shell (file exists but has no gene_validity table) is the
+# known catch-22 failure mode from an earlier run where the manual CSV
+# export was missing. If we detect that shape, remove the shell so the
+# CSV/build branch below can re-trigger with a fresh download.
 if [ -f "$CLINGEN_DB" ]; then
-    log_info "ClinGen DB already exists, skipping"
-    SUCCESS+=("ClinGen")
+    if python3 -c "
+import sqlite3, sys
+try:
+    c = sqlite3.connect('$CLINGEN_DB')
+    if c.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='gene_validity'\").fetchone():
+        sys.exit(0)
+    sys.exit(1)
+finally:
+    c.close()
+" 2>/dev/null; then
+        log_info "ClinGen DB already exists, skipping"
+        SUCCESS+=("ClinGen")
+        # Skip to next section — need a subshell to preserve control flow.
+        # We use a helper flag instead of an early return.
+        CLINGEN_DONE=1
+    else
+        log_warn "ClinGen DB at $CLINGEN_DB is an empty shell (no gene_validity table)"
+        log_warn "Removing it so the CSV build path can re-trigger on the next run."
+        rm -f "$CLINGEN_DB"
+    fi
+fi
+
+if [ -n "${CLINGEN_DONE:-}" ]; then
+    :  # already handled above
 elif [ -f "$CLINGEN_CSV" ]; then
     if build_db "scripts/db/build_clingen_db.py" "ClinGen SQLite"; then
         SUCCESS+=("ClinGen")

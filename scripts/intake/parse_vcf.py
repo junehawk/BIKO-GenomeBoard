@@ -1,4 +1,5 @@
 # scripts/intake/parse_vcf.py
+import gzip
 import logging
 from typing import List
 from scripts.common.models import Variant
@@ -13,19 +14,40 @@ from scripts.intake.parse_annotation import (
 logger = logging.getLogger(__name__)
 
 
+def _open_vcf(vcf_path: str):
+    """Open a VCF file as text, transparently handling gzip compression.
+
+    Detects compressed input by file-extension (`.gz`, `.bgz`) and falls back
+    to plain-text open otherwise. Returns a text-mode file handle so callers
+    can iterate with `for line in handle:` unchanged.
+
+    Real-pipeline VCFs (cohort / trio / batch) are almost always shipped as
+    bgzipped `.vcf.gz`; without this helper the parser raises
+    `UnicodeDecodeError: 0x8b` on the first gzip magic byte.
+    """
+    lowered = vcf_path.lower()
+    if lowered.endswith(".gz") or lowered.endswith(".bgz"):
+        return gzip.open(vcf_path, "rt", encoding="utf-8")
+    return open(vcf_path, encoding="utf-8")
+
+
 def parse_vcf(vcf_path: str) -> List[Variant]:
     """Parse a VCF file into a list of Variant objects.
     Uses simple text parsing to avoid cyvcf2 dependency issues in tests.
     Supports VEP CSQ and SnpEff ANN annotation fields if present.
+    Accepts plain-text `.vcf` as well as gzip/bgzip `.vcf.gz` / `.vcf.bgz`.
     """
     variants = []
     csq_fields: List[str] = []
     ann_fields: List[str] = []
 
     try:
-        f_handle = open(vcf_path)
+        f_handle = _open_vcf(vcf_path)
     except FileNotFoundError:
         logger.error(f"VCF file not found: {vcf_path}")
+        return variants
+    except OSError as e:
+        logger.error(f"VCF file could not be opened ({vcf_path}): {e}")
         return variants
 
     with f_handle as f:

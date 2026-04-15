@@ -59,8 +59,15 @@ docs/superpowers/plans/
 # is optional for rate-limit relief only and should live in .env.
 docs/API_KEYS.md
 
-# Real patient data — do NOT commit. The codegen-Tumor_WB.* VCFs are
-# actual patient genomic data and their derived showcase reports are
-# PHI. Keep private for internal development only.
-data/sample_vcf/codegen-*
+# Real patient data — do NOT commit. Any VCF or derived report from a
+# real sample is PHI. Synthetic demo VCFs are explicitly whitelisted
+# below. Everything else in data/sample_vcf/ is treated as patient data.
+data/sample_vcf/*
+!data/sample_vcf/demo_variants.vcf
+!data/sample_vcf/demo_variants_grch38.vcf
+!data/sample_vcf/demo_variants_grch38_annotated.vcf
+!data/sample_vcf/demo_with_in_silico.vcf
+!data/sample_vcf/rare_disease_demo.vcf
+!data/sample_vcf/batch_test/
+!data/sample_vcf/batch_test/*.vcf
 docs/showcase/sample_codegen_*
