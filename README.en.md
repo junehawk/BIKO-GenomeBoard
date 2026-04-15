@@ -130,6 +130,8 @@ pip install -r requirements.txt
 
 **Requirements**: Python ≥ 3.10, enough disk for gnomAD VCFs (~700 GB full, or chromosome-sliced).
 
+> **No external LLM API keys required** — BIKO uses local Ollama + local databases only. `NCBI_API_KEY` is optional, for ClinVar API rate-limit relief.
+
 ### 2. Build local databases
 
 ```bash

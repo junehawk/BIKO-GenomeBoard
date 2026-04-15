@@ -42,6 +42,8 @@ pip install cyvcf2
 
 Local databases eliminate API rate limits and enable fully offline operation. Build order: ClinVar → gnomAD → CIViC.
 
+> **Quick path:** `bash scripts/setup_databases.sh` automates ClinVar, gnomAD, CIViC, HPO, Orphanet, GeneReviews, Korea4K, NARD2, KRGDB, and cancerhotspots. The per-step instructions below describe what the script does and which sources still require manual setup (OMIM genemap2, ClinGen).
+
 ### ClinVar SQLite (4.4M variants)
 
 ```bash
@@ -314,15 +316,15 @@ See `docker-compose.yml` for volume and environment configuration.
 
 ```bash
 pip install -r requirements-dev.txt
-python -m pytest tests/ -v
+python -m pytest tests/ -q
 
 # Single module
-python -m pytest tests/test_oncokb.py -v
-python -m pytest tests/test_batch.py -v
-python -m pytest tests/test_rare_disease.py -v
+python -m pytest tests/test_oncokb.py -q
+python -m pytest tests/test_batch.py -q
+python -m pytest tests/test_rare_disease.py -q
 ```
 
-449 tests pass. Coverage includes ACMG engine, ClinVar override, CIViC hotspot detection, batch deduplication, tabix gnomAD, HPO matching, Orphanet prevalence, GeneReviews mapping, OMIM mapping, report generation, AnnotSV CNV/SV parsing, and SV report integration.
+901+ tests pass on Python 3.10 / 3.11 / 3.12. Coverage includes ACMG engine, in silico thresholds, ClinVar override, CIViC/OncoKB integration, TMB, AnnotSV CNV/SV, HPO matching, Korean frequency comparison (KRGDB / Korea4K / NARD2), PGx, AI Clinical Board (curate-then-narrate), variant selector, and report generation.
 
 ---
 

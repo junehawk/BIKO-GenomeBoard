@@ -130,6 +130,8 @@ pip install -r requirements.txt
 
 **요구사항**: Python ≥ 3.10, 충분한 디스크 공간(gnomAD VCF 전체 ~700GB, 또는 염색체별 선택).
 
+> **외부 LLM API 키 불필요** — BIKO는 Ollama + 로컬 DB만 사용합니다. `NCBI_API_KEY`는 선택 사항이며 ClinVar API rate limit 완화용입니다.
+
 ### 2. 로컬 데이터베이스 빌드
 
 ```bash

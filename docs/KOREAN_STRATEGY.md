@@ -19,17 +19,19 @@ BIKO GenomeBoard의 핵심 차별점은 한국인 집단 특이 데이터를 ACM
 
 ---
 
-## 3단계 빈도 비교 전략
+## 5-tier 빈도 비교 전략
 
-`scripts/korean_pop/compare_freq.py`가 구현하는 계층적 빈도 비교:
+`scripts/korean_pop/compare_freq.py`가 구현하는 5-tier 한국인-인지 빈도 비교:
 
 ```
-Step 1: KRGDB  →  한국인 특이 빈도 (가장 높은 우선순위)
-Step 2: gnomAD EAS  →  동아시아 집단 빈도
-Step 3: gnomAD ALL  →  전세계 집단 빈도
+Tier 1: KRGDB        →  한국인 단일 코호트 빈도 (가장 높은 우선순위)
+Tier 2: Korea4K      →  한국인 4K WGS 코호트 빈도
+Tier 3: NARD2        →  북아시아 참조 데이터베이스 v2 빈도
+Tier 4: gnomAD EAS   →  동아시아 집단 빈도
+Tier 5: gnomAD ALL   →  전세계 집단 빈도
 ```
 
-세 출처 중 가용한 최대 빈도값을 ACMG 분류 기준에 적용한다. KRGDB 데이터가 있으면 gnomAD 보다 우선시한다.
+다섯 출처를 동시에 비교하고, 가용한 최대 빈도값을 ACMG 분류 기준(BA1/BS1/PM2)에 적용한다. 한국인 단독 코호트(KRGDB / Korea4K / NARD2) 빈도가 있으면 gnomAD 보다 우선시한다. Korean enrichment ratio(한국인 빈도 ÷ gnomAD ALL 빈도)는 각 변이마다 자동으로 계산되어 리포트에 반영된다.
 
 ---
 
@@ -77,7 +79,7 @@ Step 3: gnomAD ALL  →  전세계 집단 빈도
 
 ### 데이터 형식
 
-KRGDB 데이터는 `/data/krgdb/` 디렉토리에 TSV 형식으로 저장한다:
+KRGDB 빈도 테이블은 `data/krgdb_freq.tsv`에 TSV 형식으로 저장한다 (`config.yaml`의 `paths.krgdb`로 등록되어 있음). Korea4K(`data/korea4k_freq.tsv`)와 NARD2(`data/nard2_freq.tsv`)도 동일한 위치 패턴을 따른다.
 
 ```
 chrom   pos     ref     alt     af_korean
@@ -95,7 +97,7 @@ chr17   43057051 A      G       0.00041
 1. KRGDB 공식 사이트(https://www.krgdb.org/)에서 최신 데이터 다운로드
 2. TSV로 변환:
    ```bash
-   bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/AF\n' krgdb.vcf > data/krgdb/krgdb_latest.tsv
+   bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/AF\n' krgdb.vcf > data/krgdb_freq.tsv
    ```
 3. 기존 파일 교체 후 테스트 실행:
    ```bash
