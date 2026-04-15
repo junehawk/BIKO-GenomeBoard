@@ -114,9 +114,8 @@ flowchart TD
 
 | 리포트 | 입력 | 특징 |
 |---|---|---|
-| [Cancer — 합성 데모](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + 치료 큐레이션 |
-| [Cancer — 실제 WGS (777 변이)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 변이 선별, KRAS G12D 드라이버 |
-| [Rare Disease — HPO 기반](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO 표현형 | HPO 랭킹 + OMIM + ClinGen |
+| [Cancer — 합성 데모](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_cancer_report.html) | 5-variant VEP annotated (합성) | PGx + TMB + 치료 큐레이션 |
+| [Rare Disease — HPO 기반](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO 표현형 (합성) | HPO 랭킹 + OMIM + ClinGen |
 | [프로젝트 소개 (상세)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/BIKO_GenomeBoard_소개.html) | — | 기능 전체 설명 + 기술 스택 |
 
 ## 설치

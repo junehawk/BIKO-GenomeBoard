@@ -114,9 +114,8 @@ Actual pipeline-generated HTML reports, hosted on GitHub Pages:
 
 | Report | Input | Notes |
 |---|---|---|
-| [Cancer — synthetic demo](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_cancer_report.html) | 5-variant VEP annotated | PGx + TMB + curated therapies |
-| [Cancer — real WGS (777 variants)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_codegen_777_report.html) | `codegen-Tumor_WB.mutect.passed.vep.vcf` | 777 → 3 variants selected, KRAS G12D driver |
-| [Rare Disease — HPO-driven](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO phenotypes | HPO ranking + OMIM + ClinGen |
+| [Cancer — synthetic demo](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_cancer_report.html) | 5-variant VEP annotated (synthetic) | PGx + TMB + curated therapies |
+| [Rare Disease — HPO-driven](https://junehawk.github.io/BIKO-GenomeBoard/showcase/sample_rare_disease_report.html) | 5-variant + 3 HPO phenotypes (synthetic) | HPO ranking + OMIM + ClinGen |
 | [Project overview (detailed)](https://junehawk.github.io/BIKO-GenomeBoard/showcase/BIKO_GenomeBoard_소개.html) | — | Full feature walkthrough + tech stack (Korean) |
 
 ## Installation

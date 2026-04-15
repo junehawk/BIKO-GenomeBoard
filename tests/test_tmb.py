@@ -160,7 +160,7 @@ def test_tmb_in_html_report(tmp_path):
     from scripts.orchestrate import run_pipeline
 
     run_pipeline(
-        vcf_path="data/sample_vcf/codegen-Tumor_WB.mutect.passed.vep.vcf",
+        vcf_path="data/sample_vcf/demo_with_in_silico.vcf",
         output_path=str(tmp_path / "report.html"),
         skip_api=True,
         mode="cancer",

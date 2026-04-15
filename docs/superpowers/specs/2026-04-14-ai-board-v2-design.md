@@ -474,7 +474,7 @@ Phase 1–3이 v2.1 쇼케이스 시점에 모두 통합되었다. 아래는 실
 | No-findings placeholder (AgentOpinion 0건) | `e318c86` | EN / KO 고정 문구 |
 | `scripts/rerender_report.py` | `f46fcbd` | 캐시 JSON → HTML 리렌더 |
 | orchestrate `clinical_board` asdict dump | `f595159` | rerender roundtrip 가능 |
-| v2.1 쇼케이스 재생성 (cancer / codegen / rare-disease) | `c00e54e`, `5f54708` | codegen: 777 raw → 2 board-presented (KRAS G12D LP + TP53 Tier II VUS) |
+| v2.1 쇼케이스 재생성 (cancer / rare-disease) | `c00e54e`, `5f54708` | cancer showcase: pre-analytic filtering 효과 시연 |
 
 ### 10.3 임상 검토에 반영된 설계 결정
 
@@ -488,9 +488,8 @@ clinical review에서 요구한 5가지 수정은 전부 반영되었다:
 
 ### 10.4 쇼케이스 산출물
 
-- `docs/showcase/sample_cancer_report_v2.html` — 10-variant demo (NSCLC stage III)
-- `docs/showcase/sample_codegen_777_report_v2.html` — 777-variant WGS demo (pancreatic cancer stage IV), selector의 pre-analytic filtering 효과 시연
-- `docs/showcase/sample_rare_disease_report_v2.html` — 5-variant demo (pediatric GDD)
+- `docs/showcase/sample_cancer_report.html` — 합성 cancer demo (synthetic input)
+- `docs/showcase/sample_rare_disease_report.html` — 5-variant demo (pediatric GDD)
 
 세 HTML 모두 AI Board 섹션에 pre-analytic filtering 캡션과 (해당 시) no-findings placeholder가 렌더링된다.
 

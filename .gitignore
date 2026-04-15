@@ -13,6 +13,8 @@ htmlcov/
 
 # Database files (built by scripts/setup_databases.sh)
 data/db/*.sqlite3
+data/db/*.sqlite3-shm
+data/db/*.sqlite3-wal
 !data/db/clinvar_test.sqlite3
 !data/db/gnomad_test.sqlite3
 data/db/gnomad_vcf/
@@ -56,3 +58,9 @@ docs/superpowers/plans/
 # MedGemma via Ollama and needs no external LLM keys. NCBI_API_KEY
 # is optional for rate-limit relief only and should live in .env.
 docs/API_KEYS.md
+
+# Real patient data — do NOT commit. The codegen-Tumor_WB.* VCFs are
+# actual patient genomic data and their derived showcase reports are
+# PHI. Keep private for internal development only.
+data/sample_vcf/codegen-*
+docs/showcase/sample_codegen_*

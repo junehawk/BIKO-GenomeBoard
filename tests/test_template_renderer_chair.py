@@ -80,11 +80,11 @@ def test_fallback_empty_curated_returns_no_findings_opinion():
 
 def test_fallback_headline_does_not_imply_recommended_therapies():
     """Regression: the fallback headline must not read like 'N treatment
-    options are recommended'. The user reported that '211 curated therapy
-    option(s) — LLM synthesis unavailable' was being mis-read as 'we have
-    211 recommended treatments' on the codegen showcase. The headline must
-    explicitly disclaim that the table is an evidence library, not a list
-    of recommended treatments."""
+    options are recommended'. An early reviewer mis-read '211 curated
+    therapy option(s) — LLM synthesis unavailable' as 'we have 211
+    recommended treatments'. The headline must explicitly disclaim that
+    the table is an evidence library, not a list of recommended
+    treatments."""
     from scripts.clinical_board.template_renderer_chair import render_from_curated
 
     curated = {"12:25:C:T": [_stub_row(f"Drug{i}", "12:25:C:T", f"cid-{i}", "A") for i in range(50)]}
