@@ -14,6 +14,7 @@ from scripts.clinical.query_omim import query_omim
 from scripts.clinical.query_clingen import get_gene_validity
 from scripts.clinical.oncokb import get_cancer_gene_info
 from scripts.common.config import get
+from scripts.common.gene_knowledge import get_gene_info
 
 logger = logging.getLogger(__name__)
 
@@ -61,8 +62,16 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
                 evidences.append(AcmgEvidence(code=code, source="in_silico", description=""))
 
         # Additional evidence from variant annotations (PVS1, PM1, PM4, PP2, BP7, etc.)
+        # gene_info (pLI / missense_z) is required for PVS1/PVS1_Strong/PP2/BP1 to fire —
+        # without it those codes were silently dead on real data.
+        # clinvar_pathogenic_positions (for self-computed PM5) is left unset here because
+        # the ClinVar local DB schema does not currently carry HGVSp. PM5 still reaches
+        # the A4 override via the InterVar upstream path when intervar_data is supplied;
+        # a future ticket (v2.3) will rebuild ClinVar DB with HGVSp to unblock the
+        # self-computed PM5 path.
         if _has_evidence_collector:
-            extra_codes = collect_additional_evidence(variant)
+            gene_info = get_gene_info(variant.gene) if variant.gene else None
+            extra_codes = collect_additional_evidence(variant, gene_info=gene_info)
             for code in extra_codes:
                 evidences.append(AcmgEvidence(code=code, source="evidence_collector", description=""))
 
@@ -157,6 +166,13 @@ def build_variant_records(variants, db_results, freq_results, classification_res
                 "polyphen": variant.polyphen or "",
                 # In silico prediction scores
                 "in_silico": variant.in_silico or {},
+                # Trio-aware de novo context (populated from VCF INFO flags by
+                # parse_vcf). Kept under a ``variant_inheritance`` key because
+                # the rare-disease enrichment path below writes a gene-level
+                # ``inheritance`` field (from OMIM AD/AR/XL) — the two are
+                # semantically different and must not collide.
+                "variant_inheritance": getattr(variant, "inheritance", None),
+                "confirmed_denovo": bool(getattr(variant, "confirmed_denovo", False)),
                 "agents": {
                     "clinical": clinvar,
                     "korean_pop": {
