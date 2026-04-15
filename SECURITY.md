@@ -27,7 +27,7 @@ GitHub issue. Two channels are accepted:
 
 1. **GitHub Security Advisories** (preferred):
    <https://github.com/junehawk/BIKO-GenomeBoard/security/advisories/new>
-2. **Email**: `[REDACTED — fill in before publishing]`
+2. **Email**: `juneh@kisti.re.kr` (the maintainer's public KISTI address, also visible in git commit metadata)
 
 Include the affected version, a minimal reproduction (synthetic data
 only — see below), and the impact you observed. Please allow
