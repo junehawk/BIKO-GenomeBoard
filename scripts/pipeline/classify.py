@@ -32,7 +32,10 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
     except ImportError:
         _has_in_silico = False
     try:
-        from scripts.classification.evidence_collector import collect_additional_evidence
+        from scripts.classification.evidence_collector import (
+            collect_additional_evidence,
+            collect_denovo_evidence,
+        )
 
         _has_evidence_collector = True
     except ImportError:
@@ -74,6 +77,13 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
             extra_codes = collect_additional_evidence(variant, gene_info=gene_info)
             for code in extra_codes:
                 evidences.append(AcmgEvidence(code=code, source="evidence_collector", description=""))
+
+            # v1 de novo support — PS2/PM6 from trio INFO flags.
+            # Kept as a separate call per spec Q4 so PS2/PM6 can never leak
+            # into the ClinVar-conflict override path in acmg_engine.
+            denovo_codes = collect_denovo_evidence(variant)
+            for code in denovo_codes:
+                evidences.append(AcmgEvidence(code=code, source="denovo", description=""))
 
         # InterVar evidence (if provided)
         if _has_intervar and intervar_data:

@@ -144,6 +144,35 @@ SYNONYMOUS_CONSEQUENCES = frozenset(
     }
 )
 
+# v1 de novo support (PS2/PM6): mirror the selector's B1 consequence gate so
+# the classification engine cannot stamp PS2/PM6 on an intronic passenger.
+# Rationale — spec Q4 collision point 2: a de novo synonymous variant in a
+# constrained gene must not reach LP purely on PS2+PM2+PP3, so the gate runs
+# inside the collector.
+_DENOVO_PROTEIN_IMPACTING = frozenset(
+    {
+        "missense_variant",
+        "stop_gained",
+        "stop_lost",
+        "frameshift_variant",
+        "splice_donor_variant",
+        "splice_acceptor_variant",
+        "start_lost",
+        "inframe_insertion",
+        "inframe_deletion",
+    }
+)
+# Non-coding consequences that can be rescued into the de novo carve-out via
+# SpliceAI delta_max >= 0.2 (Tavtigian et al. 2023 PP3-moderate threshold).
+_DENOVO_SPLICE_RESCUE = frozenset(
+    {
+        "synonymous_variant",
+        "splice_region_variant",
+        "intron_variant",
+    }
+)
+_DENOVO_SPLICEAI_RESCUE_THRESHOLD = 0.2
+
 
 def _get_consequence(variant: Variant) -> Optional[str]:
     """Return the primary VEP consequence term, normalised to lowercase.
@@ -368,3 +397,75 @@ def collect_additional_evidence(
             codes.append("BP7")
 
     return codes
+
+
+# ── PS2 / PM6 collector (v1 de novo support) ─────────────────────────────────
+#
+# Spec: _workspace/v23-engineering/00_clinical_denovo_spec.md, Q1 + Q4.
+#
+# Kept **separate** from :func:`collect_additional_evidence` per the
+# implementer checklist — PS2/PM6 come from trio INFO flags on the variant,
+# not from gene constraint or VEP annotation, so the two collectors have
+# independent inputs and error modes. The gate mirror inside this function
+# (protein-impacting + SpliceAI rescue) prevents a de novo intronic
+# passenger from collecting PS2 on a purely PS2+PM2+PP3 LP path.
+
+
+def _denovo_spliceai_rescue(variant: Variant) -> bool:
+    """Return True if the variant has SpliceAI delta_max >= 0.2.
+
+    Reads ``variant.in_silico["spliceai_max"]`` (the real-pipeline storage
+    location) with a fall-back to the historical ``spliceai_max`` attribute.
+    Unparseable or missing values return False.
+    """
+    in_silico = getattr(variant, "in_silico", None)
+    raw: Any = None
+    if isinstance(in_silico, dict):
+        raw = in_silico.get("spliceai_max")
+    if raw is None:
+        raw = getattr(variant, "spliceai_max", None)
+    if raw is None:
+        return False
+    try:
+        return float(raw) >= _DENOVO_SPLICEAI_RESCUE_THRESHOLD
+    except (TypeError, ValueError):
+        return False
+
+
+def collect_denovo_evidence(variant: Variant) -> List[str]:
+    """Collect PS2 / PM6 ACMG codes from trio-aware ``Variant`` flags.
+
+    Rules (spec Q1):
+    - ``variant.confirmed_denovo == True`` → ``["PS2_Moderate"]``
+      (downgraded from Strong per ClinGen SVI 2018, PMID 30311383, because
+      BIKO does not validate phenotype-gene specificity).
+    - ``variant.inheritance in {"de_novo", "confirmed_de_novo"}`` (but not
+      confirmed) → ``["PM6"]``.
+    - No de novo flag → ``[]``.
+
+    Consequence gate (spec Q4 collision point 2) is mirrored here: only fires
+    when the variant's consequence is protein-impacting or the variant is
+    rescued by SpliceAI delta_max >= 0.2 on a splice-region / synonymous /
+    intronic consequence. Otherwise returns ``[]`` even when the de novo
+    flag is present — ACMG 2015 PS2/PM6 wording contemplates "disease-causing
+    variant", and an intronic passenger without splice signal is not one.
+    """
+    inheritance = getattr(variant, "inheritance", None)
+    confirmed = bool(getattr(variant, "confirmed_denovo", False))
+    if inheritance not in ("de_novo", "confirmed_de_novo") and not confirmed:
+        return []
+
+    consequence = _get_consequence(variant)
+    if not consequence:
+        return []
+
+    passes_gate = consequence in _DENOVO_PROTEIN_IMPACTING
+    if not passes_gate and consequence in _DENOVO_SPLICE_RESCUE:
+        passes_gate = _denovo_spliceai_rescue(variant)
+
+    if not passes_gate:
+        return []
+
+    if confirmed:
+        return ["PS2_Moderate"]
+    return ["PM6"]

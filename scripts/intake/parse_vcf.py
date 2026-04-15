@@ -1,7 +1,7 @@
 # scripts/intake/parse_vcf.py
 import gzip
 import logging
-from typing import List
+from typing import List, Optional
 from scripts.common.models import Variant
 from scripts.intake.parse_annotation import (
     parse_csq_header,
@@ -73,11 +73,28 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                 ref = fields[3]
                 alt = fields[4]
                 gene = None
+                # Trio-aware de novo INFO flags. ``DN`` / ``DENOVO`` mark an
+                # assumed de novo (PM6 at classification time); ``CONFIRMED_DN``
+                # and ``PS2`` mark a parental-identity-verified de novo
+                # (PS2_Moderate). Absence of any flag leaves ``inheritance`` at
+                # ``None`` — ACMG 2015 says absence is not evidence of
+                # inheritance, only absence of information.
+                inheritance_label: Optional[str] = None
+                confirmed_denovo = False
                 if len(fields) > 7:
                     info = fields[7]
                     for item in info.split(";"):
                         if item.startswith("Gene="):
                             gene = item.split("=")[1]
+                        # Boolean flags appear bare or as KEY=1 (VCF spec).
+                        key = item.split("=", 1)[0]
+                        val = item.split("=", 1)[1] if "=" in item else "1"
+                        if key in ("DN", "DENOVO") and val not in ("0", "false", "False", ""):
+                            if inheritance_label is None:
+                                inheritance_label = "de_novo"
+                        elif key in ("CONFIRMED_DN", "PS2") and val not in ("0", "false", "False", ""):
+                            confirmed_denovo = True
+                            inheritance_label = "confirmed_de_novo"
 
                 # Parse annotations from INFO field
                 annotation = None
@@ -92,6 +109,10 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                             break
 
                 variant = Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene, rsid=rsid)
+                if inheritance_label is not None:
+                    variant.inheritance = inheritance_label
+                if confirmed_denovo:
+                    variant.confirmed_denovo = True
                 if annotation:
                     variant.hgvsc = annotation.get("hgvsc") or None
                     variant.hgvsp = annotation.get("hgvsp") or None

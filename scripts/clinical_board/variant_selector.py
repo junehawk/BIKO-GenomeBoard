@@ -30,6 +30,8 @@ from typing import Optional
 
 from scripts.common.config import get
 from scripts.clinical.oncokb import is_cancer_gene
+from scripts.common.ddg2p_panel import is_admitted_neurodev_gene
+from scripts.common.gene_knowledge import get_gene_info
 from scripts.db.query_civic import extract_protein_position, is_hotspot
 
 
@@ -202,7 +204,12 @@ _BENIGN = frozenset({"Benign", "Likely Benign"})
 _MUST_TIERS = frozenset({"Tier I", "Tier II"})
 
 # AMP 2017 Table 2 ordering (lower = earlier in output list). v2.2 B2 inserts
-# VUS_MMR_Lynch between VUS_hotspot and VUS_TSG_LoF at priority 6.
+# VUS_MMR_Lynch between VUS_hotspot and VUS_TSG_LoF at priority 6. v1 de novo
+# support (spec Q3.1) inserts ``VUS_denovo_neurodev`` and ``VUS_denovo_splice``
+# at priority 5 — between VUS_hotspot (cancer MAY) and VUS_MMR_Lynch (6).
+# Rationale: de novo in a DDG2P-admitted NDD gene is a stronger diagnostic
+# signal than an MMR-panel VUS flagged for Lynch screening, but weaker than a
+# cancer-specific hotspot VUS.
 _REASON_PRIORITY = {
     "P_LP": 0,
     "Tier_I": 1,
@@ -210,6 +217,8 @@ _REASON_PRIORITY = {
     "Tier_III_hotspot": 3,
     "Tier_III_oncokb_gene": 4,
     "VUS_hotspot": 5,
+    "VUS_denovo_neurodev": 5,
+    "VUS_denovo_splice": 5,
     "VUS_MMR_Lynch": 6,
     "VUS_TSG_LoF": 7,
     "VUS_indel_hotspot": 8,
@@ -222,7 +231,20 @@ _MAY_REASONS_CANCER = (
     "VUS_TSG_LoF",
     "VUS_indel_hotspot",
 )
-_MAY_REASONS_RARE = ("VUS_HPO_match",)
+_MAY_REASONS_RARE = (
+    "VUS_HPO_match",
+    "VUS_denovo_neurodev",
+    "VUS_denovo_splice",
+)
+
+# v1 de novo support — pLI / missense-Z thresholds for the "constrained gene
+# not yet in DDG2P" branch (spec Q3.1 OR-clause). Both required: pLI alone
+# admits too many housekeeping genes per spec rationale.
+_DENOVO_CONSTRAINT_PLI = 0.9
+_DENOVO_CONSTRAINT_MISSENSE_Z = 3.09
+
+# Inheritance labels that trigger the de novo rare-disease carve-out.
+_DENOVO_INHERITANCE_LABELS = frozenset({"de_novo", "confirmed_de_novo"})
 
 
 def _passes_consequence_gate(v: dict) -> bool:
@@ -499,22 +521,52 @@ def _select_rare_disease(variants: list[dict], overrides: dict) -> tuple[list[di
             excluded += 1
             continue
 
+        # v1 de novo carve-out (spec Q3.1 / Q3.2). Checked **before** the
+        # HPO-score gate so a DDG2P-admitted de novo missense VUS reaches the
+        # board even when no HPO terms were supplied. Collision point 3 from
+        # the spec: if a later arm also matches, we still want the de novo
+        # reason code to be recorded — the reason-priority ordering picks the
+        # strongest admission reason, but the board sees both in the
+        # ``selection_reason_list`` audit field. See _collect_rare_reasons.
+        denovo_reason = _rare_denovo_reason(v)
+
         try:
             hpo_score = int(v.get("hpo_score", 0) or 0)
         except (TypeError, ValueError):
             hpo_score = 0
-        if hpo_score < 1:
-            excluded += 1
-            continue
 
         af = v.get("gnomad_af")
+        af_ok = True
         if af is not None:
             try:
                 if float(af) >= max_af:
-                    excluded += 1
-                    continue
+                    af_ok = False
             except (TypeError, ValueError):
                 pass  # unparseable AF → treat as unknown (pass)
+
+        if not af_ok:
+            excluded += 1
+            continue
+
+        # De novo carve-out admission path. Bypasses the HPO-score gate but
+        # still respects the AF gate and the B1 consequence gate (checked
+        # inside _rare_denovo_reason).
+        if denovo_reason is not None:
+            tagged = _tag(v, denovo_reason)
+            # Collision point 3: record the auxiliary HPO match so the board
+            # renderer can surface both reasons without the selector silently
+            # dropping one.
+            if hpo_score >= 1:
+                tagged["selection_reason_list"] = [denovo_reason, "VUS_HPO_match"]
+            else:
+                tagged["selection_reason_list"] = [denovo_reason]
+            may.append(tagged)
+            continue
+
+        # Existing VUS + HPO admission path — unchanged.
+        if hpo_score < 1:
+            excluded += 1
+            continue
 
         consequence = _canonical_consequence(v.get("consequence", "") or "")
         if consequence not in _PROTEIN_IMPACTING_CONSEQUENCES:
@@ -551,3 +603,110 @@ def _tag(v: dict, reason: str) -> dict:
     out = dict(v)
     out["selection_reason"] = reason
     return out
+
+
+# ---------------------------------------------------------------------------
+# v1 de novo carve-out (spec Q3.1 / Q3.2)
+# ---------------------------------------------------------------------------
+
+
+def _is_denovo(v: dict) -> bool:
+    """Return True if the variant record carries a de novo INFO flag.
+
+    Accepts either a ``variant_inheritance`` key (canonical — populated by
+    classify.build_variant_records from the Variant dataclass) or a
+    ``confirmed_denovo`` truthy flag. The legacy ``inheritance`` key is NOT
+    consulted because the rare-disease enrichment path uses that key for
+    OMIM gene-level AD/AR/XL, and mixing the two semantics would cause
+    false positives.
+    """
+    inh = v.get("variant_inheritance")
+    if inh in _DENOVO_INHERITANCE_LABELS:
+        return True
+    if bool(v.get("confirmed_denovo")):
+        return True
+    return False
+
+
+def _gene_is_constrained(gene: str) -> bool:
+    """Return True if ``gene`` has pLI >= 0.9 AND missense Z >= 3.09.
+
+    Looks up :func:`scripts.common.gene_knowledge.get_gene_info`. Both
+    conditions are required per spec Q3.1 — pLI alone admits too many
+    housekeeping genes. Returns False when either field is missing.
+    """
+    if not gene:
+        return False
+    try:
+        info = get_gene_info(gene)
+    except Exception:  # noqa: BLE001 — graceful degrade on KB errors
+        return False
+    if not info:
+        return False
+    pli = info.get("pli")
+    mz = info.get("missense_z")
+    if pli is None or mz is None:
+        return False
+    try:
+        return float(pli) >= _DENOVO_CONSTRAINT_PLI and float(mz) >= _DENOVO_CONSTRAINT_MISSENSE_Z
+    except (TypeError, ValueError):
+        return False
+
+
+def _rare_denovo_reason(v: dict) -> Optional[str]:
+    """Return the de novo carve-out reason code or ``None``.
+
+    Gate order (spec Q3.1 / Q3.2):
+
+    1. Variant has a de novo INFO flag (``_is_denovo``).
+    2. Gene is DDG2P-admitted OR (pLI >= 0.9 AND missense Z >= 3.09).
+    3. Consequence passes the B1 gate OR is rescued by SpliceAI >= 0.2.
+
+    Protein-impacting de novo → ``"VUS_denovo_neurodev"``.
+    Non-coding de novo rescued by SpliceAI → ``"VUS_denovo_splice"``.
+    """
+    if not _is_denovo(v):
+        return None
+
+    gene = v.get("gene", "") or ""
+    if not is_admitted_neurodev_gene(gene) and not _gene_is_constrained(gene):
+        return None
+
+    consequence = _canonical_consequence(v.get("consequence", "") or "")
+
+    # Protein-impacting path — straight admission under the B1 gate.
+    if consequence in _PROTEIN_IMPACTING_CONSEQUENCES:
+        if _passes_consequence_gate(v):
+            return "VUS_denovo_neurodev"
+        return None
+
+    # Splice-region / synonymous rescue — B1 gate handles the SpliceAI check.
+    if consequence in _SPLICE_RESCUE_CONSEQUENCES:
+        if _passes_consequence_gate(v):
+            return "VUS_denovo_splice"
+        return None
+
+    # Deep-intronic rescue — spec Q3.2 opens a narrow SpliceAI >= 0.2 window
+    # for ``intron_variant`` that the generic B1 gate does not cover.
+    if _passes_intron_splice_rescue(v):
+        return "VUS_denovo_splice"
+
+    return None
+
+
+def _passes_intron_splice_rescue(v: dict) -> bool:
+    """Return True if a de novo intronic variant has SpliceAI delta_max >= 0.2.
+
+    Spec Q3.2 rescue path for deep-intronic de novo variants — the generic B1
+    consequence gate does not admit ``intron_variant`` even with SpliceAI
+    signal, so the de novo arm opens a narrow window here.
+    """
+    consequence = _canonical_consequence(v.get("consequence") or "")
+    if consequence != "intron_variant":
+        return False
+    in_silico = v.get("in_silico") or {}
+    raw = in_silico.get("spliceai_max") if isinstance(in_silico, dict) else None
+    try:
+        return raw is not None and float(raw) >= _SPLICEAI_RESCUE_THRESHOLD
+    except (TypeError, ValueError):
+        return False

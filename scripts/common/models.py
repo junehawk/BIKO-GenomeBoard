@@ -32,6 +32,14 @@ class Variant:
     sift: Optional[str] = None  # e.g., deleterious(0.01)
     polyphen: Optional[str] = None  # e.g., probably_damaging(0.998)
     in_silico: Optional[Dict] = None  # REVEL, CADD, AlphaMissense, SpliceAI scores
+    # Trio / inheritance context (populated from upstream VCF INFO flags).
+    # ``inheritance`` is a short label from the set:
+    #   "de_novo", "confirmed_de_novo", "maternal", "paternal", "inherited", None.
+    # ``confirmed_denovo`` is True only when parental identity was explicitly
+    # verified (CONFIRMED_DN=1 / PS2=1 INFO flag); a bare DN=1 joint-callset
+    # flag stays at assumed de novo per ClinGen SVI 2018 (PMID 30311383).
+    inheritance: Optional[str] = None
+    confirmed_denovo: bool = False
 
     @classmethod
     def from_string(cls, s: str) -> Variant:
