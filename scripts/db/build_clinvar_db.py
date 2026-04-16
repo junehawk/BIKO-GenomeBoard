@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
-"""Build local ClinVar SQLite database from NCBI variant_summary.txt.gz"""
+"""Build local ClinVar SQLite database from NCBI variant_summary.txt.gz
+
+v2.3-T6: extended schema with an ``hgvsp`` column. NCBI's ``variant_summary``
+``Name`` field embeds the protein consequence in parentheses, e.g.
+``NM_000546.6(TP53):c.524G>A (p.Arg175His)``. Persisting just the
+``p.Arg175His`` fragment is enough for the self-computed PM5 path
+(``query_local_clinvar.get_clinvar_pathogenic_positions``) to enumerate
+"protein positions in gene X with at least one ClinVar P/LP entry", which
+in turn unblocks the full A4 ClinVar-conflict override gate at the
+classification layer.
+"""
 
 import gzip
 import sqlite3
 import logging
+import re
 import sys
 from pathlib import Path
 from datetime import datetime
@@ -12,6 +23,24 @@ logger = logging.getLogger(__name__)
 
 CLINVAR_URL = "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz"
 DEFAULT_DB_PATH = "data/db/clinvar.sqlite3"
+
+# Match the parenthesised protein consequence inside ClinVar's ``Name`` column.
+# Examples:
+#   NM_000546.6(TP53):c.524G>A (p.Arg175His)            -> p.Arg175His
+#   NM_000546.6(TP53):c.215C>G (p.Pro72Arg)             -> p.Pro72Arg
+#   NM_000059.4(BRCA2):c.68_69delAG (p.Glu23Valfs)      -> p.Glu23Valfs
+# Names without an HGVSp segment (CNVs, intronic non-coding, etc.) yield None.
+_HGVSP_RE = re.compile(r"\(p\.([^\)]+)\)")
+
+
+def _extract_hgvsp(name: str) -> str | None:
+    """Return ``p.<...>`` from a ClinVar ``Name`` field, or ``None``."""
+    if not name:
+        return None
+    m = _HGVSP_RE.search(name)
+    if not m:
+        return None
+    return f"p.{m.group(1)}"
 
 
 def download_clinvar(output_path: str) -> str:
@@ -45,6 +74,11 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
 
+    # Drop the legacy table so a re-run picks up schema changes (v2.3-T6
+    # added the hgvsp column). The build is destructive by design — earlier
+    # versions only deleted rows, which left stale schemas in place.
+    conn.execute("DROP TABLE IF EXISTS variants")
+
     # Create table
     conn.execute("""
         CREATE TABLE IF NOT EXISTS variants (
@@ -63,7 +97,8 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
             origin TEXT,
             assembly TEXT DEFAULT 'GRCh38',
             last_evaluated TEXT,
-            number_submitters INTEGER
+            number_submitters INTEGER,
+            hgvsp TEXT
         )
     """)
 
@@ -75,11 +110,10 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
         )
     """)
 
-    conn.execute("DELETE FROM variants")  # Fresh build
-
     logger.info(f"Building ClinVar DB from {tsv_gz_path}...")
     count = 0
     skipped = 0
+    hgvsp_count = 0
 
     open_func = gzip.open if tsv_gz_path.endswith(".gz") else open
     mode = "rt" if tsv_gz_path.endswith(".gz") else "r"
@@ -125,6 +159,10 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
             rsid_raw = row.get("RS# (dbSNP)", "")
             rsid = f"rs{rsid_raw}" if rsid_raw and rsid_raw != "-1" else None
 
+            hgvsp = _extract_hgvsp(row.get("Name", ""))
+            if hgvsp:
+                hgvsp_count += 1
+
             batch.append(
                 (
                     f"chr{chrom}" if not chrom.startswith("chr") else chrom,
@@ -142,6 +180,7 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
                     assembly,
                     row.get("LastEvaluated", ""),
                     int(row.get("NumberSubmitters", "0") or "0"),
+                    hgvsp,
                 )
             )
 
@@ -152,8 +191,8 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
                     INSERT INTO variants (chrom, pos, ref, alt, rsid, gene,
                         clinical_significance, review_status, phenotype_list,
                         variation_id, allele_id, origin, assembly, last_evaluated,
-                        number_submitters)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        number_submitters, hgvsp)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     batch,
                 )
@@ -167,8 +206,8 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
             INSERT INTO variants (chrom, pos, ref, alt, rsid, gene,
                 clinical_significance, review_status, phenotype_list,
                 variation_id, allele_id, origin, assembly, last_evaluated,
-                number_submitters)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                number_submitters, hgvsp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
             batch,
         )
@@ -179,18 +218,23 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_rsid ON variants(rsid)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_gene ON variants(gene)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_chrom_pos_ref_alt ON variants(chrom, pos, ref, alt)")
+    # v2.3-T6: composite index supports the per-gene HGVSp fan-out used by
+    # ``get_clinvar_pathogenic_positions`` for self-computed PM5.
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_clinvar_gene_hgvsp ON variants(gene, hgvsp)")
 
     # Store metadata
     now = datetime.utcnow().isoformat()
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('source', ?)", (CLINVAR_URL,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('variant_count', ?)", (str(count),))
+    conn.execute("INSERT OR REPLACE INTO metadata VALUES ('hgvsp_count', ?)", (str(hgvsp_count),))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('assembly', 'GRCh38')")
+    conn.execute("INSERT OR REPLACE INTO metadata VALUES ('schema_version', '2')")
 
     conn.commit()
     conn.close()
 
-    logger.info(f"ClinVar DB built: {count:,} variants, {skipped:,} skipped → {db_path}")
+    logger.info(f"ClinVar DB built: {count:,} variants ({hgvsp_count:,} with HGVSp), {skipped:,} skipped → {db_path}")
     return db_path
 
 

@@ -47,6 +47,30 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
     except ImportError:
         _has_intervar = False
 
+    # v2.3-T6: Batch-prefetch ClinVar protein positions for self-computed PM5.
+    # The ClinVar local DB now carries an hgvsp column (build_clinvar_db.py
+    # schema_version=2). For every distinct gene in this batch we ask
+    # query_local_clinvar.get_clinvar_pathogenic_positions for the set of
+    # residues with at least one ClinVar P/LP entry, and pass that set into
+    # collect_additional_evidence per variant. evidence_collector then fires
+    # PM5 when the variant's protein position is in the set, which in turn
+    # unblocks the full A4 ClinVar-conflict override gate (PM1+PM5) on real
+    # data. Falls back gracefully to an empty set if the DB lacks the column
+    # (legacy build) or is absent — the InterVar upstream PM5 path still
+    # works in that case.
+    try:
+        from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+
+        _has_clinvar_pm5 = True
+    except ImportError:
+        _has_clinvar_pm5 = False
+
+    if _has_clinvar_pm5:
+        _genes = {v.gene for v in variants if getattr(v, "gene", None)}
+        clinvar_pos_by_gene: dict = {g: get_clinvar_pathogenic_positions(g) for g in _genes}
+    else:
+        clinvar_pos_by_gene = {}
+
     classification_results = {}
     for variant in variants:
         db = db_results[variant.variant_id]
@@ -67,14 +91,21 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
         # Additional evidence from variant annotations (PVS1, PM1, PM4, PP2, BP7, etc.)
         # gene_info (pLI / missense_z) is required for PVS1/PVS1_Strong/PP2/BP1 to fire —
         # without it those codes were silently dead on real data.
-        # clinvar_pathogenic_positions (for self-computed PM5) is left unset here because
-        # the ClinVar local DB schema does not currently carry HGVSp. PM5 still reaches
-        # the A4 override via the InterVar upstream path when intervar_data is supplied;
-        # a future ticket (v2.3) will rebuild ClinVar DB with HGVSp to unblock the
-        # self-computed PM5 path.
+        # clinvar_pathogenic_positions enables the self-computed PM5 path: the
+        # ClinVar local DB now carries an hgvsp column (v2.3-T6), so we look up
+        # the set of residues in this gene with a known ClinVar P/LP entry and
+        # let evidence_collector fire PM5 when the current variant's position
+        # is in the set. Without this set PM5 only reaches A4 via the InterVar
+        # upstream path when intervar_data is supplied; with it both paths are
+        # live. clinvar_pos_by_gene falls back to an empty set on legacy DBs.
         if _has_evidence_collector:
             gene_info = get_gene_info(variant.gene) if variant.gene else None
-            extra_codes = collect_additional_evidence(variant, gene_info=gene_info)
+            clinvar_pos = clinvar_pos_by_gene.get(getattr(variant, "gene", None)) or set()
+            extra_codes = collect_additional_evidence(
+                variant,
+                gene_info=gene_info,
+                clinvar_pathogenic_positions=clinvar_pos,
+            )
             for code in extra_codes:
                 evidences.append(AcmgEvidence(code=code, source="evidence_collector", description=""))
 
