@@ -135,6 +135,17 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     if ch_meta:
         versions["cancerhotspots_v2_single"] = ch_meta
 
+    # gnomAD v4.1 gene constraint metrics — pLI / LOEUF / missense Z used by
+    # the de novo carve-out admission OR-branch (v2.3-T8).
+    try:
+        from scripts.db.query_gnomad_constraint import get_db_version as get_gnomad_constraint_version
+
+        gc_meta = get_gnomad_constraint_version()
+        if gc_meta.get("source") != "not_available":
+            versions["gnomAD_constraint"] = gc_meta
+    except Exception:
+        pass
+
     # Annotation source config
     versions["_annotation_source"] = get("annotation.source", "auto")
 

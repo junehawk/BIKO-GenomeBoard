@@ -28,6 +28,7 @@ paths:
   pm1_hotspots_json: "data/pm1_hotspot_domains.json"
   pm1_hotspots_overrides: "data/pm1_hotspot_overrides.yaml"
   cancerhotspots_tsv: "data/db/hotspots/hotspots_v2_single.tsv"
+  gnomad_constraint_db: "data/db/gnomad_constraint.sqlite3"
 
 thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)

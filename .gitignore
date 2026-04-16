@@ -27,6 +27,7 @@ data/db/en_product9_prev.xml
 data/db/GRshortname_NBKid_genesymbol_dzname.txt
 data/db/GRtitle_shortname_NBKid.txt
 data/db/clingen_gene_validity.csv
+data/db/gnomad_constraint.tsv
 data/db/civic/
 data/cache/
 

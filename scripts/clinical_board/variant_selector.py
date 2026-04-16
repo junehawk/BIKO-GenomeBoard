@@ -31,7 +31,6 @@ from typing import Optional
 from scripts.common.config import get
 from scripts.clinical.oncokb import is_cancer_gene
 from scripts.common.ddg2p_panel import is_admitted_neurodev_gene
-from scripts.common.gene_knowledge import get_gene_info
 from scripts.db.query_civic import extract_protein_position, is_hotspot
 
 
@@ -631,25 +630,32 @@ def _is_denovo(v: dict) -> bool:
 def _gene_is_constrained(gene: str) -> bool:
     """Return True if ``gene`` has pLI >= 0.9 AND missense Z >= 3.09.
 
-    Looks up :func:`scripts.common.gene_knowledge.get_gene_info`. Both
-    conditions are required per spec Q3.1 — pLI alone admits too many
-    housekeeping genes. Returns False when either field is missing.
+    Sourced from the gnomAD v4.1 constraint metrics SQLite DB built by
+    ``scripts/db/build_gnomad_constraint_db.py``. Both conditions are
+    required per spec Q3.1 — pLI alone admits too many housekeeping genes,
+    and the missense-Z gate matches Karczewski 2020 (PMID 32461654) top-1%
+    constraint.
+
+    Prior to v2.3-T8 this read from ``gene_knowledge.get_gene_info``,
+    which never carried numeric pLI / missense_z fields → the OR-branch
+    of the de novo carve-out (DDG2P-admitted OR constrained) was dead
+    code. The constraint DB now lives in its own SQLite to keep the
+    LLM-narrative gene_knowledge.json schema clean.
+
+    Falls through to False (rather than raising) when the gnomAD
+    constraint DB is unavailable — query_gnomad_constraint logs a single
+    warning per run via its own availability cache.
     """
     if not gene:
         return False
+    # Lazy import: keeps the variant_selector test fixture independent of the
+    # db module so unit tests that only exercise the cancer arm need not
+    # build a constraint DB stub.
+    from scripts.db.query_gnomad_constraint import is_constrained
+
     try:
-        info = get_gene_info(gene)
-    except Exception:  # noqa: BLE001 — graceful degrade on KB errors
-        return False
-    if not info:
-        return False
-    pli = info.get("pli")
-    mz = info.get("missense_z")
-    if pli is None or mz is None:
-        return False
-    try:
-        return float(pli) >= _DENOVO_CONSTRAINT_PLI and float(mz) >= _DENOVO_CONSTRAINT_MISSENSE_Z
-    except (TypeError, ValueError):
+        return is_constrained(gene)
+    except Exception:  # noqa: BLE001 — graceful degrade on DB errors
         return False
 
 

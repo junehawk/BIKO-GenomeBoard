@@ -14,6 +14,7 @@
 #   GeneReviews — NCBI FTP (public, ~200 KB)
 #   ClinGen     — clinicalgenome.org (manual CSV export required)
 #   OMIM genemap2 — omim.org (requires OMIM account, manual download)
+#   gnomAD constraint — Broad Institute (public, ~95 MB TSV)
 #   gnomAD v4.1 — Broad Institute (optional, ~700 GB for full exome VCFs)
 # ============================================================================
 
@@ -125,7 +126,7 @@ build_db() {
 # ============================================================================
 # 1. ClinVar
 # ============================================================================
-log_step "1/8  ClinVar (NCBI)"
+log_step "1/9  ClinVar (NCBI)"
 
 CLINVAR_GZ="$DATA_DIR/variant_summary.txt.gz"
 CLINVAR_DB="$DATA_DIR/clinvar.sqlite3"
@@ -150,7 +151,7 @@ fi
 # ============================================================================
 # 2. CIViC
 # ============================================================================
-log_step "2/8  CIViC (civicdb.org)"
+log_step "2/9  CIViC (civicdb.org)"
 
 CIVIC_DB="$DATA_DIR/civic.sqlite3"
 CIVIC_DIR="$DATA_DIR/civic"
@@ -188,7 +189,7 @@ fi
 # ============================================================================
 # 3. HPO (genes_to_phenotype)
 # ============================================================================
-log_step "3/8  HPO (hpo.jax.org)"
+log_step "3/9  HPO (hpo.jax.org)"
 
 HPO_TXT="$DATA_DIR/genes_to_phenotype.txt"
 HPO_DB="$DATA_DIR/hpo.sqlite3"
@@ -213,7 +214,7 @@ fi
 # ============================================================================
 # 4. OMIM mim2gene (public)
 # ============================================================================
-log_step "4/8  OMIM mim2gene (omim.org)"
+log_step "4/9  OMIM mim2gene (omim.org)"
 
 MIM2GENE="$DATA_DIR/mim2gene.txt"
 OMIM_MAP_DB="$DATA_DIR/omim_mapping.sqlite3"
@@ -238,7 +239,7 @@ fi
 # ============================================================================
 # 5. OMIM genemap2 (requires login — check if file exists)
 # ============================================================================
-log_step "5/8  OMIM genemap2 (requires OMIM account)"
+log_step "5/9  OMIM genemap2 (requires OMIM account)"
 
 GENEMAP2="$DATA_DIR/genemap2.txt"
 OMIM_GM_DB="$DATA_DIR/omim_genemap.sqlite3"
@@ -264,7 +265,7 @@ fi
 # ============================================================================
 # 6. Orphanet (prevalence data)
 # ============================================================================
-log_step "6/8  Orphanet (orphadata.com)"
+log_step "6/9  Orphanet (orphadata.com)"
 
 ORPHANET_XML="$DATA_DIR/en_product9_prev.xml"
 ORPHANET_DB="$DATA_DIR/orphanet.sqlite3"
@@ -289,7 +290,7 @@ fi
 # ============================================================================
 # 7. GeneReviews (NCBI FTP)
 # ============================================================================
-log_step "7/8  GeneReviews (NCBI FTP)"
+log_step "7/9  GeneReviews (NCBI FTP)"
 
 GR_GENES="$DATA_DIR/GRshortname_NBKid_genesymbol_dzname.txt"
 GR_TITLES="$DATA_DIR/GRtitle_shortname_NBKid.txt"
@@ -321,7 +322,7 @@ fi
 # ============================================================================
 # 8. ClinGen (manual CSV export)
 # ============================================================================
-log_step "8/8  ClinGen Gene Validity"
+log_step "8/9  ClinGen Gene Validity"
 
 CLINGEN_CSV="$DATA_DIR/clingen_gene_validity.csv"
 CLINGEN_DB="$DATA_DIR/clingen.sqlite3"
@@ -368,6 +369,52 @@ else
     log_warn "  3. Place at: $CLINGEN_CSV"
     log_warn "  4. Re-run this script"
     SKIPPED+=("ClinGen (manual download)")
+fi
+
+# ============================================================================
+# 9. gnomAD v4.1 Constraint Metrics (public, ~95 MB TSV → ~3 MB SQLite)
+# ============================================================================
+log_step "9/9  gnomAD v4.1 Constraint Metrics"
+
+GNOMAD_CONSTRAINT_TSV="$DATA_DIR/gnomad_constraint.tsv"
+GNOMAD_CONSTRAINT_DB="$DATA_DIR/gnomad_constraint.sqlite3"
+GNOMAD_CONSTRAINT_URL="https://gnomad-public-us-east-1.s3.amazonaws.com/release/4.1/constraint/gnomad.v4.1.constraint_metrics.tsv"
+
+# Same empty-shell guard as ClinGen — a build script that ran half-way and
+# never inserted any rows leaves a SQLite file with no constraint_metrics
+# table. The query_gnomad_constraint module already log-once-shorts on this
+# but we should re-trigger the build path.
+if [ -f "$GNOMAD_CONSTRAINT_DB" ]; then
+    if python3 -c "
+import sqlite3, sys
+try:
+    c = sqlite3.connect('$GNOMAD_CONSTRAINT_DB')
+    if c.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='constraint_metrics'\").fetchone():
+        sys.exit(0)
+    sys.exit(1)
+finally:
+    c.close()
+" 2>/dev/null; then
+        log_info "gnomAD constraint DB already exists, skipping"
+        SUCCESS+=("gnomAD constraint")
+        GNOMAD_CONSTRAINT_DONE=1
+    else
+        log_warn "gnomAD constraint DB at $GNOMAD_CONSTRAINT_DB is an empty shell"
+        log_warn "Removing it so the build path can re-trigger on the next run."
+        rm -f "$GNOMAD_CONSTRAINT_DB"
+    fi
+fi
+
+if [ -n "${GNOMAD_CONSTRAINT_DONE:-}" ]; then
+    :  # already handled above
+elif download_file "$GNOMAD_CONSTRAINT_URL" "$GNOMAD_CONSTRAINT_TSV" "gnomAD v4.1 constraint metrics"; then
+    if build_db "scripts/db/build_gnomad_constraint_db.py" "gnomAD constraint SQLite" "$GNOMAD_CONSTRAINT_TSV"; then
+        SUCCESS+=("gnomAD constraint")
+    else
+        FAILED+=("gnomAD constraint (build)")
+    fi
+else
+    FAILED+=("gnomAD constraint (download)")
 fi
 
 # ============================================================================
