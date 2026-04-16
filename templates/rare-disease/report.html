@@ -1142,6 +1142,11 @@
       <div class="section-rule rule-purple"></div>
     </div>
 
+    {# Filter to gene-bearing variants only and cap to avoid flooding
+       the summary page with intergenic/unnamed VUS. Sorted by the Jinja
+       default loop order which is HPO-ranked from the Python layer. #}
+    {% set _gene_variants = variants | selectattr('gene') | list %}
+    {% set _gene_cap = 15 %}
     <table class="candidate-table">
       <thead>
         <tr>
@@ -1155,7 +1160,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for v in variants %}
+        {% for v in _gene_variants[:_gene_cap] %}
         <tr>
           <td>
             {% if loop.index <= 3 %}
@@ -1191,6 +1196,14 @@
         {% endfor %}
       </tbody>
     </table>
+    {% if _gene_variants | length > _gene_cap %}
+    <div style="padding:4px 0;font-size:8pt;color:#6b7280;text-align:center;">
+      … and {{ _gene_variants | length - _gene_cap }} more gene-bearing variants (see variant detail pages or JSON export)
+    </div>
+    {% endif %}
+    {% if _gene_variants | length == 0 %}
+    <div class="no-data" style="padding:8px 0;">No gene-annotated variants available for ranking. Run VEP / SnpEff on this VCF for gene-level interpretation.</div>
+    {% endif %}
 
     <!-- Genomic Findings panels -->
     <div class="section-header">
@@ -1237,15 +1250,24 @@
         </div>
       </div>
 
-      <!-- VUS / Benign panel -->
+      <!-- VUS / Benign panel — capped at 5 to avoid flooding the
+           summary page with clinically uninformative rows. The full
+           list is available in the omitted-variants appendix when
+           hide_vus is off, or in the JSON export. -->
       <div class="findings-panel">
-        <div class="findings-panel-title title-vus">VUS &amp; Benign</div>
+        <div class="findings-panel-title title-vus">VUS &amp; Benign ({{ other_variants | length }})</div>
         <div class="findings-panel-body">
           {% if other_variants %}
-            {% for v in other_variants %}
+            {# Prioritise gene-bearing variants so the reviewer sees
+               clinically-addressable genes, not intergenic noise. #}
+            {% set _named_vus = other_variants | selectattr('gene') | list %}
+            {% set _unnamed_vus = other_variants | rejectattr('gene') | list %}
+            {% set _prioritized_vus = _named_vus + _unnamed_vus %}
+            {% set _vus_cap = 5 %}
+            {% for v in _prioritized_vus[:_vus_cap] %}
             <div class="finding-row">
               <div>
-                <span class="finding-gene">{{ v.gene }}</span>
+                <span class="finding-gene">{{ v.gene or '—' }}</span>
                 {% if v.conflict is defined and v.conflict %}
                   <span class="conflict-flag">&#9888;</span>
                 {% endif %}
@@ -1254,6 +1276,11 @@
               {{ class_badge(v.classification) }}
             </div>
             {% endfor %}
+            {% if other_variants | length > _vus_cap %}
+            <div style="padding:6px 0;font-size:8pt;color:#6b7280;text-align:center;border-top:1px solid #e5e7eb;margin-top:4px;">
+              … and {{ other_variants | length - _vus_cap }} more VUS/Benign variants (see appendix or JSON export)
+            </div>
+            {% endif %}
           {% else %}
             <div class="no-data" style="padding:8px 0;">No VUS or benign variants.</div>
           {% endif %}
@@ -1367,15 +1394,26 @@
         {% endif %}
       {% endfor %}
       {% if no_report %}
+      {# Prioritise gene-bearing variants and cap to avoid multi-page
+         lists of intergenic VUS that add zero clinical value. #}
+      {% set _named_nr = no_report | selectattr('gene') | list %}
+      {% set _unnamed_nr = no_report | rejectattr('gene') | list %}
+      {% set _sorted_nr = _named_nr + _unnamed_nr %}
+      {% set _nr_cap = 10 %}
       <ul>
-        {% for v in no_report %}
+        {% for v in _sorted_nr[:_nr_cap] %}
         <li>
-          <strong>{{ v.gene }}</strong>&nbsp;
+          <strong>{{ v.gene or '—' }}</strong>&nbsp;
           <span style="font-family:'Courier New',monospace;font-size:7.5pt;color:var(--muted);">{{ v.variant }}</span>&nbsp;
           {{ class_badge(v.classification) }}
         </li>
         {% endfor %}
       </ul>
+      {% if no_report | length > _nr_cap %}
+      <div style="padding:4px 0;font-size:8pt;color:#6b7280;text-align:center;">
+        … and {{ no_report | length - _nr_cap }} more VUS/Benign variants not shown (see appendix or JSON export)
+      </div>
+      {% endif %}
       {% else %}
       <div class="no-data">All identified variants have reportable significance.</div>
       {% endif %}
