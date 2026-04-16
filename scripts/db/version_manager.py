@@ -120,6 +120,11 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     if pm1_meta:
         versions["PM1_Hotspots"] = pm1_meta
 
+    # DDG2P neurodevelopmental panel — full EBI Gene2Phenotype ingest (v2.3 T7)
+    ddg2p_meta = _ddg2p_panel_version()
+    if ddg2p_meta:
+        versions["DDG2P"] = ddg2p_meta
+
     # CIViC — previously omitted despite having a metadata table (v2.2 bycatch C2-db-1)
     civic_meta = _civic_version()
     if civic_meta:
@@ -160,6 +165,39 @@ def _pm1_hotspots_version() -> Optional[Dict]:
         "source_refs": payload.get("source_refs", []),
         "source_hash": payload.get("source_hash", ""),
         "record_count": payload.get("record_count", 0),
+        "path": str(json_path),
+    }
+
+
+def _ddg2p_panel_version() -> Optional[Dict]:
+    """Read version metadata from data/ddg2p_neurodev_genes.json if present.
+
+    The file is built by ``scripts/tools/build_ddg2p_table.py`` from the EBI
+    Gene2Phenotype FTP archive (CC0). Both the v1 hand-curated 30-gene starter
+    set and the v2.3 full ~2200-gene ingest produce a JSON with the same
+    top-level keys; this helper reads the build metadata so reports can
+    surface DDG2P provenance alongside ClinVar/CIViC/etc.
+    """
+    json_path = Path(get("paths.ddg2p_panel_json", "data/ddg2p_neurodev_genes.json"))
+    if not json_path.exists():
+        return None
+    try:
+        with json_path.open() as f:
+            payload = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("DDG2P panel JSON unreadable at %s: %s", json_path, e)
+        return None
+
+    genes = payload.get("genes") or {}
+    return {
+        "source": "local_json",
+        "upstream": payload.get("source", "Gene2Phenotype DDG2P"),
+        "license": payload.get("license", "CC0"),
+        "build_date": payload.get("build_date", "unknown"),
+        "source_url": payload.get("source_url", ""),
+        "source_md5": payload.get("source_md5", ""),
+        "gene_count": int(payload.get("record_count", len(genes)) or len(genes)),
+        "admission_confidences": payload.get("admission_confidences", []),
         "path": str(json_path),
     }
 
