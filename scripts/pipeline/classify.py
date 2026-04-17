@@ -214,6 +214,9 @@ def build_variant_records(variants, db_results, freq_results, classification_res
                 # semantically different and must not collide.
                 "variant_inheritance": getattr(variant, "inheritance", None),
                 "confirmed_denovo": bool(getattr(variant, "confirmed_denovo", False)),
+                # Variant origin badge: "primary" (main VCF), "germline_inherited"
+                # (from --germline target extraction), or "germline_pgx".
+                "source": getattr(variant, "source", None) or "primary",
                 "agents": {
                     "clinical": clinvar,
                     "korean_pop": {

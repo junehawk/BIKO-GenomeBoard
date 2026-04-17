@@ -148,6 +148,32 @@ def run_pipeline(
         gene_label = variant.gene or variant.variant_id
         _progress(f"  → {gene_label}: ClinVar={clinvar_sig}, gnomAD={gnomad_str}, KRGDB={krgdb_str}")
 
+    # ── Step 2b: Extract inherited variants from germline VCF (rare-disease) ─
+    inherited_variants: list = []
+    if germline_vcf and mode == "rare-disease":
+        try:
+            from scripts.pipeline.extract_germline import extract_inherited_variants
+
+            primary_ids = {v.variant_id for v in variants}
+            inherited_variants = extract_inherited_variants(
+                germline_vcf,
+                primary_variant_ids=primary_ids,
+            )
+            if inherited_variants:
+                _progress(f"  [Germline] Extracted {len(inherited_variants)} inherited target variants")
+                for iv in inherited_variants:
+                    result = query_variant_databases(iv, str(krgdb_file), skip_api)
+                    db_results[iv.variant_id] = result
+                    gene_label = iv.gene or iv.variant_id
+                    clinvar_sig = result["clinvar"].get("clinvar_significance", "Not Found")
+                    _progress(f"  → {gene_label} (inherited): ClinVar={clinvar_sig}")
+                # Merge into main variant list (primary takes precedence via dedup above)
+                variants = list(variants) + inherited_variants
+            else:
+                _progress("  [Germline] No inherited target variants found")
+        except Exception as e:
+            logger.warning("Germline inherited variant extraction failed: %s", e)
+
     # ── Step 3: Frequency comparison ─────────────────────────────────────────
     _progress("[3/6] Running frequency comparison...")
     freq_results = {}

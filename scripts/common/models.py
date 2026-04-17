@@ -40,6 +40,10 @@ class Variant:
     # flag stays at assumed de novo per ClinGen SVI 2018 (PMID 30311383).
     inheritance: Optional[str] = None
     confirmed_denovo: bool = False
+    # Variant origin: "primary" (from main VCF), "germline_inherited"
+    # (extracted from --germline VCF via target BED), "germline_pgx"
+    # (PGx-specific).  None is treated as "primary" by downstream code.
+    source: Optional[str] = None
 
     @classmethod
     def from_string(cls, s: str) -> Variant:

@@ -32,6 +32,9 @@ data/db/gnomad_constraint.tsv
 data/db/civic/
 data/cache/
 
+# Germline target BED (built from local ClinVar DB by build_germline_target_bed.py)
+data/germline_targets/
+
 # External tools (downloaded JARs, binaries — not committed)
 data/tools/
 
