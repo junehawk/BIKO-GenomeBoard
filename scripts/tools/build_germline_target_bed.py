@@ -166,27 +166,38 @@ def _collect_clinvar_plp_positions(conn: sqlite3.Connection) -> list[tuple[str, 
     return rows
 
 
-def _collect_gene_regions_from_clinvar(
+def _collect_clinvar_plp_in_genes(
     conn: sqlite3.Connection, gene_list: list[str], label: str
 ) -> list[tuple[str, int, int, str, str]]:
-    """Return BED rows spanning the known ClinVar positions for each gene."""
+    """Return BED rows for ClinVar P/LP entries restricted to a gene list.
+
+    Unlike the earlier ``_collect_gene_regions_from_clinvar`` (which spanned
+    MIN(pos)..MAX(pos) per gene — pulling every germline variant in an 84 KB
+    BRCA2 region), this returns **point-level** BED rows: one per ClinVar
+    P/LP entry. The tabix intersection therefore returns at most one
+    germline variant per target position instead of hundreds per gene span.
+
+    This fixed the 281K-variant extraction blowup observed on the first
+    ASD-10293 validation run (2026-04-17).
+    """
     rows: list[tuple[str, int, int, str, str]] = []
     placeholders = ",".join("?" for _ in gene_list)
     cursor = conn.execute(
         f"""
-        SELECT gene, chrom, MIN(pos), MAX(pos)
+        SELECT chrom, pos, gene
         FROM variants
         WHERE gene IN ({placeholders})
+          AND clinical_significance LIKE '%athogenic%'
+          AND clinical_significance NOT LIKE '%onflict%'
           AND assembly = 'GRCh38'
-        GROUP BY gene, chrom
         """,
         gene_list,
     )
-    for gene, chrom, min_pos, max_pos in cursor:
-        if not chrom or not min_pos:
+    for chrom, pos, gene in cursor:
+        if not chrom or not pos:
             continue
         c = chrom if chrom.startswith("chr") else f"chr{chrom}"
-        rows.append((c, max(0, min_pos - 1), max_pos, gene, label))
+        rows.append((c, pos - 1, pos, gene or ".", label))
     return rows
 
 
@@ -262,14 +273,14 @@ def build_target_bed(output_dir: str | None = None) -> dict:
             sources_used.append(f"clinvar_plp ({len(plp_rows)} positions)")
 
             # Source B: ACMG SF v3.2 gene regions (ClinVar-derived)
-            acmg_rows = _collect_gene_regions_from_clinvar(conn, ACMG_SF_V32_GENES, "acmg_sf")
+            acmg_rows = _collect_clinvar_plp_in_genes(conn, ACMG_SF_V32_GENES, "acmg_sf")
             all_rows.extend(acmg_rows)
             sources_used.append(f"acmg_sf ({len(acmg_rows)} regions)")
 
             # Source C: DDG2P gene regions (ClinVar-derived)
             ddg2p_genes = _load_ddg2p_genes()
             if ddg2p_genes:
-                ddg2p_rows = _collect_gene_regions_from_clinvar(conn, ddg2p_genes, "ddg2p")
+                ddg2p_rows = _collect_clinvar_plp_in_genes(conn, ddg2p_genes, "ddg2p")
                 all_rows.extend(ddg2p_rows)
                 sources_used.append(f"ddg2p ({len(ddg2p_rows)} regions)")
         finally:

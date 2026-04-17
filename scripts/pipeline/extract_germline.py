@@ -249,6 +249,24 @@ def extract_inherited_variants(
             continue
         filtered.append(v)
 
+    # Safety cap: if extraction still returns an unreasonable number of
+    # variants after AF filtering, something is wrong with the target BED
+    # (e.g. gene-span regions instead of point-level). Cap and warn rather
+    # than feeding 100K+ variants into the classification pipeline.
+    _MAX_INHERITED = 5000
+    if len(filtered) > _MAX_INHERITED:
+        logger.warning(
+            "Germline extraction returned %d variants (> safety cap %d). "
+            "This usually means the target BED contains gene-span regions "
+            "instead of point-level ClinVar P/LP positions. Truncating to "
+            "the first %d. Rebuild targets with: "
+            "python scripts/tools/build_germline_target_bed.py",
+            len(filtered),
+            _MAX_INHERITED,
+            _MAX_INHERITED,
+        )
+        filtered = filtered[:_MAX_INHERITED]
+
     logger.info(
         "Germline extraction: %d variants from tabix/scan, %d after AF filter",
         len(variants),

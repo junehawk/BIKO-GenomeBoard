@@ -94,21 +94,43 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
 def _convert_pharmcat_to_pgx_hits(pharmcat_result) -> list[dict]:
     """Convert a :class:`PharmCATResult` into the legacy pgx_hits list format.
 
-    Each entry mirrors the dict produced by ``PgxResult`` serialisation in
-    ``orchestrate.py`` so the report templates work unchanged.
+    PharmCAT provides accurate diplotype + phenotype from the actual germline
+    genotype. The builtin PGx table (``korean_pgx_table.json``) provides
+    CPIC level, Korean/Western population prevalence, and clinical impact
+    that PharmCAT does not carry. We merge both sources: PharmCAT for the
+    genotype call, builtin for the population/guideline metadata.
     """
+    # Build a gene→entry lookup from the builtin PGx table so we can
+    # enrich PharmCAT results with CPIC level + Korean prevalence.
+    builtin_by_gene: dict[str, dict] = {}
+    for entry in _load_pgx_data():
+        builtin_by_gene[entry["gene"]] = entry
+
     hits: list[dict] = []
     for gene, diplotype in pharmcat_result.diplotypes.items():
         phenotype = pharmcat_result.phenotypes.get(gene, "")
-        # Collect drug recommendations for this gene
-        gene_drugs = [r for r in pharmcat_result.drug_recommendations if r.get("gene") == gene]
+
+        # Skip genes with no meaningful result (Unknown/Unknown, No Result)
+        if phenotype in ("No Result", "") and "Unknown" in diplotype:
+            continue
+
+        # Merge with builtin metadata
+        builtin = builtin_by_gene.get(gene, {})
+        cpic_level = builtin.get("cpic_level", "")
+        korean_prev = builtin.get("korean_freq", 0.0)
+        western_prev = builtin.get("western_freq", 0.0)
+        clinical_impact = builtin.get("clinical_impact", "")
+
+        # Drug recommendations from PharmCAT (if available)
+        gene_drugs = [r for r in pharmcat_result.drug_recommendations if gene in r.get("gene", "")]
         cpic_rec = ""
-        cpic_level = ""
-        classification = ""
         if gene_drugs:
             cpic_rec = gene_drugs[0].get("guideline", "")
-            classification = gene_drugs[0].get("classification", "")
-            cpic_level = "A" if classification == "Actionable PGx" else "B"
+            if not clinical_impact:
+                clinical_impact = gene_drugs[0].get("classification", "")
+
+        # Korean flag: set if this gene has notable Korean-specific prevalence
+        korean_flag = korean_prev > 0 and abs(korean_prev - western_prev) / max(western_prev, 0.01) > 0.5
 
         hits.append(
             {
@@ -116,11 +138,11 @@ def _convert_pharmcat_to_pgx_hits(pharmcat_result) -> list[dict]:
                 "star_allele": diplotype,
                 "phenotype": phenotype,
                 "cpic_level": cpic_level,
-                "korean_prevalence": 0.0,
-                "western_prevalence": 0.0,
-                "clinical_impact": classification,
+                "korean_prevalence": korean_prev,
+                "western_prevalence": western_prev,
+                "clinical_impact": clinical_impact,
                 "cpic_recommendation": cpic_rec,
-                "korean_flag": False,
+                "korean_flag": korean_flag,
             }
         )
     return hits

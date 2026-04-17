@@ -1,50 +1,57 @@
 {
   "title": "PharmCAT Report",
-  "version": "2.13.0",
-  "genes": [
-    {
-      "gene": "CYP2C19",
-      "sourceDiplotypes": [{"name": "*1/*2", "score": 1.0}],
-      "recommendationDiplotype": "*1/*2",
-      "phenotypes": [{"phenotype": "Intermediate Metabolizer"}],
-      "drugs": [
+  "pharmcatVersion": "3.2.0",
+  "dataVersion": "2026-03-01",
+  "genes": {
+    "CYP2C19": {
+      "geneSymbol": "CYP2C19",
+      "sourceDiplotypes": [
         {
-          "name": "clopidogrel",
-          "guideline": "CPIC",
-          "classification": "Actionable PGx"
-        },
+          "allele1": {"gene": "CYP2C19", "name": "*1", "function": "Normal function"},
+          "allele2": {"gene": "CYP2C19", "name": "*2", "function": "No function"}
+        }
+      ],
+      "recommendationDiplotypes": [
         {
-          "name": "voriconazole",
-          "guideline": "CPIC",
-          "classification": "Actionable PGx"
+          "label": "*1/*2",
+          "gene": "CYP2C19",
+          "phenotypes": ["Intermediate Metabolizer"]
         }
       ]
     },
-    {
-      "gene": "DPYD",
-      "sourceDiplotypes": [{"name": "*1/*1", "score": 1.0}],
-      "recommendationDiplotype": "*1/*1",
-      "phenotypes": [{"phenotype": "Normal Metabolizer"}],
-      "drugs": [
+    "DPYD": {
+      "geneSymbol": "DPYD",
+      "sourceDiplotypes": [
         {
-          "name": "fluorouracil",
-          "guideline": "CPIC",
-          "classification": "Informative PGx"
+          "allele1": {"gene": "DPYD", "name": "*1", "function": "Normal function"},
+          "allele2": {"gene": "DPYD", "name": "*1", "function": "Normal function"}
+        }
+      ],
+      "recommendationDiplotypes": [
+        {
+          "label": "*1/*1",
+          "gene": "DPYD",
+          "phenotypes": ["Normal Metabolizer"]
         }
       ]
     },
-    {
-      "gene": "NUDT15",
-      "sourceDiplotypes": [{"name": "*1/*3", "score": 1.0}],
-      "recommendationDiplotype": "*1/*3",
-      "phenotypes": [{"phenotype": "Intermediate Metabolizer"}],
-      "drugs": [
+    "NUDT15": {
+      "geneSymbol": "NUDT15",
+      "sourceDiplotypes": [
         {
-          "name": "mercaptopurine",
-          "guideline": "CPIC",
-          "classification": "Actionable PGx"
+          "allele1": {"gene": "NUDT15", "name": "*1", "function": "Normal function"},
+          "allele2": {"gene": "NUDT15", "name": "*3", "function": "No function"}
+        }
+      ],
+      "recommendationDiplotypes": [
+        {
+          "label": "*1/*3",
+          "gene": "NUDT15",
+          "phenotypes": ["Intermediate Metabolizer"]
         }
       ]
     }
-  ]
+  },
+  "drugs": {},
+  "messages": []
 }
