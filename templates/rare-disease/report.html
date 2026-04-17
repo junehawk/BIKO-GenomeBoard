@@ -1,4 +1,16 @@
 {%- import "macros/override.html" as override -%}
+
+{#- ── Source badge macro for variant-level origin display ── -#}
+{% macro source_badge(variant) %}
+  {% if variant.source is defined %}
+    {% if variant.source == "germline_inherited" %}
+      <span style="display:inline-block;background:#7c3aed;color:white;padding:1px 6px;border-radius:2px;font-size:7pt;font-weight:600;margin-left:4px;vertical-align:middle;">INHERITED</span>
+    {% elif variant.source == "germline_pgx" %}
+      <span style="display:inline-block;background:#059669;color:white;padding:1px 6px;border-radius:2px;font-size:7pt;font-weight:600;margin-left:4px;vertical-align:middle;">PGx</span>
+    {% endif %}
+  {% endif %}
+{% endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1338,12 +1350,31 @@
       <span class="section-badge badge-navy">Pharmacogenomics Summary</span>
       <div class="section-rule rule-navy"></div>
     </div>
+
+    {# ── PGx source badge ── #}
+    {% if pgx_source is defined %}
+      {% if pgx_source == "pharmcat" %}
+        <div style="display:inline-block;background:#059669;color:white;padding:2px 8px;border-radius:3px;font-size:7.5pt;font-weight:600;margin-bottom:6px;">
+          PharmCAT v{{ pharmcat_version | default('') }} — CPIC Clinical Annotation
+        </div>
+      {% elif pgx_source == "builtin_limited" %}
+        <div style="display:inline-block;background:#d97706;color:white;padding:2px 8px;border-radius:3px;font-size:7.5pt;font-weight:600;margin-bottom:6px;">
+          BIKO Built-in (Limited) — PharmCAT not available
+        </div>
+      {% else %}
+        <div style="display:inline-block;background:#6b7280;color:white;padding:2px 8px;border-radius:3px;font-size:7.5pt;font-weight:600;margin-bottom:6px;">
+          BIKO Built-in — SNV Matching
+        </div>
+      {% endif %}
+    {% endif %}
+
     <table>
       <thead>
         <tr>
           <th>Gene</th>
           <th>Phenotype</th>
           <th>CPIC Level</th>
+          <th>Confidence</th>
           <th>Korean Population Context</th>
         </tr>
       </thead>
@@ -1365,6 +1396,17 @@
             {% endif %}
           </td>
           <td>
+            {% if pgx_source is defined and pgx_source == "pharmcat" %}
+              <span style="color:#059669;font-size:7pt;font-weight:600;">High (CPIC)</span>
+            {% elif pgx_source is defined and pgx_source == "builtin_limited" and germline_provided is defined and germline_provided %}
+              <span style="color:#d97706;font-size:7pt;font-weight:600;">Moderate (SNV)</span>
+            {% elif pgx_source is defined %}
+              <span style="color:#dc2626;font-size:7pt;font-weight:600;">Low (no germline)</span>
+            {% else %}
+              <span style="color:#6b7280;font-size:7pt;">—</span>
+            {% endif %}
+          </td>
+          <td>
             {% if pgx.korean_prevalence is defined and pgx.western_prevalence is defined %}
               <span class="pgx-korean-note">
                 Korean: {{ "%.1f"|format(pgx.korean_prevalence * 100) }}% &nbsp;|&nbsp;
@@ -1378,6 +1420,17 @@
         {% endfor %}
       </tbody>
     </table>
+
+    {# ── Germline not provided warning ── #}
+    {% if germline_provided is defined and not germline_provided %}
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:8px 12px;margin-top:8px;font-size:8pt;color:#92400e;">
+      <strong>&#x26A0;&#xFE0F; Germline VCF not provided</strong><br>
+      Pharmacogenomics results are derived from the primary input and may not accurately
+      reflect the patient's constitutional pharmacogenomic genotype. For accurate PGx assessment,
+      provide a germline VCF via the <code>--germline</code> option.
+    </div>
+    {% endif %}
+
     {% endif %}
 
     <!-- Variants with no reportable therapeutic options -->
@@ -1486,7 +1539,7 @@
 
       <!-- Identity header: gene name + HGVS + badges -->
       <div class="variant-detail-header">
-        <div class="variant-gene-name">{{ v.gene }}</div>
+        <div class="variant-gene-name">{{ v.gene }}{{ source_badge(v) }}</div>
         <div class="variant-header-right">
           <div class="variant-alteration">
             {% if v.hgvs is defined and v.hgvs and v.hgvs.transcript is defined and v.hgvs.transcript %}
@@ -1870,11 +1923,36 @@
       <div class="section-rule rule-navy"></div>
     </div>
 
+    {# ── PGx source badge (detail page) ── #}
+    {% if pgx_source is defined %}
+      {% if pgx_source == "pharmcat" %}
+        <div style="display:inline-block;background:#059669;color:white;padding:2px 8px;border-radius:3px;font-size:7.5pt;font-weight:600;margin-bottom:8px;">
+          PharmCAT v{{ pharmcat_version | default('') }} — CPIC Clinical Annotation
+        </div>
+      {% elif pgx_source == "builtin_limited" %}
+        <div style="display:inline-block;background:#d97706;color:white;padding:2px 8px;border-radius:3px;font-size:7.5pt;font-weight:600;margin-bottom:8px;">
+          BIKO Built-in (Limited) — PharmCAT not available
+        </div>
+      {% else %}
+        <div style="display:inline-block;background:#6b7280;color:white;padding:2px 8px;border-radius:3px;font-size:7.5pt;font-weight:600;margin-bottom:8px;">
+          BIKO Built-in — SNV Matching
+        </div>
+      {% endif %}
+    {% endif %}
+
     {% for pgx in pgx_results %}
     <div class="pgx-row">
       <div class="pgx-row-header">
         <div class="pgx-gene">{{ pgx.gene }}</div>
         <div style="display:flex;align-items:center;gap:8px;">
+          {# ── Per-gene confidence indicator ── #}
+          {% if pgx_source is defined and pgx_source == "pharmcat" %}
+            <span style="color:#059669;font-size:7pt;font-weight:600;border:1px solid #059669;border-radius:2px;padding:1px 5px;">High confidence (CPIC)</span>
+          {% elif pgx_source is defined and pgx_source == "builtin_limited" and germline_provided is defined and germline_provided %}
+            <span style="color:#d97706;font-size:7pt;font-weight:600;border:1px solid #d97706;border-radius:2px;padding:1px 5px;">Moderate (SNV matching)</span>
+          {% elif pgx_source is defined %}
+            <span style="color:#dc2626;font-size:7pt;font-weight:600;border:1px solid #dc2626;border-radius:2px;padding:1px 5px;">Low (germline source not confirmed)</span>
+          {% endif %}
           {% set level = pgx.cpic_level | upper %}
           {% if level == "A" %}
             <span class="badge badge-cpic-a">CPIC Level A</span>
@@ -1937,6 +2015,16 @@
       </div>
     </div>
     {% endfor %}
+
+    {# ── Germline not provided warning (detail page) ── #}
+    {% if germline_provided is defined and not germline_provided %}
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:4px;padding:8px 12px;margin-top:10px;font-size:8pt;color:#92400e;">
+      <strong>&#x26A0;&#xFE0F; Germline VCF not provided</strong><br>
+      Pharmacogenomics results are derived from the primary input and may not accurately
+      reflect the patient's constitutional pharmacogenomic genotype. For accurate PGx assessment,
+      provide a germline VCF via the <code>--germline</code> option.
+    </div>
+    {% endif %}
 
   </div><!-- /page-body -->
 

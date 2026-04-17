@@ -32,6 +32,9 @@ data/db/gnomad_constraint.tsv
 data/db/civic/
 data/cache/
 
+# External tools (downloaded JARs, binaries — not committed)
+data/tools/
+
 # Generated output
 output/
 input/

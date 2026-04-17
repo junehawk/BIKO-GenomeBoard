@@ -16,6 +16,7 @@
 #   OMIM genemap2 — omim.org (requires OMIM account, manual download)
 #   gnomAD constraint — Broad Institute (public, ~95 MB TSV)
 #   gnomAD v4.1 — Broad Institute (optional, ~700 GB for full exome VCFs)
+#   PharmCAT    — Stanford/CPIC (optional, requires Java 17+)
 # ============================================================================
 
 set -euo pipefail
@@ -374,7 +375,7 @@ fi
 # ============================================================================
 # 9. gnomAD v4.1 Constraint Metrics (public, ~95 MB TSV → ~3 MB SQLite)
 # ============================================================================
-log_step "9/9  gnomAD v4.1 Constraint Metrics"
+log_step "9/10  gnomAD v4.1 Constraint Metrics"
 
 GNOMAD_CONSTRAINT_TSV="$DATA_DIR/gnomad_constraint.tsv"
 GNOMAD_CONSTRAINT_DB="$DATA_DIR/gnomad_constraint.sqlite3"
@@ -415,6 +416,31 @@ elif download_file "$GNOMAD_CONSTRAINT_URL" "$GNOMAD_CONSTRAINT_TSV" "gnomAD v4.
     fi
 else
     FAILED+=("gnomAD constraint (download)")
+fi
+
+# ============================================================================
+# 10. PharmCAT (Stanford/CPIC — requires Java 17+)
+# ============================================================================
+log_step "10/10  PharmCAT (Stanford/CPIC)"
+
+PHARMCAT_JAR="$PROJECT_ROOT/data/tools/pharmcat/pharmcat.jar"
+PHARMCAT_SCRIPT="$PROJECT_ROOT/scripts/tools/setup_pharmcat.sh"
+
+if [ -f "$PHARMCAT_JAR" ]; then
+    log_info "PharmCAT JAR already exists, skipping"
+    SUCCESS+=("PharmCAT")
+elif [ -f "$PHARMCAT_SCRIPT" ]; then
+    log_info "Running PharmCAT setup (requires Java 17+)..."
+    if bash "$PHARMCAT_SCRIPT" 2>&1; then
+        SUCCESS+=("PharmCAT")
+    else
+        log_warn "PharmCAT setup failed (Java 17+ may not be installed)"
+        log_warn "PharmCAT is optional — PGx will use builtin fallback"
+        SKIPPED+=("PharmCAT (Java 17+ required)")
+    fi
+else
+    log_warn "PharmCAT setup script not found at $PHARMCAT_SCRIPT"
+    SKIPPED+=("PharmCAT (setup script missing)")
 fi
 
 # ============================================================================

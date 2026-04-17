@@ -90,6 +90,7 @@ def run_pipeline(
     clinical_board: bool = False,
     board_lang: str = None,
     clinical_note: str = None,
+    germline_vcf: str = None,
 ) -> dict:
     """Run the full BIKO GenomeBoard analysis pipeline.
 
@@ -163,13 +164,38 @@ def run_pipeline(
 
     # ── Step 4: Pharmacogenomics ──────────────────────────────────────────────
     _progress("[4/6] Checking pharmacogenomics (PGx)...")
+
+    from scripts.pharma.korean_pgx import get_pgx_results
+
+    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf)
+    pgx_source = pgx_data["pgx_source"]
+    _progress(f"  [PGx engine: {pgx_source}]")
+
+    if pgx_data["warnings"]:
+        for w in pgx_data["warnings"]:
+            _progress(f"  [PGx warning] {w}")
+
+    # Warn when primary VCF is somatic/de novo and no germline provided
+    if not germline_vcf and mode in ("cancer", "rare-disease"):
+        logger.warning(
+            "PGx results from somatic/de novo input may be incomplete. "
+            "Provide --germline for accurate pharmacogenomics assessment."
+        )
+
+    # Backward-compat: collect PgxResult objects from per-variant db_results
+    # for the legacy pgx_hits list (used when builtin engine runs via query)
     pgx_hits = []
-    for variant in variants:
-        pgx = db_results[variant.variant_id]["pgx"]
-        if pgx:
-            pgx_hits.append(pgx)
-            cpic_str = getattr(pgx, "cpic_level", "")
-            _progress(f"  → {pgx.gene}: {pgx.phenotype}, CPIC Level {cpic_str}")
+    if pgx_source in ("builtin", "builtin_limited"):
+        for variant in variants:
+            pgx = db_results[variant.variant_id]["pgx"]
+            if pgx:
+                pgx_hits.append(pgx)
+                cpic_str = getattr(pgx, "cpic_level", "")
+                _progress(f"  -> {pgx.gene}: {pgx.phenotype}, CPIC Level {cpic_str}")
+    else:
+        # PharmCAT path: log from the unified results
+        for hit in pgx_data["pgx_hits"]:
+            _progress(f"  -> {hit['gene']}: {hit.get('phenotype', '')}")
 
     # ── Step 5: ACMG classification ───────────────────────────────────────────
     _progress("[5/6] Running ACMG classification engine...")
@@ -201,18 +227,12 @@ def run_pipeline(
         variant_records, hide_vus
     )
 
-    report_data = {
-        "sample_id": sample_id,
-        "date": str(date.today()),
-        "variants": variant_records,
-        "detailed_variants": detailed_variants,
-        "omitted_variants": omitted_variants,
-        "hide_vus": hide_vus,
-        "tier1_variants": tier1,
-        "tier2_variants": tier2,
-        "tier3_variants": tier3,
-        "tier4_count": tier4_count,
-        "pgx_results": [
+    # Build pgx_results list — prefer PharmCAT hits when available,
+    # otherwise serialise from per-variant PgxResult objects.
+    if pgx_source == "pharmcat":
+        pgx_results_list = pgx_data["pgx_hits"]
+    else:
+        pgx_results_list = [
             {
                 "gene": p.gene,
                 "star_allele": p.star_allele,
@@ -225,7 +245,23 @@ def run_pipeline(
                 "korean_flag": p.korean_flag,
             }
             for p in pgx_hits
-        ],
+        ]
+
+    report_data = {
+        "sample_id": sample_id,
+        "date": str(date.today()),
+        "variants": variant_records,
+        "detailed_variants": detailed_variants,
+        "omitted_variants": omitted_variants,
+        "hide_vus": hide_vus,
+        "tier1_variants": tier1,
+        "tier2_variants": tier2,
+        "tier3_variants": tier3,
+        "tier4_count": tier4_count,
+        "pgx_results": pgx_results_list,
+        "pgx_source": pgx_source,
+        "germline_provided": pgx_data["germline_provided"],
+        "pharmcat_version": pgx_data["pharmcat_version"],
         "summary": summary,
         "db_versions": get_all_db_versions(skip_api=skip_api),
         "pipeline": {
@@ -427,6 +463,14 @@ EXAMPLES
         choices=["en", "ko"],
         help="Clinical Board output language (default: en)",
     )
+    parser.add_argument(
+        "--germline",
+        type=str,
+        default=None,
+        help="Germline VCF for pharmacogenomics analysis. PharmCAT will be used "
+        "if available; falls back to built-in SNV matching otherwise. "
+        "Accepts .vcf, .vcf.gz, .vcf.bgz.",
+    )
     note_group = parser.add_mutually_exclusive_group()
     note_group.add_argument(
         "--clinical-note",
@@ -515,6 +559,7 @@ EXAMPLES
             clinical_board=getattr(args, "clinical_board", False),
             board_lang=getattr(args, "board_lang", None),
             clinical_note=clinical_note_text,
+            germline_vcf=getattr(args, "germline", None),
         )
 
         if result is None:

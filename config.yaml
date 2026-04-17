@@ -133,6 +133,13 @@ clinical_board:
     # explicit empty_reason instead of fabricating a top-K.
     fallback_when_empty: false
 
+pharmacogenomics:
+  engine: "auto"                 # auto: PharmCAT if available, else builtin | pharmcat | builtin
+  pharmcat_jar: ""               # empty = auto-discover from data/tools/pharmcat/pharmcat-*.jar
+  java_path: ""                  # empty = system PATH
+  reference_fasta: ""            # GRCh38 FASTA for PharmCAT preprocessor (empty = skip preprocessor)
+  fallback_to_builtin: true      # when PharmCAT unavailable, fall back to builtin SNV matching
+
 knowledge_base:
   enabled: true
   path: "data/knowledge_base"

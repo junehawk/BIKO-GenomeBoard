@@ -1,0 +1,50 @@
+{
+  "title": "PharmCAT Report",
+  "version": "2.13.0",
+  "genes": [
+    {
+      "gene": "CYP2C19",
+      "sourceDiplotypes": [{"name": "*1/*2", "score": 1.0}],
+      "recommendationDiplotype": "*1/*2",
+      "phenotypes": [{"phenotype": "Intermediate Metabolizer"}],
+      "drugs": [
+        {
+          "name": "clopidogrel",
+          "guideline": "CPIC",
+          "classification": "Actionable PGx"
+        },
+        {
+          "name": "voriconazole",
+          "guideline": "CPIC",
+          "classification": "Actionable PGx"
+        }
+      ]
+    },
+    {
+      "gene": "DPYD",
+      "sourceDiplotypes": [{"name": "*1/*1", "score": 1.0}],
+      "recommendationDiplotype": "*1/*1",
+      "phenotypes": [{"phenotype": "Normal Metabolizer"}],
+      "drugs": [
+        {
+          "name": "fluorouracil",
+          "guideline": "CPIC",
+          "classification": "Informative PGx"
+        }
+      ]
+    },
+    {
+      "gene": "NUDT15",
+      "sourceDiplotypes": [{"name": "*1/*3", "score": 1.0}],
+      "recommendationDiplotype": "*1/*3",
+      "phenotypes": [{"phenotype": "Intermediate Metabolizer"}],
+      "drugs": [
+        {
+          "name": "mercaptopurine",
+          "guideline": "CPIC",
+          "classification": "Actionable PGx"
+        }
+      ]
+    }
+  ]
+}
