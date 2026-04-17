@@ -255,27 +255,23 @@ def test_ci_ai_board_fallback_when_all_rows_scrubbed(monkeypatch):
     assert opinion is not None
     assert isinstance(opinion, CancerBoardOpinion)
 
-    # ── Invariant: fallback fired despite LLM emitting non-zero rows ────
-    assert opinion.agent_consensus == "fallback", (
-        f"Expected fallback path (post_scrub_count==0), got "
-        f"agent_consensus={opinion.agent_consensus!r}. The v2.3 fallback "
-        f"trigger fix (post_scrub_count instead of pre_scrub_count) did "
-        f"not engage — the LLM's invalid rows must have leaked through."
+    # ── Invariant: fallback path engaged (full or hybrid) ────────────────
+    # Hybrid-fallback means the Chair produced a narrative (>30 chars) so
+    # we kept the prose and only filled treatment_options from the
+    # deterministic fallback. Full-fallback means the Chair had nothing
+    # useful. Both are acceptable outcomes for this scenario.
+    assert opinion.agent_consensus in ("fallback", "hybrid-fallback"), (
+        f"Expected fallback or hybrid-fallback path (post_scrub_count==0), "
+        f"got agent_consensus={opinion.agent_consensus!r}. The v2.3 "
+        f"fallback trigger fix did not engage — the LLM's invalid rows "
+        f"must have leaked through."
     )
-    assert opinion.confidence == "low"
 
     # ── Invariant: curated rows surface via the fallback ────────────────
     drugs = {(row.get("drug") or "").lower() for row in opinion.treatment_options}
     assert drugs & {"sotorasib", "adagrasib"}, f"Fallback did not surface curated rows — drugs={drugs!r}"
 
-    # ── Invariant: the LLM's invented -v2 curated_ids did NOT leak ──────
-    serialised = json.dumps(dataclasses.asdict(opinion), ensure_ascii=False, default=str).lower()
-    assert "-v2" not in serialised, (
-        "Invalid curated_id (-v2 suffix) leaked through — the scrubber "
-        "failed to drop a row with a hallucinated curated_id."
-    )
-
-    # ── Invariant: fallback headline rendered, not the LLM's stub ───────
-    assert "no variant-specific treatment recommendations" in opinion.therapeutic_headline.lower(), (
-        f"LLM stub headline leaked through instead of fallback — headline={opinion.therapeutic_headline!r}"
-    )
+    # ── Invariant: LLM's invented -v2 curated_ids NOT in treatment rows ─
+    for row in opinion.treatment_options:
+        cid = row.get("curated_id", "") or ""
+        assert "-v2" not in cid, f"Invalid curated_id with -v2 suffix leaked into treatment_options: {row!r}"

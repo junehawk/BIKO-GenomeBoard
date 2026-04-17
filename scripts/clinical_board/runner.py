@@ -234,12 +234,38 @@ def run_clinical_board(
                 )
             logger.warning(
                 "[Clinical Board] Board Chair fallback triggered — %s. "
-                "Rendering deterministic curator rows via template_renderer_chair.",
+                "Filling treatment rows from deterministic curator via "
+                "template_renderer_chair (hybrid merge — Chair narrative preserved).",
                 reason,
             )
             fallback = render_from_curated(curated_for_chair or {}, agent_opinions=opinions)
-            fallback.selection_metadata = selection_metadata
-            board_opinion = fallback
+
+            # Hybrid merge: the Chair's narrative synthesis (therapeutic
+            # implications, actionable findings, clinical actions, monitoring
+            # plan, immunotherapy assessment) is the LLM's primary value-add
+            # over the raw agent opinions. Throwing it all away because
+            # treatment_options was empty/invalid wastes ~4 min of GPU time
+            # and produces a generic "unable to produce recommendations"
+            # placeholder instead of actual clinical reasoning.
+            #
+            # We keep the Chair's narrative and fill ONLY the treatment rows
+            # from the deterministic fallback. The scrubber already ran on
+            # the narrative fields so hallucinated drug names (if any) are
+            # redacted. Set consensus to "hybrid-fallback" so downstream
+            # render.py and the reviewer can tell which parts are LLM
+            # (narrative) vs deterministic (treatment rows).
+            chair_has_narrative = bool(
+                getattr(board_opinion, "therapeutic_implications", "")
+                and len(getattr(board_opinion, "therapeutic_implications", "")) > 30
+            )
+            if chair_has_narrative:
+                board_opinion.treatment_options = fallback.treatment_options
+                board_opinion.agent_consensus = "hybrid-fallback"
+                board_opinion.selection_metadata = selection_metadata
+            else:
+                # Chair produced no useful narrative either — full fallback.
+                fallback.selection_metadata = selection_metadata
+                board_opinion = fallback
 
     # Step 4: Save decisions to Knowledge Base
     if get("knowledge_base.enabled", False):

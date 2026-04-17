@@ -131,14 +131,14 @@ def run_pipeline(
     # ── Step 2: Query databases per variant ──────────────────────────────────
     _progress("[2/6] Querying databases (ClinVar, gnomAD, KRGDB)...")
     if skip_api:
-        _progress("  [skip-api mode: ClinVar and gnomAD queries disabled]")
+        _progress("  [skip-api mode: external API calls disabled, using local DBs only]")
 
     db_results = {}
     for variant in variants:
         result = query_variant_databases(variant, str(krgdb_file), skip_api)
         db_results[variant.variant_id] = result
 
-        clinvar_sig = result["clinvar"]["clinvar_significance"] if not skip_api else "N/A (offline)"
+        clinvar_sig = result["clinvar"].get("clinvar_significance", "Not Found")
         gnomad_all = result["gnomad"].get("gnomad_all")
         krgdb_val = result["krgdb_freq"]
 
