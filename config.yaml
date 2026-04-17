@@ -56,7 +56,7 @@ report:
   font_url: "https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
 
 pgx:
-  genes: ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD", "CYP3A5", "UGT1A1", "SLCO1B1", "VKORC1", "CYP1A2", "G6PD", "IFNL3"]
+  genes: ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD", "CYP3A5", "UGT1A1", "SLCO1B1", "VKORC1", "CYP1A2", "G6PD", "IFNL3", "CYP2B6", "CYP4F2", "ABCG2", "NAT2", "CACNA1S", "CFTR", "CYP3A4", "MT-RNR1", "RYR1"]
   risk_factor_genes: ["APOE"]
 
 acmg:

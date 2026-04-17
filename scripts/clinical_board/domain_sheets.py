@@ -2,8 +2,6 @@
 
 Each builder consumes the variants/report_data already collected by the
 pipeline and formats a focused, human-readable text section for one agent.
-No new DB queries are issued here — the pipeline has already collected the
-relevant fields.
 
 **Caller contract:** ``variants`` MUST be the board-selected variant list
 produced by ``scripts.clinical_board.variant_selector.select_board_variants``,
@@ -16,7 +14,10 @@ filtered list to every ``build_domain_sheet`` invocation.
 
 from __future__ import annotations
 
+import logging
 from typing import Callable
+
+logger = logging.getLogger(__name__)
 
 MAX_DOMAIN_CHARS = 16_000  # ~4K tokens at ~4 chars/token
 
@@ -53,6 +54,84 @@ def build_domain_sheet(
 
 def _empty_sheet(variants: list, report_data: dict) -> str:
     return ""
+
+
+# ---------------------------------------------------------------------------
+# CIViC literature evidence helper
+# ---------------------------------------------------------------------------
+
+_MAX_EVIDENCE_PER_GENE = 5
+
+
+def _get_civic_literature_evidence(gene: str) -> list[dict]:
+    """Query the local CIViC DB for literature evidence entries for *gene*.
+
+    Returns up to ``_MAX_EVIDENCE_PER_GENE`` entries sorted by evidence level
+    (A first).  Each dict carries ``statement``, ``pmid``, ``citation``,
+    ``disease``, ``therapies``, ``evidence_level``, ``significance``, and
+    ``variant``.
+
+    If the CIViC DB is unavailable the function returns an empty list so that
+    the domain sheet degrades gracefully.
+    """
+    try:
+        from scripts.db.query_civic import get_variant_evidence
+    except ImportError:
+        logger.debug("query_civic unavailable — skipping CIViC literature evidence")
+        return []
+
+    try:
+        evidence = get_variant_evidence(gene)
+    except Exception:
+        logger.debug("CIViC query failed for gene %s", gene, exc_info=True)
+        return []
+
+    return evidence[:_MAX_EVIDENCE_PER_GENE]
+
+
+def _format_civic_evidence_block(gene: str, evidence: list[dict]) -> list[str]:
+    """Format a list of CIViC evidence dicts into human-readable lines."""
+    lines: list[str] = []
+    if not evidence:
+        return lines
+    lines.append(f"    CIViC Literature Evidence ({len(evidence)} entries):")
+    for ev in evidence:
+        pmid = ev.get("pmid") or ev.get("citation_id") or ""
+        citation = ev.get("citation", "")
+        level = ev.get("evidence_level", "")
+        significance = ev.get("significance", "")
+        disease = ev.get("disease", "")
+        therapies = ev.get("therapies", "")
+        variant = ev.get("variant", "")
+        statement = ev.get("statement") or ev.get("evidence_statement") or ""
+        # Truncate long statements to keep domain sheet concise
+        if len(statement) > 200:
+            statement = statement[:197] + "..."
+
+        header_parts = []
+        if pmid:
+            header_parts.append(f"PMID:{pmid}")
+        if level:
+            header_parts.append(f"Level {level}")
+        if significance:
+            header_parts.append(significance)
+        header = " | ".join(header_parts)
+
+        context_parts = []
+        if variant:
+            context_parts.append(variant)
+        if disease:
+            context_parts.append(disease)
+        if therapies:
+            context_parts.append(therapies)
+        context = " — ".join(context_parts)
+
+        lines.append(f"      [{header}] {context}")
+        if citation:
+            lines.append(f"        Citation: {citation}")
+        if statement:
+            lines.append(f"        Evidence: {statement}")
+    return lines
 
 
 # ---------------------------------------------------------------------------
@@ -146,6 +225,7 @@ def _rd_literature_analyst(variants: list, report_data: dict) -> str:
         return "## Literature Evidence Domain Data\n(No variants supplied.)\n"
 
     lines = ["## Literature Evidence Domain Data", ""]
+    seen_genes: set[str] = set()
     for v in variants:
         gene = v.get("gene", "?")
         hgvsp = v.get("hgvsp") or v.get("hgvsc") or ""
@@ -167,6 +247,13 @@ def _rd_literature_analyst(variants: list, report_data: dict) -> str:
             lines.append(f"    GeneReviews: {gene_reviews}")
         if pmids:
             lines.append(f"    Refs: {', '.join(map(str, pmids[:8]))}")
+
+        # --- CIViC literature grounding (Phase 1) ---
+        if gene not in seen_genes:
+            seen_genes.add(gene)
+            civic_literature = _get_civic_literature_evidence(gene)
+            lines.extend(_format_civic_evidence_block(gene, civic_literature))
+
         lines.append("")
     return "\n".join(lines)
 
@@ -262,6 +349,7 @@ def _cancer_clinical_evidence(variants: list, report_data: dict) -> str:
     import os
 
     lines = ["## Clinical Evidence Domain Data", ""]
+    seen_genes: set[str] = set()
     if variants:
         for v in variants:
             gene = v.get("gene", "?")
@@ -277,6 +365,13 @@ def _cancer_clinical_evidence(variants: list, report_data: dict) -> str:
                 lines.append(f"    CIViC: {drug} — {disease} (level {level}, {direction})".rstrip())
             if trials:
                 lines.append(f"    Trial markers: {', '.join(map(str, trials[:5]))}")
+
+            # --- CIViC literature grounding (Phase 1) ---
+            if gene not in seen_genes:
+                seen_genes.add(gene)
+                civic_literature = _get_civic_literature_evidence(gene)
+                lines.extend(_format_civic_evidence_block(gene, civic_literature))
+
             lines.append("")
 
     kb_dir = report_data.get("_kb_treatments_dir")

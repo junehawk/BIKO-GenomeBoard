@@ -1,5 +1,5 @@
 {
-  "version": "2026-03-20",
+  "version": "2026-04-15",
   "genes": [
     {
       "gene": "CYP2D6",
@@ -117,6 +117,126 @@
       "clinical_impact": "PEG-IFN/ribavirin response prediction — CC genotype (favorable) much more common in Koreans",
       "cpic_level": "A",
       "source": "CPIC 2014"
+    },
+    {
+      "gene": "DPYD",
+      "variant": "*2A (rs3918290)",
+      "korean_freq": 0.001,
+      "western_freq": 0.01,
+      "metric": "allele_freq",
+      "clinical_impact": "5-FU/capecitabine dose adjustment or contraindication",
+      "cpic_level": "A",
+      "source": "CPIC 2017"
+    },
+    {
+      "gene": "TPMT",
+      "variant": "*3C (rs1142345)",
+      "korean_freq": 0.02,
+      "western_freq": 0.05,
+      "metric": "carrier_freq",
+      "clinical_impact": "Azathioprine/mercaptopurine dose reduction required",
+      "cpic_level": "A",
+      "source": "CPIC 2018"
+    },
+    {
+      "gene": "HLA-A",
+      "variant": "HLA-A*31:01",
+      "korean_freq": 0.08,
+      "western_freq": 0.025,
+      "metric": "allele_freq",
+      "clinical_impact": "Carbamazepine hypersensitivity risk — HLA-A*31:01 enriched in East Asians",
+      "cpic_level": "A",
+      "source": "CPIC 2013"
+    },
+    {
+      "gene": "CYP2B6",
+      "variant": "*6 (rs3745274)",
+      "korean_freq": 0.175,
+      "western_freq": 0.275,
+      "metric": "allele_freq",
+      "clinical_impact": "Efavirenz dose reduction — slow metabolizers at risk of CNS toxicity",
+      "cpic_level": "A",
+      "source": "CPIC 2019"
+    },
+    {
+      "gene": "CYP4F2",
+      "variant": "*3 (rs2108622)",
+      "korean_freq": 0.275,
+      "western_freq": 0.115,
+      "metric": "allele_freq",
+      "clinical_impact": "Warfarin dose increase — CYP4F2*3 carriers require higher warfarin doses",
+      "cpic_level": "B",
+      "source": "PharmGKB"
+    },
+    {
+      "gene": "ABCG2",
+      "variant": "rs2231142 (Q141K)",
+      "korean_freq": 0.30,
+      "western_freq": 0.125,
+      "metric": "allele_freq",
+      "clinical_impact": "Rosuvastatin exposure increase — dose reduction recommended in carriers",
+      "cpic_level": "B",
+      "source": "CPIC 2022"
+    },
+    {
+      "gene": "NAT2",
+      "variant": "Slow acetylator (multiple variants)",
+      "korean_freq": 0.125,
+      "western_freq": 0.55,
+      "metric": "carrier_freq",
+      "clinical_impact": "Isoniazid hepatotoxicity risk — slow acetylators need dose adjustment",
+      "cpic_level": "B",
+      "source": "CPIC 2019"
+    },
+    {
+      "gene": "CACNA1S",
+      "variant": "c.520C>T and others",
+      "korean_freq": 0.001,
+      "western_freq": 0.001,
+      "metric": "carrier_freq",
+      "clinical_impact": "Malignant hyperthermia susceptibility — avoid volatile anesthetics and succinylcholine",
+      "cpic_level": "B",
+      "source": "CPIC 2019"
+    },
+    {
+      "gene": "CFTR",
+      "variant": "F508del (rs113993960)",
+      "korean_freq": 0.0005,
+      "western_freq": 0.035,
+      "metric": "carrier_freq",
+      "clinical_impact": "Ivacaftor eligibility — CFTR modulator therapy indicated for specific mutations",
+      "cpic_level": "B",
+      "source": "CPIC 2014"
+    },
+    {
+      "gene": "CYP3A4",
+      "variant": "*22 (rs35599367)",
+      "korean_freq": 0.02,
+      "western_freq": 0.05,
+      "metric": "allele_freq",
+      "clinical_impact": "Tacrolimus dose reduction — CYP3A4*22 carriers have decreased metabolism",
+      "cpic_level": "B",
+      "source": "PharmGKB"
+    },
+    {
+      "gene": "MT-RNR1",
+      "variant": "m.1555A>G",
+      "korean_freq": 0.025,
+      "western_freq": 0.002,
+      "metric": "carrier_freq",
+      "clinical_impact": "Aminoglycoside-induced hearing loss — contraindicated in carriers",
+      "cpic_level": "A",
+      "source": "CPIC 2021"
+    },
+    {
+      "gene": "RYR1",
+      "variant": "Multiple pathogenic variants",
+      "korean_freq": 0.001,
+      "western_freq": 0.0002,
+      "metric": "carrier_freq",
+      "clinical_impact": "Malignant hyperthermia susceptibility — avoid volatile anesthetics and succinylcholine",
+      "cpic_level": "B",
+      "source": "CPIC 2019"
     }
   ]
 }

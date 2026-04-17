@@ -32,9 +32,9 @@ def _config_genes():
 # ---------------------------------------------------------------------------
 
 
-def test_pgx_table_has_12_genes():
+def test_pgx_table_has_24_genes():
     data = _pgx_table()
-    assert len(data["genes"]) == 12
+    assert len(data["genes"]) == 24
 
 
 # ---------------------------------------------------------------------------
@@ -129,10 +129,19 @@ def test_config_pgx_genes_includes_new():
         "CYP1A2",
         "G6PD",
         "IFNL3",
+        "CYP2B6",
+        "CYP4F2",
+        "ABCG2",
+        "NAT2",
+        "CACNA1S",
+        "CFTR",
+        "CYP3A4",
+        "MT-RNR1",
+        "RYR1",
     ]
     for gene in expected:
         assert gene in genes, f"{gene} missing from config pgx.genes"
-    assert len(genes) == 15
+    assert len(genes) == 24
 
 
 # ---------------------------------------------------------------------------
