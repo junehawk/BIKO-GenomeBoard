@@ -107,7 +107,7 @@ clinical_board:
     cache_namespace: "oncokb"  # stored in variant_cache.sqlite3 via set_cached_ns/get_cached_ns
   ollama_url: "http://localhost:11434"
   agent_model: "alibayram/medgemma:27b"
-  chair_model: "alibayram/medgemma:27b"
+  chair_model: "supergemma4-31b"
   timeout: 300
   max_retries: 1
   language: "en"         # en or ko
