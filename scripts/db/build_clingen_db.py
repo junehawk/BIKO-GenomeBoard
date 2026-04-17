@@ -22,6 +22,7 @@ def build_db(csv_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
         hgnc_id TEXT,
         disease TEXT,
         mondo_id TEXT,
+        moi TEXT,
         sop TEXT,
         classification TEXT NOT NULL,
         report_url TEXT,
@@ -32,25 +33,51 @@ def build_db(csv_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
 
     with open(csv_path) as f:
         # Skip header lines until we find the column header
+        header_cols = None
         for line in f:
             if line.startswith('"GENE SYMBOL"'):
+                header_cols = next(csv.reader([line]))
                 break
+        if header_cols is None:
+            logger.error("ClinGen CSV header not found — expected '\"GENE SYMBOL\",...'")
+            conn.close()
+            return db_path
+
+        # Build column index map so we're resilient to column reordering.
+        # Fall back to positional parsing if header names don't match.
+        col_map = {name.strip().upper(): idx for idx, name in enumerate(header_cols)}
+
+        def _col(name: str, fallback: int) -> int:
+            return col_map.get(name, fallback)
+
+        i_gene = _col("GENE SYMBOL", 0)
+        i_hgnc = _col("GENE ID (HGNC)", 1)
+        i_disease = _col("DISEASE LABEL", 2)
+        i_mondo = _col("DISEASE ID (MONDO)", 3)
+        i_moi = _col("MOI", 4)
+        i_sop = _col("SOP", 5)
+        i_class = _col("CLASSIFICATION", 6)
+        i_url = _col("ONLINE REPORT", 7)
+        i_date = _col("CLASSIFICATION DATE", 8)
+        i_gcep = _col("GCEP", 9)
+
         reader = csv.reader(f)
         for row in reader:
-            if len(row) < 6:
+            if len(row) < 7 or row[0].startswith("+"):
                 continue
             conn.execute(
-                "INSERT INTO gene_validity VALUES (?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO gene_validity VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (
-                    row[0],  # gene_symbol
-                    row[1],  # hgnc_id
-                    row[2],  # disease
-                    row[3],  # mondo_id
-                    row[4],  # sop
-                    row[5],  # classification
-                    row[6] if len(row) > 6 else "",
-                    row[7] if len(row) > 7 else "",
-                    row[8] if len(row) > 8 else "",
+                    row[i_gene] if i_gene < len(row) else "",
+                    row[i_hgnc] if i_hgnc < len(row) else "",
+                    row[i_disease] if i_disease < len(row) else "",
+                    row[i_mondo] if i_mondo < len(row) else "",
+                    row[i_moi] if i_moi < len(row) else "",
+                    row[i_sop] if i_sop < len(row) else "",
+                    row[i_class] if i_class < len(row) else "",
+                    row[i_url] if i_url < len(row) else "",
+                    row[i_date] if i_date < len(row) else "",
+                    row[i_gcep] if i_gcep < len(row) else "",
                 ),
             )
 

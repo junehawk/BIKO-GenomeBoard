@@ -358,7 +358,7 @@ fi
 if [ -n "${CLINGEN_DONE:-}" ]; then
     :  # already handled above
 elif [ -f "$CLINGEN_CSV" ]; then
-    if build_db "scripts/db/build_clingen_db.py" "ClinGen SQLite"; then
+    if build_db "scripts/db/build_clingen_db.py" "ClinGen SQLite" "$CLINGEN_CSV"; then
         SUCCESS+=("ClinGen")
     else
         FAILED+=("ClinGen (build)")
