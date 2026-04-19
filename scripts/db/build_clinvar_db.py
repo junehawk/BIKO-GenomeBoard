@@ -17,7 +17,7 @@ import logging
 import re
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -223,7 +223,7 @@ def build_db(tsv_gz_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_clinvar_gene_hgvsp ON variants(gene, hgvsp)")
 
     # Store metadata
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('source', ?)", (CLINVAR_URL,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('variant_count', ?)", (str(count),))

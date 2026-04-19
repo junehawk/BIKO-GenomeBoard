@@ -5,7 +5,7 @@ import re
 import sqlite3
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "data/db/omim_genemap.sqlite3"
@@ -156,7 +156,7 @@ def build_db(txt_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_genemap_gene ON omim_genemap(gene)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_genemap_mim ON omim_genemap(mim_number)")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)")
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('source', ?)", (txt_path,))

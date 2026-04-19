@@ -6,7 +6,7 @@ import sqlite3
 import logging
 import sys
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -186,7 +186,7 @@ def build_db(vcf_paths: list, db_path: str = DEFAULT_DB_PATH, version: str = "4.
     conn.execute("CREATE INDEX IF NOT EXISTS idx_rsid ON variants(rsid)")
 
     # Metadata
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('gnomad_version', ?)", (version,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('variant_count', ?)", (str(total_count),))

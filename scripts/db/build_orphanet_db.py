@@ -5,7 +5,7 @@ import sqlite3
 import logging
 import xml.etree.ElementTree as ET
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "data/db/orphanet.sqlite3"
@@ -80,7 +80,7 @@ def build_db(xml_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_prev_gene ON prevalence(gene_symbol)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_prev_orpha ON prevalence(orpha_code)")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)")
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('source', 'Orphanet (orphadata.com)')")

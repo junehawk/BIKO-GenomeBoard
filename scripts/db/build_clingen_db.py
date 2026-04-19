@@ -5,7 +5,7 @@ import csv
 import sqlite3
 import logging
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def build_db(csv_path: str, db_path: str = DEFAULT_DB_PATH) -> str:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cv_gene ON gene_validity(gene_symbol)")
     conn.execute("CREATE INDEX IF NOT EXISTS idx_cv_class ON gene_validity(classification)")
 
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     conn.execute("CREATE TABLE IF NOT EXISTS metadata (key TEXT PRIMARY KEY, value TEXT)")
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('build_date', ?)", (now,))
     conn.execute("INSERT OR REPLACE INTO metadata VALUES ('source', 'ClinGen (clinicalgenome.org)')")
