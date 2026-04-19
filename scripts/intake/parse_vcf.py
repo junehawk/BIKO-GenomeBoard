@@ -1,9 +1,11 @@
 # scripts/intake/parse_vcf.py
+from __future__ import annotations
+
 import gzip
 import logging
 import os
 import re
-from typing import List, Optional, Tuple
+from typing import IO, List, Optional, Tuple
 
 from scripts.common.models import Variant
 from scripts.intake.parse_annotation import (
@@ -22,7 +24,7 @@ logger = logging.getLogger(__name__)
 _DEFAULT_DGQ_THRESHOLD = 7.0
 
 
-def _open_vcf(vcf_path: str):
+def _open_vcf(vcf_path: str) -> IO[str]:
     """Open a VCF file as text, transparently handling gzip compression.
 
     Detects compressed input by file-extension (`.gz`, `.bgz`) and falls back

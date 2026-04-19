@@ -15,14 +15,17 @@ engine no longer carries any hardcoded gene → phenotype elif chain;
 editing the JSON is sufficient to extend or correct the curated set.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import threading
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from scripts.common.config import get
 from scripts.common.models import PgxResult, Variant
+from scripts.common.types import PgxHit, PgxResultsDict
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +63,7 @@ _FALLBACK_PGX_GENES = [
 ]
 
 
-def _load_pgx_data() -> list:
+def _load_pgx_data() -> List[Dict[str, Any]]:
     global _PGX_DATA
     with _PGX_LOCK:
         if _PGX_DATA is None:
@@ -122,7 +125,7 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
 # ---------------------------------------------------------------------------
 
 
-def _convert_pharmcat_to_pgx_hits(pharmcat_result) -> list[dict]:
+def _convert_pharmcat_to_pgx_hits(pharmcat_result: Any) -> List[PgxHit]:
     """Convert a :class:`PharmCATResult` into the legacy pgx_hits list format.
 
     PharmCAT provides accurate diplotype + phenotype from the actual germline
@@ -193,9 +196,9 @@ def _convert_pharmcat_to_pgx_hits(pharmcat_result) -> list[dict]:
 
 def get_pgx_results(
     variants: List[Variant],
-    germline_vcf: str | None = None,
-    config: dict | None = None,
-) -> dict:
+    germline_vcf: Optional[str] = None,
+    config: Optional[Dict[str, Any]] = None,
+) -> PgxResultsDict:
     """Unified PGx entry point.
 
     Returns a dict with keys compatible with ``report_data``:
@@ -234,7 +237,7 @@ def get_pgx_results(
         logger.warning("PharmCAT not available, falling back to builtin PGx")
 
     # --- Builtin fallback -------------------------------------------------
-    hits: list[dict] = []
+    hits = []  # type: List[PgxHit]
     for v in variants:
         result = check_korean_pgx(v)
         if result:

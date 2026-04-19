@@ -1,10 +1,12 @@
 """Clinical Board runner — orchestrates the full diagnostic synthesis process."""
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 import time
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from scripts.clinical_board.case_briefing import build_case_briefing
 from scripts.clinical_board.curated_treatments import curate_treatments
@@ -30,7 +32,7 @@ def _load_agents(
     model: str,
     language: str,
     mode: str = "rare-disease",
-):
+) -> List[Any]:
     """Lazy-load domain agents for the given mode."""
     if mode == "cancer":
         from scripts.clinical_board.agents.clinical_evidence import ClinicalEvidenceAnalyst
@@ -58,13 +60,13 @@ def _load_agents(
     ]
 
 
-def _load_chair(client: OllamaClient, model: str, language: str):
+def _load_chair(client: OllamaClient, model: str, language: str) -> Any:
     from scripts.clinical_board.agents.board_chair import BoardChair
 
     return BoardChair(client=client, model=model, language=language)
 
 
-def _summarize_context(report_data: dict) -> str:
+def _summarize_context(report_data: Dict[str, Any]) -> str:
     """Compact summary of clinical context for KB storage."""
     parts = []
     sample_id = report_data.get("sample_id")
@@ -81,12 +83,12 @@ def _summarize_context(report_data: dict) -> str:
 
 
 def run_clinical_board(
-    report_data: dict,
+    report_data: Dict[str, Any],
     mode: str,
-    ollama_url: str = None,
-    agent_model: str = None,
-    chair_model: str = None,
-    language: str = None,
+    ollama_url: Optional[str] = None,
+    agent_model: Optional[str] = None,
+    chair_model: Optional[str] = None,
+    language: Optional[str] = None,
 ) -> Optional[Union[BoardOpinion, CancerBoardOpinion]]:
     """Run the full Clinical Board analysis.
 

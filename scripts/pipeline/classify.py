@@ -1,6 +1,9 @@
 """ACMG classification, variant record assembly, and summary generation."""
 
+from __future__ import annotations
+
 import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 from scripts.classification.acmg_engine import (
     apply_clinvar_override,
@@ -14,12 +17,18 @@ from scripts.clinical.query_clingen import get_gene_validity
 from scripts.clinical.query_omim import query_omim
 from scripts.common.config import get
 from scripts.common.gene_knowledge import get_gene_info
-from scripts.common.models import AcmgEvidence
+from scripts.common.models import AcmgEvidence, StructuralVariant, Variant
+from scripts.common.types import HpoResults, VariantRecord
 
 logger = logging.getLogger(__name__)
 
 
-def classify_variants(variants, db_results, freq_results, intervar_data=None):
+def classify_variants(
+    variants: List[Variant],
+    db_results: Dict[str, Dict[str, Any]],
+    freq_results: Dict[str, Dict[str, Any]],
+    intervar_data: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
     """Run ACMG classification for a list of variants.
 
     Returns classification_results dict keyed by variant_id.
@@ -162,7 +171,14 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
     return classification_results
 
 
-def build_variant_records(variants, db_results, freq_results, classification_results, mode, hpo_results):
+def build_variant_records(
+    variants: List[Variant],
+    db_results: Dict[str, Dict[str, Any]],
+    freq_results: Dict[str, Dict[str, Any]],
+    classification_results: Dict[str, Any],
+    mode: str,
+    hpo_results: HpoResults,
+) -> List[VariantRecord]:
     """Build the variant_records list from per-variant results."""
     from scripts.db.query_civic import get_predictive_evidence_for_tier
     from scripts.somatic.amp_tiering import amp_assign_tier
@@ -297,7 +313,7 @@ def build_variant_records(variants, db_results, freq_results, classification_res
     return variant_records
 
 
-def build_summary(variant_records):
+def build_summary(variant_records: List[VariantRecord]) -> Dict[str, int]:
     """Build summary statistics from variant records."""
     summary = {
         "total": len(variant_records),
@@ -328,7 +344,7 @@ def build_summary(variant_records):
     return summary
 
 
-def sv_to_dict(sv) -> dict:
+def sv_to_dict(sv: StructuralVariant) -> Dict[str, Any]:
     """Convert StructuralVariant to template-friendly dict."""
     return {
         "annotsv_id": sv.annotsv_id,
@@ -359,7 +375,17 @@ def sv_to_dict(sv) -> dict:
     }
 
 
-def split_variants_for_display(variant_records, hide_vus):
+def split_variants_for_display(
+    variant_records: List[VariantRecord],
+    hide_vus: bool,
+) -> Tuple[
+    List[VariantRecord],
+    List[VariantRecord],
+    List[VariantRecord],
+    int,
+    List[VariantRecord],
+    List[VariantRecord],
+]:
     """Split variant records into detailed and omitted lists for template rendering.
 
     Returns (tier1, tier2, tier3, tier4_count, detailed, omitted).
