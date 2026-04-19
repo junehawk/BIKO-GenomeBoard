@@ -142,6 +142,41 @@ def run_clinical_board(
             vid = v_record.get("variant") or v_record.get("variant_id") or ""
             if vid in _reason_map:
                 v_record["selection_reason_list"] = _reason_map[vid]
+
+    # Promote board-admitted VUS variants to detailed_variants. The
+    # classify.py split_variants_for_display() runs BEFORE the Board, so
+    # a VUS admitted by the selector (and potentially cited by the Chair)
+    # ends up in the omitted_variants appendix instead of the main detail
+    # pages. Observed on ASD-10293: CHD8 VUS was the Chair's primary
+    # diagnosis ("CHD8-related neurodevelopmental disorder") but the
+    # per-variant detail pages did not include CHD8 at all — the reviewer
+    # saw the diagnosis with no variant context to back it up. Moving
+    # board-admitted variants into detailed restores that context. The
+    # move is only from omitted → detailed (never the reverse), so P/LP
+    # already in detailed stay untouched.
+    detailed = report_data.get("detailed_variants") or []
+    omitted = report_data.get("omitted_variants") or []
+    board_admitted_ids = {
+        (bv.get("variant") or bv.get("variant_id") or "")
+        for bv in board_variants
+        if (bv.get("variant") or bv.get("variant_id"))
+    }
+    if board_admitted_ids and detailed is not None and omitted:
+        detailed_ids = {(v.get("variant") or v.get("variant_id") or "") for v in detailed}
+        to_promote = [
+            v
+            for v in omitted
+            if (v.get("variant") or v.get("variant_id") or "") in board_admitted_ids
+            and (v.get("variant") or v.get("variant_id") or "") not in detailed_ids
+        ]
+        if to_promote:
+            report_data["detailed_variants"] = list(detailed) + to_promote
+            report_data["omitted_variants"] = [v for v in omitted if v not in to_promote]
+            logger.info(
+                "[Clinical Board] Promoted %d board-admitted VUS variant(s) from omitted to detailed pages",
+                len(to_promote),
+            )
+
     logger.info(
         f"[Clinical Board] Pre-filter: {selection_metadata['total_input']} → "
         f"{selection_metadata['selected']} variants "

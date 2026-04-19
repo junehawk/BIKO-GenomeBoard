@@ -36,7 +36,7 @@ _CSQ_HGVSC_IDX: Optional[int] = None
 _CSQ_HGVSP_IDX: Optional[int] = None
 
 
-def _parse_vcf_line(line: str) -> Optional[Variant]:
+def _parse_vcf_line(line: str, fallback_gene: str = "") -> Optional[Variant]:
     """Parse a single VCF data line into a :class:`Variant`.
 
     Returns None if the line cannot be parsed (header, malformed, etc.).
@@ -99,12 +99,19 @@ def _parse_vcf_line(line: str) -> Optional[Variant]:
         if gi_match:
             gene = gi_match.group(1)
 
+    # Target BED fallback — when the germline VCF is unannotated (no CSQ /
+    # ANN / GENEINFO) the only source of gene identity is the target BED
+    # row that selected this position. Without this, inherited ClinVar
+    # P/LP variants render as "NONE | Pathogenic" in the report.
+    if not gene and fallback_gene:
+        gene = fallback_gene
+
     return Variant(
         chrom=chrom,
         pos=pos,
         ref=ref,
         alt=alt,
-        gene=gene,
+        gene=gene or None,
         rsid=rsid,
         consequence=consequence,
         hgvsc=hgvsc,
@@ -118,12 +125,16 @@ def _parse_vcf_line(line: str) -> Optional[Variant]:
 # ---------------------------------------------------------------------------
 
 
-def _load_target_regions(target_bed: str) -> list[tuple[str, int, int]]:
+def _load_target_regions(target_bed: str) -> list[tuple[str, int, int, str]]:
     """Load target regions from a BED file (plain or bgzipped).
 
-    Returns a list of (chrom, start, end) tuples.
+    Returns a list of (chrom, start, end, gene) tuples. The gene column
+    (4th BED column) is used as a fallback when the germline VCF's INFO
+    field lacks CSQ / ANN / GENEINFO annotation — without this, inherited
+    variants showed up in the report as "NONE | Pathogenic" with no way
+    to tell which gene they belonged to.
     """
-    regions: list[tuple[str, int, int]] = []
+    regions: list[tuple[str, int, int, str]] = []
     path = Path(target_bed)
     if not path.exists():
         return regions
@@ -148,7 +159,10 @@ def _load_target_regions(target_bed: str) -> list[tuple[str, int, int]]:
                     end = int(parts[2])
                 except ValueError:
                     continue
-                regions.append((chrom, start, end))
+                gene = parts[3] if len(parts) >= 4 else ""
+                if gene == ".":
+                    gene = ""
+                regions.append((chrom, start, end, gene))
     except Exception as exc:
         logger.warning("Failed to load target BED %s: %s", target_bed, exc)
 
@@ -315,7 +329,7 @@ def _extract_via_tabix(
 
     try:
         contigs = set(tbx.contigs)
-        for chrom, start, end in regions:
+        for chrom, start, end, gene in regions:
             # Try both chr-prefixed and bare chromosome names
             query_chrom = None
             if chrom in contigs:
@@ -330,7 +344,7 @@ def _extract_via_tabix(
 
             try:
                 for line in tbx.fetch(query_chrom, start, end):
-                    v = _parse_vcf_line(line)
+                    v = _parse_vcf_line(line, fallback_gene=gene)
                     if v is None:
                         continue
                     if v.variant_id in primary_ids or v.variant_id in seen_ids:
@@ -362,27 +376,29 @@ def _extract_via_linear_scan(
     if not regions:
         return []
 
-    # Build a lookup: chrom -> sorted list of (start, end)
-    region_map: dict[str, list[tuple[int, int]]] = {}
-    for chrom, start, end in regions:
+    # Build a lookup: chrom -> sorted list of (start, end, gene)
+    region_map: dict[str, list[tuple[int, int, str]]] = {}
+    for chrom, start, end, gene in regions:
         bare = chrom.replace("chr", "")
         for c in (chrom, bare, f"chr{bare}"):
-            region_map.setdefault(c, []).append((start, end))
+            region_map.setdefault(c, []).append((start, end, gene))
     for k in region_map:
         region_map[k].sort()
 
-    def _overlaps(chrom: str, pos: int) -> bool:
+    def _overlapping_gene(chrom: str, pos: int) -> Optional[str]:
+        """Return the target-BED gene for the first region overlapping pos,
+        or None if pos falls outside all target regions for chrom."""
         intervals = region_map.get(chrom)
         if not intervals:
-            return False
+            return None
         # BED is 0-based half-open, VCF pos is 1-based
         vcf_0 = pos - 1
-        for s, e in intervals:
+        for s, e, g in intervals:
             if s <= vcf_0 < e:
-                return True
+                return g or ""
             if s > vcf_0:
                 break
-        return False
+        return None
 
     logger.info("Linear scan of germline VCF %s (this may be slow for large files)", germline_vcf)
     opener = gzip.open if germline_vcf.endswith(".gz") or germline_vcf.endswith(".bgz") else open
@@ -405,10 +421,11 @@ def _extract_via_linear_scan(
                 except ValueError:
                     continue
 
-                if not _overlaps(chrom, pos):
+                target_gene = _overlapping_gene(chrom, pos)
+                if target_gene is None:
                     continue
 
-                v = _parse_vcf_line(line)
+                v = _parse_vcf_line(line, fallback_gene=target_gene)
                 if v is None:
                     continue
                 if v.variant_id in primary_ids or v.variant_id in seen_ids:
