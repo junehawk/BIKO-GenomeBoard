@@ -393,7 +393,7 @@ def test_board_chair_handles_error():
 
 
 def test_all_agents_have_korean_system_prompt():
-    """All domain agents must have system prompts containing Korean text."""
+    """All domain agents must have Korean system prompts when language='ko'."""
     mock_client = MagicMock()
 
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
@@ -402,10 +402,10 @@ def test_all_agents_have_korean_system_prompt():
     from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
 
     agents = [
-        VariantPathologist(client=mock_client),
-        DiseaseGeneticist(client=mock_client),
-        PGxSpecialist(client=mock_client),
-        LiteratureAnalyst(client=mock_client),
+        VariantPathologist(client=mock_client, language="ko"),
+        DiseaseGeneticist(client=mock_client, language="ko"),
+        PGxSpecialist(client=mock_client, language="ko"),
+        LiteratureAnalyst(client=mock_client, language="ko"),
     ]
 
     for agent in agents:
@@ -421,14 +421,58 @@ def test_all_agents_have_korean_system_prompt():
         assert "한국어" in prompt, f"{agent.agent_name} system prompt must instruct Korean response"
 
 
+def test_all_agents_have_english_system_prompt():
+    """All domain agents must have English system prompts when language='en' (default)."""
+    mock_client = MagicMock()
+
+    from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
+    from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
+    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
+
+    agents = [
+        VariantPathologist(client=mock_client, language="en"),
+        DiseaseGeneticist(client=mock_client, language="en"),
+        PGxSpecialist(client=mock_client, language="en"),
+        LiteratureAnalyst(client=mock_client, language="en"),
+    ]
+
+    for agent in agents:
+        prompt = agent.system_prompt
+        # English prompt must contain no Korean characters in the response-language
+        # directive, and must instruct an English response.
+        assert "Respond in English" in prompt, (
+            f"{agent.agent_name} English system prompt must instruct English response"
+        )
+        # Deterministic-engine disclaimer should still be present.
+        assert "classification engine" in prompt, (
+            f"{agent.agent_name} English system prompt must include disclaimer about deterministic classification engine"
+        )
+
+
 def test_board_chair_has_korean_system_prompt():
-    """Board Chair must have a system prompt containing Korean text."""
+    """Board Chair must have a system prompt containing Korean text (legacy alias)."""
     from scripts.clinical_board.agents.board_chair import SYSTEM_PROMPT
 
     has_korean = any("\uac00" <= ch <= "\ud7a3" for ch in SYSTEM_PROMPT)
     assert has_korean, "Board Chair system prompt does not contain Korean text"
     assert "분류 엔진" in SYSTEM_PROMPT
     assert "한국어" in SYSTEM_PROMPT
+
+
+def test_board_chair_english_system_prompt_available():
+    """Board Chair must expose an English system prompt via get_system_prompt()."""
+    from scripts.clinical_board.agents.board_chair import get_system_prompt
+
+    en_prompt = get_system_prompt("rare-disease", "en")
+    assert "Respond in English" in en_prompt
+    assert "classification engine" in en_prompt
+
+    en_cancer = get_system_prompt("cancer", "en")
+    assert "Respond in English" in en_cancer
+    assert "curated_id" in en_cancer
+    assert "variant_key" in en_cancer
+    assert "treatment_options" in en_cancer
 
 
 # ---------------------------------------------------------------------------

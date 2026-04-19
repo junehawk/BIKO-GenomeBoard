@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 DISCLAIMER = BOARD_DISCLAIMER
 
-SYSTEM_PROMPT = """당신은 임상유전학 사례 회의의 위원장(Board Chair)입니다.
+SYSTEM_PROMPT_KO = """당신은 임상유전학 사례 회의의 위원장(Board Chair)입니다.
 4명의 도메인 전문의로부터 분석 소견을 받아 종합적인 진단 의견을 제시하는 것이 당신의 역할입니다.
 
 ## 종합 지침
@@ -67,7 +67,61 @@ SYSTEM_PROMPT = """당신은 임상유전학 사례 회의의 위원장(Board Ch
 }"""
 
 
-CANCER_SYSTEM_PROMPT = """당신은 종양유전체 임상 회의의 위원장(Cancer Board Chair)입니다.
+SYSTEM_PROMPT_EN = """You are the Board Chair of a clinical genetics case conference.
+Your role is to receive analyses from four domain specialists and synthesise them into
+an integrated diagnostic opinion.
+
+## Synthesis Guidance
+
+1. **Synthesis of specialist opinions**
+   - Integrate the opinions of the four specialists (Variant Pathology, Disease Genetics,
+     Pharmacogenomics, Literature Analysis).
+   - Consolidate each specialist's key findings and supporting evidence.
+
+2. **Identification of consensus and disagreement**
+   - Clearly distinguish issues on which the specialists agree from those on which they
+     disagree.
+   - Where there is disagreement, present both arguments and adopt the position with the
+     stronger evidence.
+
+3. **Ranking of differential diagnoses**
+   - Rank the differential diagnoses by likelihood.
+   - State the supporting evidence for each diagnosis.
+
+4. **Actionable recommendations**
+   - Assess the need for genetic counseling.
+   - Specify additional testing in concrete terms when needed.
+   - Include treatment-related implications if any.
+
+5. **Follow-up recommendations**
+   - Propose items that require further monitoring.
+   - Include a follow-up plan for potential reclassification of VUS variants.
+
+## Important Principles
+The specialists' analyses do not alter the outputs of the deterministic classification engine.
+Build clinical interpretation and integrative reasoning on top of the classification results.
+
+## Response Language
+Respond in English.
+
+## Response Format (JSON)
+Respond in the following JSON format:
+{
+  "primary_diagnosis": "primary diagnosis",
+  "primary_diagnosis_evidence": "key supporting evidence",
+  "differential_diagnoses": [
+    {"diagnosis": "differential diagnosis", "likelihood": "high/moderate/low", "evidence": "evidence"}
+  ],
+  "key_findings": ["key finding 1", "key finding 2"],
+  "recommendations": ["recommendation 1", "recommendation 2"],
+  "agent_consensus": "unanimous/majority/split",
+  "dissenting_opinions": ["minority opinions (if any)"],
+  "follow_up": ["follow-up items"],
+  "confidence": "high/moderate/low"
+}"""
+
+
+CANCER_SYSTEM_PROMPT_KO = """당신은 종양유전체 임상 회의의 위원장(Cancer Board Chair)입니다.
 4명의 종양 전문 분석가의 소견을 종합하여 치료 중심의 종합 의견을 제시합니다.
 
 ## 종합 지침
@@ -146,37 +200,182 @@ variant_key)`` 쌍이 CURATED EVIDENCE 섹션에 존재하는지 검증합니다
 }"""
 
 
-def _format_agent_opinion(opinion: AgentOpinion) -> str:
-    """Format an agent opinion into readable text for the chair prompt."""
-    lines = [f"=== {opinion.agent_name} 소견 ==="]
-    lines.append(f"전문 영역: {opinion.domain}")
-    lines.append(f"종합 신뢰도: {opinion.confidence}")
+CANCER_SYSTEM_PROMPT_EN = """You are the Cancer Board Chair of an oncology genomics case conference.
+You synthesise the opinions of four oncology-focused analysts into an integrated,
+treatment-oriented board opinion.
+
+## Synthesis Guidance
+
+1. **Synthesis of therapeutic implications**
+   - Integrate the opinions of the Therapeutic Target, Tumor Genomics, PGx, and
+     Clinical Evidence analysts into a therapeutic-implications-focused summary.
+   - First, write a short clinical headline (max 120 characters) that summarises the
+     therapeutic stance in `therapeutic_headline`, e.g. "Stage IV pancreatic
+     adenocarcinoma — KRAS G12D driver, no standard targeted therapy" or "Stage III
+     NSCLC — TP53/BRCA2 co-mutated, DDR-targeted therapy candidate". Then provide the
+     full therapeutic_implications paragraph.
+
+2. **Organisation of treatment options**
+   - Compile the list of treatment options with drug name, evidence level (A/B/C/D),
+     and resistance-risk notes.
+
+3. **Immunotherapy eligibility**
+   - Assess immunotherapy eligibility based on available data such as TMB and MSI.
+
+4. **Monitoring plan**
+   - Propose monitoring items to track treatment response and the emergence of
+     resistance.
+
+5. **Consensus and disagreement**
+   - Clearly distinguish points of agreement from points of disagreement among the
+     analysts.
+
+## Important Principles
+The analysts' opinions do not alter the outputs of the deterministic classification engine.
+Do not cite KB summaries as guideline-level evidence.
+
+## Response Language
+Respond in English. (The `therapeutic_headline` field may use English clinical
+abbreviations by convention.)
+
+## CRITICAL — Deterministic Treatment-Option Binding (v2.2 curate-then-narrate)
+**curated_id MUST come from the CURATED EVIDENCE section — do not invent drugs not in
+that section.** Every treatment_options row must include all four of the following
+keys:
+``curated_id`` (the exact id from CURATED EVIDENCE — do not change a single character),
+``variant_key`` (the ``{chrom}:{pos}:{ref}:{alt}`` from **exactly the same row** in
+CURATED EVIDENCE where that curated_id appears — do not use the variant_key of a
+different variant),
+``drug``, ``evidence_level``. Do not propose a drug without a curated_id.
+
+**Validation rule**: After you respond, the narrative_scrubber verifies that every
+treatment row's ``(curated_id, variant_key)`` pair exists in the CURATED EVIDENCE
+section. Rows whose pair does not match are **dropped silently**. If every row is
+dropped, the entire LLM opinion is discarded and a deterministic (template) fallback
+renderer takes its place. Therefore:
+- Pasting one curated_id under a different variant_key (paste-attack pattern) yields an
+  empty table.
+- Any modification to the curated_id (e.g., stripping a prefix, changing case) causes
+  the row to be dropped.
+- If CURATED EVIDENCE is empty, output treatment_options as an empty array `[]` and
+  state in therapeutic_implications that "no curated treatment evidence is available".
+  Do not invent options.
+
+**Example (valid row format)**: if CURATED EVIDENCE contains
+``- curated_id=civic-abc variant_key=12:25398284:C:T drug=Cetuximab level=A ...``,
+your output must be
+``{"curated_id": "civic-abc", "variant_key": "12:25398284:C:T", "drug": "Cetuximab", "evidence_level": "A", "resistance_notes": ""}``.
+**Copy curated_id and variant_key verbatim from CURATED EVIDENCE.**
+
+## Response Format (JSON)
+{
+  "therapeutic_headline": "Stage IV PDAC — KRAS G12D driver, no standard targeted therapy",
+  "therapeutic_implications": "integrated therapeutic implications (detailed paragraph)",
+  "therapeutic_evidence": "evidence summary (e.g., CIViC levels)",
+  "treatment_options": [
+    {"curated_id": "cid-sot", "variant_key": "12:25398284:C:T", "drug": "drug name", "evidence_level": "A/B/C/D", "resistance_notes": "resistance risk (if any)"}
+  ],
+  "actionable_findings": ["clinically actionable key findings"],
+  "clinical_actions": ["recommended clinical actions"],
+  "immunotherapy_eligibility": "immunotherapy eligibility assessment",
+  "monitoring_plan": ["monitoring items"],
+  "agent_consensus": "unanimous/majority/split",
+  "dissenting_opinions": ["minority opinions"],
+  "confidence": "high/moderate/low"
+}"""
+
+
+# Backward-compatible module-level aliases. Existing tests (test_a2_prompt_snapshot,
+# test_board_chair_curated_id, test_clinical_board_agents) import the legacy names
+# directly and assert Korean-specific structural invariants against them, so the
+# aliases continue to resolve to the KO variant. Language-aware dispatch at runtime
+# goes through ``get_system_prompt()`` below.
+SYSTEM_PROMPT = SYSTEM_PROMPT_KO
+CANCER_SYSTEM_PROMPT = CANCER_SYSTEM_PROMPT_KO
+
+
+def get_system_prompt(mode: str, language: str) -> str:
+    """Return the appropriate Board Chair system prompt for a mode + language pair.
+
+    Language fallback: anything other than ``"ko"`` returns the English variant,
+    matching the ``clinical_board.language`` config default.
+    """
+    if mode == "cancer":
+        return CANCER_SYSTEM_PROMPT_KO if language == "ko" else CANCER_SYSTEM_PROMPT_EN
+    return SYSTEM_PROMPT_KO if language == "ko" else SYSTEM_PROMPT_EN
+
+
+def _format_agent_opinion(opinion: AgentOpinion, language: str = "en") -> str:
+    """Format an agent opinion into readable text for the chair prompt.
+
+    The section labels follow the Board Chair language so the LLM sees a
+    language-consistent prompt from the system prompt through to the
+    agent-opinion digest.
+    """
+    if language == "ko":
+        lines = [f"=== {opinion.agent_name} 소견 ==="]
+        lines.append(f"전문 영역: {opinion.domain}")
+        lines.append(f"종합 신뢰도: {opinion.confidence}")
+        lines.append("")
+
+        if opinion.findings:
+            lines.append("주요 소견:")
+            for f in opinion.findings:
+                finding = f.get("finding", "") if isinstance(f, dict) else str(f)
+                evidence = f.get("evidence", "") if isinstance(f, dict) else ""
+                confidence = f.get("confidence", "") if isinstance(f, dict) else ""
+                lines.append(f"  - {finding}")
+                if evidence:
+                    lines.append(f"    근거: {evidence}")
+                if confidence:
+                    lines.append(f"    신뢰도: {confidence}")
+
+        if opinion.recommendations:
+            lines.append("\n권고사항:")
+            for r in opinion.recommendations:
+                lines.append(f"  - {r}")
+
+        if opinion.concerns:
+            lines.append("\n우려사항:")
+            for c in opinion.concerns:
+                lines.append(f"  - {c}")
+
+        if opinion.references:
+            lines.append("\n참고문헌:")
+            for ref in opinion.references:
+                lines.append(f"  - {ref}")
+
+        return "\n".join(lines)
+
+    lines = [f"=== {opinion.agent_name} Opinion ==="]
+    lines.append(f"Domain: {opinion.domain}")
+    lines.append(f"Overall Confidence: {opinion.confidence}")
     lines.append("")
 
     if opinion.findings:
-        lines.append("주요 소견:")
+        lines.append("Key Findings:")
         for f in opinion.findings:
             finding = f.get("finding", "") if isinstance(f, dict) else str(f)
             evidence = f.get("evidence", "") if isinstance(f, dict) else ""
             confidence = f.get("confidence", "") if isinstance(f, dict) else ""
             lines.append(f"  - {finding}")
             if evidence:
-                lines.append(f"    근거: {evidence}")
+                lines.append(f"    Evidence: {evidence}")
             if confidence:
-                lines.append(f"    신뢰도: {confidence}")
+                lines.append(f"    Confidence: {confidence}")
 
     if opinion.recommendations:
-        lines.append("\n권고사항:")
+        lines.append("\nRecommendations:")
         for r in opinion.recommendations:
             lines.append(f"  - {r}")
 
     if opinion.concerns:
-        lines.append("\n우려사항:")
+        lines.append("\nConcerns:")
         for c in opinion.concerns:
             lines.append(f"  - {c}")
 
     if opinion.references:
-        lines.append("\n참고문헌:")
+        lines.append("\nReferences:")
         for ref in opinion.references:
             lines.append(f"  - {ref}")
 
@@ -208,7 +407,7 @@ class BoardChair:
                   "cancer" returns CancerBoardOpinion (treatment-focused).
         """
         prompt = self._build_prompt(case_briefing, agent_opinions, curated_treatments=curated_treatments)
-        system_prompt = CANCER_SYSTEM_PROMPT if mode == "cancer" else SYSTEM_PROMPT
+        system_prompt = get_system_prompt(mode, self.language)
 
         try:
             response = self.client.generate_json(
@@ -281,7 +480,7 @@ class BoardChair:
         curated_treatments: dict = None,
     ) -> str:
         """Build the synthesis prompt with case briefing and all agent opinions."""
-        opinions_text = "\n\n".join(_format_agent_opinion(op) for op in agent_opinions)
+        opinions_text = "\n\n".join(_format_agent_opinion(op, self.language) for op in agent_opinions)
         curated_block = self._format_curated_evidence(curated_treatments)
 
         if self.language == "ko":
