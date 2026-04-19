@@ -11,6 +11,73 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Added — v2.4 (germline integration & curator expansion)
+- `--germline <vcf>` CLI flag enables somatic + germline dual-input
+  pipeline. In rare-disease mode `extract_inherited_variants` intersects
+  the germline VCF against a ClinVar P/LP **point-level** target BED
+  (5000-variant cap) and yields inherited-variant rows that flow through
+  the same ACMG path as the proband variants. Inherited variants gene-key
+  off the BED's 4th column with a fallback to the VCF annotation when
+  the column is empty.
+- PharmCAT 3.2.0 integration via `scripts/pharma/pharmcat_runner.py`.
+  Java 17 is auto-installed on first invocation if missing; the PharmCAT
+  JAR is auto-downloaded and cached. The runner pre-filters the germline
+  VCF with `tabix` against ~1000 PharmCAT-relevant positions to stay
+  inside the 120 s harness ceiling. `pgx_source` in report metadata
+  distinguishes `"pharmcat"` from `"builtin"` fallback.
+- 12-gene PGx gap fill: DPYD, TPMT, HLA-A, CYP2B6, CYP4F2, ABCG2, NAT2,
+  CACNA1S, CFTR, CYP3A4, MT-RNR1, RYR1 added to
+  `data/korean_pgx_table.json` (24 genes total). Each entry now carries
+  a `default_phenotype` field; the prior hardcoded `elif` chain in
+  `scripts/pharma/korean_pgx.py` was replaced by data-driven lookup.
+- `--ped <ped>` CLI flag with strict-mode trio / quartet resolution.
+  Any unresolved role raises immediately. Filename heuristic
+  (`*_proband.vcf`, `*_father.vcf`, ...) remains the fallback when
+  `--ped` is omitted.
+- De novo evidence codes in rare-disease mode: PS2 (confirmed) and PM6
+  (assumed) fire when `parse_vcf` reads trio FORMAT/GT and detects a
+  de-novo proband call. DDG2P neurodevelopmental panel ingest (2,201
+  admitted genes) gives a separate selector carve-out. SpliceAI
+  `delta_max >= 0.2` rescue applies to splice-region and synonymous
+  variants in rare-disease mode.
+- gnomAD v4.1 constraint OR-branch activated for de-novo admission.
+- ClinGen ingest now parses the public CSV export by **header name**
+  rather than column index, so future column reorders no longer
+  silently mis-load fields.
+- Literature Analyst (Rare-Disease Board) is now grounded against the
+  local CIViC build (4,811 evidence_statements). PMIDs that cannot be
+  matched against a known CIViC evidence statement are dropped from
+  emitted prose.
+- Two-model hybrid Clinical Board: domain agents run on
+  **MedGemma 27B**, Board Chair runs on **SuperGemma4 31B**. Hybrid
+  merge preserves the Chair narrative when the deterministic curator
+  and the LLM Chair disagree on row count.
+- De-novo badges on the rare-disease variant card, driven by
+  `selection_reason_list` written back to `report_data` after Board
+  selection.
+- Clinical-priority sort applied to the report after Board selection:
+  `(board_admitted, classification_rank, hpo_score, has_gene, variant_id)`
+  — Board-admitted variants float to the top regardless of classification
+  rank. Board-admitted VUS are auto-promoted from the
+  `detailed_variants` block into the headline variant table.
+
+### Changed — v2.4
+- Default Clinical Board model wiring split: agent calls go to
+  `alibayram/medgemma:27b`, Chair calls go to the SuperGemma4 31B
+  endpoint.
+- Variant-selector consequence gate (v2.2 B1) now also applies to the
+  rare-disease selector path. P/LP variants and SpliceAI ≥ 0.2 splice
+  rescues bypass the gate.
+- README.md / README.en.md / CLAUDE.md document the v2.3 / v2.4
+  features, system-tool dependencies (Java 17, bcftools, tabix,
+  pysam), and the `--germline` / `--ped` usage examples.
+
+### Tests — v2.4
+- 988 → 1053+ tests across the v2.3 / v2.4 series. Trio FORMAT/GT
+  parsing, PED resolution, PharmCAT runner, inherited-variant
+  extraction, DDG2P carve-out, and de-novo PS2/PM6 each carry their
+  own test module.
+
 ## [2.2.1] — 2026-04-15
 
 Privacy cleanup and public-release baseline. No feature changes —

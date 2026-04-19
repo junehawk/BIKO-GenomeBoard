@@ -99,12 +99,30 @@ flowchart TD
 - **TMB 계산** — FoundationOne CDx 방법론, High/Intermediate/Low 자동 분류
 - **CNV/SV 분석** — AnnotSV TSV → ACMG CNV 2020 Class 1–5
 - **HPO 표현형 랭킹** — 329K+ 유전자-표현형 연관, 오프라인 SQLite
-- **AI Clinical Board** — 로컬 MedGemma 27B 기반 다전문가 시스템(4 전문의 + Board Chair), Grounded Prompting, 결정적 분류는 절대 변경하지 않음
-- **PGx 스크리닝** — 12개 유전자, CPIC Level A/B, 한국인 vs 서양인 유병률 비교
-- **변이 선별기** — AI Board에 들어갈 변이를 AMP/ACMG 기준으로 결정적으로 선별(protein-impacting gate, MMR/Lynch carve-out 포함)
+- **AI Clinical Board** — 로컬 MedGemma 27B(전문의) + SuperGemma4 31B(Board Chair) 하이브리드, Grounded Prompting, 결정적 분류는 절대 변경하지 않음
+- **PGx 스크리닝** — PharmCAT 3.2.0 통합 + 24개 유전자 한국인 PGx 테이블(CPIC Level A/B), 한국인 vs 서양인 유병률 비교
+- **Germline VCF 통합** — `--germline` 플래그로 체세포 + 생식세포 동시 분석, ClinVar P/LP point-level BED 기반 inherited variant 추출
+- **Trio / Quartet 지원** — `--ped` 플래그(strict mode)로 PED 파일 기반 가족구성원 해결, 트리오 FORMAT/GT에서 de novo 자동 검출
+- **De novo 증거** — 희귀질환 모드에서 PS2/PM6 발화, DDG2P 신경발달 패널(2,201 유전자) 카브아웃, SpliceAI ≥ 0.2 splice rescue
+- **변이 선별기** — AI Board에 들어갈 변이를 AMP/ACMG 기준으로 결정적으로 선별(protein-impacting gate, MMR/Lynch carve-out, 임상 우선순위 정렬)
 - **100% 오프라인** — 모든 핵심 DB가 로컬, 외부 API 호출은 선택 사항
 - **한국어/영어 리포트**
 - **리포트 재생성 도구** — 캐시된 JSON에서 Ollama 재호출 없이 HTML을 다시 렌더링
+
+### v2.4 신규 기능 요약
+
+v2.4는 BIKO를 체세포 전용 도구에서 **체세포 + 생식세포 듀얼 입력 파이프라인**으로 확장했습니다. 주요 변경:
+
+| 영역 | v2.3 이전 | v2.4 |
+|---|---|---|
+| Germline 입력 | 없음 | `--germline` VCF + ClinVar P/LP BED 기반 inherited variant 추출 |
+| PGx | 12개 유전자 빌트인 테이블만 | PharmCAT 3.2.0 통합(Java 17 자동 설치) + 24개 유전자 빌트인 fallback |
+| Trio | 파일명 휴리스틱 | `--ped` strict mode(트리오/쿼텟), de novo PS2/PM6 자동 발화 |
+| Rare Disease 패널 | OMIM 기반 | + DDG2P 2,201 유전자 신경발달 패널 카브아웃 |
+| Board Chair | MedGemma 단일 모델 | MedGemma 27B(전문의) + SuperGemma4 31B(Chair) 하이브리드 |
+| 리포트 정렬 | classification rank | `(board_admitted, classification_rank, hpo_score, ...)` — Board 채택 변이가 최상단 |
+
+세부 동작은 [CLAUDE.md](CLAUDE.md) v2.3 / v2.4 섹션을 참조하세요.
 
 ### 샘플 리포트 (직접 보기)
 
@@ -129,6 +147,17 @@ pip install -r requirements.txt
 ```
 
 **요구사항**: Python ≥ 3.10, 충분한 디스크 공간(gnomAD VCF 전체 ~700GB, 또는 염색체별 선택).
+
+**시스템 도구 의존성** (v2.4 PGx + germline 경로):
+
+| 도구 | 용도 | 비고 |
+|---|---|---|
+| `bcftools` | VCF 정규화 / 인덱싱 | 시스템 패키지 (apt/brew) |
+| `tabix` (htslib) | BED-narrowed germline 추출, PharmCAT pre-filter | 시스템 패키지 |
+| `pysam` | gnomAD VCF tabix 직접 쿼리 | `pip install pysam` (requirements에 포함) |
+| **Java 17** | PharmCAT 3.2.0 실행 | PharmCAT 첫 실행 시 자동 설치 시도 |
+
+PharmCAT JAR도 첫 실행 시 자동 다운로드되며, 이후 캐시됩니다. `--germline` 플래그를 사용하지 않으면 PharmCAT 경로는 건너뛰고 빌트인 PGx 테이블 fallback을 사용합니다.
 
 > **외부 LLM API 키 불필요** — BIKO는 Ollama + 로컬 DB만 사용합니다. `NCBI_API_KEY`는 선택 사항이며 ClinVar API rate limit 완화용입니다.
 
@@ -175,6 +204,23 @@ python scripts/orchestrate.py patient.vcf --mode rare-disease \
 ```
 
 HPO 표현형은 후보유전자 랭킹에 사용됩니다.
+
+### Germline VCF + Trio (v2.4)
+
+생식세포 VCF와 PED 파일을 함께 제공하면 PGx(PharmCAT)와 de novo 검출이 활성화됩니다.
+
+```bash
+python scripts/orchestrate.py proband.vcf.gz \
+  --germline germline.vcf.gz \
+  --ped family.ped \
+  --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 \
+  -o report.html --skip-api
+```
+
+- `--germline` — PharmCAT 3.2.0이 자동 실행되며, ClinVar P/LP point-level BED와 교차하여 inherited variant 블록을 채웁니다. 생략 시 빌트인 PGx 테이블로 fallback.
+- `--ped` — strict mode로 트리오/쿼텟을 해결합니다. 모호한 역할이 있으면 즉시 실패합니다. 생략 시 파일명 휴리스틱(`*_proband.vcf`, `*_father.vcf`, ...)으로 fallback합니다.
+- 트리오가 해결되면 `parse_vcf`가 FORMAT/GT에서 de novo를 자동 검출하고, ACMG 엔진이 PS2/PM6를 발화합니다. DDG2P 신경발달 패널 유전자는 별도 카브아웃이 적용됩니다.
 
 ### AI Clinical Board 포함
 

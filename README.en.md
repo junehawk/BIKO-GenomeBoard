@@ -99,12 +99,30 @@ These two principles together mean LLM hallucinations cannot leak into variant c
 - **TMB calculation** — FoundationOne CDx methodology, High/Intermediate/Low auto-classification
 - **CNV/SV analysis** — AnnotSV TSV → ACMG CNV 2020 Class 1–5
 - **HPO phenotype ranking** — 329K+ gene-phenotype associations, offline SQLite
-- **AI Clinical Board** — local MedGemma 27B multi-specialist system (4 specialists + Board Chair), Grounded Prompting, never alters the deterministic classification
-- **PGx screening** — 12 genes, CPIC Level A/B, Korean vs Western prevalence comparison
-- **Variant selector** — deterministic pre-filter that decides which variants reach the AI Board (protein-impacting consequence gate, MMR/Lynch carve-out)
+- **AI Clinical Board** — local MedGemma 27B (specialists) + SuperGemma4 31B (Board Chair) hybrid, Grounded Prompting, never alters the deterministic classification
+- **PGx screening** — PharmCAT 3.2.0 integration + 24-gene Korean PGx table (CPIC Level A/B), Korean vs Western prevalence comparison
+- **Germline VCF integration** — `--germline` flag enables joint somatic + germline analysis; inherited variants extracted against a ClinVar P/LP point-level BED
+- **Trio / quartet support** — `--ped` flag (strict mode) resolves family roles from a PED file; trio FORMAT/GT enables automatic de-novo detection
+- **De novo evidence** — in rare-disease mode, PS2/PM6 fire on confirmed/assumed de novo, DDG2P neurodevelopmental panel (2,201 genes) carve-out, SpliceAI ≥ 0.2 splice rescue
+- **Variant selector** — deterministic pre-filter that decides which variants reach the AI Board (protein-impacting consequence gate, MMR/Lynch carve-out, clinical-priority sort)
 - **100% offline** — all core databases local, external API calls are opt-in
 - **Korean / English report output**
 - **Report regeneration tool** — re-render HTML from a cached run JSON without calling Ollama again
+
+### v2.4 highlights
+
+v2.4 grew BIKO from a somatic-only tool into a **dual-input pipeline (somatic + germline)**:
+
+| Area | Pre-v2.3 | v2.4 |
+|---|---|---|
+| Germline input | none | `--germline` VCF + ClinVar P/LP BED inherited-variant extraction |
+| PGx | 12-gene builtin table only | PharmCAT 3.2.0 (Java 17 auto-install) + 24-gene builtin fallback |
+| Trio | filename heuristic | `--ped` strict mode (trio/quartet), automatic de-novo PS2/PM6 |
+| Rare-disease panel | OMIM-only | + DDG2P 2,201-gene neurodevelopmental panel carve-out |
+| Board Chair | MedGemma single model | MedGemma 27B (specialists) + SuperGemma4 31B (Chair) hybrid |
+| Report sort | classification rank | `(board_admitted, classification_rank, hpo_score, ...)` — Board picks float to top |
+
+See the v2.3 / v2.4 section in [CLAUDE.md](CLAUDE.md) for implementation details.
 
 ### Sample reports (see them first)
 
@@ -129,6 +147,17 @@ pip install -r requirements.txt
 ```
 
 **Requirements**: Python ≥ 3.10, enough disk for gnomAD VCFs (~700 GB full, or chromosome-sliced).
+
+**System-tool dependencies** (v2.4 PGx + germline path):
+
+| Tool | Used for | Notes |
+|---|---|---|
+| `bcftools` | VCF normalisation / indexing | system package (apt/brew) |
+| `tabix` (htslib) | BED-narrowed germline extraction, PharmCAT pre-filter | system package |
+| `pysam` | gnomAD VCF tabix direct query | `pip install pysam` (in requirements) |
+| **Java 17** | PharmCAT 3.2.0 runtime | auto-installed by the runner on first PharmCAT invocation |
+
+The PharmCAT JAR is also auto-downloaded on first run and cached. If `--germline` is omitted, the PharmCAT path is skipped entirely and the builtin PGx table fallback is used.
 
 > **No external LLM API keys required** — BIKO uses local Ollama + local databases only. `NCBI_API_KEY` is optional, for ClinVar API rate-limit relief.
 
@@ -175,6 +204,23 @@ python scripts/orchestrate.py patient.vcf --mode rare-disease \
 ```
 
 HPO terms drive the candidate-gene ranking.
+
+### Germline VCF + trio (v2.4)
+
+Pass a germline VCF and a PED file alongside the proband VCF to enable PharmCAT-driven PGx and trio-based de-novo detection:
+
+```bash
+python scripts/orchestrate.py proband.vcf.gz \
+  --germline germline.vcf.gz \
+  --ped family.ped \
+  --mode rare-disease \
+  --hpo HP:0001250,HP:0001263 \
+  -o report.html --skip-api
+```
+
+- `--germline` — PharmCAT 3.2.0 runs automatically and the inherited-variant block is filled from a ClinVar P/LP point-level BED intersection. If omitted, the pipeline falls back to the builtin PGx table.
+- `--ped` — strict-mode trio / quartet resolution. Any role that cannot be unambiguously resolved from the PED file raises immediately. If omitted, the parser falls back to filename heuristics (`*_proband.vcf`, `*_father.vcf`, ...).
+- When the trio resolves, `parse_vcf` reads FORMAT/GT to flag de-novo variants and the ACMG engine fires PS2 / PM6. DDG2P neurodevelopmental-panel genes get an additional admission carve-out.
 
 ### With AI Clinical Board
 
