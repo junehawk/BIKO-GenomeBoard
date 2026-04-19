@@ -124,11 +124,191 @@ Deferred to v2.3 (long-term, per user 2026-04-14):
   forward-compat gate for v2.3 — leave it default-false. Do not add
   PHI persistence paths without an explicit v2.3 ticket.
 
+## v2.3 / v2.4 — germline integration & curator expansion
+
+v2.3 and v2.4 extended BIKO from a somatic-VCF tool into a dual-input
+pipeline (somatic + germline) and filled the deterministic-curator
+side of the rare-disease and PGx paths. The Phase A inversion from
+v2.2 still holds: every treatment / drug row originates from a curator,
+never from free-form LLM generation.
+
+### --germline VCF + inherited variant extraction
+
+`orchestrate.py` accepts an optional `--germline <vcf>` alongside the
+primary somatic / proband VCF. In `--mode rare-disease`,
+`scripts/pipeline/extract_germline.py::extract_inherited_variants`
+intersects the germline VCF against a target BED and yields
+inherited-variant rows that flow through the same ACMG path as the
+proband variants. The somatic VCF still drives Tier I–IV (cancer mode)
+or proband classification (rare-disease mode); the germline VCF
+populates the inherited block and the PGx path. When `--germline` is
+omitted in cancer or rare-disease mode the pipeline emits a single
+warning explaining that PGx accuracy degrades without a germline call
+set, then continues with the somatic input only.
+
+The target BED for germline extraction is **point-level** (one row per
+ClinVar P/LP position) with a 5000-variant cap. Earlier gene-span
+BEDs ran tabix over hundreds of kilobases per gene, which made the
+extraction run for tens of minutes on whole-genome germline VCFs.
+Do not revert to gene-span BEDs — see commit `9c5e9bb` for the
+optimisation history.
+
+The extracted inherited variants carry their gene assignment from the
+BED's 4th column (gene symbol). When the BED 4th column is empty the
+extractor falls back to the VCF's annotation gene; do not remove this
+fallback, it is what allows older annotated germline VCFs (no gene in
+INFO) to still produce gene-keyed rows in the report (commit `65c6057`).
+
+### PharmCAT 3.2.0 integration
+
+`scripts/pharma/pharmcat_runner.py` invokes Oracle PharmCAT 3.2.0 over
+the germline VCF for the curator-grade PGx path. Setup is automated:
+the runner installs Java 17 on first use if `java -version` reports
+< 17, and downloads the PharmCAT JAR on first run. `pgx_source` in
+the report metadata distinguishes `"pharmcat"` (full PharmCAT pipeline
+ran) from `"builtin"` (fallback to the in-repo `korean_pgx_table.json`
+when PharmCAT is unavailable or the germline VCF is missing).
+
+PharmCAT requires VCF positions to be limited or it walks the entire
+genome and times out at the harness's 120 s ceiling. Before invoking
+PharmCAT the runner pre-filters the germline VCF with `tabix` against
+~1000 PharmCAT-relevant positions. **Do not remove the pre-filter** —
+without it the runner times out on whole-genome germline VCFs and the
+PGx block silently falls back to builtin. See `9c5e9bb`.
+
+When PharmCAT runs, the runner v3 parser merges the PharmCAT phenotype
+output with the builtin metadata table so Korean-vs-Western prevalence
+and clinical-impact text from `korean_pgx_table.json` survive in the
+report alongside the diplotype call.
+
+### 12-gene PGx gap fill
+
+`data/korean_pgx_table.json` was extended in v2.4 to cover the
+PharmCAT gene set: DPYD, TPMT, HLA-A, CYP2B6, CYP4F2, ABCG2, NAT2,
+CACNA1S, CFTR, CYP3A4, MT-RNR1, RYR1 — bringing the total to 24
+genes. Each entry now carries a `default_phenotype` field used when
+PharmCAT is unavailable. The previous hardcoded `elif` chain in
+`scripts/pharma/korean_pgx.py` was replaced by data-driven lookup
+against this field (commit `decbec3`); new genes are added by editing
+JSON, not Python.
+
+### --ped CLI + strict-mode trio / quartet
+
+`scripts/intake/parse_ped.py` resolves trio (proband + 2 parents) and
+quartet (+ 1 sibling) topologies from a standard PED file. The
+`--ped` CLI flag is **strict mode**: when `--ped` is supplied the
+parser raises if any role cannot be resolved unambiguously from the
+file. When `--ped` is omitted, the parser falls back to filename
+heuristics (`*_proband.vcf`, `*_father.vcf`, ...) for backward
+compatibility with the pre-v2.4 sample layout.
+
+Do **not** remove the strict mode and route everything through the
+filename fallback — strict mode is the only code path that gives a
+loud failure when a PED file disagrees with the trio expectation.
+See `44027af` for the rationale.
+
+### De novo evidence codes (PS2 / PM6 / DDG2P / SpliceAI)
+
+In rare-disease mode with a resolved trio, `parse_vcf` reads the
+trio FORMAT/GT cells and computes a de-novo flag per variant. The
+ACMG engine then fires:
+
+- **PS2** — confirmed de novo (both parents 0/0, proband het) in a
+  gene with a maternally-or-paternally-confirmed disease association
+  and an established gene–disease link.
+- **PM6** — assumed de novo (parental phenotype absent but parental
+  genotype not biologically confirmed) in the same gene set.
+- **DDG2P carve-out** — variants in genes on the DDG2P
+  neurodevelopmental panel (2,201 admitted genes, ingested in
+  `3f34ec0`) are admitted to the rare-disease selector even when
+  proband-only evidence would otherwise leave them at VUS, provided
+  de novo (PS2/PM6) fires or the gnomAD v4.1 constraint OR-branch is
+  satisfied (`693cc23`).
+- **SpliceAI rescue** — splice-region and synonymous variants are
+  rescued at `delta_max >= 0.2` (Tavtigian et al. 2023 PP3-moderate
+  threshold) from `v["in_silico"]["spliceai_max"]`. This is the same
+  rescue introduced in v2.2 B1 but now also applies to the rare-disease
+  selector path.
+
+The report renders these as **de-novo badges** on the variant card
+(`4592758`). The badges are driven by `selection_reason_list`, which
+the Board selector writes back to `report_data` after admitting a
+variant (`bb9433e`); without this write-back the report would show
+zero badges even when the selector admitted a de-novo variant.
+
+### Clinical priority sort + board-admitted VUS promotion
+
+After the Clinical Board selection completes, `report_data` is
+re-sorted by clinical priority before render:
+
+```
+(board_admitted, classification_rank, hpo_score, has_gene, variant_id)
+```
+
+`board_admitted` is the primary key so any variant the Board admits
+floats to the top of the report regardless of classification rank
+(commit `a0240c9`). Board-admitted VUS are also auto-promoted from
+the `detailed_variants` block into the headline variant table
+(`65c6057`) — without the promotion the report would surface a
+Board recommendation for a variant the reader could not find on
+the first page.
+
+### MedGemma + SuperGemma4 hybrid Board config
+
+The Clinical Board now runs a **two-model hybrid**: domain agents
+(Therapeutic Target Analyst, Tumor Genomics Specialist, PGx
+Specialist, Clinical Evidence Analyst, Variant Pathologist, Disease
+Geneticist, Literature Analyst) all run on **MedGemma 27B**; the
+Board Chair runs on **SuperGemma4 31B**. The split was introduced in
+`7290586` because SuperGemma4 produced more coherent narrative
+synthesis than MedGemma at the Chair seam, while MedGemma kept its
+domain-grounding edge for the agent layer.
+
+The hybrid merge step (`0a21386`) preserves the Chair narrative when
+the deterministic curator and the LLM Chair disagree on row count —
+the Chair narrative is kept, but the curator rows backstop missing
+treatment lines. Do not let merge logic drop the Chair narrative when
+falling back to curated rows; the deterministic Jinja renderer
+(`template_renderer_chair.render_from_curated()`) is only the last
+resort, used when the Chair emits zero rows.
+
+### Literature Analyst CIViC grounding
+
+The Rare Disease Board's Literature Analyst is now grounded against
+the local CIViC build (4,811 evidence_statements). Free-form prose
+that names a PMID is checked against CIViC's evidence corpus before
+emission (`bb8ba8d`). Literature claims that cannot be matched to a
+known evidence statement are dropped, mirroring the curate-then-narrate
+contract that Phase A established for treatments.
+
+### ClinGen column-map CSV parser
+
+The ClinGen ingest now parses the public CSV export by **header
+name** rather than column index (`eb4c760`). When ClinGen reorders
+columns in a future export, the build no longer silently mis-loads
+fields — the loader looks up `MOI`, `Disease`, `GENE_SYMBOL`,
+etc. from the header. `setup_databases.sh` was updated to pass the
+CSV path to the new parser; the legacy positional parser is gone.
+
+### Patient-metadata flags (still deferred)
+
+v2.4 does **not** wire `--patient-name`, `--patient-dob`, `--patient-mrn`,
+etc. The `reporting.persist_patient_metadata` config flag remains
+default-false. The `--ped` flag is the closest v2.4 came to patient
+metadata, and it deliberately stays scoped to PED relationship
+resolution — it does not introduce a PHI-persistence path.
+
 ## Rollback
 
 The rollback checkpoint for the entire v2.2 Phase A + B stack is git
 tag **`pre-v2.2-phaseA`**. `git checkout pre-v2.2-phaseA` returns the
 repo to the last v2.1 state.
+
+The v2.4 work landed incrementally on `main` between commits `8ec13eb`
+(2026-04-15, PharmCAT integration) and `a0240c9` (2026-04-19,
+clinical priority sort). There is no consolidated `pre-v2.4` tag
+yet — for a clean rollback, target `pre-v2.2-phaseA` and replay the
+desired v2.3/v2.4 commits selectively.
 
 ## Pre-push checklist — run these BEFORE `git push`
 
@@ -202,3 +382,21 @@ Special notes:
   (above) first. `ruff format` missed on a single edited file is
   the #1 cause of CI red on this repo — cheaper to run the local
   commands than to chase a CI failure notification.
+- Do **not** remove the PharmCAT pre-filter (tabix-narrowed germline
+  VCF) — without it, PharmCAT walks the whole genome and trips the
+  120 s timeout, which silently degrades the PGx block to the builtin
+  fallback. See commit `9c5e9bb`.
+- Do **not** revert the ClinVar P/LP target BED back to gene-span
+  ranges. The point-level (one row per P/LP position) BED with the
+  5000-variant cap is what makes whole-genome germline extraction
+  finish in seconds instead of tens of minutes.
+- Do **not** drop the `selection_reason_list` write-back from the
+  Board selector to `report_data`. Without it, the de-novo /
+  promoted-VUS badges in the rare-disease report render empty even
+  when the selector admitted a variant for those reasons (commit
+  `bb9433e`).
+- Do **not** route the trio-resolution path solely through the
+  filename heuristic and remove `--ped` strict mode. Strict mode is
+  the only path that fails loudly when a PED file disagrees with the
+  trio expectation; the heuristic is the fallback for legacy sample
+  layouts only.
