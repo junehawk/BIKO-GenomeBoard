@@ -1,5 +1,5 @@
 # tests/test_acmg_logic.py
-from scripts.classification.acmg_engine import classify_variant, check_clinvar_conflict
+from scripts.classification.acmg_engine import check_clinvar_conflict, classify_variant
 from scripts.common.models import AcmgEvidence
 
 

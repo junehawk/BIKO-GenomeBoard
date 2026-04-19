@@ -11,8 +11,9 @@ Reference: Li MM et al. J Mol Diagn. 2017;19(1):4-23.
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+
 from scripts.clinical.oncokb import get_cancer_gene_info
-from scripts.db.query_civic import is_hotspot, extract_protein_position
+from scripts.db.query_civic import extract_protein_position, is_hotspot
 
 logger = logging.getLogger(__name__)
 

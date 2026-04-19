@@ -12,7 +12,6 @@ from __future__ import annotations
 import inspect
 from unittest.mock import MagicMock
 
-
 from scripts.clinical_board.agents.board_chair import BoardChair
 
 

@@ -1,6 +1,6 @@
 # tests/test_pharmgkb.py
-from scripts.pharma.query_pharmgkb import query_pharmgkb
 from scripts.common.models import Variant
+from scripts.pharma.query_pharmgkb import query_pharmgkb
 
 
 def test_query_pharmgkb_found(mocker):

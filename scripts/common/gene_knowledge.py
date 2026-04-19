@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Dict, Optional
+
 from scripts.common.config import get
 
 _KNOWLEDGE = None

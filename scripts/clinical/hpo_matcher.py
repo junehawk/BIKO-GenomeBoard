@@ -2,6 +2,7 @@
 
 import logging
 from typing import Dict, List
+
 from scripts.common.api_utils import fetch_with_retry
 
 logger = logging.getLogger(__name__)

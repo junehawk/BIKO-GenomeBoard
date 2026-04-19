@@ -1,6 +1,7 @@
 # tests/conftest.py
 import pytest
-from scripts.common.models import Variant, FrequencyData
+
+from scripts.common.models import FrequencyData, Variant
 
 
 @pytest.fixture

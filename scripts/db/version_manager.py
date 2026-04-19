@@ -1,11 +1,12 @@
 """Collect and manage database version metadata for reports."""
 
 import json
-import sqlite3
 import logging
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

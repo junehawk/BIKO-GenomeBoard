@@ -13,7 +13,6 @@ import pytest
 
 from scripts.db import build_pm1_hotspots as bph
 
-
 PMID_RE = re.compile(r"PMID\s+\d+")
 ALLOWED_STRENGTHS = {"moderate", "supporting"}
 

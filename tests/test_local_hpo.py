@@ -1,9 +1,10 @@
 # tests/test_local_hpo.py
 """Tests for the local HPO gene-phenotype SQLite DB."""
 
+import os
 import sqlite3
 import tempfile
-import os
+
 import pytest
 
 

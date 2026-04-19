@@ -17,7 +17,6 @@ import pytest
 from scripts.intake.parse_ped import PedEntry, parse_ped, resolve_trio
 from scripts.intake.parse_vcf import parse_vcf
 
-
 # ─── parse_ped ────────────────────────────────────────────────────────────
 
 

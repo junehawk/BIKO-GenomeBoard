@@ -11,7 +11,6 @@ from __future__ import annotations
 import dataclasses
 import json
 
-
 from scripts.clinical_board.models import AgentOpinion, CancerBoardOpinion
 
 

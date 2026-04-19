@@ -1,9 +1,10 @@
 """Query local ClinVar SQLite database."""
 
-import sqlite3
 import logging
-from typing import Optional, Dict, List, Set
+import sqlite3
 from pathlib import Path
+from typing import Dict, List, Optional, Set
+
 from scripts.common.config import get
 from scripts.common.hgvs_utils import extract_protein_position
 from scripts.common.models import Variant

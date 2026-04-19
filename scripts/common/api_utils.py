@@ -1,9 +1,11 @@
 # scripts/common/api_utils.py
+import threading
+import time
+from typing import Optional
+
 import requests
 import requests.exceptions
-import time
-import threading
-from typing import Optional
+
 from scripts.common.config import get
 
 _session = None

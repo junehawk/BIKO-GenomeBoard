@@ -8,7 +8,6 @@ import pytest
 
 from scripts.common.models import Variant
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -185,6 +184,7 @@ def test_get_db_version(test_db_path, monkeypatch):
 def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
     """Run orchestrate.run_pipeline with annotation.source=local using the test DB."""
     import yaml
+
     from scripts.common.config import reset
 
     # Write a minimal config pointing to the test DB

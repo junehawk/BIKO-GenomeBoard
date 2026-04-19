@@ -12,7 +12,6 @@ import os
 import sqlite3
 from typing import Iterable
 
-
 _HEADER = "== PRIOR BOARD KNOWLEDGE =="
 _ANCHOR_WARNING = (
     "⚠️  참고 자료 (reference only) — 과거 보드 판단은 앵커링 편향을 피하기 위해 "

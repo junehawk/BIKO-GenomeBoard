@@ -4,13 +4,14 @@ import logging
 import os
 import re
 from typing import List, Optional, Tuple
+
 from scripts.common.models import Variant
 from scripts.intake.parse_annotation import (
-    parse_csq_header,
-    parse_ann_header,
-    parse_csq_value,
-    parse_ann_value,
     format_consequence,
+    parse_ann_header,
+    parse_ann_value,
+    parse_csq_header,
+    parse_csq_value,
 )
 
 logger = logging.getLogger(__name__)
@@ -493,8 +494,8 @@ def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     vcf_path = sys.argv[1] if len(sys.argv) > 1 else "data/sample_vcf/demo_variants.vcf"
     variants = parse_vcf(vcf_path)

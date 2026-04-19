@@ -136,8 +136,8 @@ def test_board_chair_cancer_mode():
 
 def test_render_cancer_board_opinion():
     """CancerBoardOpinion renders treatment-focused HTML."""
-    from scripts.clinical_board.render import render_board_opinion_html
     from scripts.clinical_board.models import AgentOpinion
+    from scripts.clinical_board.render import render_board_opinion_html
 
     opinion = CancerBoardOpinion(
         therapeutic_implications="EGFR L858R — TKI sensitive",
@@ -229,8 +229,8 @@ def test_render_includes_selection_metadata_rare_disease():
 
 def test_agent_panel_placeholder_when_findings_empty():
     """AgentOpinion panels with empty findings render a grey italic placeholder."""
-    from scripts.clinical_board.render import render_board_opinion_html
     from scripts.clinical_board.models import AgentOpinion
+    from scripts.clinical_board.render import render_board_opinion_html
 
     empty_agent = AgentOpinion(
         agent_name="Variant Pathologist",
@@ -260,8 +260,8 @@ def test_agent_panel_placeholder_when_findings_empty():
 
 def test_agent_panel_normal_when_findings_present():
     """AgentOpinion panels with findings do NOT emit the placeholder message."""
-    from scripts.clinical_board.render import render_board_opinion_html
     from scripts.clinical_board.models import AgentOpinion
+    from scripts.clinical_board.render import render_board_opinion_html
 
     agent = AgentOpinion(
         agent_name="Variant Pathologist",

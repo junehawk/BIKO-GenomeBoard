@@ -1,11 +1,12 @@
 # scripts/clinical/query_clinvar.py
 import logging
 import os
-from typing import Optional, Dict, List
-from scripts.common.models import Variant
+from typing import Dict, List, Optional
+
 from scripts.common.api_utils import fetch_with_retry
-from scripts.common.config import get
 from scripts.common.cache import get_cached, set_cached
+from scripts.common.config import get
+from scripts.common.models import Variant
 
 CLINVAR_ESEARCH = get("api.clinvar_esearch", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi")
 CLINVAR_ESUMMARY = get("api.clinvar_esummary", "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi")
@@ -132,8 +133,8 @@ def query_clinvar(variant: Variant) -> Dict:
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.clinical.query_clinvar 'chr17:7577120 G>A'"}))

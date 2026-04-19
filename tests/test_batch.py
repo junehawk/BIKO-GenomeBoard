@@ -67,7 +67,7 @@ def test_collect_unique_variants():
 
     Total = 9 variant references, Unique = 7 (TP53 and CFTR appear twice).
     """
-    from scripts.orchestrate import _discover_samples, _collect_unique_variants
+    from scripts.orchestrate import _collect_unique_variants, _discover_samples
 
     samples = _discover_samples(str(BATCH_DIR))
     unique_variants, sample_map = _collect_unique_variants(samples)

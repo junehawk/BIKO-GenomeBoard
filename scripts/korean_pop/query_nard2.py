@@ -10,8 +10,9 @@ TSV format: chrom  pos  ref  alt  frequency
 
 import threading
 from typing import Optional
-from scripts.common.models import Variant
+
 from scripts.common.config import get
+from scripts.common.models import Variant
 
 _NARD2_CACHE: dict = {}
 _NARD2_LOCK = threading.Lock()
@@ -47,8 +48,8 @@ def query_nard2(variant: Variant, nard2_path: str = None) -> Optional[float]:
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_nard2 'chr17:7675088 C>A' [nard2_path]"}))

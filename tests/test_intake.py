@@ -1,7 +1,8 @@
 # tests/test_intake.py
 from pathlib import Path
-from scripts.intake.parse_vcf import parse_vcf
+
 from scripts.intake.parse_text import parse_text
+from scripts.intake.parse_vcf import parse_vcf
 
 DEMO_VCF = Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants.vcf"
 

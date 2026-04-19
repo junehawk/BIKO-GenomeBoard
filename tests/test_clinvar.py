@@ -1,5 +1,5 @@
 # tests/test_clinvar.py
-from scripts.clinical.query_clinvar import query_clinvar, _search_clinvar_variant
+from scripts.clinical.query_clinvar import _search_clinvar_variant, query_clinvar
 from scripts.common.models import Variant
 
 SAMPLE_CLINVAR_RESPONSE = {

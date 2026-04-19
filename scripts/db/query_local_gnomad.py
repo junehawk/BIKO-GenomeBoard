@@ -1,9 +1,10 @@
 """Query local gnomAD SQLite database."""
 
-import sqlite3
 import logging
-from typing import Dict, Optional
+import sqlite3
 from pathlib import Path
+from typing import Dict, Optional
+
 from scripts.common.config import get
 from scripts.common.models import Variant
 

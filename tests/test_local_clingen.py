@@ -1,5 +1,6 @@
 import sqlite3
 import tempfile
+
 import pytest
 
 
@@ -101,9 +102,10 @@ def test_empty_shell_clingen_db_returns_none_and_logs_once(tmp_path, caplog):
     setup_databases.sh shell-without-CSV case), queries must still return
     None without raising, and emit exactly ONE warning per run."""
     import sqlite3 as _sq
+
     from scripts.db.query_local_clingen import (
-        get_gene_validity_local,
         get_gene_disease_pairs,
+        get_gene_validity_local,
         reset_availability_cache,
     )
 

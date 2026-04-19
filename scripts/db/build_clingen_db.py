@@ -2,10 +2,10 @@
 """Build local ClinGen gene-validity SQLite database."""
 
 import csv
-import sqlite3
 import logging
-from pathlib import Path
+import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

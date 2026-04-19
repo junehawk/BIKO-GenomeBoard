@@ -5,14 +5,12 @@ import json
 from pathlib import Path
 from unittest.mock import patch
 
-
 from scripts.counselor.generate_pdf import generate_report_html
 from scripts.tools.fetch_references import (
     KNOWN_REFERENCES,
     fetch_gene_references,
     search_pubmed,
 )
-
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 

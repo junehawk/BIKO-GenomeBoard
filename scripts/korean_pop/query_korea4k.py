@@ -10,8 +10,9 @@ TSV format: chrom  pos  ref  alt  frequency
 
 import threading
 from typing import Optional
-from scripts.common.models import Variant
+
 from scripts.common.config import get
+from scripts.common.models import Variant
 
 _KOREA4K_CACHE: dict = {}
 _KOREA4K_LOCK = threading.Lock()
@@ -47,8 +48,8 @@ def query_korea4k(variant: Variant, korea4k_path: str = None) -> Optional[float]
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     if len(sys.argv) < 2:
         print(

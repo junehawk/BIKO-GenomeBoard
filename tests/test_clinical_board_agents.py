@@ -4,7 +4,6 @@ from unittest.mock import MagicMock
 
 from scripts.clinical_board.models import AgentOpinion, BoardOpinion
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -397,10 +396,10 @@ def test_all_agents_have_korean_system_prompt():
     """All domain agents must have system prompts containing Korean text."""
     mock_client = MagicMock()
 
-    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
-    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
+    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
 
     agents = [
         VariantPathologist(client=mock_client),
@@ -441,10 +440,10 @@ def test_agent_names_and_domains():
     """Verify all agents have correct names and domains."""
     mock_client = MagicMock()
 
-    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
-    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
+    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
 
     expected = [
         (VariantPathologist, "Variant Pathologist", "variant_pathology"),

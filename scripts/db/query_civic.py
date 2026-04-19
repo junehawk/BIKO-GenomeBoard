@@ -1,10 +1,11 @@
 """Query local CIViC database for gene descriptions, variant evidence, and hotspots."""
 
-import sqlite3
-import re
 import logging
-from typing import Dict, List, Optional
+import re
+import sqlite3
 from pathlib import Path
+from typing import Dict, List, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
-from scripts.korean_pop.query_krgdb import query_krgdb
 from scripts.common.models import Variant
+from scripts.korean_pop.query_krgdb import query_krgdb
 
 
 def test_query_krgdb_found(tmp_path):

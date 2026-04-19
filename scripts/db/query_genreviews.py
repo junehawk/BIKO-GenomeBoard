@@ -1,8 +1,9 @@
 """Query GeneReviews local SQLite database."""
 
-import sqlite3
 import logging
+import sqlite3
 from typing import Dict, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

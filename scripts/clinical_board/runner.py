@@ -6,18 +6,18 @@ import os
 import time
 from typing import Optional, Union
 
-from scripts.clinical_board.models import (
-    AgentOpinion,
-    BoardOpinion,
-    CancerBoardOpinion,
-)
-from scripts.clinical_board.ollama_client import OllamaClient
 from scripts.clinical_board.case_briefing import build_case_briefing
 from scripts.clinical_board.curated_treatments import curate_treatments
 from scripts.clinical_board.domain_sheets import build_domain_sheet
 from scripts.clinical_board.kb_query import query_prior_knowledge
 from scripts.clinical_board.knowledge_base import KnowledgeBase
+from scripts.clinical_board.models import (
+    AgentOpinion,
+    BoardOpinion,
+    CancerBoardOpinion,
+)
 from scripts.clinical_board.narrative_scrubber import scrub_opinion
+from scripts.clinical_board.ollama_client import OllamaClient
 from scripts.clinical_board.template_renderer_chair import render_from_curated
 from scripts.clinical_board.variant_selector import select_board_variants
 from scripts.common.config import get
@@ -33,10 +33,10 @@ def _load_agents(
 ):
     """Lazy-load domain agents for the given mode."""
     if mode == "cancer":
+        from scripts.clinical_board.agents.clinical_evidence import ClinicalEvidenceAnalyst
+        from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
         from scripts.clinical_board.agents.therapeutic_target import TherapeuticTargetAnalyst
         from scripts.clinical_board.agents.tumor_genomics import TumorGenomicsSpecialist
-        from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
-        from scripts.clinical_board.agents.clinical_evidence import ClinicalEvidenceAnalyst
 
         return [
             TherapeuticTargetAnalyst(client=client, model=model, language=language),
@@ -45,10 +45,10 @@ def _load_agents(
             ClinicalEvidenceAnalyst(client=client, model=model, language=language),
         ]
 
-    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
-    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
+    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
+    from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
 
     return [
         VariantPathologist(client=client, model=model, language=language),

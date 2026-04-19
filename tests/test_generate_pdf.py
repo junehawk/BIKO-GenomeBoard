@@ -1,7 +1,7 @@
 # tests/test_generate_pdf.py
 import copy
-from scripts.counselor.generate_pdf import generate_report_html
 
+from scripts.counselor.generate_pdf import generate_report_html
 
 # ── Shared fixture data ──────────────────────────────────────────────────────
 

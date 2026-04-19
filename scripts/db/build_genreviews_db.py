@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build GeneReviews SQLite from NCBI FTP identifier files."""
 
-import sqlite3
 import logging
-from pathlib import Path
+import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "data/db/genreviews.sqlite3"

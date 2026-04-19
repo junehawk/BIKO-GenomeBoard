@@ -1,8 +1,9 @@
 """Query local HPO SQLite database for gene-phenotype associations."""
 
-import sqlite3
 import logging
+import sqlite3
 from typing import Dict, List, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

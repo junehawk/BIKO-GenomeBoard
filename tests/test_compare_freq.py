@@ -1,5 +1,5 @@
-from scripts.korean_pop.compare_freq import compare_frequencies
 from scripts.common.models import FrequencyData
+from scripts.korean_pop.compare_freq import compare_frequencies
 
 
 def test_korean_rare_pm2():

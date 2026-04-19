@@ -1,5 +1,5 @@
-from scripts.korean_pop.query_gnomad import query_gnomad
 from scripts.common.models import Variant
+from scripts.korean_pop.query_gnomad import query_gnomad
 
 
 # Mock response using ac/an schema (gnomAD v4 format)

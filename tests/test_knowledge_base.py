@@ -2,7 +2,6 @@
 
 import sqlite3
 
-
 from scripts.db.build_kb_db import build_kb_db
 
 
@@ -239,8 +238,8 @@ def test_update_index_lists_gene_wikis(tmp_path):
 
 def test_query_prior_knowledge_found(tmp_path):
     """Prior knowledge returns formatted text for known variants."""
-    from scripts.clinical_board.knowledge_base import KnowledgeBase
     from scripts.clinical_board.kb_query import query_prior_knowledge
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
 
     db_path = tmp_path / "kb.sqlite3"
     build_kb_db(str(db_path))
@@ -280,8 +279,8 @@ def test_query_prior_knowledge_no_db():
 
 def test_query_prior_knowledge_mode_isolated(tmp_path):
     """Cancer entries do not leak into rare-disease queries."""
-    from scripts.clinical_board.knowledge_base import KnowledgeBase
     from scripts.clinical_board.kb_query import query_prior_knowledge
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
 
     db_path = tmp_path / "kb.sqlite3"
     build_kb_db(str(db_path))
@@ -301,8 +300,8 @@ def test_query_prior_knowledge_mode_isolated(tmp_path):
 
 def test_query_prior_knowledge_truncates(tmp_path):
     """max_chars truncation is respected."""
-    from scripts.clinical_board.knowledge_base import KnowledgeBase
     from scripts.clinical_board.kb_query import query_prior_knowledge
+    from scripts.clinical_board.knowledge_base import KnowledgeBase
 
     db_path = tmp_path / "kb.sqlite3"
     build_kb_db(str(db_path))

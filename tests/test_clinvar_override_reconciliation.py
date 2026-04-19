@@ -12,8 +12,8 @@ import pytest
 
 from scripts.classification.acmg_engine import (
     ClassificationResult,
-    apply_hotspot_conflict_reconciliation,
     _is_conflicting_status,
+    apply_hotspot_conflict_reconciliation,
 )
 
 

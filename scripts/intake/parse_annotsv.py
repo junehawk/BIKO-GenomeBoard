@@ -3,6 +3,7 @@
 import csv
 import logging
 from typing import Dict, List, Optional
+
 from scripts.common.models import StructuralVariant
 
 logger = logging.getLogger(__name__)

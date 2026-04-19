@@ -12,7 +12,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 DEFAULT_DB_PATH = "data/knowledge_base/kb.sqlite3"
 
 

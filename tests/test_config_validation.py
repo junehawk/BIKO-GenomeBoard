@@ -1,6 +1,7 @@
 """Tests for config.yaml schema validation."""
 
 import os
+
 import pytest
 
 
@@ -172,6 +173,7 @@ def test_load_real_config_no_errors():
 def test_load_config_wrong_type_logs_warning(tmp_path, caplog):
     """Wrong type for a threshold should log a warning but not raise."""
     import logging
+
     from scripts.common.config import load_config
 
     config_file = tmp_path / "config.yaml"
@@ -191,6 +193,7 @@ def test_load_config_wrong_type_logs_warning(tmp_path, caplog):
 def test_load_config_unknown_key_logs_warning(tmp_path, caplog):
     """Unknown top-level key should log a warning but not raise."""
     import logging
+
     from scripts.common.config import load_config
 
     config_file = tmp_path / "config.yaml"
@@ -198,5 +201,37 @@ def test_load_config_unknown_key_logs_warning(tmp_path, caplog):
     with caplog.at_level(logging.WARNING, logger="scripts.common.config"):
         config = load_config(config_path=str(config_file))
     assert any("future_feature" in r.message for r in caplog.records)
+    # Warning text should mention where to register a new section.
+    assert any("KNOWN_TOP_LEVEL_KEYS" in r.message for r in caplog.records)
     # Should still load successfully
     assert config is not None
+
+
+def test_real_config_yaml_has_no_unknown_top_level_keys():
+    """The real project config.yaml must not trigger unknown-key warnings.
+
+    Every top-level section present in config.yaml has to be registered in
+    KNOWN_TOP_LEVEL_KEYS so users do not see noise on every load. This test
+    catches the "added a new section to config.yaml but forgot to register
+    it" regression — Phase 1.1 of the v2.4 refactor introduced acmg /
+    pharmacogenomics / knowledge_base for exactly this reason.
+    """
+    from pathlib import Path
+
+    import yaml
+
+    from scripts.common.config_schema import KNOWN_TOP_LEVEL_KEYS, validate_config
+
+    config_path = Path(__file__).parent.parent / "config.yaml"
+    with open(config_path) as f:
+        raw_config = yaml.safe_load(f) or {}
+
+    unregistered = [k for k in raw_config if k not in KNOWN_TOP_LEVEL_KEYS]
+    assert unregistered == [], (
+        f"config.yaml has top-level keys not registered in KNOWN_TOP_LEVEL_KEYS: "
+        f"{unregistered}. Add them to scripts/common/config_schema.py."
+    )
+
+    messages = validate_config(raw_config)
+    unknown_warnings = [m for m in messages if "unknown top-level key" in m]
+    assert unknown_warnings == [], f"Unexpected unknown-key warnings: {unknown_warnings}"

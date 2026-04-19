@@ -1,9 +1,10 @@
 """Tests for OMIM genemap2 build and query modules."""
 
-import pytest
 from pathlib import Path
 
-from scripts.db.build_omim_genemap_db import build_db, _parse_phenotypes, _normalise_inheritance
+import pytest
+
+from scripts.db.build_omim_genemap_db import _normalise_inheritance, _parse_phenotypes, build_db
 from scripts.db.query_omim_genemap import get_gene_phenotypes, get_inheritance_patterns
 
 SAMPLE_FILE = Path(__file__).resolve().parent.parent / "data" / "db" / "sample_genemap2.txt"

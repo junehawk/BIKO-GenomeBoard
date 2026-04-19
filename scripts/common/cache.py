@@ -8,12 +8,13 @@ rather than spinning up parallel cache trees.
 """
 
 import json
+import logging
 import sqlite3
 import threading
 import time
-import logging
 from pathlib import Path
-from typing import Any, Optional, Dict
+from typing import Any, Dict, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

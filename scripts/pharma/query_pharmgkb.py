@@ -1,10 +1,11 @@
 # scripts/pharma/query_pharmgkb.py
-import time
 import threading
-from typing import Optional, Dict
-from scripts.common.models import Variant
+import time
+from typing import Dict, Optional
+
 from scripts.common.api_utils import fetch_with_retry
 from scripts.common.config import get
+from scripts.common.models import Variant
 
 PHARMGKB_API = get("api.pharmgkb", "https://api.pharmgkb.org/v1/data")
 _last_request_time = 0
@@ -44,8 +45,8 @@ def query_pharmgkb(variant: Variant) -> Optional[Dict]:
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.pharma.query_pharmgkb 'chr10:96541616 G>A' [gene]"}))

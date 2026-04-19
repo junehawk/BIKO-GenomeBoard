@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-
 # ---------------------------------------------------------------------------
 # Default ClinGen SVI 2022 thresholds
 # ---------------------------------------------------------------------------

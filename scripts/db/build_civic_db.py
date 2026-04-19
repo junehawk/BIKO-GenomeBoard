@@ -2,11 +2,11 @@
 """Build local CIViC SQLite database from downloaded TSV files."""
 
 import csv
-import sqlite3
 import logging
 import re
-from pathlib import Path
+import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

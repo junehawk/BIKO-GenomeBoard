@@ -2,11 +2,11 @@
 """Build local gnomAD SQLite database from sites VCF files."""
 
 import gzip
-import sqlite3
 import logging
+import sqlite3
 import sys
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 

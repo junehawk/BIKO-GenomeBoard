@@ -1,4 +1,5 @@
 import pytest
+
 from scripts.db.build_civic_db import build_db
 from scripts.db.query_civic import reset_civic_connection
 

@@ -18,14 +18,13 @@ from __future__ import annotations
 
 import pytest
 
+from scripts.classification.acmg_engine import ClassificationResult, apply_hotspot_conflict_reconciliation
 from scripts.classification.evidence_collector import (
     collect_additional_evidence,
     collect_denovo_evidence,
 )
-from scripts.classification.acmg_engine import apply_hotspot_conflict_reconciliation, ClassificationResult
-from scripts.common.ddg2p_panel import is_admitted_neurodev_gene, get_neurodev_info
+from scripts.common.ddg2p_panel import get_neurodev_info, is_admitted_neurodev_gene
 from scripts.common.models import Variant
-
 
 # ---------------------------------------------------------------------------
 # 1–3. parse_vcf INFO flag plumbing

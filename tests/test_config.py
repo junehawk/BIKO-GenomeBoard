@@ -1,6 +1,7 @@
 """Tests for centralized configuration management."""
 
 import os
+
 import pytest
 
 

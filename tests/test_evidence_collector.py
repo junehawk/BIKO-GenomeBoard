@@ -1,8 +1,8 @@
 # tests/test_evidence_collector.py
 """Tests for ACMG evidence collector module."""
 
-from scripts.common.models import Variant
 from scripts.classification.evidence_collector import collect_additional_evidence
+from scripts.common.models import Variant
 
 
 def _make_variant(**kwargs) -> Variant:

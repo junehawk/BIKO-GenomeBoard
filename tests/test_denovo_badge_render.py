@@ -19,7 +19,6 @@ from pathlib import Path
 import pytest
 from jinja2 import Environment, StrictUndefined
 
-
 _TEMPLATE_PATH = Path(__file__).resolve().parents[1] / "templates" / "rare-disease" / "report.html"
 
 

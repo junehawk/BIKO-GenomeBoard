@@ -1,13 +1,12 @@
 """Tests for OllamaClient — all Ollama interactions are mocked."""
 
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 import requests
 
 from scripts.clinical_board.ollama_client import OllamaClient, _extract_json
-
 
 # ── Fixtures ─────────────────────────────────────────────────────────────────
 

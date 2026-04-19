@@ -2,12 +2,13 @@
 """Tests for VEP CSQ / SnpEff ANN annotation parsing."""
 
 from pathlib import Path
+
 from scripts.intake.parse_annotation import (
-    parse_csq_header,
-    parse_ann_header,
-    parse_csq_value,
-    parse_ann_value,
     format_consequence,
+    parse_ann_header,
+    parse_ann_value,
+    parse_csq_header,
+    parse_csq_value,
 )
 from scripts.intake.parse_vcf import parse_vcf
 

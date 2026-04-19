@@ -15,7 +15,6 @@ import logging
 
 from scripts.intake.parse_vcf import parse_vcf
 
-
 _HEADER = (
     "##fileformat=VCFv4.1\n"
     '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'

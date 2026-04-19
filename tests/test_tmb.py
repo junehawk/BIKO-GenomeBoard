@@ -1,8 +1,9 @@
 """TMB calculation tests."""
 
-import pytest
 from dataclasses import dataclass
 from typing import Optional
+
+import pytest
 
 
 @dataclass

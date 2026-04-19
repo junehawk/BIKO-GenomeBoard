@@ -6,7 +6,6 @@ import pytest
 
 from scripts.clinical_board.case_briefing import build_case_briefing
 
-
 # ── Paths ────────────────────────────────────────────────────────────────────
 
 DEMO_VCF = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants_grch38_annotated.vcf")

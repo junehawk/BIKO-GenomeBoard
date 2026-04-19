@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build OMIM genemap2 gene-phenotype-inheritance SQLite database."""
 
+import logging
 import re
 import sqlite3
-import logging
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "data/db/omim_genemap.sqlite3"

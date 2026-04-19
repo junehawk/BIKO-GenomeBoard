@@ -1,8 +1,9 @@
 # scripts/common/models.py
 from __future__ import annotations
+
+import re
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-import re
 
 STRENGTH_MAP = {
     "PVS": "very_strong",

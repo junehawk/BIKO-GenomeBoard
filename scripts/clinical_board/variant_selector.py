@@ -28,11 +28,10 @@ from __future__ import annotations
 
 from typing import Optional
 
-from scripts.common.config import get
 from scripts.clinical.oncokb import is_cancer_gene
+from scripts.common.config import get
 from scripts.common.ddg2p_panel import is_admitted_neurodev_gene
 from scripts.db.query_civic import extract_protein_position, is_hotspot
-
 
 # ACMG SF v3.2 (Miller DT et al. 2023, Genet Med, PMID 37347242) —
 # conservative partial list covering highly actionable cardiac, cancer, and

@@ -1,6 +1,7 @@
 # tests/test_models.py
 import pytest
-from scripts.common.models import Variant, AcmgEvidence, FrequencyData, PgxResult
+
+from scripts.common.models import AcmgEvidence, FrequencyData, PgxResult, Variant
 
 
 def test_variant_from_string():

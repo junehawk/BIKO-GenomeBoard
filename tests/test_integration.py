@@ -1,14 +1,15 @@
 # tests/test_integration.py
 from pathlib import Path
-from scripts.intake.parse_vcf import parse_vcf
-from scripts.clinical.query_clinvar import query_clinvar
-from scripts.korean_pop.query_gnomad import query_gnomad
-from scripts.korean_pop.query_krgdb import query_krgdb, _KRGDB_CACHE
-from scripts.korean_pop.compare_freq import compare_frequencies
-from scripts.pharma.korean_pgx import check_korean_pgx
+
 from scripts.classification.acmg_engine import classify_variant
-from scripts.counselor.generate_pdf import generate_report_html
+from scripts.clinical.query_clinvar import query_clinvar
 from scripts.common.models import AcmgEvidence, FrequencyData
+from scripts.counselor.generate_pdf import generate_report_html
+from scripts.intake.parse_vcf import parse_vcf
+from scripts.korean_pop.compare_freq import compare_frequencies
+from scripts.korean_pop.query_gnomad import query_gnomad
+from scripts.korean_pop.query_krgdb import _KRGDB_CACHE, query_krgdb
+from scripts.pharma.korean_pgx import check_korean_pgx
 
 DEMO_VCF_PATH = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants.vcf")
 

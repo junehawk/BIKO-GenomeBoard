@@ -5,7 +5,6 @@ from pathlib import Path
 
 from scripts.counselor.generate_pdf import generate_report_html
 
-
 # ── Shared fixture data ──────────────────────────────────────────────────────
 
 MINIMAL_REPORT = {
@@ -132,8 +131,9 @@ def test_orchestrate_rare_disease_report_content(tmp_path):
 
 def test_rare_disease_mode_no_amp_tier(tmp_path):
     """Rare disease mode는 AMP tier 필드 없이 기존 방식 유지."""
-    from scripts.orchestrate import run_pipeline
     from pathlib import Path
+
+    from scripts.orchestrate import run_pipeline
 
     rare_vcf = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "rare_disease_demo.vcf")
     result = run_pipeline(

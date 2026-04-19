@@ -1,7 +1,8 @@
 # tests/test_api_utils.py
 from unittest.mock import MagicMock
-from scripts.common.api_utils import fetch_with_retry
+
 import scripts.common.api_utils as api_utils_mod
+from scripts.common.api_utils import fetch_with_retry
 
 
 def _mock_session(mocker, get_side_effect=None, get_return=None):

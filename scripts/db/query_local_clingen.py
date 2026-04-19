@@ -15,10 +15,11 @@ warning. On a 100-variant rare-disease run that was 200+ log lines per
 run of pure noise.
 """
 
-import sqlite3
 import logging
+import sqlite3
 from pathlib import Path
 from typing import Dict, List, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

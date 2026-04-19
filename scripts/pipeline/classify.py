@@ -2,19 +2,19 @@
 
 import logging
 
-from scripts.common.models import AcmgEvidence
 from scripts.classification.acmg_engine import (
-    classify_variant,
-    check_clinvar_conflict,
     apply_clinvar_override,
     apply_hotspot_conflict_reconciliation,
+    check_clinvar_conflict,
+    classify_variant,
 )
 from scripts.clinical.hpo_matcher import calculate_hpo_score, get_matching_hpo_terms
-from scripts.clinical.query_omim import query_omim
-from scripts.clinical.query_clingen import get_gene_validity
 from scripts.clinical.oncokb import get_cancer_gene_info
+from scripts.clinical.query_clingen import get_gene_validity
+from scripts.clinical.query_omim import query_omim
 from scripts.common.config import get
 from scripts.common.gene_knowledge import get_gene_info
+from scripts.common.models import AcmgEvidence
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
     """
     # Lazy imports for optional modules
     try:
-        from scripts.classification.in_silico import parse_in_silico_from_csq, generate_pp3_bp4
+        from scripts.classification.in_silico import generate_pp3_bp4, parse_in_silico_from_csq
 
         _has_in_silico = True
     except ImportError:
@@ -164,8 +164,8 @@ def classify_variants(variants, db_results, freq_results, intervar_data=None):
 
 def build_variant_records(variants, db_results, freq_results, classification_results, mode, hpo_results):
     """Build the variant_records list from per-variant results."""
-    from scripts.somatic.amp_tiering import amp_assign_tier
     from scripts.db.query_civic import get_predictive_evidence_for_tier
+    from scripts.somatic.amp_tiering import amp_assign_tier
 
     variant_records = []
     for variant in variants:

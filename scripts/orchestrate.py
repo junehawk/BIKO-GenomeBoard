@@ -20,28 +20,28 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.clinical.hpo_matcher import resolve_hpo_terms
+from scripts.common.config import get
+from scripts.common.models import FrequencyData
+from scripts.counselor.generate_pdf import generate_pdf, generate_report_html
+from scripts.db.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.korean_pop.compare_freq import compare_frequencies
-from scripts.clinical.hpo_matcher import resolve_hpo_terms
-from scripts.db.version_manager import get_all_db_versions
-from scripts.counselor.generate_pdf import generate_report_html, generate_pdf
-from scripts.common.models import FrequencyData
-from scripts.common.config import get
+from scripts.pipeline.batch import (
+    collect_unique_variants,
+    discover_samples,
+    run_batch_pipeline,
+)
+from scripts.pipeline.classify import (
+    build_summary,
+    build_variant_records,
+    classify_variants,
+    split_variants_for_display,
+    sv_to_dict,
+)
 
 # Pipeline modules (extracted from this file)
 from scripts.pipeline.query import query_variant_databases
-from scripts.pipeline.classify import (
-    classify_variants,
-    build_variant_records,
-    build_summary,
-    sv_to_dict,
-    split_variants_for_display,
-)
-from scripts.pipeline.batch import (
-    discover_samples,
-    collect_unique_variants,
-    run_batch_pipeline,
-)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("genomeboard")
@@ -325,7 +325,7 @@ def run_pipeline(
 
     # Calculate TMB (cancer mode only)
     if mode == "cancer":
-        from scripts.somatic.tmb import calculate_tmb, calculate_panel_size_from_bed
+        from scripts.somatic.tmb import calculate_panel_size_from_bed, calculate_tmb
 
         tmb_panel = panel_size_mb
         if bed_path:
@@ -352,8 +352,8 @@ def run_pipeline(
         report_data["clinical_note"] = clinical_note
     if clinical_board:
         try:
-            from scripts.clinical_board.runner import run_clinical_board
             from scripts.clinical_board.render import render_board_opinion_html
+            from scripts.clinical_board.runner import run_clinical_board
 
             _progress("[Board] Running Clinical Board diagnostic synthesis...")
             board_opinion = run_clinical_board(report_data, mode, language=board_lang)

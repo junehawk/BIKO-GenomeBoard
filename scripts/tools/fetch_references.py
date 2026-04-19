@@ -8,9 +8,9 @@ This script is NOT part of the automated pipeline.
 """
 
 import json
-import time
 import logging
-from typing import List, Dict, Optional
+import time
+from typing import Dict, List, Optional
 
 from scripts.common.api_utils import fetch_with_retry
 

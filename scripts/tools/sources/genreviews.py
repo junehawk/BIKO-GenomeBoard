@@ -3,6 +3,7 @@
 import logging
 import time
 from typing import Dict, Optional
+
 from scripts.common.api_utils import fetch_with_retry
 from scripts.common.config import get
 

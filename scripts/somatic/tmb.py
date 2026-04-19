@@ -9,6 +9,7 @@ FDA-approved FoundationOne CDx methodology.
 import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
+
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)

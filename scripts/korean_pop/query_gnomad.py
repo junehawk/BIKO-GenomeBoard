@@ -1,9 +1,11 @@
 import logging
-import requests
 from typing import Dict, Optional
-from scripts.common.models import Variant
-from scripts.common.config import get
+
+import requests
+
 from scripts.common.cache import get_cached, set_cached
+from scripts.common.config import get
+from scripts.common.models import Variant
 
 GNOMAD_API = get("api.gnomad", "https://gnomad.broadinstitute.org/api")
 
@@ -97,8 +99,8 @@ def query_gnomad(variant: Variant) -> Dict:
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_gnomad 'chr17:7577120 G>A'"}))

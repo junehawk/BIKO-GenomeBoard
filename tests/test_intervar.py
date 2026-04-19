@@ -1,11 +1,12 @@
 # tests/test_intervar.py
 """Tests for InterVar TSV parser."""
 
-import pytest
 from pathlib import Path
 
+import pytest
+
 from scripts.common.models import Variant
-from scripts.intake.parse_intervar import parse_intervar, get_intervar_evidence
+from scripts.intake.parse_intervar import get_intervar_evidence, parse_intervar
 
 SAMPLE_FILE = str(Path(__file__).parent.parent / "data" / "sample_intervar" / "sample_intervar_output.tsv")
 

@@ -1,6 +1,7 @@
 # scripts/intake/parse_text.py
 import re
 from typing import List
+
 from scripts.common.models import Variant
 
 

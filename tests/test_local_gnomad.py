@@ -8,7 +8,6 @@ import pytest
 
 from scripts.common.models import Variant
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -181,6 +180,7 @@ def test_get_db_version(test_db_path):
 def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
     """Run orchestrate.run_pipeline with annotation.source=local using test gnomAD DB."""
     import yaml
+
     from scripts.common.config import reset
 
     cfg = {

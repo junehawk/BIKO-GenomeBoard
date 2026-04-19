@@ -3,7 +3,6 @@
 
 import sqlite3
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -31,6 +30,7 @@ def _make_gnomad_db(db_path: str):
 def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
     """With both local DBs present, versions report local_db source for ClinVar & gnomAD."""
     import yaml
+
     from scripts.common.config import reset
 
     clinvar_db = str(tmp_path / "clinvar_test.sqlite3")
@@ -102,6 +102,7 @@ def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
 def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
     """When no local DBs are configured and skip_api=False, versions show api source."""
     import yaml
+
     from scripts.common.config import reset
 
     cfg = {
@@ -159,6 +160,7 @@ def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
 def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
     """skip_api=True with no local DBs → not_available source."""
     import yaml
+
     from scripts.common.config import reset
 
     cfg = {
@@ -214,6 +216,7 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
 def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
     """KRGDB file present → versions includes KRGDB with local_file source."""
     import yaml
+
     from scripts.common.config import reset
 
     krgdb_file = tmp_path / "krgdb_freq.tsv"
@@ -273,6 +276,7 @@ def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
 def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
     """ACMG entry is always present in versions dict."""
     import yaml
+
     from scripts.common.config import reset
 
     cfg = {
@@ -329,6 +333,7 @@ def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
 def test_report_shows_db_source_type(tmp_path, monkeypatch):
     """Rendered report HTML contains 'Local DB' text when local DBs are used."""
     import yaml
+
     from scripts.common.config import reset
 
     clinvar_db = str(tmp_path / "clinvar_test.sqlite3")
@@ -370,8 +375,8 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
     from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.db.version_manager import get_all_db_versions
 
     db_versions = get_all_db_versions(skip_api=True)
     report_data = {
@@ -413,6 +418,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
 def test_report_shows_build_date(tmp_path, monkeypatch):
     """Rendered report HTML contains the build date from the local ClinVar DB."""
     import yaml
+
     from scripts.common.config import reset
 
     clinvar_db = str(tmp_path / "clinvar_test.sqlite3")
@@ -454,8 +460,8 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
     from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.db.version_manager import get_all_db_versions
 
     db_versions = get_all_db_versions(skip_api=True)
 
@@ -501,6 +507,7 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
 def _write_min_config(tmp_path, monkeypatch, **paths):
     """Tiny config writer with sensible defaults for PM1/CIViC tests."""
     import yaml
+
     from scripts.common.config import reset
 
     cfg = {

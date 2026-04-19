@@ -1,6 +1,7 @@
 from typing import Dict, List
-from scripts.common.models import FrequencyData
+
 from scripts.common.config import get
+from scripts.common.models import FrequencyData
 
 BA1_THRESHOLD = get("thresholds.ba1", 0.05)
 BS1_THRESHOLD = get("thresholds.bs1", 0.01)
@@ -64,8 +65,8 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
 
 
 if __name__ == "__main__":
-    import sys
     import json
+    import sys
 
     krgdb = float(sys.argv[1]) if len(sys.argv) > 1 else None
     eas = float(sys.argv[2]) if len(sys.argv) > 2 else None

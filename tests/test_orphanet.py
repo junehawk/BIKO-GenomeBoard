@@ -1,7 +1,8 @@
 # tests/test_orphanet.py
 import sqlite3
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def _create_sample_orphanet_xml(path):

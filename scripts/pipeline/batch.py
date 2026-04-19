@@ -5,23 +5,23 @@ import logging
 import os
 import threading
 import time as time_mod
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from datetime import date
 from pathlib import Path
 
+from scripts.clinical.hpo_matcher import resolve_hpo_terms
+from scripts.common.config import get
+from scripts.common.models import FrequencyData
+from scripts.db.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.korean_pop.compare_freq import compare_frequencies
-from scripts.clinical.hpo_matcher import resolve_hpo_terms
-from scripts.db.version_manager import get_all_db_versions
-from scripts.common.models import FrequencyData
-from scripts.common.config import get
-from scripts.pipeline.query import query_variant_databases
 from scripts.pipeline.classify import (
-    classify_variants,
-    build_variant_records,
     build_summary,
+    build_variant_records,
+    classify_variants,
     split_variants_for_display,
 )
+from scripts.pipeline.query import query_variant_databases
 
 logger = logging.getLogger(__name__)
 

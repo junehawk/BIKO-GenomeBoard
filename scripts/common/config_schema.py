@@ -25,7 +25,10 @@ SCHEMA: dict[str, tuple[type, bool]] = {
     "cache.enabled": (bool, False),
 }
 
-# Known top-level sections (for unknown-key warnings)
+# Known top-level sections (for unknown-key warnings).
+# Keep this set in sync with the section list in config.yaml — any new
+# top-level section added there must be registered here, otherwise users
+# see a friendly "unknown top-level key" warning at every load.
 KNOWN_TOP_LEVEL_KEYS = {
     "paths",
     "thresholds",
@@ -33,12 +36,22 @@ KNOWN_TOP_LEVEL_KEYS = {
     "annotation",
     "report",
     "pgx",
+    "acmg",
     "somatic",
     "in_silico",
     "cache",
     "clinical_board",
+    "pharmacogenomics",
+    "knowledge_base",
     "_project_root",
 }
+
+
+# Friendly hint text for the unknown-key warning — points users at the
+# right place to register a legitimately new section.
+_UNKNOWN_KEY_HINT = (
+    "register it in scripts/common/config_schema.py::KNOWN_TOP_LEVEL_KEYS if intentional, or check for a typo"
+)
 
 
 def _resolve(config: dict, dotted_key: str) -> tuple[bool, Any]:
@@ -87,6 +100,6 @@ def validate_config(config: dict) -> list[str]:
     # 2. Warn on unknown top-level keys
     for key in config:
         if key not in KNOWN_TOP_LEVEL_KEYS:
-            messages.append(f"WARNING: unknown top-level key '{key}'")
+            messages.append(f"WARNING: unknown top-level key '{key}' — {_UNKNOWN_KEY_HINT}")
 
     return messages

@@ -2,8 +2,10 @@
 """Tests for SQLite variant cache (scripts/common/cache.py)."""
 
 import time
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from scripts.common.models import Variant
 
 

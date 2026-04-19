@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """Build Orphanet prevalence SQLite from Product 9 XML."""
 
-import sqlite3
 import logging
+import sqlite3
 import xml.etree.ElementTree as ET
-from pathlib import Path
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "data/db/orphanet.sqlite3"

@@ -17,6 +17,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional
+
 from scripts.common.api_utils import fetch_with_retry
 from scripts.common.config import get
 from scripts.db.query_civic import (
@@ -24,11 +25,11 @@ from scripts.db.query_civic import (
     get_treatment_summary,
     get_variant_evidence,
 )
-from scripts.tools.sources.ncbi_gene import fetch_gene_summary
-from scripts.tools.sources.genreviews import fetch_genreviews_info
-from scripts.db.query_orphanet import get_prevalence_text
 from scripts.db.query_genreviews import get_genreviews_for_gene as get_genreviews_for_gene_local
 from scripts.db.query_omim_mapping import get_mim_for_gene
+from scripts.db.query_orphanet import get_prevalence_text
+from scripts.tools.sources.genreviews import fetch_genreviews_info
+from scripts.tools.sources.ncbi_gene import fetch_gene_summary
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,14 @@
 # scripts/classification/acmg_engine.py
 from __future__ import annotations
+
 import json
 import threading
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
-from scripts.common.models import AcmgEvidence
+
 from scripts.common.config import get
+from scripts.common.models import AcmgEvidence
 
 
 @dataclass

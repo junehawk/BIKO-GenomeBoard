@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build OMIM gene mapping SQLite from mim2gene.txt."""
 
-import sqlite3
 import logging
-from pathlib import Path
+import sqlite3
 from datetime import datetime, timezone
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 DEFAULT_DB_PATH = "data/db/omim_mapping.sqlite3"
