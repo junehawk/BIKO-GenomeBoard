@@ -91,6 +91,7 @@ def run_pipeline(
     board_lang: str = None,
     clinical_note: str = None,
     germline_vcf: str = None,
+    ped_path: str = None,
 ) -> dict:
     """Run the full BIKO GenomeBoard analysis pipeline.
 
@@ -119,11 +120,13 @@ def run_pipeline(
         logger.error(f"VCF file not found: {vcf_path}")
         return None
 
-    variants = parse_vcf(str(vcf_file))
+    variants = parse_vcf(str(vcf_file), ped_path=ped_path)
     if not variants:
         logger.error(f"No variants parsed from {vcf_path}")
         return None
     _progress(f"  → Found {len(variants)} variants")
+    if ped_path:
+        _progress(f"  → Trio resolution: PED file ({ped_path})")
 
     krgdb_file = Path(krgdb_path)
     if not krgdb_file.exists():
@@ -293,6 +296,8 @@ def run_pipeline(
         "pipeline": {
             "skip_api": skip_api,
             "krgdb_path": str(krgdb_file),
+            "ped_used": bool(ped_path),
+            "ped_path": str(ped_path) if ped_path else None,
         },
         "mode": mode,
         "hpo_results": hpo_results,
@@ -497,6 +502,18 @@ EXAMPLES
         "if available; falls back to built-in SNV matching otherwise. "
         "Accepts .vcf, .vcf.gz, .vcf.bgz.",
     )
+    parser.add_argument(
+        "--ped",
+        type=str,
+        default=None,
+        dest="ped_path",
+        help="Plink-style PED file for trio family structure. When provided, "
+        "trio proband and parents are resolved from PED in STRICT MODE "
+        "(fails if no trio can be identified against VCF samples). "
+        "Without --ped, the parser falls back to the filename-based "
+        "proband heuristic (3-sample VCFs only). PED mode supports "
+        "quartet / N≥3 VCFs.",
+    )
     note_group = parser.add_mutually_exclusive_group()
     note_group.add_argument(
         "--clinical-note",
@@ -586,6 +603,7 @@ EXAMPLES
             board_lang=getattr(args, "board_lang", None),
             clinical_note=clinical_note_text,
             germline_vcf=getattr(args, "germline", None),
+            ped_path=getattr(args, "ped_path", None),
         )
 
         if result is None:

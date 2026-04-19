@@ -232,21 +232,30 @@ def _detect_trio_denovo_from_genotype(
     return "de_novo"
 
 
-def parse_vcf(vcf_path: str) -> List[Variant]:
+def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
     """Parse a VCF file into a list of Variant objects.
     Uses simple text parsing to avoid cyvcf2 dependency issues in tests.
     Supports VEP CSQ and SnpEff ANN annotation fields if present.
     Accepts plain-text `.vcf` as well as gzip/bgzip `.vcf.gz` / `.vcf.bgz`.
 
     Trio-aware de novo detection (v2.3-T9): if the #CHROM header exposes
-    exactly three sample columns the parser attempts to identify the
-    proband by filename heuristic and, per variant, checks whether the
-    parent genotypes are homozygous reference and the proband carries an
-    alt allele. Such variants are labelled ``inheritance="de_novo"`` so
-    downstream collect_denovo_evidence fires PM6 even on raw
-    triodenovo output that lacks INFO-level DN / DENOVO flags. PS2 is
-    never inferred from genotype concordance alone — see
-    _detect_trio_denovo_from_genotype for the ACMG rationale.
+    sample columns the parser identifies proband + parents and, per
+    variant, checks whether the parent genotypes are homozygous reference
+    and the proband carries an alt allele. Such variants are labelled
+    ``inheritance="de_novo"`` so downstream collect_denovo_evidence
+    fires PM6 even on raw triodenovo output that lacks INFO-level DN /
+    DENOVO flags. PS2 is never inferred from genotype concordance alone
+    — see _detect_trio_denovo_from_genotype for the ACMG rationale.
+
+    Proband resolution precedence (v2.4 Quick Win C):
+      1. If ``ped_path`` is provided → **strict** PED resolution via
+         :func:`scripts.intake.parse_ped.resolve_trio`. Supports N≥3 sample
+         VCFs (quartet, cohort). Fails loud with ``ValueError`` when the
+         PED cannot resolve a trio against the VCF samples — no silent
+         fallback, because mis-assigning the proband silently propagates
+         into de novo misclassification.
+      2. Otherwise → legacy filename heuristic
+         (:func:`_detect_trio_proband`), 3-sample VCFs only.
     """
     variants = []
     csq_fields: List[str] = []
@@ -274,14 +283,41 @@ def parse_vcf(vcf_path: str) -> List[Variant]:
                 ann_fields = parse_ann_header(line)
                 logger.debug(f"Detected SnpEff ANN header with {len(ann_fields)} fields")
 
-            # Capture #CHROM header to discover sample columns and, for
-            # exactly-3-sample files, map proband + parents for trio-aware
-            # de novo detection on the data lines that follow.
+            # Capture #CHROM header to discover sample columns and map
+            # proband + parents for trio-aware de novo detection on the
+            # data lines that follow. When ``ped_path`` is supplied we
+            # use PED-based resolution in STRICT mode (fails loud if the
+            # PED can't be matched against the VCF samples). Otherwise
+            # we fall back to the legacy filename heuristic, which only
+            # applies to exactly-3-sample VCFs.
             if line.startswith("#CHROM"):
                 header_fields = line.rstrip("\n").split("\t")
                 if len(header_fields) > 9:
                     sample_ids = header_fields[9:]
-                    proband_idx, parent_idxs = _detect_trio_proband(vcf_path, sample_ids)
+                    if ped_path:
+                        # Import locally so repos without PED helpers in
+                        # an older checkout don't break on import-time.
+                        from scripts.intake.parse_ped import parse_ped as _parse_ped
+                        from scripts.intake.parse_ped import resolve_trio as _resolve_trio
+
+                        ped_entries = _parse_ped(ped_path)
+                        proband_idx, parent_idxs = _resolve_trio(ped_entries, sample_ids)
+                        if proband_idx is None:
+                            raise ValueError(
+                                f"PED file {ped_path} did not resolve a trio against "
+                                f"VCF samples {sample_ids}. Strict mode — no fallback. "
+                                f"Remove --ped to use the filename heuristic, or fix "
+                                f"the PED so one affected individual has both parents "
+                                f"listed with IDs present in the VCF."
+                            )
+                        logger.info(
+                            "PED-based trio: proband=%s, parents=%s (from %s)",
+                            sample_ids[proband_idx],
+                            [sample_ids[i] for i in parent_idxs],
+                            ped_path,
+                        )
+                    else:
+                        proband_idx, parent_idxs = _detect_trio_proband(vcf_path, sample_ids)
                 continue
 
             if line.startswith("#"):
