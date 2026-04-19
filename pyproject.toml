@@ -34,3 +34,12 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "weasyprint.*"
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+markers = [
+    "unit: fast unit tests with no external dependencies",
+    "integration: require local DBs, subprocesses, or network (excluded by CI -k 'not integration')",
+    "e2e: full orchestrate.py end-to-end pipeline",
+    "slow: runs longer than 5 seconds",
+    "llm: require a running Ollama server",
+]

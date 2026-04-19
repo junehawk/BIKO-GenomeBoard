@@ -493,6 +493,7 @@ class TestFormatScores:
 # ═══════════════════════════════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 class TestVCFIntegration:
     """Integration tests parsing the demo VCF with in silico fields."""
 

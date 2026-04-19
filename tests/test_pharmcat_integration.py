@@ -10,7 +10,11 @@ import subprocess
 from pathlib import Path
 from unittest import mock
 
+import pytest
+
 from scripts.common.models import Variant
+
+pytestmark = pytest.mark.integration
 
 # ---------------------------------------------------------------------------
 # Helpers

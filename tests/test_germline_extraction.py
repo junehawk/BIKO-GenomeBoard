@@ -438,6 +438,7 @@ class TestVariantRecordSource:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.integration
 class TestOrchestrateGermlineIntegration:
     def test_orchestrate_merges_inherited_in_rare_disease(self):
         """run_pipeline in rare-disease mode with --germline merges inherited variants."""
