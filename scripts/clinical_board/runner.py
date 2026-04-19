@@ -126,6 +126,22 @@ def run_clinical_board(
     board_variants, selection_metadata = select_board_variants(raw_variants, mode, report_data=report_data)
     report_data["_board_variants"] = board_variants
     report_data["_board_selection_metadata"] = selection_metadata
+
+    # Write selection_reason_list back to report_data["variants"] so the
+    # rare-disease template's denovo_badge macro can render it. The
+    # selector runs AFTER build_variant_records so mutating the Variant
+    # object is not enough — we need to update the already-snapshotted
+    # variant record dicts. Match by variant_id.
+    _reason_map = {
+        (bv.get("variant") or bv.get("variant_id") or ""): bv.get("selection_reason_list", [])
+        for bv in board_variants
+        if bv.get("selection_reason_list")
+    }
+    if _reason_map:
+        for v_record in raw_variants:
+            vid = v_record.get("variant") or v_record.get("variant_id") or ""
+            if vid in _reason_map:
+                v_record["selection_reason_list"] = _reason_map[vid]
     logger.info(
         f"[Clinical Board] Pre-filter: {selection_metadata['total_input']} → "
         f"{selection_metadata['selected']} variants "
