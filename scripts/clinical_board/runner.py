@@ -177,6 +177,39 @@ def run_clinical_board(
                 len(to_promote),
             )
 
+    # Re-sort report_data["variants"] so the summary-page short-lists
+    # (Candidate Gene Ranking top-15, VUS panel top-5, No Reportable
+    # top-10) surface clinically interesting variants first. Previously
+    # the order was genomic coordinate, so a Chair-cited variant on
+    # chr14 (CHD8 was position #36) would fall below 35 random chr1/2
+    # intergenic VUS and never appear in any page-1 section.
+    #
+    # Sort key (ascending; lower = higher priority):
+    #   1. Board-admitted first (selection_reason_list non-empty)
+    #   2. Classification rank (P < LP < Drug Response < VUS < LB < B)
+    #   3. HPO score (negated — higher HPO first)
+    #   4. Has gene annotation (gene-bearing before gene=None)
+    #   5. variant_id (stable genomic-coordinate tiebreaker)
+    _CLASS_RANK = {
+        "pathogenic": 0,
+        "likely pathogenic": 1,
+        "drug response": 2,
+        "risk factor": 3,
+        "vus": 4,
+        "likely benign": 5,
+        "benign": 6,
+    }
+
+    def _variant_sort_key(v: dict) -> tuple:
+        board_admitted = 0 if v.get("selection_reason_list") else 1
+        cls_rank = _CLASS_RANK.get((v.get("classification") or "VUS").lower(), 9)
+        hpo_score = -(v.get("hpo_score") or 0)
+        has_gene = 0 if v.get("gene") else 1
+        return (board_admitted, cls_rank, hpo_score, has_gene, v.get("variant") or "")
+
+    if raw_variants:
+        raw_variants.sort(key=_variant_sort_key)
+
     logger.info(
         f"[Clinical Board] Pre-filter: {selection_metadata['total_input']} → "
         f"{selection_metadata['selected']} variants "
