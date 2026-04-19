@@ -25,6 +25,26 @@ jobs:
       - run: ruff check scripts/ tests/
       - run: ruff format --check scripts/ tests/
 
+  type-check:
+    # Gradual mypy adoption (v2.4 refactor round 2, Phase 3). Runs in
+    # advisory mode — error count is tracked against the baseline in
+    # _workspace/v24-refactor-round2/mypy_baseline.txt. Promotion to a
+    # hard gate is deferred to refactor round 3 once check_untyped_defs
+    # flips to true.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install mypy + runtime deps
+        run: |
+          pip install mypy
+          pip install -r requirements.txt
+      - name: Run mypy (advisory)
+        run: mypy scripts/ tests/
+
   test:
     runs-on: ubuntu-latest
     strategy:

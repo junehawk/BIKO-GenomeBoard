@@ -12,3 +12,25 @@ ignore = [
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+check_untyped_defs = false  # gradual start — tighten in refactor round 3
+warn_unused_ignores = true
+files = ["scripts/", "tests/"]
+exclude = [
+    "scripts/tools/",  # one-off build utilities, not core pipeline
+]
+
+[[tool.mypy.overrides]]
+module = "pysam.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "cyvcf2.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "weasyprint.*"
+ignore_missing_imports = true
