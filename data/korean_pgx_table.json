@@ -1,5 +1,5 @@
 {
-  "version": "2026-04-15",
+  "version": "2026-04-19",
   "genes": [
     {
       "gene": "CYP2D6",
@@ -8,7 +8,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Codeine, tamoxifen dose adjustment required",
       "cpic_level": "A",
-      "source": "CPIC 2019"
+      "source": "CPIC 2019",
+      "default_phenotype": "CYP2D6 variant detected — see CPIC codeine/tamoxifen guideline for dose adjustment (CPIC 2019)"
     },
     {
       "gene": "CYP2C19",
@@ -17,7 +18,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Clopidogrel poor response risk",
       "cpic_level": "A",
-      "source": "CPIC 2022"
+      "source": "CPIC 2022",
+      "default_phenotype": "Intermediate Metabolizer (*2 carrier)"
     },
     {
       "gene": "CYP2C9",
@@ -26,7 +28,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Warfarin dose reduction required",
       "cpic_level": "A",
-      "source": "PharmGKB"
+      "source": "PharmGKB",
+      "default_phenotype": "CYP2C9 variant — warfarin dose reduction may be indicated per CPIC"
     },
     {
       "gene": "HLA-B",
@@ -36,7 +39,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Abacavir hypersensitivity risk (FDA Black Box Warning)",
       "cpic_level": "A",
-      "source": "CPIC 2015"
+      "source": "CPIC 2015",
+      "default_phenotype": "HLA-B*5701 carrier — abacavir hypersensitivity risk"
     },
     {
       "gene": "NUDT15",
@@ -46,7 +50,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Thiopurine myelosuppression risk",
       "cpic_level": "A",
-      "source": "Yang et al. 2014"
+      "source": "Yang et al. 2014",
+      "default_phenotype": "NUDT15 intermediate metabolizer (p.R139C carrier)"
     },
     {
       "gene": "CYP3A5",
@@ -56,7 +61,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Tacrolimus dose adjustment — CYP3A5 expressors (common in Koreans) require higher doses",
       "cpic_level": "A",
-      "source": "CPIC 2022"
+      "source": "CPIC 2022",
+      "default_phenotype": "CYP3A5 expressor (*1 carrier) — higher tacrolimus dose needed"
     },
     {
       "gene": "UGT1A1",
@@ -66,7 +72,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Irinotecan dose reduction — UGT1A1*6 (East Asian-specific) increases toxicity risk",
       "cpic_level": "A",
-      "source": "CPIC 2020"
+      "source": "CPIC 2020",
+      "default_phenotype": "UGT1A1 poor metabolizer (*6 carrier) — irinotecan toxicity risk"
     },
     {
       "gene": "SLCO1B1",
@@ -76,7 +83,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Statin-induced myopathy risk — dose adjustment for simvastatin recommended",
       "cpic_level": "A",
-      "source": "CPIC 2014"
+      "source": "CPIC 2014",
+      "default_phenotype": "SLCO1B1 decreased function (*15 carrier) — statin myopathy risk"
     },
     {
       "gene": "VKORC1",
@@ -86,7 +94,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Warfarin dose reduction — most Koreans require significantly lower warfarin doses",
       "cpic_level": "A",
-      "source": "CPIC 2017"
+      "source": "CPIC 2017",
+      "default_phenotype": "VKORC1 low-dose warfarin phenotype (-1639A carrier)"
     },
     {
       "gene": "CYP1A2",
@@ -96,7 +105,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Caffeine and clozapine metabolism — decreased CYP1A2 activity in carriers",
       "cpic_level": "C",
-      "source": "PharmGKB"
+      "source": "PharmGKB",
+      "default_phenotype": "CYP1A2 poor metabolizer (*1C carrier)"
     },
     {
       "gene": "G6PD",
@@ -106,7 +116,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Rasburicase contraindicated — hemolytic anemia risk in G6PD-deficient patients",
       "cpic_level": "A",
-      "source": "CPIC 2014"
+      "source": "CPIC 2014",
+      "default_phenotype": "G6PD deficient — rasburicase contraindicated"
     },
     {
       "gene": "IFNL3",
@@ -116,7 +127,8 @@
       "metric": "genotype_freq",
       "clinical_impact": "PEG-IFN/ribavirin response prediction — CC genotype (favorable) much more common in Koreans",
       "cpic_level": "A",
-      "source": "CPIC 2014"
+      "source": "CPIC 2014",
+      "default_phenotype": "IFNL3 favorable responder (CC genotype)"
     },
     {
       "gene": "DPYD",
@@ -126,7 +138,8 @@
       "metric": "allele_freq",
       "clinical_impact": "5-FU/capecitabine dose adjustment or contraindication",
       "cpic_level": "A",
-      "source": "CPIC 2017"
+      "source": "CPIC 2017",
+      "default_phenotype": "DPYD decreased function carrier — consider fluoropyrimidine dose reduction per CPIC 2018 (PMID 29152729)"
     },
     {
       "gene": "TPMT",
@@ -136,7 +149,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Azathioprine/mercaptopurine dose reduction required",
       "cpic_level": "A",
-      "source": "CPIC 2018"
+      "source": "CPIC 2018",
+      "default_phenotype": "TPMT intermediate metabolizer (*2/*3 carrier) — thiopurine dose reduction per CPIC 2019 (PMID 30447069)"
     },
     {
       "gene": "HLA-A",
@@ -146,7 +160,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Carbamazepine hypersensitivity risk — HLA-A*31:01 enriched in East Asians",
       "cpic_level": "A",
-      "source": "CPIC 2013"
+      "source": "CPIC 2013",
+      "default_phenotype": "HLA-A*31:01 carrier — carbamazepine/oxcarbazepine SJS/TEN risk; consider alternative (CPIC 2018, PMID 29392793)"
     },
     {
       "gene": "CYP2B6",
@@ -156,7 +171,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Efavirenz dose reduction — slow metabolizers at risk of CNS toxicity",
       "cpic_level": "A",
-      "source": "CPIC 2019"
+      "source": "CPIC 2019",
+      "default_phenotype": "CYP2B6 poor metabolizer (*6) — efavirenz, methadone, bupropion dose consideration (CPIC 2019, PMID 31006110)"
     },
     {
       "gene": "CYP4F2",
@@ -166,7 +182,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Warfarin dose increase — CYP4F2*3 carriers require higher warfarin doses",
       "cpic_level": "B",
-      "source": "PharmGKB"
+      "source": "PharmGKB",
+      "default_phenotype": "CYP4F2 V433M carrier — warfarin dose adjustment per CPIC 2017 (PMID 28198005)"
     },
     {
       "gene": "ABCG2",
@@ -176,7 +193,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Rosuvastatin exposure increase — dose reduction recommended in carriers",
       "cpic_level": "B",
-      "source": "CPIC 2022"
+      "source": "CPIC 2022",
+      "default_phenotype": "ABCG2 Q141K carrier — rosuvastatin/simvastatin dose reduction per CPIC 2022 (PMID 35152405)"
     },
     {
       "gene": "NAT2",
@@ -186,7 +204,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Isoniazid hepatotoxicity risk — slow acetylators need dose adjustment",
       "cpic_level": "B",
-      "source": "CPIC 2019"
+      "source": "CPIC 2019",
+      "default_phenotype": "NAT2 slow acetylator — isoniazid hepatotoxicity risk (PharmGKB Level 1B; CPIC guideline pending)"
     },
     {
       "gene": "CACNA1S",
@@ -196,7 +215,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Malignant hyperthermia susceptibility — avoid volatile anesthetics and succinylcholine",
       "cpic_level": "B",
-      "source": "CPIC 2019"
+      "source": "CPIC 2019",
+      "default_phenotype": "CACNA1S MH-susceptibility variant — avoid volatile anesthetics and succinylcholine (CPIC 2019, PMID 30499100)"
     },
     {
       "gene": "CFTR",
@@ -206,7 +226,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Ivacaftor eligibility — CFTR modulator therapy indicated for specific mutations",
       "cpic_level": "B",
-      "source": "CPIC 2014"
+      "source": "CPIC 2014",
+      "default_phenotype": "CFTR variant — CPIC ivacaftor guideline applies to specific responsive alleles; confirm allele-drug match (PMID 24598717)"
     },
     {
       "gene": "CYP3A4",
@@ -216,7 +237,8 @@
       "metric": "allele_freq",
       "clinical_impact": "Tacrolimus dose reduction — CYP3A4*22 carriers have decreased metabolism",
       "cpic_level": "B",
-      "source": "PharmGKB"
+      "source": "PharmGKB",
+      "default_phenotype": "CYP3A4 *22 carrier — tacrolimus dose reduction consideration"
     },
     {
       "gene": "MT-RNR1",
@@ -226,7 +248,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Aminoglycoside-induced hearing loss — contraindicated in carriers",
       "cpic_level": "A",
-      "source": "CPIC 2021"
+      "source": "CPIC 2021",
+      "default_phenotype": "MT-RNR1 ototoxicity-associated variant — avoid aminoglycosides if alternatives exist (CPIC 2021, PMID 34032274)"
     },
     {
       "gene": "RYR1",
@@ -236,7 +259,8 @@
       "metric": "carrier_freq",
       "clinical_impact": "Malignant hyperthermia susceptibility — avoid volatile anesthetics and succinylcholine",
       "cpic_level": "B",
-      "source": "CPIC 2019"
+      "source": "CPIC 2019",
+      "default_phenotype": "RYR1 MH-associated variant (if curated pathogenic) — avoid volatile anesthetics and succinylcholine; confirm with MH expert"
     }
   ]
 }

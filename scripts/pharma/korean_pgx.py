@@ -8,6 +8,11 @@ Provides two levels of API:
 * ``get_pgx_results(variants, germline_vcf, config)`` -- unified entry
   point that prefers PharmCAT when a germline VCF is supplied and
   PharmCAT is installed, falling back to the builtin engine otherwise.
+
+Phenotype strings are fully JSON-driven via the ``default_phenotype``
+field on each gene entry in ``data/korean_pgx_table.json``. The builtin
+engine no longer carries any hardcoded gene → phenotype elif chain;
+editing the JSON is sufficient to extend or correct the curated set.
 """
 
 import json
@@ -24,6 +29,36 @@ logger = logging.getLogger(__name__)
 _PGX_DATA = None
 _PGX_LOCK = threading.Lock()
 
+# Fallback PGx gene set used only when the JSON table cannot be loaded
+# (file missing, malformed JSON, etc.). Keeps check_korean_pgx() callable
+# during degraded operation instead of raising.
+_FALLBACK_PGX_GENES = [
+    "CYP2D6",
+    "CYP2C19",
+    "CYP2C9",
+    "HLA-B",
+    "HLA-A",
+    "NUDT15",
+    "TPMT",
+    "DPYD",
+    "CYP3A5",
+    "UGT1A1",
+    "SLCO1B1",
+    "VKORC1",
+    "CYP1A2",
+    "G6PD",
+    "IFNL3",
+    "CYP2B6",
+    "CYP4F2",
+    "ABCG2",
+    "NAT2",
+    "CACNA1S",
+    "CFTR",
+    "CYP3A4",
+    "MT-RNR1",
+    "RYR1",
+]
+
 
 def _load_pgx_data() -> list:
     global _PGX_DATA
@@ -39,48 +74,44 @@ def _load_pgx_data() -> list:
     return _PGX_DATA
 
 
-PGX_GENES = set(get("pgx.genes", ["CYP2D6", "CYP2C19", "CYP2C9", "HLA-B", "HLA-A", "NUDT15", "TPMT", "DPYD"]))
+def _get_pgx_genes() -> set[str]:
+    """Derive the active PGx gene set.
+
+    Priority:
+      1. Genes present in ``data/korean_pgx_table.json`` (authoritative).
+      2. ``pgx.genes`` config list (legacy override).
+      3. Hardcoded 24-gene fallback list (only when both above fail).
+    """
+    pgx_data = _load_pgx_data()
+    if pgx_data:
+        return {entry["gene"] for entry in pgx_data if entry.get("gene")}
+    configured = get("pgx.genes", _FALLBACK_PGX_GENES)
+    return set(configured) if configured else set(_FALLBACK_PGX_GENES)
+
+
+PGX_GENES = _get_pgx_genes()
 
 
 def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
-    """Return a :class:`PgxResult` if *variant* matches a known PGx gene."""
+    """Return a :class:`PgxResult` if *variant* matches a known PGx gene.
+
+    Phenotype is sourced from the JSON ``default_phenotype`` field; no
+    hardcoded gene → phenotype mapping remains in this module.
+    """
     if variant.gene not in PGX_GENES:
         return None
 
     pgx_data = _load_pgx_data()
     for entry in pgx_data:
         if entry["gene"] == variant.gene:
-            korean_prev = entry.get("korean_freq", 0)
-            western_prev = entry.get("western_freq", 0)
-            phenotype = ""
-            if variant.gene == "CYP2C19":
-                phenotype = "Intermediate Metabolizer (*2 carrier)"
-            elif variant.gene == "HLA-B":
-                phenotype = "HLA-B*5701 carrier — abacavir hypersensitivity risk"
-            elif variant.gene == "NUDT15":
-                phenotype = "NUDT15 intermediate metabolizer (p.R139C carrier)"
-            elif variant.gene == "CYP3A5":
-                phenotype = "CYP3A5 expressor (*1 carrier) — higher tacrolimus dose needed"
-            elif variant.gene == "UGT1A1":
-                phenotype = "UGT1A1 poor metabolizer (*6 carrier) — irinotecan toxicity risk"
-            elif variant.gene == "SLCO1B1":
-                phenotype = "SLCO1B1 decreased function (*15 carrier) — statin myopathy risk"
-            elif variant.gene == "VKORC1":
-                phenotype = "VKORC1 low-dose warfarin phenotype (-1639A carrier)"
-            elif variant.gene == "G6PD":
-                phenotype = "G6PD deficient — rasburicase contraindicated"
-            elif variant.gene == "IFNL3":
-                phenotype = "IFNL3 favorable responder (CC genotype)"
-            elif variant.gene == "CYP1A2":
-                phenotype = "CYP1A2 poor metabolizer (*1C carrier)"
             return PgxResult(
                 gene=variant.gene,
                 star_allele=entry.get("variant", ""),
-                phenotype=phenotype,
-                cpic_level=entry["cpic_level"],
-                korean_prevalence=korean_prev,
-                western_prevalence=western_prev,
-                clinical_impact=entry["clinical_impact"],
+                phenotype=entry.get("default_phenotype", ""),
+                cpic_level=entry.get("cpic_level", ""),
+                korean_prevalence=entry.get("korean_freq", 0),
+                western_prevalence=entry.get("western_freq", 0),
+                clinical_impact=entry.get("clinical_impact", ""),
                 cpic_recommendation="",
             )
     return None
@@ -99,6 +130,9 @@ def _convert_pharmcat_to_pgx_hits(pharmcat_result) -> list[dict]:
     CPIC level, Korean/Western population prevalence, and clinical impact
     that PharmCAT does not carry. We merge both sources: PharmCAT for the
     genotype call, builtin for the population/guideline metadata.
+
+    Phenotype priority: PharmCAT diplotype-derived phenotype >
+    builtin ``default_phenotype`` > empty string.
     """
     # Build a gene→entry lookup from the builtin PGx table so we can
     # enrich PharmCAT results with CPIC level + Korean prevalence.
@@ -120,6 +154,10 @@ def _convert_pharmcat_to_pgx_hits(pharmcat_result) -> list[dict]:
         korean_prev = builtin.get("korean_freq", 0.0)
         western_prev = builtin.get("western_freq", 0.0)
         clinical_impact = builtin.get("clinical_impact", "")
+
+        # Phenotype precedence: PharmCAT diplotype-derived > builtin default > ""
+        if not phenotype:
+            phenotype = builtin.get("default_phenotype", "")
 
         # Drug recommendations from PharmCAT (if available)
         gene_drugs = [r for r in pharmcat_result.drug_recommendations if gene in r.get("gene", "")]

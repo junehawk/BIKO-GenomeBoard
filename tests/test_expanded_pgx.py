@@ -2,9 +2,10 @@
 import json
 from pathlib import Path
 
+import pytest
 
 from scripts.common.models import Variant
-from scripts.pharma.korean_pgx import check_korean_pgx
+from scripts.pharma.korean_pgx import PGX_GENES, check_korean_pgx
 
 
 # ---------------------------------------------------------------------------
@@ -165,3 +166,124 @@ def test_existing_pgx_genes_still_work_hla_b():
     assert result is not None
     assert result.phenotype == "HLA-B*5701 carrier — abacavir hypersensitivity risk"
     assert result.cpic_level == "A"
+
+
+# ---------------------------------------------------------------------------
+# 5. JSON-driven phenotype — regression + new coverage
+# ---------------------------------------------------------------------------
+
+# Snapshot of the legacy 12-gene phenotype strings. These MUST remain
+# byte-identical to the hardcoded elif chain that existed before the
+# v2.4 Quick Win B refactor — any accidental change is a regression.
+_LEGACY_12_GENE_PHENOTYPE_SNAPSHOTS: dict[str, str] = {
+    "CYP2C19": "Intermediate Metabolizer (*2 carrier)",
+    "HLA-B": "HLA-B*5701 carrier — abacavir hypersensitivity risk",
+    "NUDT15": "NUDT15 intermediate metabolizer (p.R139C carrier)",
+    "CYP3A5": "CYP3A5 expressor (*1 carrier) — higher tacrolimus dose needed",
+    "UGT1A1": "UGT1A1 poor metabolizer (*6 carrier) — irinotecan toxicity risk",
+    "SLCO1B1": "SLCO1B1 decreased function (*15 carrier) — statin myopathy risk",
+    "VKORC1": "VKORC1 low-dose warfarin phenotype (-1639A carrier)",
+    "G6PD": "G6PD deficient — rasburicase contraindicated",
+    "IFNL3": "IFNL3 favorable responder (CC genotype)",
+    "CYP1A2": "CYP1A2 poor metabolizer (*1C carrier)",
+}
+
+
+@pytest.mark.parametrize("gene,expected_phenotype", sorted(_LEGACY_12_GENE_PHENOTYPE_SNAPSHOTS.items()))
+def test_legacy_12_genes_phenotype_unchanged(gene: str, expected_phenotype: str):
+    """Regression: snapshot-match phenotype strings for the 10 genes that
+    had hardcoded phenotypes pre-refactor (CYP2D6/CYP2C9 were not in the
+    elif chain — they are covered separately below)."""
+    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene=gene)
+    result = check_korean_pgx(variant)
+    assert result is not None, f"{gene} check_korean_pgx returned None"
+    assert result.phenotype == expected_phenotype, (
+        f"{gene} phenotype drifted from snapshot: {result.phenotype!r} != {expected_phenotype!r}"
+    )
+
+
+# Keyword probes for the 12 newly-curated genes. Each entry asserts
+# that a non-empty phenotype is returned AND that it contains a
+# clinically meaningful keyword — this catches both dead-code regressions
+# (phenotype missing entirely) and empty-string drift.
+_NEW_12_GENE_KEYWORDS: list[tuple[str, str]] = [
+    ("DPYD", "fluoropyrimidine"),
+    ("TPMT", "thiopurine"),
+    ("HLA-A", "carbamazepine"),
+    ("CYP2B6", "efavirenz"),
+    ("CYP4F2", "warfarin"),
+    ("ABCG2", "rosuvastatin"),
+    ("NAT2", "isoniazid"),
+    ("CACNA1S", "volatile anesthetics"),
+    ("CFTR", "ivacaftor"),
+    ("CYP3A4", "tacrolimus"),
+    ("MT-RNR1", "aminoglycosides"),
+    ("RYR1", "volatile anesthetics"),
+]
+
+
+@pytest.mark.parametrize("gene,expected_keyword", _NEW_12_GENE_KEYWORDS)
+def test_new_12_genes_phenotype_populated(gene: str, expected_keyword: str):
+    """Every newly-curated gene must return a non-empty phenotype
+    containing the expected drug/mechanism keyword."""
+    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene=gene)
+    result = check_korean_pgx(variant)
+    assert result is not None, f"{gene} returned None — likely missing from PGX_GENES"
+    assert result.phenotype != "", f"{gene} has empty phenotype (JSON default_phenotype missing?)"
+    assert expected_keyword.lower() in result.phenotype.lower(), (
+        f"{gene} phenotype missing expected keyword {expected_keyword!r}: {result.phenotype!r}"
+    )
+
+
+def test_pgx_genes_set_covers_all_24():
+    """PGX_GENES must include every gene in the curated 24-gene panel."""
+    expected = {
+        "CYP2D6",
+        "CYP2C19",
+        "CYP2C9",
+        "HLA-B",
+        "HLA-A",
+        "NUDT15",
+        "TPMT",
+        "DPYD",
+        "CYP3A5",
+        "UGT1A1",
+        "SLCO1B1",
+        "VKORC1",
+        "CYP1A2",
+        "G6PD",
+        "IFNL3",
+        "CYP2B6",
+        "CYP4F2",
+        "ABCG2",
+        "NAT2",
+        "CACNA1S",
+        "CFTR",
+        "CYP3A4",
+        "MT-RNR1",
+        "RYR1",
+    }
+    missing = expected - PGX_GENES
+    assert not missing, f"PGX_GENES missing expected genes: {sorted(missing)}"
+
+
+def test_check_korean_pgx_unknown_gene_returns_none():
+    """Genes outside the PGx panel return None rather than a stub PgxResult."""
+    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene="FOOBAR")
+    assert check_korean_pgx(variant) is None
+
+
+def test_default_phenotype_field_present_all_entries():
+    """Every JSON entry must have a non-empty ``default_phenotype``.
+    Without this, the JSON-driven phenotype path silently degrades
+    to an empty string, which is indistinguishable from a missing gene
+    in the report template."""
+    path = Path(__file__).parent.parent / "data" / "korean_pgx_table.json"
+    with open(path) as f:
+        data = json.load(f)
+    for entry in data["genes"]:
+        gene = entry.get("gene", "<unknown>")
+        dp = entry.get("default_phenotype")
+        assert dp is not None, f"{gene} missing default_phenotype field"
+        assert isinstance(dp, str), f"{gene} default_phenotype is not a string: {type(dp)}"
+        assert dp.strip(), f"{gene} default_phenotype is empty/whitespace"

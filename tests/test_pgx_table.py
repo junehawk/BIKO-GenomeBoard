@@ -135,3 +135,20 @@ def test_no_duplicate_genes():
     genes = [entry["gene"] for entry in data["genes"]]
     duplicates = [g for g in genes if genes.count(g) > 1]
     assert not duplicates, f"Duplicate genes in PGx table: {set(duplicates)}"
+
+
+# ---------------------------------------------------------------------------
+# 6. default_phenotype — JSON-driven phenotype source
+# ---------------------------------------------------------------------------
+
+
+def test_default_phenotype_field_present():
+    """v2.4 Quick Win B: every entry must have a non-empty
+    ``default_phenotype`` used by ``check_korean_pgx`` as the single
+    source of phenotype text (no hardcoded elif chain anymore)."""
+    data = _load_table()
+    for entry in data["genes"]:
+        gene = entry.get("gene", "<unknown>")
+        dp = entry.get("default_phenotype")
+        assert dp is not None, f"{gene} missing default_phenotype"
+        assert isinstance(dp, str) and dp.strip(), f"{gene} has empty default_phenotype"
