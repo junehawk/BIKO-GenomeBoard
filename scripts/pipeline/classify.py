@@ -214,6 +214,14 @@ def build_variant_records(variants, db_results, freq_results, classification_res
                 # semantically different and must not collide.
                 "variant_inheritance": getattr(variant, "inheritance", None),
                 "confirmed_denovo": bool(getattr(variant, "confirmed_denovo", False)),
+                # v2.4 QW-A: selection reason audit channel. The
+                # clinical_board.variant_selector populates this list when a
+                # variant hits the de novo / HPO / hotspot carve-outs
+                # (VUS_denovo_neurodev, VUS_denovo_splice, VUS_HPO_match, ...).
+                # Defaults to [] so legacy Variant objects without the attribute
+                # render an empty badge row in the template instead of raising
+                # UndefinedError.
+                "selection_reason_list": list(getattr(variant, "selection_reason_list", []) or []),
                 # Variant origin badge: "primary" (main VCF), "germline_inherited"
                 # (from --germline target extraction), or "germline_pgx".
                 "source": getattr(variant, "source", None) or "primary",

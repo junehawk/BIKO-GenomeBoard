@@ -11,6 +11,29 @@
   {% endif %}
 {% endmacro %}
 
+{#- ── De novo badge macro (v2.4 QW-A) ─────────────────────────────── -#}
+{# Renders variant-level de novo / neurodev / splice badges. Axis is
+   variant-level (the event), not gene-level inheritance (AD/AR/XL from
+   OMIM), so this coexists with the OMIM inheritance pill without
+   overlap.  All fields are guarded with ``default('')`` so a legacy
+   variant dict missing the attributes renders as empty output instead
+   of raising UndefinedError. -#}
+{% macro denovo_badge(variant) %}
+  {% set _inh = variant.variant_inheritance | default('') %}
+  {% if _inh == "confirmed_de_novo" %}
+    <span style="display:inline-block;background:#5B21B6;color:white;padding:1px 6px;border-radius:2px;font-size:7pt;font-weight:700;margin-left:4px;vertical-align:middle;" title="Trio-confirmed de novo (ACMG PS2)">Confirmed de novo (PS2)</span>
+  {% elif _inh == "de_novo" %}
+    <span style="display:inline-block;background:#7c3aed;color:white;padding:1px 6px;border-radius:2px;font-size:7pt;font-weight:700;margin-left:4px;vertical-align:middle;" title="Assumed de novo (ACMG PM6)">De novo (PM6, assumed)</span>
+  {% endif %}
+  {% for reason in variant.selection_reason_list | default([]) %}
+    {% if reason == "VUS_denovo_neurodev" %}
+      <span style="display:inline-block;background:#059669;color:white;padding:1px 6px;border-radius:2px;font-size:7pt;font-weight:700;margin-left:4px;vertical-align:middle;" title="DDG2P-admitted neurodevelopmental gene">Neurodev (DDG2P)</span>
+    {% elif reason == "VUS_denovo_splice" %}
+      <span style="display:inline-block;background:#d97706;color:white;padding:1px 6px;border-radius:2px;font-size:7pt;font-weight:700;margin-left:4px;vertical-align:middle;" title="De novo splice rescue via SpliceAI >= 0.2">De novo Splice (SpliceAI)</span>
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1181,7 +1204,7 @@
               <span class="rank-badge">{{ loop.index }}</span>
             {% endif %}
           </td>
-          <td><strong>{{ v.gene }}</strong></td>
+          <td><strong>{{ v.gene }}</strong>{{ denovo_badge(v) }}</td>
           <td>{{ class_badge(v.classification) }}</td>
           <td>
             {% set score = v.hpo_score | default(0) %}
@@ -1539,7 +1562,7 @@
 
       <!-- Identity header: gene name + HGVS + badges -->
       <div class="variant-detail-header">
-        <div class="variant-gene-name">{{ v.gene }}{{ source_badge(v) }}</div>
+        <div class="variant-gene-name">{{ v.gene }}{{ source_badge(v) }}{{ denovo_badge(v) }}</div>
         <div class="variant-header-right">
           <div class="variant-alteration">
             {% if v.hgvs is defined and v.hgvs and v.hgvs.transcript is defined and v.hgvs.transcript %}
