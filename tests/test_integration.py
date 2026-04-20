@@ -8,9 +8,9 @@ from scripts.enrichment.query_clinvar import query_clinvar
 from scripts.common.models import AcmgEvidence, FrequencyData
 from scripts.counselor.generate_pdf import generate_report_html
 from scripts.intake.parse_vcf import parse_vcf
-from scripts.korean_pop.compare_freq import compare_frequencies
-from scripts.korean_pop.query_gnomad import query_gnomad
-from scripts.korean_pop.query_krgdb import _KRGDB_CACHE, query_krgdb
+from scripts.population.compare_freq import compare_frequencies
+from scripts.population.query_gnomad import query_gnomad
+from scripts.population.query_krgdb import _KRGDB_CACHE, query_krgdb
 from scripts.pharma.korean_pgx import check_korean_pgx
 
 pytestmark = pytest.mark.integration
@@ -35,7 +35,7 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
     )
     # Mock gnomAD
     mocker.patch(
-        "scripts.korean_pop.query_gnomad._graphql_query",
+        "scripts.population.query_gnomad._graphql_query",
         return_value={"data": {"variant": {"genome": {"af": 0.0002, "populations": [{"id": "eas", "af": 0.0003}]}}}},
     )
     # Create temp KRGDB data

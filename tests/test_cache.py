@@ -394,7 +394,7 @@ def test_gnomad_uses_cache(tmp_path, mocker):
         cache_mod._conn = None
 
         mock_graphql = mocker.patch(
-            "scripts.korean_pop.query_gnomad._graphql_query",
+            "scripts.population.query_gnomad._graphql_query",
             return_value={
                 "data": {
                     "variant": {
@@ -409,10 +409,10 @@ def test_gnomad_uses_cache(tmp_path, mocker):
                 }
             },
         )
-        mocker.patch("scripts.korean_pop.query_gnomad.get_cached", side_effect=cache_mod.get_cached)
-        mocker.patch("scripts.korean_pop.query_gnomad.set_cached", side_effect=cache_mod.set_cached)
+        mocker.patch("scripts.population.query_gnomad.get_cached", side_effect=cache_mod.get_cached)
+        mocker.patch("scripts.population.query_gnomad.set_cached", side_effect=cache_mod.set_cached)
 
-        from scripts.korean_pop.query_gnomad import query_gnomad
+        from scripts.population.query_gnomad import query_gnomad
 
         variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
 

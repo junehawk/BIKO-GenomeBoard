@@ -103,7 +103,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_gnomad 'chr17:7577120 G>A'"}))
+        print(json.dumps({"error": "Usage: python -m scripts.population.query_gnomad 'chr17:7577120 G>A'"}))
         sys.exit(1)
     v = Variant.from_string(sys.argv[1])
     print(json.dumps(query_gnomad(v), indent=2))

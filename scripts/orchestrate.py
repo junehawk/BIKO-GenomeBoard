@@ -26,7 +26,7 @@ from scripts.common.models import FrequencyData
 from scripts.counselor.generate_pdf import generate_pdf, generate_report_html
 from scripts.db.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
-from scripts.korean_pop.compare_freq import compare_frequencies
+from scripts.population.compare_freq import compare_frequencies
 from scripts.pipeline.batch import (
     collect_unique_variants,
     discover_samples,

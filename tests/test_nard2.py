@@ -1,5 +1,5 @@
 from scripts.common.models import Variant
-from scripts.korean_pop.query_nard2 import query_nard2
+from scripts.population.query_nard2 import query_nard2
 
 
 def test_query_nard2_found(tmp_path):
@@ -20,7 +20,7 @@ def test_query_nard2_not_found(tmp_path):
 
 def test_query_nard2_no_file(tmp_path):
     """Missing NARD2 file should log a warning and return None (not raise)."""
-    from scripts.korean_pop.query_nard2 import _NARD2_CACHE
+    from scripts.population.query_nard2 import _NARD2_CACHE
 
     missing_path = str(tmp_path / "nonexistent.tsv")
     # Remove from cache if previously cached (test isolation)
@@ -32,7 +32,7 @@ def test_query_nard2_no_file(tmp_path):
 
 def test_nard2_cache_singleton(tmp_path):
     """Verify that loading the same file twice reuses the cached dict."""
-    from scripts.korean_pop.query_nard2 import _NARD2_CACHE, _load_nard2
+    from scripts.population.query_nard2 import _NARD2_CACHE, _load_nard2
 
     nard2_file = tmp_path / "nard2_cache_test.tsv"
     nard2_file.write_text("chr10\t94781859\tG\tA\t0.29\n")

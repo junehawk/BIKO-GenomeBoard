@@ -1,5 +1,5 @@
 from scripts.common.models import Variant
-from scripts.korean_pop.query_gnomad import query_gnomad
+from scripts.population.query_gnomad import query_gnomad
 
 
 # Mock response using ac/an schema (gnomAD v4 format)
@@ -18,7 +18,7 @@ def _make_genome_response(ac, an, eas_ac, eas_an):
 def test_query_gnomad_returns_frequencies(mocker):
     # ac=200, an=1000000 → af=0.0002; eas ac=3, an=10000 → af=0.0003
     mock_response = _make_genome_response(ac=200, an=1000000, eas_ac=3, eas_an=10000)
-    mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=mock_response)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=mock_response)
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A")
     result = query_gnomad(variant)
     assert abs(result["gnomad_all"] - 0.0002) < 1e-9
@@ -26,7 +26,7 @@ def test_query_gnomad_returns_frequencies(mocker):
 
 
 def test_query_gnomad_not_found(mocker):
-    mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value={"data": {"variant": None}})
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value={"data": {"variant": None}})
     variant = Variant(chrom="chr1", pos=99999999, ref="A", alt="T")
     result = query_gnomad(variant)
     assert result["gnomad_all"] is None
@@ -44,7 +44,7 @@ def test_query_gnomad_fallback_to_exome(mocker):
             }
         }
     }
-    mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=mock_response)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=mock_response)
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A")
     result = query_gnomad(variant)
     assert abs(result["gnomad_all"] - 0.0002) < 1e-9
@@ -54,7 +54,7 @@ def test_query_gnomad_multi_dataset_fallback(mocker):
     """First dataset returns no variant; second dataset returns data."""
     hit_response = _make_genome_response(ac=200, an=1000000, eas_ac=3, eas_an=10000)
     mocker.patch(
-        "scripts.korean_pop.query_gnomad._graphql_query", side_effect=[{"data": {"variant": None}}, hit_response]
+        "scripts.population.query_gnomad._graphql_query", side_effect=[{"data": {"variant": None}}, hit_response]
     )
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A")
     result = query_gnomad(variant)
@@ -65,14 +65,14 @@ def test_query_gnomad_multi_dataset_fallback(mocker):
 # I-5c: api_available tracking
 def test_query_gnomad_api_available_true(mocker):
     mock_response = _make_genome_response(ac=200, an=1000000, eas_ac=3, eas_an=10000)
-    mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=mock_response)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=mock_response)
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A")
     result = query_gnomad(variant)
     assert result["api_available"] is True
 
 
 def test_query_gnomad_api_available_false(mocker):
-    mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value={"data": {"variant": None}})
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value={"data": {"variant": None}})
     variant = Variant(chrom="chr1", pos=99999999, ref="A", alt="T")
     result = query_gnomad(variant)
     assert result["api_available"] is False

@@ -52,7 +52,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: python -m scripts.korean_pop.query_nard2 'chr17:7675088 C>A' [nard2_path]"}))
+        print(json.dumps({"error": "Usage: python -m scripts.population.query_nard2 'chr17:7675088 C>A' [nard2_path]"}))
         sys.exit(1)
     v = Variant.from_string(sys.argv[1])
     path = sys.argv[2] if len(sys.argv) > 2 else "data/nard2_freq.tsv"

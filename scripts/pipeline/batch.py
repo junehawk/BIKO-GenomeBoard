@@ -14,7 +14,7 @@ from scripts.common.config import get
 from scripts.common.models import FrequencyData
 from scripts.db.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
-from scripts.korean_pop.compare_freq import compare_frequencies
+from scripts.population.compare_freq import compare_frequencies
 from scripts.pipeline.classify import (
     build_summary,
     build_variant_records,

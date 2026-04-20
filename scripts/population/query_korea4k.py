@@ -54,7 +54,7 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(
             json.dumps(
-                {"error": "Usage: python -m scripts.korean_pop.query_korea4k 'chr17:7675088 C>A' [korea4k_path]"}
+                {"error": "Usage: python -m scripts.population.query_korea4k 'chr17:7675088 C>A' [korea4k_path]"}
             )
         )
         sys.exit(1)
