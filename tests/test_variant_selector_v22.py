@@ -118,7 +118,7 @@ def test_kras_g12d_missense_tier3_admitted():
 def test_gate_accepts_biko_formatted_consequence_labels():
     """v2.2 regression — the real pipeline stores consequence as the
     BIKO-formatted short label (e.g. "Missense") via
-    scripts/intake/parse_annotation.py::format_consequence, not the raw VEP
+    scripts/annotation/parse_annotation.py::format_consequence, not the raw VEP
     SO term. The B1 gate and downstream reason detection must match both
     forms or every Tier III MAY-arm VUS silently disappears from the Board.
 

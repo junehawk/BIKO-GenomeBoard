@@ -86,7 +86,7 @@ def _pm1_hotspot_match(gene: Optional[str], protein_position: Optional[int]) -> 
 
 # ── Consequence groups ────────────────────────────────────────────────────────
 #
-# Inverse of scripts/intake/parse_annotation.py::format_consequence mapping.
+# Inverse of scripts/annotation/parse_annotation.py::format_consequence mapping.
 # Real pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
 # variant dict, but evidence_collector's tests use the raw VEP SO term. Both
 # must resolve to the same internal canonical form.

@@ -1,4 +1,4 @@
-# scripts/pharma/query_pharmgkb.py
+# scripts/pharmacogenomics/query_pharmgkb.py
 import threading
 import time
 from typing import Dict, Optional

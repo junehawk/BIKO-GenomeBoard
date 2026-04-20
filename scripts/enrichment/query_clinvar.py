@@ -1,4 +1,4 @@
-# scripts/clinical/query_clinvar.py
+# scripts/enrichment/query_clinvar.py
 import logging
 import os
 from typing import Dict, List, Optional

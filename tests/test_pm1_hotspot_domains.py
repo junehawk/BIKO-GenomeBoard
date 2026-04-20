@@ -59,7 +59,7 @@ def test_kras_a146t_fires_pm1_supporting():
 
 def test_pm1_fires_with_biko_formatted_consequence_label():
     """v2.2 regression — real pipeline stores consequence as the BIKO-formatted
-    short label (e.g. "Missense") via scripts/intake/parse_annotation.py::
+    short label (e.g. "Missense") via scripts/annotation/parse_annotation.py::
     format_consequence, not the raw VEP SO term. ``_get_consequence`` must
     canonicalise both forms or PM1 silently never fires on real data.
 

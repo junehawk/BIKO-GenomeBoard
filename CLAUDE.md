@@ -63,7 +63,7 @@ LLM did not endorse.
 `pm1_hotspot_domains.json` is the ACMG-authoritative PM1 source for
 protein-domain hotspots. It is built by
 `scripts/tools/build_pm1_hotspot_table.py` and registered through
-`scripts/db/version_manager.py`. `evidence_collector.collect_additional_evidence`
+`scripts/storage/version_manager.py`. `evidence_collector.collect_additional_evidence`
 consults this table (not the legacy `cancerhotspots_v2_single` build)
 when firing PM1 for domain hotspots.
 
@@ -136,7 +136,7 @@ never from free-form LLM generation.
 
 `orchestrate.py` accepts an optional `--germline <vcf>` alongside the
 primary somatic / proband VCF. In `--mode rare-disease`,
-`scripts/pipeline/extract_germline.py::extract_inherited_variants`
+`scripts/orchestration/extract_germline.py::extract_inherited_variants`
 intersects the germline VCF against a target BED and yields
 inherited-variant rows that flow through the same ACMG path as the
 proband variants. The somatic VCF still drives Tier I–IV (cancer mode)
@@ -161,7 +161,7 @@ INFO) to still produce gene-keyed rows in the report (commit `65c6057`).
 
 ### PharmCAT 3.2.0 integration
 
-`scripts/pharma/pharmcat_runner.py` invokes Oracle PharmCAT 3.2.0 over
+`scripts/pharmacogenomics/pharmcat_runner.py` invokes Oracle PharmCAT 3.2.0 over
 the germline VCF for the curator-grade PGx path. Setup is automated:
 the runner installs Java 17 on first use if `java -version` reports
 < 17, and downloads the PharmCAT JAR on first run. `pgx_source` in
@@ -188,7 +188,7 @@ PharmCAT gene set: DPYD, TPMT, HLA-A, CYP2B6, CYP4F2, ABCG2, NAT2,
 CACNA1S, CFTR, CYP3A4, MT-RNR1, RYR1 — bringing the total to 24
 genes. Each entry now carries a `default_phenotype` field used when
 PharmCAT is unavailable. The previous hardcoded `elif` chain in
-`scripts/pharma/korean_pgx.py` was replaced by data-driven lookup
+`scripts/pharmacogenomics/korean_pgx.py` was replaced by data-driven lookup
 against this field (commit `decbec3`); new genes are added by editing
 JSON, not Python.
 
@@ -354,7 +354,7 @@ Special notes:
 - **Consequence-form normalization** — the real pipeline stores
   `variant.consequence` as a BIKO-formatted short label
   (`"Missense"`, not `"missense_variant"`) via
-  `scripts/intake/parse_annotation.py::format_consequence`. Any new
+  `scripts/annotation/parse_annotation.py::format_consequence`. Any new
   code that filters on VEP SO terms must either call the
   `_canonicalize_so_term` / `_canonical_consequence` helpers or
   include both forms in its frozenset, or it will be silent dead

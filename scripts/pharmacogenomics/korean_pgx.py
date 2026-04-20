@@ -1,4 +1,4 @@
-# scripts/pharma/korean_pgx.py
+# scripts/pharmacogenomics/korean_pgx.py
 """Korean-population pharmacogenomics (PGx) analysis.
 
 Provides two levels of API:

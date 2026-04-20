@@ -1,4 +1,4 @@
-# scripts/intake/parse_intervar.py
+# scripts/annotation/parse_intervar.py
 """Parse InterVar TSV output and extract ACMG evidence codes per variant.
 
 InterVar produces a tab-separated file with per-variant rows.  The first

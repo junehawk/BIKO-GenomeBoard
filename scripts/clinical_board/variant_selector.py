@@ -146,7 +146,7 @@ _PROTEIN_IMPACTING_CONSEQUENCES = frozenset(
     }
 )
 
-# Inverse of scripts/intake/parse_annotation.py::format_consequence. The real
+# Inverse of scripts/annotation/parse_annotation.py::format_consequence. The real
 # pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
 # variant dict, but the selector's gate is expressed in raw VEP SO terms. Both
 # forms must resolve to the same membership check or Tier III MAY-arm variants
