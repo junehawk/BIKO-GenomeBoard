@@ -1,7 +1,7 @@
 """Regression tests for v2.3-T6 self-computed PM5 path.
 
 Covers ``scripts/storage/query_local_clinvar.get_clinvar_pathogenic_positions``
-and the wiring inside ``scripts/pipeline/classify.classify_variants`` that
+and the wiring inside ``scripts/orchestration/classify.classify_variants`` that
 feeds it into ``evidence_collector.collect_additional_evidence``.
 
 These tests build a tiny throw-away ClinVar SQLite DB with the v2.3-T6
@@ -272,7 +272,7 @@ def test_pm5_fires_via_self_computed_path(patched_clinvar_db, monkeypatch):
     full classify_variants -> collect_additional_evidence wiring."""
     from scripts.common.models import Variant as VariantModel
     from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
-    from scripts.pipeline.classify import classify_variants
+    from scripts.orchestration.classify import classify_variants
 
     # Sanity — fixture DB really does have residue 175 in the set.
     assert 175 in get_clinvar_pathogenic_positions("TP53")

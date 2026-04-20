@@ -2,7 +2,7 @@
 
 This module is the single home for the dict-shaped contracts that flow
 between pipeline stages — primarily the per-variant record dict written
-by :func:`scripts.pipeline.classify.build_variant_records` and consumed
+by :func:`scripts.orchestration.classify.build_variant_records` and consumed
 by the report templates, the Clinical Board, and the curators.
 
 These TypedDicts are deliberately ``total=False`` because the pipeline
@@ -119,7 +119,7 @@ class BoardSelectionMetadata(TypedDict, total=False):
 class VariantRecord(TypedDict, total=False):
     """Shape of a single dict in ``report_data["variants"]``.
 
-    Built by :func:`scripts.pipeline.classify.build_variant_records` and
+    Built by :func:`scripts.orchestration.classify.build_variant_records` and
     consumed downstream by:
 
     * the report templates (``templates/cancer/report.html``,

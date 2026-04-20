@@ -204,9 +204,9 @@ class TestBuildTargetBed:
 class TestExtractGermline:
     def test_extract_inherited_from_fixture_germline(self, tmp_germline_vcf, tmp_target_bed):
         """Variants matching target regions are extracted."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
-        with patch("scripts.pipeline.extract_germline._get_gnomad_af", return_value=None):
+        with patch("scripts.orchestration.extract_germline._get_gnomad_af", return_value=None):
             variants = extract_inherited_variants(
                 tmp_germline_vcf,
                 target_bed=tmp_target_bed,
@@ -224,14 +224,14 @@ class TestExtractGermline:
 
     def test_extract_filters_common_variants(self, tmp_germline_vcf, tmp_target_bed):
         """Variants with gnomAD AF >= max_gnomad_af are excluded."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
         def mock_af(variant):
             if variant.gene == "BRAF":
                 return 0.05  # Above threshold
             return None  # Unknown -- kept (conservative)
 
-        with patch("scripts.pipeline.extract_germline._get_gnomad_af", side_effect=mock_af):
+        with patch("scripts.orchestration.extract_germline._get_gnomad_af", side_effect=mock_af):
             variants = extract_inherited_variants(
                 tmp_germline_vcf,
                 target_bed=tmp_target_bed,
@@ -244,9 +244,9 @@ class TestExtractGermline:
 
     def test_extract_sets_source_germline_inherited(self, tmp_germline_vcf, tmp_target_bed):
         """All extracted variants carry source='germline_inherited'."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
-        with patch("scripts.pipeline.extract_germline._get_gnomad_af", return_value=None):
+        with patch("scripts.orchestration.extract_germline._get_gnomad_af", return_value=None):
             variants = extract_inherited_variants(
                 tmp_germline_vcf,
                 target_bed=tmp_target_bed,
@@ -256,7 +256,7 @@ class TestExtractGermline:
 
     def test_extract_empty_when_no_target_bed(self, tmp_germline_vcf, tmp_path):
         """When target BED doesn't exist, returns empty list with no crash."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
         nonexistent = str(tmp_path / "no_such.bed")
         variants = extract_inherited_variants(
@@ -267,7 +267,7 @@ class TestExtractGermline:
 
     def test_extract_empty_when_no_matches(self, tmp_path):
         """When no variants match target regions, returns empty list."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
         # VCF with only a variant not in the target BED
         vcf_path = tmp_path / "no_match.vcf"
@@ -277,7 +277,7 @@ class TestExtractGermline:
         bed_path = tmp_path / "target.bed"
         bed_path.write_text("chr17\t7577119\t7577120\tTP53\tclinvar_plp\n")
 
-        with patch("scripts.pipeline.extract_germline._get_gnomad_af", return_value=None):
+        with patch("scripts.orchestration.extract_germline._get_gnomad_af", return_value=None):
             variants = extract_inherited_variants(
                 str(vcf_path),
                 target_bed=str(bed_path),
@@ -287,7 +287,7 @@ class TestExtractGermline:
 
     def test_extract_empty_when_vcf_missing(self, tmp_target_bed):
         """When germline VCF doesn't exist, returns empty list."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
         variants = extract_inherited_variants(
             "/nonexistent/germline.vcf",
@@ -297,12 +297,12 @@ class TestExtractGermline:
 
     def test_dedup_primary_takes_precedence(self, tmp_germline_vcf, tmp_target_bed):
         """When primary_variant_ids contains a match, inherited copy is skipped."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
         # TP53 variant is in the germline VCF and target BED
         primary_ids = {"chr17:7577120:G>A"}
 
-        with patch("scripts.pipeline.extract_germline._get_gnomad_af", return_value=None):
+        with patch("scripts.orchestration.extract_germline._get_gnomad_af", return_value=None):
             variants = extract_inherited_variants(
                 tmp_germline_vcf,
                 target_bed=tmp_target_bed,
@@ -316,9 +316,9 @@ class TestExtractGermline:
 
     def test_extract_gzipped_target_bed(self, tmp_germline_vcf, tmp_target_bed_gz):
         """Gzipped target BED files are read correctly."""
-        from scripts.pipeline.extract_germline import extract_inherited_variants
+        from scripts.orchestration.extract_germline import extract_inherited_variants
 
-        with patch("scripts.pipeline.extract_germline._get_gnomad_af", return_value=None):
+        with patch("scripts.orchestration.extract_germline._get_gnomad_af", return_value=None):
             variants = extract_inherited_variants(
                 tmp_germline_vcf,
                 target_bed=tmp_target_bed_gz,
@@ -328,7 +328,7 @@ class TestExtractGermline:
 
     def test_parse_vcf_line_with_geneinfo(self):
         """VCF lines with GENEINFO field are parsed correctly."""
-        from scripts.pipeline.extract_germline import _parse_vcf_line
+        from scripts.orchestration.extract_germline import _parse_vcf_line
 
         line = "chr17\t7577120\trs28934578\tG\tA\t100\tPASS\tGENEINFO=TP53"
         v = _parse_vcf_line(line)
@@ -343,7 +343,7 @@ class TestExtractGermline:
 
     def test_parse_vcf_line_skips_header(self):
         """Header lines return None."""
-        from scripts.pipeline.extract_germline import _parse_vcf_line
+        from scripts.orchestration.extract_germline import _parse_vcf_line
 
         assert _parse_vcf_line("#CHROM\tPOS\tID\tREF\tALT") is None
         assert _parse_vcf_line("##fileformat=VCFv4.2") is None
@@ -374,7 +374,7 @@ class TestVariantSourceField:
 class TestVariantRecordSource:
     def test_variant_record_carries_source_field(self):
         """build_variant_records propagates source to variant records."""
-        from scripts.pipeline.classify import build_variant_records
+        from scripts.orchestration.classify import build_variant_records
 
         variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53", source="germline_inherited")
         db_results = {
@@ -406,7 +406,7 @@ class TestVariantRecordSource:
 
     def test_variant_record_default_source_is_primary(self):
         """Variants without explicit source get 'primary' in records."""
-        from scripts.pipeline.classify import build_variant_records
+        from scripts.orchestration.classify import build_variant_records
 
         variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
         db_results = {
@@ -472,7 +472,7 @@ class TestOrchestrateGermlineIntegration:
             patch("scripts.orchestrate.get_all_db_versions", return_value={}),
             patch("scripts.orchestrate.generate_report_html", return_value="<html></html>"),
             patch("scripts.orchestrate.resolve_hpo_terms", return_value=[]),
-            patch("scripts.pipeline.extract_germline.extract_inherited_variants", return_value=inherited),
+            patch("scripts.orchestration.extract_germline.extract_inherited_variants", return_value=inherited),
         ):
             # Primary VCF returns one variant
             primary = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
@@ -569,7 +569,7 @@ class TestOrchestrateGermlineIntegration:
             patch("scripts.orchestrate.split_variants_for_display", return_value=([], [], [], 0, [], [])),
             patch("scripts.orchestrate.get_all_db_versions", return_value={}),
             patch("scripts.orchestrate.generate_report_html", return_value="<html></html>"),
-            patch("scripts.pipeline.extract_germline.extract_inherited_variants") as mock_extract,
+            patch("scripts.orchestration.extract_germline.extract_inherited_variants") as mock_extract,
         ):
             primary = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
             mock_parse.return_value = [primary]

@@ -15,13 +15,13 @@ from scripts.common.models import FrequencyData
 from scripts.storage.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.population.compare_freq import compare_frequencies
-from scripts.pipeline.classify import (
+from scripts.orchestration.classify import (
     build_summary,
     build_variant_records,
     classify_variants,
     split_variants_for_display,
 )
-from scripts.pipeline.query import query_variant_databases
+from scripts.orchestration.query import query_variant_databases
 
 logger = logging.getLogger(__name__)
 

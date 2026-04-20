@@ -4,7 +4,7 @@ pass-through of ``selection_reason_list``.
 The plan's pre-step fix: v2.3 ticket 1 populates
 ``variant.selection_reason_list`` (via variant_selector's tagging + any
 upstream enrichment), but the report_data builder in
-``scripts/pipeline/classify.py`` previously dropped the field, so the
+``scripts/orchestration/classify.py`` previously dropped the field, so the
 template's de novo badge was permanently blank on real data.
 
 These tests confirm the record dict now always carries a
@@ -16,7 +16,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 from scripts.common.models import Variant
-from scripts.pipeline.classify import build_variant_records
+from scripts.orchestration.classify import build_variant_records
 
 
 def _min_db(variant_id: str) -> dict:

@@ -2,7 +2,7 @@
 """BIKO GenomeBoard Standalone Pipeline — VCF → Report
 
 Entry point for single-sample and batch variant analysis.
-Core logic is in scripts/pipeline/ modules:
+Core logic is in scripts/orchestration/ modules:
   - pipeline.query: per-variant database queries
   - pipeline.classify: ACMG classification, variant record assembly
   - pipeline.batch: batch processing with deduplication
@@ -27,12 +27,12 @@ from scripts.counselor.generate_pdf import generate_pdf, generate_report_html
 from scripts.storage.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.population.compare_freq import compare_frequencies
-from scripts.pipeline.batch import (
+from scripts.orchestration.batch import (
     collect_unique_variants,
     discover_samples,
     run_batch_pipeline,
 )
-from scripts.pipeline.classify import (
+from scripts.orchestration.classify import (
     build_summary,
     build_variant_records,
     classify_variants,
@@ -41,7 +41,7 @@ from scripts.pipeline.classify import (
 )
 
 # Pipeline modules (extracted from this file)
-from scripts.pipeline.query import query_variant_databases
+from scripts.orchestration.query import query_variant_databases
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("genomeboard")
@@ -155,7 +155,7 @@ def run_pipeline(
     inherited_variants: list = []
     if germline_vcf and mode == "rare-disease":
         try:
-            from scripts.pipeline.extract_germline import extract_inherited_variants
+            from scripts.orchestration.extract_germline import extract_inherited_variants
 
             primary_ids = {v.variant_id for v in variants}
             inherited_variants = extract_inherited_variants(

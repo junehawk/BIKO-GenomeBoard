@@ -14,7 +14,7 @@ Merges three sources into ``data/germline_targets/combined_targets.bed.gz``
   ``data/ddg2p_neurodev_genes.json``.
 
 The output BED is consumed by
-:func:`scripts.pipeline.extract_germline.extract_inherited_variants` which
+:func:`scripts.orchestration.extract_germline.extract_inherited_variants` which
 performs a fast tabix intersection against a germline VCF to avoid reading
 4-5 M variants.
 
