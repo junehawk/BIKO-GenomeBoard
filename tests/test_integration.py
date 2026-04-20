@@ -6,7 +6,7 @@ import pytest
 from scripts.classification.acmg_engine import classify_variant
 from scripts.enrichment.query_clinvar import query_clinvar
 from scripts.common.models import AcmgEvidence, FrequencyData
-from scripts.counselor.generate_pdf import generate_report_html
+from scripts.reporting.generate_pdf import generate_report_html
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.population.compare_freq import compare_frequencies
 from scripts.population.query_gnomad import query_gnomad

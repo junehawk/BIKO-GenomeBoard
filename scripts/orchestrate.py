@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 from scripts.common.config import get
 from scripts.common.models import FrequencyData
-from scripts.counselor.generate_pdf import generate_pdf, generate_report_html
+from scripts.reporting.generate_pdf import generate_pdf, generate_report_html
 from scripts.storage.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.population.compare_freq import compare_frequencies

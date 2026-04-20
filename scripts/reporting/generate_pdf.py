@@ -1,4 +1,4 @@
-# scripts/counselor/generate_pdf.py
+# scripts/reporting/generate_pdf.py
 import os
 import re
 from pathlib import Path

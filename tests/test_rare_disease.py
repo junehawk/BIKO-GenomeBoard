@@ -368,7 +368,7 @@ MINIMAL_RARE_DISEASE_REPORT = {
 
 def test_rare_disease_report_has_candidate_ranking():
     """Rare disease report template includes candidate ranking table."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert "Candidate Gene Ranking" in html
@@ -378,7 +378,7 @@ def test_rare_disease_report_has_candidate_ranking():
 
 def test_rare_disease_report_has_inheritance():
     """Rare disease report template shows inheritance patterns."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     # AD appears for TP53, AR for CFTR
@@ -388,7 +388,7 @@ def test_rare_disease_report_has_inheritance():
 
 def test_rare_disease_report_has_phenotypes():
     """Rare disease report template shows OMIM phenotypes and HPO terms."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert "Li-Fraumeni syndrome" in html
@@ -399,7 +399,7 @@ def test_rare_disease_report_has_phenotypes():
 
 def test_rare_disease_report_has_hpo_section():
     """Rare disease report shows HPO phenotype section."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert "Patient Phenotypes" in html or "HPO" in html
@@ -408,7 +408,7 @@ def test_rare_disease_report_has_hpo_section():
 
 def test_rare_disease_report_has_clingen():
     """Rare disease report shows ClinGen validity."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert "Definitive" in html
@@ -417,7 +417,7 @@ def test_rare_disease_report_has_clingen():
 
 def test_rare_disease_report_has_hpo_score():
     """Rare disease report shows HPO score in candidate ranking."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     # HPO score of 2 for TP53 should appear
@@ -426,7 +426,7 @@ def test_rare_disease_report_has_hpo_score():
 
 def test_rare_disease_report_has_matching_hpo_in_detail():
     """Rare disease variant detail shows matching HPO terms."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert "Matching HPO Terms" in html
@@ -435,7 +435,7 @@ def test_rare_disease_report_has_matching_hpo_in_detail():
 
 def test_rare_disease_report_research_use_only():
     """Rare disease report has Research Use Only disclaimer on every page."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(MINIMAL_RARE_DISEASE_REPORT, mode="rare-disease")
     assert html.count("Research Use Only") >= 1

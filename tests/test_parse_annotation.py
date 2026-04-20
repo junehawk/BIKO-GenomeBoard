@@ -280,7 +280,7 @@ def test_parse_vcf_without_annotation():
 
 def test_annotation_fallback_to_gene_knowledge():
     """When no VCF annotation, generate_report_html uses gene_knowledge.json data."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     data = {
         "sample_id": "TEST_FALLBACK",
@@ -318,7 +318,7 @@ def test_annotation_fallback_to_gene_knowledge():
 
 def test_annotation_vcf_fields_override_gene_knowledge():
     """When VCF annotation present, hgvs dict uses VCF data, not gene_knowledge."""
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     data = {
         "sample_id": "TEST_ANNOT",

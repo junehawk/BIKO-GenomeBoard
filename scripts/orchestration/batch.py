@@ -176,7 +176,7 @@ def _generate_single_report(report_data: dict, output_path: str, mode: str) -> s
     from pathlib import Path as _Path
 
     sys.path.insert(0, str(_Path(__file__).parent.parent.parent))
-    from scripts.counselor.generate_pdf import generate_report_html as _gen_html
+    from scripts.reporting.generate_pdf import generate_report_html as _gen_html
 
     html = _gen_html(report_data, mode=mode)
     _Path(output_path).parent.mkdir(parents=True, exist_ok=True)

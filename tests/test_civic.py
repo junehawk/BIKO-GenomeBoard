@@ -292,28 +292,28 @@ def test_extract_protein_position_with_transcript_prefix():
 
 def test_hgvsp_to_civic_variant_gly12asp():
     """p.Gly12Asp -> G12D"""
-    from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+    from scripts.reporting.generate_pdf import _hgvsp_to_civic_variant
 
     assert _hgvsp_to_civic_variant("p.Gly12Asp") == "G12D"
 
 
 def test_hgvsp_to_civic_variant_val600glu():
     """p.Val600Glu -> V600E"""
-    from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+    from scripts.reporting.generate_pdf import _hgvsp_to_civic_variant
 
     assert _hgvsp_to_civic_variant("p.Val600Glu") == "V600E"
 
 
 def test_hgvsp_to_civic_variant_arg249met():
     """p.Arg249Met -> R249M"""
-    from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+    from scripts.reporting.generate_pdf import _hgvsp_to_civic_variant
 
     assert _hgvsp_to_civic_variant("p.Arg249Met") == "R249M"
 
 
 def test_hgvsp_to_civic_variant_none():
     """Returns None for empty/invalid input."""
-    from scripts.counselor.generate_pdf import _hgvsp_to_civic_variant
+    from scripts.reporting.generate_pdf import _hgvsp_to_civic_variant
 
     assert _hgvsp_to_civic_variant(None) is None
     assert _hgvsp_to_civic_variant("") is None

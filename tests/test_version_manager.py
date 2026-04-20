@@ -375,7 +375,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
     from scripts.storage.version_manager import get_all_db_versions
 
     db_versions = get_all_db_versions(skip_api=True)
@@ -460,7 +460,7 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
     from scripts.storage.version_manager import get_all_db_versions
 
     db_versions = get_all_db_versions(skip_api=True)

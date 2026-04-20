@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from scripts.counselor.generate_pdf import generate_report_html
+from scripts.reporting.generate_pdf import generate_report_html
 
 # ── Shared fixture data ──────────────────────────────────────────────────────
 

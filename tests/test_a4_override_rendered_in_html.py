@@ -17,7 +17,7 @@ import re
 
 from scripts.classification.acmg_engine import ClassificationResult
 from scripts.common.models import Variant
-from scripts.counselor.generate_pdf import generate_report_html
+from scripts.reporting.generate_pdf import generate_report_html
 from scripts.orchestration.classify import build_variant_records
 
 # ─── Helpers ────────────────────────────────────────────────────────────────

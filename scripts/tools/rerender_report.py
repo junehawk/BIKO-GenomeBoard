@@ -99,7 +99,7 @@ def rerender(input_json_path: Path, output_html_path: Path) -> int:
         report_data["clinical_board"] = rebuilt
         report_data["clinical_board_html"] = render_board_opinion_html(rebuilt, language=language)
 
-    from scripts.counselor.generate_pdf import generate_report_html
+    from scripts.reporting.generate_pdf import generate_report_html
 
     html = generate_report_html(report_data, mode=mode)
     output_html_path.parent.mkdir(parents=True, exist_ok=True)
