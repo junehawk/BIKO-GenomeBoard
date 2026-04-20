@@ -306,7 +306,9 @@ def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
                         ped_entries = _parse_ped(ped_path)
                         proband_idx, parent_idxs = _resolve_trio(ped_entries, sample_ids)
                         if proband_idx is None:
-                            raise ValueError(
+                            from scripts.common.exceptions import InvalidInput
+
+                            raise InvalidInput(
                                 f"PED file {ped_path} did not resolve a trio against "
                                 f"VCF samples {sample_ids}. Strict mode — no fallback. "
                                 f"Remove --ped to use the filename heuristic, or fix "

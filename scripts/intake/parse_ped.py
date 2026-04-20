@@ -22,6 +22,8 @@ import os
 from dataclasses import dataclass
 from typing import Optional
 
+from scripts.common.exceptions import InvalidInput
+
 logger = logging.getLogger(__name__)
 
 
@@ -68,8 +70,10 @@ def parse_ped(ped_path: str) -> dict[str, PedEntry]:
     - Windows CRLF line endings are handled by Python's text-mode reader
 
     A malformed row (< 6 whitespace-delimited tokens) raises
-    ``ValueError`` with the 1-based line number — swallowing a malformed
-    PED would let a silent misparse propagate into proband selection.
+    :class:`scripts.common.exceptions.InvalidInput` (a ``ValueError``
+    subclass, so legacy ``except ValueError`` sites still match) with
+    the 1-based line number — swallowing a malformed PED would let a
+    silent misparse propagate into proband selection.
 
     Parameters
     ----------
@@ -100,7 +104,7 @@ def parse_ped(ped_path: str) -> dict[str, PedEntry]:
             # Use a permissive whitespace split to match PLINK behaviour.
             fields = line.split()
             if len(fields) < 6:
-                raise ValueError(
+                raise InvalidInput(
                     f"Malformed PED line {lineno} in {ped_path}: "
                     f"expected ≥6 whitespace-delimited columns, got {len(fields)} "
                     f"({line!r})"
@@ -108,13 +112,13 @@ def parse_ped(ped_path: str) -> dict[str, PedEntry]:
             try:
                 sex = int(fields[4])
             except ValueError:
-                raise ValueError(
+                raise InvalidInput(
                     f"Malformed PED line {lineno} in {ped_path}: Sex column must be an integer, got {fields[4]!r}"
                 ) from None
             try:
                 affected = int(fields[5])
             except ValueError:
-                raise ValueError(
+                raise InvalidInput(
                     f"Malformed PED line {lineno} in {ped_path}: Phenotype column must be an integer, got {fields[5]!r}"
                 ) from None
 
