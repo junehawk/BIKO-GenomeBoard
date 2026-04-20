@@ -500,7 +500,7 @@ class TestVCFIntegration:
     @pytest.fixture()
     def vcf_records(self):
         """Parse the demo VCF and return a list of (csq_field_dict, gene) tuples."""
-        from scripts.intake.parse_annotation import parse_csq_header
+        from scripts.annotation.parse_annotation import parse_csq_header
 
         records = []
         fields = []

@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-from scripts.intake.parse_annotation import (
+from scripts.annotation.parse_annotation import (
     format_consequence,
     parse_ann_header,
     parse_ann_value,

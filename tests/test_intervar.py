@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from scripts.common.models import Variant
-from scripts.intake.parse_intervar import get_intervar_evidence, parse_intervar
+from scripts.annotation.parse_intervar import get_intervar_evidence, parse_intervar
 
 SAMPLE_FILE = str(Path(__file__).parent.parent / "data" / "sample_intervar" / "sample_intervar_output.tsv")
 

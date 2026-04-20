@@ -50,7 +50,7 @@ def classify_variants(
     except ImportError:
         _has_evidence_collector = False
     try:
-        from scripts.intake.parse_intervar import get_intervar_evidence
+        from scripts.annotation.parse_intervar import get_intervar_evidence
 
         _has_intervar = True
     except ImportError:

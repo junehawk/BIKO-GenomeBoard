@@ -8,7 +8,7 @@ import re
 from typing import IO, List, Optional, Tuple
 
 from scripts.common.models import Variant
-from scripts.intake.parse_annotation import (
+from scripts.annotation.parse_annotation import (
     format_consequence,
     parse_ann_header,
     parse_ann_value,

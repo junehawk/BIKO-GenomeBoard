@@ -232,7 +232,7 @@ def run_pipeline(
     intervar_data = None
     if intervar_path:
         try:
-            from scripts.intake.parse_intervar import parse_intervar
+            from scripts.annotation.parse_intervar import parse_intervar
 
             intervar_data = parse_intervar(intervar_path)
             _progress(f"  [InterVar] Loaded evidence for {len(intervar_data)} variants")
