@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from scripts.classification.acmg_engine import classify_variant
-from scripts.clinical.query_clinvar import query_clinvar
+from scripts.enrichment.query_clinvar import query_clinvar
 from scripts.common.models import AcmgEvidence, FrequencyData
 from scripts.counselor.generate_pdf import generate_report_html
 from scripts.intake.parse_vcf import parse_vcf
@@ -25,7 +25,7 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
 
     # Mock ClinVar
     mocker.patch(
-        "scripts.clinical.query_clinvar._search_clinvar_variant",
+        "scripts.enrichment.query_clinvar._search_clinvar_variant",
         return_value={
             "clinical_significance": {"description": "Pathogenic"},
             "gene": {"symbol": "TP53"},

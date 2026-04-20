@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 from datetime import date
 from pathlib import Path
 
-from scripts.clinical.hpo_matcher import resolve_hpo_terms
+from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 from scripts.common.config import get
 from scripts.common.models import FrequencyData
 from scripts.db.version_manager import get_all_db_versions

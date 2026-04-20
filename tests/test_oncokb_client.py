@@ -28,7 +28,7 @@ def clear_ns_cache():
 
 def test_offline_mode_shortcircuits_without_http(monkeypatch):
     """When offline_mode=True, the client returns [] without touching requests."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
 
     called = []
 
@@ -43,7 +43,7 @@ def test_offline_mode_shortcircuits_without_http(monkeypatch):
 
 
 def test_http_429_raises_oncokb_unavailable(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
 
     response = MagicMock()
     response.status_code = 429
@@ -55,7 +55,7 @@ def test_http_429_raises_oncokb_unavailable(monkeypatch):
 
 
 def test_connection_refused_raises_oncokb_unavailable(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
 
     def raise_conn_err(*a, **kw):
         raise oncokb_client.requests.exceptions.ConnectionError("refused")
@@ -66,7 +66,7 @@ def test_connection_refused_raises_oncokb_unavailable(monkeypatch):
 
 
 def test_timeout_raises_oncokb_unavailable(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
 
     def raise_timeout(*a, **kw):
         raise oncokb_client.requests.exceptions.Timeout("slow")
@@ -77,7 +77,7 @@ def test_timeout_raises_oncokb_unavailable(monkeypatch):
 
 
 def test_happy_path_returns_hits_and_caches(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
 
     payload = {
         "query": {"hugoSymbol": "KRAS", "alteration": "G12D"},
@@ -112,7 +112,7 @@ def test_happy_path_returns_hits_and_caches(monkeypatch):
 
 
 def test_5xx_raises_oncokb_unavailable(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
 
     response = MagicMock()
     response.status_code = 503
@@ -124,7 +124,7 @@ def test_5xx_raises_oncokb_unavailable(monkeypatch):
 
 def test_walltime_happy_path_cached_is_under_1s(monkeypatch):
     """Cached lookup must be near-instant (well under 1 s)."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.common import cache
 
     cache.set_cached_ns("oncokb", "KRAS::G12D", [{"drug": "Sotorasib", "pmids": ["32955176"], "level": "LEVEL_1"}])

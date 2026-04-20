@@ -7,7 +7,7 @@ DEMO_VCF = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_vari
 
 def test_orchestrate_demo_vcf(mocker, tmp_path):
     """End-to-end: orchestrate.py produces report from demo VCF"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"
@@ -41,7 +41,7 @@ def test_orchestrate_skip_api(tmp_path):
 
 def test_orchestrate_json_output(mocker, tmp_path):
     """JSON data written alongside HTML when json_output is specified"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"
@@ -74,7 +74,7 @@ def test_orchestrate_missing_vcf(tmp_path):
 
 def test_orchestrate_sample_id(mocker, tmp_path):
     """Custom sample_id is reflected in report data"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"
@@ -92,7 +92,7 @@ def test_orchestrate_sample_id(mocker, tmp_path):
 
 def test_orchestrate_summary_counts(mocker, tmp_path):
     """Summary counts in report data are consistent with variant records"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"
@@ -114,7 +114,7 @@ def test_orchestrate_summary_counts(mocker, tmp_path):
 
 def test_orchestrate_pgx_results(mocker, tmp_path):
     """PGx hits are captured in report data for known PGx genes"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"
@@ -133,7 +133,7 @@ def test_orchestrate_pgx_results(mocker, tmp_path):
 
 def test_orchestrate_krgdb_missing(mocker, tmp_path):
     """Missing KRGDB file logs a warning but pipeline continues"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"
@@ -153,7 +153,7 @@ def test_orchestrate_krgdb_missing(mocker, tmp_path):
 
 def test_orchestrate_report_structure(mocker, tmp_path):
     """Report data contains all required top-level keys"""
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.korean_pop.query_gnomad._graphql_query", return_value=None)
 
     output_path = tmp_path / "report.html"

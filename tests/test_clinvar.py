@@ -1,5 +1,5 @@
 # tests/test_clinvar.py
-from scripts.clinical.query_clinvar import _search_clinvar_variant, query_clinvar
+from scripts.enrichment.query_clinvar import _search_clinvar_variant, query_clinvar
 from scripts.common.models import Variant
 
 SAMPLE_CLINVAR_RESPONSE = {
@@ -17,7 +17,7 @@ SAMPLE_CLINVAR_RESPONSE = {
 
 def test_query_clinvar_pathogenic(mocker):
     mocker.patch(
-        "scripts.clinical.query_clinvar._search_clinvar_variant",
+        "scripts.enrichment.query_clinvar._search_clinvar_variant",
         return_value=SAMPLE_CLINVAR_RESPONSE["result"]["12375"],
     )
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
@@ -28,7 +28,7 @@ def test_query_clinvar_pathogenic(mocker):
 
 
 def test_query_clinvar_not_found(mocker):
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     variant = Variant(chrom="chr1", pos=12345, ref="A", alt="T")
     result = query_clinvar(variant)
     assert result is not None
@@ -39,7 +39,7 @@ def test_query_clinvar_not_found(mocker):
 # I-5c: api_available tracking
 def test_query_clinvar_api_available_true(mocker):
     mocker.patch(
-        "scripts.clinical.query_clinvar._search_clinvar_variant",
+        "scripts.enrichment.query_clinvar._search_clinvar_variant",
         return_value=SAMPLE_CLINVAR_RESPONSE["result"]["12375"],
     )
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
@@ -48,7 +48,7 @@ def test_query_clinvar_api_available_true(mocker):
 
 
 def test_query_clinvar_api_available_false(mocker):
-    mocker.patch("scripts.clinical.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     variant = Variant(chrom="chr1", pos=12345, ref="A", alt="T")
     result = query_clinvar(variant)
     assert result["api_available"] is False
@@ -59,7 +59,7 @@ def test_search_clinvar_uses_rsid_first(mocker):
     esearch_response = {"esearchresult": {"idlist": ["12375"]}}
     esummary_response = {"result": {"12375": SAMPLE_CLINVAR_RESPONSE["result"]["12375"]}}
     mock_fetch = mocker.patch(
-        "scripts.clinical.query_clinvar.fetch_with_retry", side_effect=[esearch_response, esummary_response]
+        "scripts.enrichment.query_clinvar.fetch_with_retry", side_effect=[esearch_response, esummary_response]
     )
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53", rsid="rs28934578")
     result = _search_clinvar_variant(variant)
@@ -75,7 +75,7 @@ def test_search_clinvar_falls_back_to_gene_pos(mocker):
     esearch_response = {"esearchresult": {"idlist": ["12375"]}}
     esummary_response = {"result": {"12375": SAMPLE_CLINVAR_RESPONSE["result"]["12375"]}}
     mock_fetch = mocker.patch(
-        "scripts.clinical.query_clinvar.fetch_with_retry", side_effect=[esearch_response, esummary_response]
+        "scripts.enrichment.query_clinvar.fetch_with_retry", side_effect=[esearch_response, esummary_response]
     )
     variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53", rsid=None)
     result = _search_clinvar_variant(variant)

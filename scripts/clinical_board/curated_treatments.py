@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from scripts.clinical import oncokb_client
+from scripts.enrichment import oncokb_client
 from scripts.common.config import get
 from scripts.common.hgvs_utils import normalize_hgvsp_for_civic
 

@@ -3,7 +3,7 @@
 import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from scripts.clinical.query_clinvar import query_clinvar
+from scripts.enrichment.query_clinvar import query_clinvar
 from scripts.common.config import get
 from scripts.db.query_local_clinvar import query_local_clinvar
 from scripts.db.query_tabix_gnomad import query_tabix_gnomad

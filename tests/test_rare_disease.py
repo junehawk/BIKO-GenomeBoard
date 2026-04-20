@@ -8,12 +8,12 @@ from unittest.mock import patch
 
 def test_resolve_hpo_terms_offline():
     """resolve_hpo_terms handles API calls correctly when mocked."""
-    from scripts.clinical.hpo_matcher import resolve_hpo_terms
+    from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 
     mock_term = {"name": "Seizures"}
     mock_genes = {"genes": [{"symbol": "SCN1A"}, {"symbol": "KCNQ2"}]}
 
-    with patch("scripts.clinical.hpo_matcher.fetch_with_retry") as mock_fetch:
+    with patch("scripts.enrichment.hpo_matcher.fetch_with_retry") as mock_fetch:
         mock_fetch.side_effect = [mock_term, mock_genes]
         results = resolve_hpo_terms(["HP:0001250"])
 
@@ -26,9 +26,9 @@ def test_resolve_hpo_terms_offline():
 
 def test_resolve_hpo_terms_skips_invalid():
     """resolve_hpo_terms skips IDs that don't start with 'HP:'."""
-    from scripts.clinical.hpo_matcher import resolve_hpo_terms
+    from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 
-    with patch("scripts.clinical.hpo_matcher.fetch_with_retry") as mock_fetch:
+    with patch("scripts.enrichment.hpo_matcher.fetch_with_retry") as mock_fetch:
         results = resolve_hpo_terms(["NOT_AN_HPO_ID", "INVALID"])
 
     assert results == []
@@ -37,9 +37,9 @@ def test_resolve_hpo_terms_skips_invalid():
 
 def test_resolve_hpo_terms_api_unavailable():
     """resolve_hpo_terms falls back to local DB when API returns None."""
-    from scripts.clinical.hpo_matcher import resolve_hpo_terms
+    from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 
-    with patch("scripts.clinical.hpo_matcher.fetch_with_retry", return_value=None):
+    with patch("scripts.enrichment.hpo_matcher.fetch_with_retry", return_value=None):
         results = resolve_hpo_terms(["HP:0001263"])
 
     assert len(results) == 1
@@ -56,7 +56,7 @@ def test_resolve_hpo_terms_api_unavailable():
 
 def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
     """API 실패 시 로컬 HPO DB로 fallback."""
-    from scripts.clinical.hpo_matcher import resolve_hpo_terms
+    from scripts.enrichment.hpo_matcher import resolve_hpo_terms
     from scripts.db.build_hpo_db import build_db
 
     # Build local DB
@@ -68,7 +68,7 @@ def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
     build_db(str(tsv), db_path)
 
     # Mock API to fail
-    monkeypatch.setattr("scripts.clinical.hpo_matcher.fetch_with_retry", lambda *a, **kw: None)
+    monkeypatch.setattr("scripts.enrichment.hpo_matcher.fetch_with_retry", lambda *a, **kw: None)
 
     # Patch config.get at both the source and the already-imported reference
     def _cfg(key, default=None):
@@ -86,7 +86,7 @@ def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
 
 def test_calculate_hpo_score():
     """calculate_hpo_score returns count of HPO terms linked to the gene."""
-    from scripts.clinical.hpo_matcher import calculate_hpo_score
+    from scripts.enrichment.hpo_matcher import calculate_hpo_score
 
     hpo_results = [
         {"id": "HP:0001250", "name": "Seizures", "genes": ["SCN1A", "KCNQ2", "TP53"]},
@@ -102,7 +102,7 @@ def test_calculate_hpo_score():
 
 def test_calculate_hpo_score_case_insensitive():
     """calculate_hpo_score is case-insensitive for gene names."""
-    from scripts.clinical.hpo_matcher import calculate_hpo_score
+    from scripts.enrichment.hpo_matcher import calculate_hpo_score
 
     hpo_results = [
         {"id": "HP:0001250", "name": "Seizures", "genes": ["SCN1A", "TP53"]},
@@ -114,7 +114,7 @@ def test_calculate_hpo_score_case_insensitive():
 
 def test_calculate_hpo_score_empty():
     """calculate_hpo_score returns 0 when hpo_results is empty or gene is empty."""
-    from scripts.clinical.hpo_matcher import calculate_hpo_score
+    from scripts.enrichment.hpo_matcher import calculate_hpo_score
 
     assert calculate_hpo_score("TP53", []) == 0
     assert calculate_hpo_score("", [{"id": "HP:0001250", "name": "X", "genes": ["TP53"]}]) == 0
@@ -123,7 +123,7 @@ def test_calculate_hpo_score_empty():
 
 def test_get_matching_hpo_terms():
     """get_matching_hpo_terms returns formatted list of matching HPO terms."""
-    from scripts.clinical.hpo_matcher import get_matching_hpo_terms
+    from scripts.enrichment.hpo_matcher import get_matching_hpo_terms
 
     hpo_results = [
         {"id": "HP:0001250", "name": "Seizures", "genes": ["SCN1A", "TP53"]},
@@ -145,7 +145,7 @@ def test_get_matching_hpo_terms():
 
 def test_query_omim_known_gene():
     """query_omim returns data for genes in the static OMIM_DATA dict."""
-    from scripts.clinical.query_omim import query_omim
+    from scripts.enrichment.query_omim import query_omim
 
     result = query_omim("TP53")
     assert result is not None
@@ -156,7 +156,7 @@ def test_query_omim_known_gene():
 
 def test_query_omim_cftr():
     """query_omim returns data for CFTR."""
-    from scripts.clinical.query_omim import query_omim
+    from scripts.enrichment.query_omim import query_omim
 
     result = query_omim("CFTR")
     assert result is not None
@@ -166,7 +166,7 @@ def test_query_omim_cftr():
 
 def test_query_omim_unknown_gene():
     """query_omim returns None for genes not in the static data."""
-    from scripts.clinical.query_omim import query_omim
+    from scripts.enrichment.query_omim import query_omim
 
     assert query_omim("UNKNOWNGENE123") is None
     assert query_omim("") is None
@@ -174,7 +174,7 @@ def test_query_omim_unknown_gene():
 
 def test_query_omim_ptpn11():
     """query_omim returns Noonan syndrome data for PTPN11."""
-    from scripts.clinical.query_omim import query_omim
+    from scripts.enrichment.query_omim import query_omim
 
     result = query_omim("PTPN11")
     assert result is not None
@@ -187,7 +187,7 @@ def test_query_omim_ptpn11():
 
 def test_get_gene_validity_known():
     """get_gene_validity returns Definitive for known genes."""
-    from scripts.clinical.query_clingen import get_gene_validity
+    from scripts.enrichment.query_clingen import get_gene_validity
 
     assert get_gene_validity("TP53") == "Definitive"
     assert get_gene_validity("BRCA2") == "Definitive"
@@ -196,7 +196,7 @@ def test_get_gene_validity_known():
 
 def test_get_gene_validity_unknown():
     """get_gene_validity returns None for unknown genes."""
-    from scripts.clinical.query_clingen import get_gene_validity
+    from scripts.enrichment.query_clingen import get_gene_validity
 
     assert get_gene_validity("UNKNOWNGENE") is None
     assert get_gene_validity("") is None
@@ -443,7 +443,7 @@ def test_rare_disease_report_research_use_only():
 
 def test_rare_disease_full_offline_with_local_dbs(tmp_path, monkeypatch):
     """HPO + ClinGen 로컬 DB로 오프라인 rare disease 파이프라인 전체 동작."""
-    from scripts.clinical.hpo_matcher import calculate_hpo_score, resolve_hpo_terms
+    from scripts.enrichment.hpo_matcher import calculate_hpo_score, resolve_hpo_terms
     from scripts.db.build_hpo_db import build_db as build_hpo
 
     # Build HPO DB
@@ -455,7 +455,7 @@ def test_rare_disease_full_offline_with_local_dbs(tmp_path, monkeypatch):
     build_hpo(str(hpo_tsv), hpo_db)
 
     # Block API
-    monkeypatch.setattr("scripts.clinical.hpo_matcher.fetch_with_retry", lambda *a, **kw: None)
+    monkeypatch.setattr("scripts.enrichment.hpo_matcher.fetch_with_retry", lambda *a, **kw: None)
     monkeypatch.setattr(
         "scripts.common.config.get",
         lambda key, default=None: hpo_db if key == "paths.hpo_db" else default,

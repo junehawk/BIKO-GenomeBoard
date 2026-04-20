@@ -4,7 +4,7 @@ This test fills the end-to-end regression gap between the Phase A unit tests
 and the real Ollama-backed Clinical Board run. CI (ubuntu-latest) has no
 Ollama and no CIViC DB, so we stub:
 
-    * ``scripts.clinical.oncokb_client.annotate_protein_change`` — returns a
+    * ``scripts.enrichment.oncokb_client.annotate_protein_change`` — returns a
       canned KRAS G12D row set (sotorasib + adagrasib, NO futibatinib) so the
       real ``curate_treatments`` deterministic merge path runs end-to-end.
     * ``scripts.clinical_board.agents.board_chair.BoardChair.synthesize`` —
@@ -88,7 +88,7 @@ def _oncokb_stub_sotorasib_adagrasib(gene: str, alteration: str, **kwargs) -> li
 
 def test_ci_ai_board_curate_then_narrate_fallback(monkeypatch):
     """CI smoke — runner → curator → chair → scrubber → fallback, no Ollama."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import runner as runner_mod
     from scripts.clinical_board.agents import board_chair as chair_mod
     from scripts.clinical_board.models import BOARD_DISCLAIMER, CancerBoardOpinion
@@ -192,7 +192,7 @@ def test_ci_ai_board_fallback_when_all_rows_scrubbed(monkeypatch):
     rows surfaced with a clear "research reference library" framing
     instead of a silently-empty table.
     """
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import runner as runner_mod
     from scripts.clinical_board.agents import board_chair as chair_mod
     from scripts.clinical_board.models import BOARD_DISCLAIMER, CancerBoardOpinion

@@ -330,7 +330,7 @@ def test_assign_tier_vus_hotspot_tp53(civic_db, monkeypatch):
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
-    from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+    from scripts.enrichment.oncokb import assign_tier, reset_oncokb_cache
 
     reset_oncokb_cache()
     # p.Arg249Ser → position 249 (TP53 R249S is in hotspots)
@@ -345,7 +345,7 @@ def test_assign_tier_vus_hotspot_kras_12(civic_db, monkeypatch):
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
-    from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+    from scripts.enrichment.oncokb import assign_tier, reset_oncokb_cache
 
     reset_oncokb_cache()
     result = assign_tier("VUS", "KRAS", hgvsp="p.Gly12Asp")
@@ -359,7 +359,7 @@ def test_assign_tier_vus_non_hotspot_cancer_gene(civic_db, monkeypatch):
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
-    from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+    from scripts.enrichment.oncokb import assign_tier, reset_oncokb_cache
 
     reset_oncokb_cache()
     result = assign_tier("VUS", "KRAS", hgvsp="p.Ala999Val")
@@ -368,7 +368,7 @@ def test_assign_tier_vus_non_hotspot_cancer_gene(civic_db, monkeypatch):
 
 def test_assign_tier_vus_no_hgvsp_still_tier3():
     """VUS on cancer gene without hgvsp → Tier 3 (no hotspot check possible)."""
-    from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+    from scripts.enrichment.oncokb import assign_tier, reset_oncokb_cache
 
     reset_oncokb_cache()
     result = assign_tier("VUS", "KRAS", hgvsp="")
@@ -377,7 +377,7 @@ def test_assign_tier_vus_no_hgvsp_still_tier3():
 
 def test_assign_tier_existing_behavior_unchanged():
     """Existing tier assignments are not affected by the new hgvsp parameter."""
-    from scripts.clinical.oncokb import assign_tier, reset_oncokb_cache
+    from scripts.enrichment.oncokb import assign_tier, reset_oncokb_cache
 
     reset_oncokb_cache()
     # Pathogenic level-1 gene → Tier 1
@@ -400,7 +400,7 @@ def test_pipeline_kras_has_treatment(civic_db, tmp_path, monkeypatch):
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
 
-    from scripts.clinical.oncokb import reset_oncokb_cache
+    from scripts.enrichment.oncokb import reset_oncokb_cache
 
     reset_oncokb_cache()
 

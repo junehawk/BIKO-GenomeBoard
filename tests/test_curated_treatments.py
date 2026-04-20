@@ -48,7 +48,7 @@ def _braf_v600e():
 
 def test_kras_g12d_returns_curated_hits_no_futibatinib(monkeypatch):
     """Known hallucination — futibatinib must NEVER appear for KRAS G12D."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -89,7 +89,7 @@ def test_kras_g12d_returns_curated_hits_no_futibatinib(monkeypatch):
 
 
 def test_empty_variant_returns_empty_list(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -102,7 +102,7 @@ def test_empty_variant_returns_empty_list(monkeypatch):
 
 
 def test_offline_mode_uses_only_civic(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -140,7 +140,7 @@ def test_partial_coords_also_raise():
 
 def test_http_429_degrades_to_civic_only(monkeypatch, caplog):
     """OncoKB 429 must NOT raise; curator degrades to CIViC-only with one warning."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -171,7 +171,7 @@ def test_http_429_degrades_to_civic_only(monkeypatch, caplog):
 
 
 def test_connection_refused_degrades(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -187,7 +187,7 @@ def test_connection_refused_degrades(monkeypatch):
 def test_merge_by_therapy_ids(monkeypatch):
     """When OncoKB + CIViC both cite a therapy with the same therapy_ids,
     the merged row is ``source="both"`` with union PMIDs."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -232,7 +232,7 @@ def test_merge_by_therapy_ids(monkeypatch):
 
 def test_merge_by_drug_name_fallback(monkeypatch):
     """Without therapy_ids overlap, case-insensitive drug name match merges."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -272,7 +272,7 @@ def test_merge_by_drug_name_fallback(monkeypatch):
 
 
 def test_rank_by_evidence_level_a_before_d(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -317,7 +317,7 @@ def test_rank_by_evidence_level_a_before_d(monkeypatch):
 
 
 def test_curated_id_is_stable_hash(monkeypatch):
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -358,7 +358,7 @@ def test_walltime_budget_offline_under_1s(monkeypatch):
 
 def test_walltime_budget_degraded_network_under_30s(monkeypatch):
     """30 variants × 100 ms stubbed OncoKB ≤ 30 s."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 
@@ -391,7 +391,7 @@ def test_walltime_budget_degraded_network_under_30s(monkeypatch):
 )
 def test_drug_alias_fuzz(monkeypatch, oncokb_name, civic_name):
     """Drug-name merge must handle brand-vs-generic aliases via the alias map."""
-    from scripts.clinical import oncokb_client
+    from scripts.enrichment import oncokb_client
     from scripts.clinical_board import curated_treatments
     from scripts.clinical_board.curated_treatments import curate_treatments
 

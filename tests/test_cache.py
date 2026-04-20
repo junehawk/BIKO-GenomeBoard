@@ -345,7 +345,7 @@ def test_clinvar_uses_cache(tmp_path, mocker):
         cache_mod._conn = None
 
         mock_search = mocker.patch(
-            "scripts.clinical.query_clinvar._search_clinvar_variant",
+            "scripts.enrichment.query_clinvar._search_clinvar_variant",
             return_value={
                 "clinical_significance": {"description": "Pathogenic"},
                 "gene": {"symbol": "TP53"},
@@ -354,10 +354,10 @@ def test_clinvar_uses_cache(tmp_path, mocker):
             },
         )
         # Patch cache functions used by query_clinvar to use our isolated cache
-        mocker.patch("scripts.clinical.query_clinvar.get_cached", side_effect=cache_mod.get_cached)
-        mocker.patch("scripts.clinical.query_clinvar.set_cached", side_effect=cache_mod.set_cached)
+        mocker.patch("scripts.enrichment.query_clinvar.get_cached", side_effect=cache_mod.get_cached)
+        mocker.patch("scripts.enrichment.query_clinvar.set_cached", side_effect=cache_mod.set_cached)
 
-        from scripts.clinical.query_clinvar import query_clinvar
+        from scripts.enrichment.query_clinvar import query_clinvar
 
         variant = Variant(chrom="chr17", pos=7577120, ref="G", alt="A", gene="TP53")
 

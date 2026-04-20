@@ -11,10 +11,10 @@ from scripts.classification.acmg_engine import (
     check_clinvar_conflict,
     classify_variant,
 )
-from scripts.clinical.hpo_matcher import calculate_hpo_score, get_matching_hpo_terms
-from scripts.clinical.oncokb import get_cancer_gene_info
-from scripts.clinical.query_clingen import get_gene_validity
-from scripts.clinical.query_omim import query_omim
+from scripts.enrichment.hpo_matcher import calculate_hpo_score, get_matching_hpo_terms
+from scripts.enrichment.oncokb import get_cancer_gene_info
+from scripts.enrichment.query_clingen import get_gene_validity
+from scripts.enrichment.query_omim import query_omim
 from scripts.common.config import get
 from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.models import AcmgEvidence, StructuralVariant, Variant

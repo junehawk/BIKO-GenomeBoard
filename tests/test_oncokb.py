@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scripts.clinical.oncokb import (
+from scripts.enrichment.oncokb import (
     assign_tier,
     get_cancer_gene_info,
     get_tier_label,

@@ -20,7 +20,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.clinical.hpo_matcher import resolve_hpo_terms
+from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 from scripts.common.config import get
 from scripts.common.models import FrequencyData
 from scripts.counselor.generate_pdf import generate_pdf, generate_report_html
