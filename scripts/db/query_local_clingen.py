@@ -20,6 +20,7 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, List, Optional
 
+from scripts.common.availability_cache import AvailabilityCache
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
@@ -34,10 +35,11 @@ _RANK = {
     "Refuted": 5,
 }
 
-# Module-level state for the "log once then short-circuit" pattern. Reset
-# via reset_availability_cache() — exposed for tests that flip the
-# underlying DB state mid-process.
-_AVAILABILITY_CACHE: dict[str, Optional[bool]] = {}
+# Per-module availability cache — gives this module its own reset
+# surface (``reset_availability_cache`` below) so tests rotating
+# through multiple DB states don't interfere with the shared cache in
+# other modules.
+_AVAILABILITY = AvailabilityCache()
 
 
 def _get_db_path(db_path: Optional[str] = None) -> str:
@@ -47,18 +49,15 @@ def _get_db_path(db_path: Optional[str] = None) -> str:
 def reset_availability_cache() -> None:
     """Clear the memoised availability decision. Tests that build a fresh
     ClinGen DB in tmp_path must call this between runs."""
-    _AVAILABILITY_CACHE.clear()
+    _AVAILABILITY.reset()
 
 
-def _probe_availability(path: str) -> bool:
-    """Return True iff ``path`` exists and exposes a non-empty
-    ``gene_validity`` table. Memoised per path — first probe logs a warning
-    on failure; subsequent calls are silent.
+def _probe(path: str) -> bool:
+    """Probe for a usable ClinGen DB at ``path``. Logs a single WARNING
+    on any failure mode (missing file, empty shell, SQLite error); the
+    :class:`AvailabilityCache` wrapper ensures at most one invocation
+    per path per reset cycle.
     """
-    cached = _AVAILABILITY_CACHE.get(path)
-    if cached is not None:
-        return cached
-
     if not Path(path).exists():
         logger.warning(
             "ClinGen local DB not found at %s — skipping ClinGen gene-validity "
@@ -67,7 +66,6 @@ def _probe_availability(path: str) -> bool:
             "re-run scripts/setup_databases.sh.",
             path,
         )
-        _AVAILABILITY_CACHE[path] = False
         return False
 
     try:
@@ -81,17 +79,21 @@ def _probe_availability(path: str) -> bool:
                     "export and re-run scripts/setup_databases.sh to populate.",
                     path,
                 )
-                _AVAILABILITY_CACHE[path] = False
                 return False
         finally:
             conn.close()
     except sqlite3.Error as e:
         logger.warning("ClinGen local DB probe failed at %s: %s", path, e)
-        _AVAILABILITY_CACHE[path] = False
         return False
 
-    _AVAILABILITY_CACHE[path] = True
     return True
+
+
+def _probe_availability(path: str) -> bool:
+    """Return True iff ``path`` exposes a usable ClinGen DB. Memoised
+    via :class:`AvailabilityCache`; the probe runs at most once per
+    path per reset cycle."""
+    return _AVAILABILITY.check(path, _probe)
 
 
 def get_gene_validity_local(gene: str, db_path: Optional[str] = None) -> Optional[str]:

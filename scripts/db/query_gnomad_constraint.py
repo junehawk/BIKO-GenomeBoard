@@ -30,6 +30,7 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, Optional
 
+from scripts.common.availability_cache import AvailabilityCache
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
@@ -40,10 +41,10 @@ logger = logging.getLogger(__name__)
 PLI_THRESHOLD = 0.9
 MISSENSE_Z_THRESHOLD = 3.09
 
-# Module-level state for the "log once then short-circuit" pattern. Reset
-# via reset_availability_cache() — exposed for tests that flip the
-# underlying DB state mid-process.
-_AVAILABILITY_CACHE: dict[str, Optional[bool]] = {}
+# Per-module availability cache — see ``scripts/common/availability_cache.py``.
+# Each call-site keeps its own reset surface so tests that rotate through
+# multiple DB states do not spill into other modules' memoisation.
+_AVAILABILITY = AvailabilityCache()
 
 
 def _get_db_path(db_path: Optional[str] = None) -> str:
@@ -53,18 +54,15 @@ def _get_db_path(db_path: Optional[str] = None) -> str:
 def reset_availability_cache() -> None:
     """Clear the memoised availability decision. Tests that build a fresh
     gnomAD constraint DB in tmp_path must call this between runs."""
-    _AVAILABILITY_CACHE.clear()
+    _AVAILABILITY.reset()
 
 
-def _probe_availability(path: str) -> bool:
-    """Return True iff ``path`` exists and exposes a non-empty
-    ``constraint_metrics`` table. Memoised per path — the first probe
-    logs a warning on failure; subsequent calls are silent.
+def _probe(path: str) -> bool:
+    """Probe for a usable gnomAD constraint DB at ``path``. Logs a single
+    WARNING on any failure mode (missing file, empty shell, SQLite error);
+    the :class:`AvailabilityCache` wrapper ensures at most one invocation
+    per path per reset cycle.
     """
-    cached = _AVAILABILITY_CACHE.get(path)
-    if cached is not None:
-        return cached
-
     if not Path(path).exists():
         logger.warning(
             "gnomAD constraint DB not found at %s — skipping pLI / "
@@ -75,7 +73,6 @@ def _probe_availability(path: str) -> bool:
             "scripts/setup_databases.sh).",
             path,
         )
-        _AVAILABILITY_CACHE[path] = False
         return False
 
     try:
@@ -91,17 +88,21 @@ def _probe_availability(path: str) -> bool:
                     "scripts/db/build_gnomad_constraint_db.py to populate.",
                     path,
                 )
-                _AVAILABILITY_CACHE[path] = False
                 return False
         finally:
             conn.close()
     except sqlite3.Error as e:
         logger.warning("gnomAD constraint DB probe failed at %s: %s", path, e)
-        _AVAILABILITY_CACHE[path] = False
         return False
 
-    _AVAILABILITY_CACHE[path] = True
     return True
+
+
+def _probe_availability(path: str) -> bool:
+    """Return True iff ``path`` exposes a usable gnomAD constraint DB.
+    Memoised via :class:`AvailabilityCache`; the probe runs at most
+    once per path per reset cycle."""
+    return _AVAILABILITY.check(path, _probe)
 
 
 def get_constraint(gene: str, db_path: Optional[str] = None) -> Optional[Dict[str, Optional[float]]]:

@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 from typing import Dict, Optional
 
+from scripts.common.availability_cache import check_availability
 from scripts.common.config import get
 from scripts.common.models import Variant
 
@@ -18,8 +19,15 @@ def _get_connection() -> Optional[sqlite3.Connection]:
     if _conn is not None:
         return _conn
     db_path = get("paths.gnomad_db", "data/db/gnomad.sqlite3")
-    if not Path(db_path).exists():
-        logger.warning(f"gnomAD local DB not found: {db_path}")
+    # ``check_availability`` both tests the file and emits the log-once
+    # WARNING when it is missing. Returning ``None`` lets the caller
+    # short-circuit cleanly (see :func:`query_local_gnomad`).
+    if not check_availability(
+        "gnomAD",
+        db_path,
+        probe=lambda p: Path(p).exists(),
+        message=f"gnomAD local DB not found: {db_path}",
+    ):
         return None
     _conn = sqlite3.connect(db_path, check_same_thread=False)
     _conn.row_factory = sqlite3.Row

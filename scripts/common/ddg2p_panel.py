@@ -23,6 +23,8 @@ import os
 import threading
 from typing import Any, Dict, Optional, Set
 
+from scripts.common.availability_cache import AvailabilityCache
+
 logger = logging.getLogger(__name__)
 
 _PANEL_PATH_DEFAULT = os.path.join(
@@ -34,12 +36,17 @@ _PANEL_PATH_DEFAULT = os.path.join(
 _PANEL_CACHE: Optional[Dict[str, Any]] = None
 _ADMITTED_CACHE: Optional[Set[str]] = None
 _LOAD_LOCK = threading.Lock()
-_LOAD_WARNED = False
+
+# Log-once memoisation for the "panel missing / malformed" warnings.
+# Distinct from _PANEL_CACHE (which caches the parsed data) so that
+# _reset_for_tests can clear the warning state without rebuilding the
+# panel on unrelated tests.
+_LOAD_AVAILABILITY = AvailabilityCache()
 
 
 def _load_panel() -> Dict[str, Any]:
     """Return the panel dict, loading it once per process (thread-safe)."""
-    global _PANEL_CACHE, _ADMITTED_CACHE, _LOAD_WARNED
+    global _PANEL_CACHE, _ADMITTED_CACHE
 
     if _PANEL_CACHE is not None:
         return _PANEL_CACHE
@@ -49,14 +56,18 @@ def _load_panel() -> Dict[str, Any]:
             return _PANEL_CACHE
 
         path = _PANEL_PATH_DEFAULT
-        if not os.path.exists(path):
-            if not _LOAD_WARNED:
+
+        def _probe(p: str) -> bool:
+            if not os.path.exists(p):
                 logger.warning(
                     "[ddg2p_panel] panel file not found at %s — de novo neurodev "
                     "carve-out will be disabled for this process",
-                    path,
+                    p,
                 )
-                _LOAD_WARNED = True
+                return False
+            return True
+
+        if not _LOAD_AVAILABILITY.check(path, _probe):
             _PANEL_CACHE = {"genes": {}, "admission_confidences": []}
             _ADMITTED_CACHE = set()
             return _PANEL_CACHE
@@ -65,9 +76,7 @@ def _load_panel() -> Dict[str, Any]:
             with open(path, "r", encoding="utf-8") as fh:
                 data = json.load(fh)
         except (OSError, json.JSONDecodeError) as exc:
-            if not _LOAD_WARNED:
-                logger.warning("[ddg2p_panel] panel load failed: %s", exc)
-                _LOAD_WARNED = True
+            logger.warning("[ddg2p_panel] panel load failed: %s", exc)
             _PANEL_CACHE = {"genes": {}, "admission_confidences": []}
             _ADMITTED_CACHE = set()
             return _PANEL_CACHE
@@ -110,8 +119,8 @@ def get_neurodev_info(gene: Optional[str]) -> Optional[Dict[str, Any]]:
 
 def _reset_for_tests() -> None:
     """Test helper: clear the module-level cache so tests can force a reload."""
-    global _PANEL_CACHE, _ADMITTED_CACHE, _LOAD_WARNED
+    global _PANEL_CACHE, _ADMITTED_CACHE
     with _LOAD_LOCK:
         _PANEL_CACHE = None
         _ADMITTED_CACHE = None
-        _LOAD_WARNED = False
+        _LOAD_AVAILABILITY.reset()
