@@ -8,6 +8,10 @@ build/
 node_modules/
 .pytest_cache/
 htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.mypy_cache/
 .ruff_cache/
 .DS_Store
 .omc/

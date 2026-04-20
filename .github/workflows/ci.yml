@@ -64,6 +64,27 @@ jobs:
         env:
           GB_SKIP_API: "true"
 
+  coverage:
+    # Baseline coverage is observational (v2.4 refactor round 2, Phase 4.4).
+    # No threshold is enforced in this round; the numbers are logged so
+    # round 3 can set a target against a known starting point. Runs in
+    # advisory mode so coverage drift never blocks a merge.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Run tests with coverage (advisory, no threshold)
+        run: python -m pytest tests/ -q -k "not integration" --cov=scripts --cov-report=term
+        env:
+          GB_SKIP_API: "true"
+
   build:
     runs-on: ubuntu-latest
     needs: [lint, test]

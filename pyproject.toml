@@ -43,3 +43,15 @@ markers = [
     "slow: runs longer than 5 seconds",
     "llm: require a running Ollama server",
 ]
+
+[tool.coverage.run]
+source = ["scripts"]
+omit = [
+    "scripts/tools/*",
+    "tests/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+precision = 1
+skip_empty = true
