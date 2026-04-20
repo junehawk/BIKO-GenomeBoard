@@ -154,7 +154,7 @@ def test_panel_loader_consumes_full_set():
 def test_version_manager_registration():
     """``version_manager.get_version('DDG2P')`` must return the new entry
     populated from the panel JSON."""
-    from scripts.db.version_manager import get_version
+    from scripts.storage.version_manager import get_version
 
     meta = get_version("DDG2P", skip_api=True)
     assert meta is not None, "version_manager did not return a DDG2P entry"

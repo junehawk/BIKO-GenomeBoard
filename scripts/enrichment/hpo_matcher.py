@@ -43,7 +43,7 @@ def resolve_hpo_terms(hpo_ids: List[str]) -> List[Dict]:
         # Fallback to local DB if API returned no genes
         if not genes:
             try:
-                from scripts.db.query_local_hpo import resolve_hpo_terms_local
+                from scripts.storage.query_local_hpo import resolve_hpo_terms_local
 
                 local = resolve_hpo_terms_local([hpo_id])
                 if local:

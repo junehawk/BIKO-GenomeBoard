@@ -2,7 +2,7 @@
 
 import sqlite3
 
-from scripts.db.build_kb_db import build_kb_db
+from scripts.storage.build_kb_db import build_kb_db
 
 
 def test_build_kb_db_creates_tables(tmp_path):

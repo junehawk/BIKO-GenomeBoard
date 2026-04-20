@@ -140,7 +140,7 @@ def test_clinical_evidence_sheet_includes_civic_pmid():
     """Cancer clinical_evidence domain sheet includes CIViC PMID from DB query."""
     variants = [{"gene": "BRAF", "hgvsp": "p.Val600Glu"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=_MOCK_CIVIC_EVIDENCE,
     ):
         sheet = build_domain_sheet("clinical_evidence", "cancer", variants, {})
@@ -152,7 +152,7 @@ def test_clinical_evidence_sheet_includes_evidence_statement():
     """Cancer clinical_evidence domain sheet includes evidence statement text."""
     variants = [{"gene": "BRAF"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=_MOCK_CIVIC_EVIDENCE,
     ):
         sheet = build_domain_sheet("clinical_evidence", "cancer", variants, {})
@@ -164,7 +164,7 @@ def test_clinical_evidence_sheet_includes_citation():
     """Cancer clinical_evidence domain sheet includes citation information."""
     variants = [{"gene": "BRAF"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=_MOCK_CIVIC_EVIDENCE,
     ):
         sheet = build_domain_sheet("clinical_evidence", "cancer", variants, {})
@@ -176,7 +176,7 @@ def test_literature_sheet_includes_civic_pmid():
     """Rare-disease literature_evidence domain sheet includes CIViC PMID."""
     variants = [{"gene": "BRAF", "hgvsp": "p.Val600Glu"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=_MOCK_CIVIC_EVIDENCE,
     ):
         sheet = build_domain_sheet("literature_evidence", "rare-disease", variants, {})
@@ -188,7 +188,7 @@ def test_literature_sheet_includes_evidence_statement():
     """Rare-disease literature_evidence sheet includes evidence statement text."""
     variants = [{"gene": "BRAF"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=_MOCK_CIVIC_EVIDENCE,
     ):
         sheet = build_domain_sheet("literature_evidence", "rare-disease", variants, {})
@@ -200,7 +200,7 @@ def test_domain_sheet_graceful_without_civic():
     """Domain sheet degrades gracefully when CIViC DB is unavailable."""
     variants = [{"gene": "TP53"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         side_effect=Exception("DB not found"),
     ):
         sheet = build_domain_sheet("clinical_evidence", "cancer", variants, {})
@@ -228,7 +228,7 @@ def test_civic_evidence_dedup_across_same_gene():
         {"gene": "BRAF", "hgvsp": "p.Val600Lys"},
     ]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=_MOCK_CIVIC_EVIDENCE,
     ) as mock_query:
         sheet = build_domain_sheet("clinical_evidence", "cancer", variants, {})
@@ -256,7 +256,7 @@ def test_civic_evidence_long_statement_truncated():
     ]
     variants = [{"gene": "EGFR"}]
     with patch(
-        "scripts.db.query_civic.get_variant_evidence",
+        "scripts.storage.query_civic.get_variant_evidence",
         return_value=long_evidence,
     ):
         sheet = build_domain_sheet("clinical_evidence", "cancer", variants, {})

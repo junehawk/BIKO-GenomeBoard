@@ -9,14 +9,14 @@ import sqlite3
 
 
 def _make_clinvar_db(db_path: str):
-    from scripts.db.build_test_clinvar_db import build_test_db
+    from scripts.storage.build_test_clinvar_db import build_test_db
 
     build_test_db(db_path)
     return db_path
 
 
 def _make_gnomad_db(db_path: str):
-    from scripts.db.build_test_gnomad_db import build_test_db
+    from scripts.storage.build_test_gnomad_db import build_test_db
 
     build_test_db(db_path)
     return db_path
@@ -65,15 +65,15 @@ def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
     reset()
 
     # Reset local DB connections so they pick up new config
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     versions = get_all_db_versions(skip_api=True)
 
@@ -128,15 +128,15 @@ def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
 
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     versions = get_all_db_versions(skip_api=False)
 
@@ -186,15 +186,15 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
 
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     versions = get_all_db_versions(skip_api=True)
 
@@ -244,15 +244,15 @@ def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
 
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     versions = get_all_db_versions(skip_api=True)
 
@@ -301,15 +301,15 @@ def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
 
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
     gn_mod.close()
     gn_mod._conn = None
 
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     versions = get_all_db_versions(skip_api=True)
 
@@ -367,8 +367,8 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
 
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
@@ -376,7 +376,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
     gn_mod._conn = None
 
     from scripts.counselor.generate_pdf import generate_report_html
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     db_versions = get_all_db_versions(skip_api=True)
     report_data = {
@@ -452,8 +452,8 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
 
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
@@ -461,7 +461,7 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
     gn_mod._conn = None
 
     from scripts.counselor.generate_pdf import generate_report_html
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     db_versions = get_all_db_versions(skip_api=True)
 
@@ -532,8 +532,8 @@ def _write_min_config(tmp_path, monkeypatch, **paths):
     monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
     reset()
     # Reset local DB conns so they re-read config
-    import scripts.db.query_local_clinvar as cv_mod
-    import scripts.db.query_local_gnomad as gn_mod
+    import scripts.storage.query_local_clinvar as cv_mod
+    import scripts.storage.query_local_gnomad as gn_mod
 
     cv_mod.close()
     cv_mod._conn = None
@@ -544,13 +544,13 @@ def _write_min_config(tmp_path, monkeypatch, **paths):
 
 def test_pm1_hotspots_registered(tmp_path, monkeypatch):
     """After build_pm1_hotspots runs, version_manager exposes PM1_Hotspots."""
-    from scripts.db.build_pm1_hotspots import build_pm1_hotspots
+    from scripts.storage.build_pm1_hotspots import build_pm1_hotspots
 
     pm1_path = tmp_path / "pm1.json"
     build_pm1_hotspots(output_path=pm1_path)
     _write_min_config(tmp_path, monkeypatch, pm1_hotspots_json=str(pm1_path))
 
-    from scripts.db.version_manager import get_all_db_versions, get_version
+    from scripts.storage.version_manager import get_all_db_versions, get_version
 
     versions = get_all_db_versions(skip_api=True)
 
@@ -573,7 +573,7 @@ def test_pm1_hotspots_absent_when_file_missing(tmp_path, monkeypatch):
         monkeypatch,
         pm1_hotspots_json=str(tmp_path / "absent.json"),
     )
-    from scripts.db.version_manager import get_all_db_versions, get_version
+    from scripts.storage.version_manager import get_all_db_versions, get_version
 
     versions = get_all_db_versions(skip_api=True)
     assert "PM1_Hotspots" not in versions
@@ -596,7 +596,7 @@ def test_civic_registered_when_db_present(tmp_path, monkeypatch):
 
     _write_min_config(tmp_path, monkeypatch, civic_db=str(civic_db))
 
-    from scripts.db.version_manager import get_all_db_versions, get_version
+    from scripts.storage.version_manager import get_all_db_versions, get_version
 
     versions = get_all_db_versions(skip_api=True)
     assert "CIViC" in versions
@@ -616,7 +616,7 @@ def test_cancerhotspots_stub_flagged(tmp_path, monkeypatch):
     tsv.write_text('{"status":404}')
     _write_min_config(tmp_path, monkeypatch, cancerhotspots_tsv=str(tsv))
 
-    from scripts.db.version_manager import get_all_db_versions
+    from scripts.storage.version_manager import get_all_db_versions
 
     versions = get_all_db_versions(skip_api=True)
     assert "cancerhotspots_v2_single" in versions
@@ -628,6 +628,6 @@ def test_cancerhotspots_stub_flagged(tmp_path, monkeypatch):
 
 def test_get_version_unknown_source_returns_none(tmp_path, monkeypatch):
     _write_min_config(tmp_path, monkeypatch)
-    from scripts.db.version_manager import get_version
+    from scripts.storage.version_manager import get_version
 
     assert get_version("not_a_real_source") is None

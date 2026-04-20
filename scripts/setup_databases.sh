@@ -139,7 +139,7 @@ else
     if download_file \
         "https://ftp.ncbi.nlm.nih.gov/pub/clinvar/tab_delimited/variant_summary.txt.gz" \
         "$CLINVAR_GZ" "ClinVar variant_summary.txt.gz"; then
-        if build_db "scripts/db/build_clinvar_db.py" "ClinVar SQLite"; then
+        if build_db "scripts/storage/build_clinvar_db.py" "ClinVar SQLite"; then
             SUCCESS+=("ClinVar")
         else
             FAILED+=("ClinVar (build)")
@@ -175,7 +175,7 @@ else
     done
 
     if [ "$civic_ok" = true ]; then
-        if build_db "scripts/db/build_civic_db.py" "CIViC SQLite"; then
+        if build_db "scripts/storage/build_civic_db.py" "CIViC SQLite"; then
             SUCCESS+=("CIViC")
         else
             FAILED+=("CIViC (build)")
@@ -202,7 +202,7 @@ else
     if download_file \
         "https://hpo.jax.org/data/annotations/genes_to_phenotype.txt" \
         "$HPO_TXT" "HPO genes_to_phenotype.txt"; then
-        if build_db "scripts/db/build_hpo_db.py" "HPO SQLite"; then
+        if build_db "scripts/storage/build_hpo_db.py" "HPO SQLite"; then
             SUCCESS+=("HPO")
         else
             FAILED+=("HPO (build)")
@@ -227,7 +227,7 @@ else
     if download_file \
         "https://omim.org/static/omim/data/mim2gene.txt" \
         "$MIM2GENE" "OMIM mim2gene.txt"; then
-        if build_db "scripts/db/build_omim_mapping.py" "OMIM mapping SQLite"; then
+        if build_db "scripts/storage/build_omim_mapping.py" "OMIM mapping SQLite"; then
             SUCCESS+=("OMIM mim2gene")
         else
             FAILED+=("OMIM mim2gene (build)")
@@ -249,7 +249,7 @@ if [ -f "$OMIM_GM_DB" ]; then
     log_info "OMIM genemap DB already exists, skipping"
     SUCCESS+=("OMIM genemap2")
 elif [ -f "$GENEMAP2" ]; then
-    if build_db "scripts/db/build_omim_genemap_db.py" "OMIM genemap SQLite"; then
+    if build_db "scripts/storage/build_omim_genemap_db.py" "OMIM genemap SQLite"; then
         SUCCESS+=("OMIM genemap2")
     else
         FAILED+=("OMIM genemap2 (build)")
@@ -278,7 +278,7 @@ else
     if download_file \
         "https://www.orphadata.com/data/xml/en_product9_prev.xml" \
         "$ORPHANET_XML" "Orphanet en_product9_prev.xml"; then
-        if build_db "scripts/db/build_orphanet_db.py" "Orphanet SQLite"; then
+        if build_db "scripts/storage/build_orphanet_db.py" "Orphanet SQLite"; then
             SUCCESS+=("Orphanet")
         else
             FAILED+=("Orphanet (build)")
@@ -310,7 +310,7 @@ else
         "$GR_TITLES" "GeneReviews titles file" || gr_ok=false
 
     if [ "$gr_ok" = true ]; then
-        if build_db "scripts/db/build_genreviews_db.py" "GeneReviews SQLite"; then
+        if build_db "scripts/storage/build_genreviews_db.py" "GeneReviews SQLite"; then
             SUCCESS+=("GeneReviews")
         else
             FAILED+=("GeneReviews (build)")
@@ -358,7 +358,7 @@ fi
 if [ -n "${CLINGEN_DONE:-}" ]; then
     :  # already handled above
 elif [ -f "$CLINGEN_CSV" ]; then
-    if build_db "scripts/db/build_clingen_db.py" "ClinGen SQLite" "$CLINGEN_CSV"; then
+    if build_db "scripts/storage/build_clingen_db.py" "ClinGen SQLite" "$CLINGEN_CSV"; then
         SUCCESS+=("ClinGen")
     else
         FAILED+=("ClinGen (build)")
@@ -409,7 +409,7 @@ fi
 if [ -n "${GNOMAD_CONSTRAINT_DONE:-}" ]; then
     :  # already handled above
 elif download_file "$GNOMAD_CONSTRAINT_URL" "$GNOMAD_CONSTRAINT_TSV" "gnomAD v4.1 constraint metrics"; then
-    if build_db "scripts/db/build_gnomad_constraint_db.py" "gnomAD constraint SQLite" "$GNOMAD_CONSTRAINT_TSV"; then
+    if build_db "scripts/storage/build_gnomad_constraint_db.py" "gnomAD constraint SQLite" "$GNOMAD_CONSTRAINT_TSV"; then
         SUCCESS+=("gnomAD constraint")
     else
         FAILED+=("gnomAD constraint (build)")

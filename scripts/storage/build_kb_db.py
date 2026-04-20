@@ -4,7 +4,7 @@ Creates the board_decisions table and variant_stats view used by the
 AI Clinical Board v2 to persist and aggregate per-variant board outcomes.
 
 Usage:
-    python scripts/db/build_kb_db.py [db_path]
+    python scripts/storage/build_kb_db.py [db_path]
 """
 
 import sqlite3

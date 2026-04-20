@@ -1,4 +1,4 @@
-"""Tests for scripts/db/build_pm1_hotspots.py — v2.2 A3.
+"""Tests for scripts/storage/build_pm1_hotspots.py — v2.2 A3.
 
 Exercises the three-layer merge (cancerhotspots + ClinGen baseline + overrides),
 JSON schema invariants, idempotency, and exclusions handling.
@@ -11,7 +11,7 @@ import re
 
 import pytest
 
-from scripts.db import build_pm1_hotspots as bph
+from scripts.storage import build_pm1_hotspots as bph
 
 PMID_RE = re.compile(r"PMID\s+\d+")
 ALLOWED_STRENGTHS = {"moderate", "supporting"}
@@ -284,7 +284,7 @@ def test_stub_fallback_logs_warning(tmp_path, caplog):
     stub = tmp_path / "stub.tsv"
     stub.write_text('{"status":404,"error":"Not Found"}')
     output = tmp_path / "pm1.json"
-    with caplog.at_level("WARNING", logger="scripts.db.build_pm1_hotspots"):
+    with caplog.at_level("WARNING", logger="scripts.storage.build_pm1_hotspots"):
         bph.build_pm1_hotspots(
             cancerhotspots_tsv=stub,
             output_path=output,

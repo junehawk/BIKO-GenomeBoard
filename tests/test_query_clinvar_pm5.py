@@ -1,6 +1,6 @@
 """Regression tests for v2.3-T6 self-computed PM5 path.
 
-Covers ``scripts/db/query_local_clinvar.get_clinvar_pathogenic_positions``
+Covers ``scripts/storage/query_local_clinvar.get_clinvar_pathogenic_positions``
 and the wiring inside ``scripts/pipeline/classify.classify_variants`` that
 feeds it into ``evidence_collector.collect_additional_evidence``.
 
@@ -90,7 +90,7 @@ def patched_clinvar_db(tmp_path, monkeypatch):
     db_path = tmp_path / "clinvar_t6.sqlite3"
     _write_test_db(str(db_path))
 
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
     from scripts.common import config as cfgmod
 
     # Force the lazy config getter to return our path. We patch via monkeypatch
@@ -102,7 +102,7 @@ def patched_clinvar_db(tmp_path, monkeypatch):
             return str(db_path)
         return real_get(key, default)
 
-    monkeypatch.setattr("scripts.db.query_local_clinvar.get", _patched_get)
+    monkeypatch.setattr("scripts.storage.query_local_clinvar.get", _patched_get)
 
     qmod.close()
     qmod.reset_cache_for_tests()
@@ -119,7 +119,7 @@ def patched_clinvar_db(tmp_path, monkeypatch):
 
 
 def test_get_pathogenic_positions_tp53(patched_clinvar_db):
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     positions = get_clinvar_pathogenic_positions("TP53")
     # All three P/LP entries with parseable HGVSp must appear.
@@ -129,7 +129,7 @@ def test_get_pathogenic_positions_tp53(patched_clinvar_db):
 
 
 def test_get_pathogenic_positions_ignores_conflict(patched_clinvar_db):
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     positions = get_clinvar_pathogenic_positions("TP53")
     # 999 came from a "Conflicting interpretations of pathogenicity" row and
@@ -138,13 +138,13 @@ def test_get_pathogenic_positions_ignores_conflict(patched_clinvar_db):
 
 
 def test_get_pathogenic_positions_unknown_gene(patched_clinvar_db):
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     assert get_clinvar_pathogenic_positions("BOGUS_GENE_XYZ") == set()
 
 
 def test_get_pathogenic_positions_no_hgvsp_rows_skipped(patched_clinvar_db):
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     # The TP53 row at 7676000 has hgvsp=NULL — it must be silently skipped
     # rather than crashing extract_protein_position with a None argument.
@@ -154,7 +154,7 @@ def test_get_pathogenic_positions_no_hgvsp_rows_skipped(patched_clinvar_db):
 
 
 def test_get_pathogenic_positions_isolates_genes(patched_clinvar_db):
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     brca = get_clinvar_pathogenic_positions("BRCA1")
     assert brca == {61}
@@ -165,8 +165,8 @@ def test_get_pathogenic_positions_isolates_genes(patched_clinvar_db):
 
 def test_cache_reused(patched_clinvar_db, monkeypatch):
     """A second call for the same gene must NOT re-issue the SELECT."""
-    import scripts.db.query_local_clinvar as qmod
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    import scripts.storage.query_local_clinvar as qmod
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     # Prime the cache.
     first = get_clinvar_pathogenic_positions("TP53")
@@ -188,8 +188,8 @@ def test_cache_reused(patched_clinvar_db, monkeypatch):
 
 def test_availability_cache_reset(patched_clinvar_db):
     """reset_cache_for_tests() must let the next call re-query the DB."""
-    import scripts.db.query_local_clinvar as qmod
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    import scripts.storage.query_local_clinvar as qmod
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     first = get_clinvar_pathogenic_positions("TP53")
     qmod.reset_cache_for_tests()
@@ -204,7 +204,7 @@ def test_availability_cache_reset(patched_clinvar_db):
 
 def test_db_missing_returns_empty(monkeypatch, tmp_path):
     """When the DB file does not exist the function must return an empty set."""
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
 
     qmod.close()
     qmod.reset_cache_for_tests()
@@ -216,16 +216,16 @@ def test_db_missing_returns_empty(monkeypatch, tmp_path):
             return str(missing)
         return default
 
-    monkeypatch.setattr("scripts.db.query_local_clinvar.get", _patched_get)
+    monkeypatch.setattr("scripts.storage.query_local_clinvar.get", _patched_get)
 
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     assert get_clinvar_pathogenic_positions("TP53") == set()
 
 
 def test_legacy_db_without_hgvsp_column(tmp_path, monkeypatch):
     """A legacy DB (pre v2.3-T6) without the hgvsp column must degrade gracefully."""
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
 
     db_path = tmp_path / "legacy_clinvar.sqlite3"
     conn = sqlite3.connect(str(db_path))
@@ -250,11 +250,11 @@ def test_legacy_db_without_hgvsp_column(tmp_path, monkeypatch):
             return str(db_path)
         return default
 
-    monkeypatch.setattr("scripts.db.query_local_clinvar.get", _patched_get)
+    monkeypatch.setattr("scripts.storage.query_local_clinvar.get", _patched_get)
     qmod.close()
     qmod.reset_cache_for_tests()
 
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
     # No crash, no Exception — just an empty set.
     assert get_clinvar_pathogenic_positions("TP53") == set()
@@ -271,7 +271,7 @@ def test_pm5_fires_via_self_computed_path(patched_clinvar_db, monkeypatch):
     """A novel TP53 missense at residue 175 must collect PM5 through the
     full classify_variants -> collect_additional_evidence wiring."""
     from scripts.common.models import Variant as VariantModel
-    from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+    from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
     from scripts.pipeline.classify import classify_variants
 
     # Sanity — fixture DB really does have residue 175 in the set.

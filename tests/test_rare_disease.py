@@ -57,7 +57,7 @@ def test_resolve_hpo_terms_api_unavailable():
 def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
     """API 실패 시 로컬 HPO DB로 fallback."""
     from scripts.enrichment.hpo_matcher import resolve_hpo_terms
-    from scripts.db.build_hpo_db import build_db
+    from scripts.storage.build_hpo_db import build_db
 
     # Build local DB
     tsv = tmp_path / "genes_to_phenotype.txt"
@@ -75,7 +75,7 @@ def test_resolve_hpo_terms_falls_back_to_local_db(tmp_path, monkeypatch):
         return db_path if key == "paths.hpo_db" else default
 
     monkeypatch.setattr("scripts.common.config.get", _cfg)
-    monkeypatch.setattr("scripts.db.query_local_hpo.get", _cfg)
+    monkeypatch.setattr("scripts.storage.query_local_hpo.get", _cfg)
 
     results = resolve_hpo_terms(["HP:0001250"])
     assert len(results) == 1
@@ -444,7 +444,7 @@ def test_rare_disease_report_research_use_only():
 def test_rare_disease_full_offline_with_local_dbs(tmp_path, monkeypatch):
     """HPO + ClinGen 로컬 DB로 오프라인 rare disease 파이프라인 전체 동작."""
     from scripts.enrichment.hpo_matcher import calculate_hpo_score, resolve_hpo_terms
-    from scripts.db.build_hpo_db import build_db as build_hpo
+    from scripts.storage.build_hpo_db import build_db as build_hpo
 
     # Build HPO DB
     hpo_tsv = tmp_path / "gtp.txt"
@@ -461,7 +461,7 @@ def test_rare_disease_full_offline_with_local_dbs(tmp_path, monkeypatch):
         lambda key, default=None: hpo_db if key == "paths.hpo_db" else default,
     )
     monkeypatch.setattr(
-        "scripts.db.query_local_hpo.get",
+        "scripts.storage.query_local_hpo.get",
         lambda key, default=None: hpo_db if key == "paths.hpo_db" else default,
     )
 

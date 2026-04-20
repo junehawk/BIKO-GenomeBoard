@@ -12,11 +12,11 @@ case "$1" in
     ;;
   build-clinvar-db)
     shift
-    python scripts/db/build_clinvar_db.py "$@"
+    python scripts/storage/build_clinvar_db.py "$@"
     ;;
   build-gnomad-db)
     shift
-    python scripts/db/build_gnomad_db.py "$@"
+    python scripts/storage/build_gnomad_db.py "$@"
     ;;
   test)
     pip install -r requirements-dev.txt

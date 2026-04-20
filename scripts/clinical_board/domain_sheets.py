@@ -75,7 +75,7 @@ def _get_civic_literature_evidence(gene: str) -> list[dict]:
     the domain sheet degrades gracefully.
     """
     try:
-        from scripts.db.query_civic import get_variant_evidence
+        from scripts.storage.query_civic import get_variant_evidence
     except ImportError:
         logger.debug("query_civic unavailable — skipping CIViC literature evidence")
         return []

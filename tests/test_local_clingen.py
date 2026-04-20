@@ -27,7 +27,7 @@ def _create_sample_clingen_csv(path):
 
 
 def test_build_clingen_db():
-    from scripts.db.build_clingen_db import build_db
+    from scripts.storage.build_clingen_db import build_db
 
     with tempfile.TemporaryDirectory() as tmpdir:
         import os
@@ -44,7 +44,7 @@ def test_build_clingen_db():
 
 
 def test_query_gene_validity_local(tmp_clingen_db):
-    from scripts.db.query_local_clingen import get_gene_validity_local
+    from scripts.storage.query_local_clingen import get_gene_validity_local
 
     assert get_gene_validity_local("TP53", tmp_clingen_db) == "Definitive"
     assert get_gene_validity_local("SCN1A", tmp_clingen_db) == "Definitive"
@@ -53,7 +53,7 @@ def test_query_gene_validity_local(tmp_clingen_db):
 
 
 def test_get_gene_disease_pairs(tmp_clingen_db):
-    from scripts.db.query_local_clingen import get_gene_disease_pairs
+    from scripts.storage.query_local_clingen import get_gene_disease_pairs
 
     pairs = get_gene_disease_pairs("TP53", tmp_clingen_db)
     assert len(pairs) >= 1
@@ -63,7 +63,7 @@ def test_get_gene_disease_pairs(tmp_clingen_db):
 
 @pytest.fixture
 def tmp_clingen_db(tmp_path):
-    from scripts.db.build_clingen_db import build_db
+    from scripts.storage.build_clingen_db import build_db
 
     csv_path = tmp_path / "clingen.csv"
     _create_sample_clingen_csv(str(csv_path))
@@ -79,7 +79,7 @@ def test_missing_clingen_db_returns_none_and_logs_once(tmp_path, caplog):
     """If `paths.clingen_db` points at a nonexistent file, every query
     must return None without raising, and the user must see exactly ONE
     warning per run (not one per variant)."""
-    from scripts.db.query_local_clingen import (
+    from scripts.storage.query_local_clingen import (
         get_gene_validity_local,
         reset_availability_cache,
     )
@@ -103,7 +103,7 @@ def test_empty_shell_clingen_db_returns_none_and_logs_once(tmp_path, caplog):
     None without raising, and emit exactly ONE warning per run."""
     import sqlite3 as _sq
 
-    from scripts.db.query_local_clingen import (
+    from scripts.storage.query_local_clingen import (
         get_gene_disease_pairs,
         get_gene_validity_local,
         reset_availability_cache,
@@ -126,7 +126,7 @@ def test_availability_cache_reset_refires_warning(tmp_path, caplog):
     """reset_availability_cache() must re-enable the one-shot warning so
     tests that rotate through multiple DB states can observe each
     transition."""
-    from scripts.db.query_local_clingen import (
+    from scripts.storage.query_local_clingen import (
         get_gene_validity_local,
         reset_availability_cache,
     )

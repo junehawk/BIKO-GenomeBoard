@@ -45,7 +45,7 @@ def _strip(hgvsp: Optional[str]) -> str:
 def hgvsp_to_civic_variant(hgvsp: Optional[str]) -> Optional[str]:
     """Convert HGVSp to CIViC variant name format (``p.Gly12Asp`` → ``G12D``).
 
-    Legacy entry point — preserved for ``scripts/db/query_civic.py`` callers.
+    Legacy entry point — preserved for ``scripts/storage/query_civic.py`` callers.
     Only recognises clean single-residue substitutions. For broader tolerance
     use :func:`normalize_hgvsp_for_civic`.
     """

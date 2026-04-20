@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from scripts.enrichment.query_clinvar import query_clinvar
 from scripts.common.config import get
-from scripts.db.query_local_clinvar import query_local_clinvar
-from scripts.db.query_tabix_gnomad import query_tabix_gnomad
+from scripts.storage.query_local_clinvar import query_local_clinvar
+from scripts.storage.query_tabix_gnomad import query_tabix_gnomad
 from scripts.population.query_gnomad import query_gnomad
 from scripts.population.query_korea4k import query_korea4k
 from scripts.population.query_krgdb import query_krgdb

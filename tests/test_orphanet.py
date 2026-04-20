@@ -53,7 +53,7 @@ def _create_sample_orphanet_xml(path):
 
 
 def test_build_orphanet_db(tmp_path):
-    from scripts.db.build_orphanet_db import build_db
+    from scripts.storage.build_orphanet_db import build_db
 
     xml_path = str(tmp_path / "orphanet.xml")
     db_path = str(tmp_path / "orphanet.sqlite3")
@@ -67,7 +67,7 @@ def test_build_orphanet_db(tmp_path):
 
 
 def test_query_prevalence_by_gene(tmp_orphanet_db):
-    from scripts.db.query_orphanet import get_prevalence_by_gene
+    from scripts.storage.query_orphanet import get_prevalence_by_gene
 
     result = get_prevalence_by_gene("CFTR", tmp_orphanet_db)
     assert len(result) >= 1
@@ -76,7 +76,7 @@ def test_query_prevalence_by_gene(tmp_orphanet_db):
 
 
 def test_get_prevalence_text(tmp_orphanet_db):
-    from scripts.db.query_orphanet import get_prevalence_text
+    from scripts.storage.query_orphanet import get_prevalence_text
 
     text = get_prevalence_text("CFTR", tmp_orphanet_db)
     assert "Cystic fibrosis" in text
@@ -84,7 +84,7 @@ def test_get_prevalence_text(tmp_orphanet_db):
 
 
 def test_query_unknown_gene(tmp_orphanet_db):
-    from scripts.db.query_orphanet import get_prevalence_by_gene
+    from scripts.storage.query_orphanet import get_prevalence_by_gene
 
     result = get_prevalence_by_gene("FAKEGENE", tmp_orphanet_db)
     assert result == []
@@ -92,7 +92,7 @@ def test_query_unknown_gene(tmp_orphanet_db):
 
 @pytest.fixture
 def tmp_orphanet_db(tmp_path):
-    from scripts.db.build_orphanet_db import build_db
+    from scripts.storage.build_orphanet_db import build_db
 
     xml_path = str(tmp_path / "orphanet.xml")
     db_path = str(tmp_path / "orphanet.sqlite3")

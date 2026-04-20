@@ -48,7 +48,7 @@ def query_omim(gene: str) -> Optional[Dict]:
     """Get OMIM data for a gene. Uses genemap DB first, then static fallback."""
     # Try genemap2 DB first
     try:
-        from scripts.db.query_omim_genemap import get_gene_phenotypes, get_inheritance_patterns
+        from scripts.storage.query_omim_genemap import get_gene_phenotypes, get_inheritance_patterns
 
         phenotypes_data = get_gene_phenotypes(gene)
         if phenotypes_data:

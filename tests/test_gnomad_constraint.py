@@ -71,8 +71,8 @@ def _write_fixture_tsv(path) -> None:
 
 @pytest.fixture
 def tmp_constraint_db(tmp_path):
-    from scripts.db.build_gnomad_constraint_db import build_db
-    from scripts.db.query_gnomad_constraint import reset_availability_cache
+    from scripts.storage.build_gnomad_constraint_db import build_db
+    from scripts.storage.query_gnomad_constraint import reset_availability_cache
 
     tsv_path = tmp_path / "gnomad_constraint.tsv"
     db_path = tmp_path / "gnomad_constraint.sqlite3"
@@ -90,7 +90,7 @@ def tmp_constraint_db(tmp_path):
 
 
 def test_build_gnomad_constraint_db(tmp_path):
-    from scripts.db.build_gnomad_constraint_db import build_db
+    from scripts.storage.build_gnomad_constraint_db import build_db
 
     tsv_path = tmp_path / "gnomad_constraint.tsv"
     db_path = tmp_path / "out.sqlite3"
@@ -146,7 +146,7 @@ def test_build_gnomad_constraint_db(tmp_path):
 
 
 def test_get_constraint_returns_metrics_dict(tmp_constraint_db):
-    from scripts.db.query_gnomad_constraint import get_constraint
+    from scripts.storage.query_gnomad_constraint import get_constraint
 
     metrics = get_constraint("SCN1A", tmp_constraint_db)
     assert metrics is not None
@@ -157,7 +157,7 @@ def test_get_constraint_returns_metrics_dict(tmp_constraint_db):
 
 
 def test_is_constrained_scn1a_true(tmp_constraint_db):
-    from scripts.db.query_gnomad_constraint import is_constrained
+    from scripts.storage.query_gnomad_constraint import is_constrained
 
     # SCN1A: pLI=1.0 (>=0.9), mis_z=7.62 (>=3.09) → True
     assert is_constrained("SCN1A", tmp_constraint_db) is True
@@ -166,27 +166,27 @@ def test_is_constrained_scn1a_true(tmp_constraint_db):
 def test_is_constrained_tp53_false_due_to_low_missense_z(tmp_constraint_db):
     """TP53 has high pLI but tolerates missense (low mis_z); admission
     requires BOTH thresholds, so the de novo carve-out must reject it."""
-    from scripts.db.query_gnomad_constraint import is_constrained
+    from scripts.storage.query_gnomad_constraint import is_constrained
 
     assert is_constrained("TP53", tmp_constraint_db) is False
 
 
 def test_is_constrained_borderline_pli_false(tmp_constraint_db):
     """BORDER1 has mis_z above 3.09 but pLI below 0.9 — must be False."""
-    from scripts.db.query_gnomad_constraint import is_constrained
+    from scripts.storage.query_gnomad_constraint import is_constrained
 
     assert is_constrained("BORDER1", tmp_constraint_db) is False
 
 
 def test_is_constrained_borderline_missense_z_false(tmp_constraint_db):
     """BORDER2 has pLI above 0.9 but mis_z below 3.09 — must be False."""
-    from scripts.db.query_gnomad_constraint import is_constrained
+    from scripts.storage.query_gnomad_constraint import is_constrained
 
     assert is_constrained("BORDER2", tmp_constraint_db) is False
 
 
 def test_is_constrained_unknown_gene_false(tmp_constraint_db):
-    from scripts.db.query_gnomad_constraint import get_constraint, is_constrained
+    from scripts.storage.query_gnomad_constraint import get_constraint, is_constrained
 
     assert get_constraint("DOES_NOT_EXIST_XYZ", tmp_constraint_db) is None
     assert is_constrained("DOES_NOT_EXIST_XYZ", tmp_constraint_db) is False
@@ -194,13 +194,13 @@ def test_is_constrained_unknown_gene_false(tmp_constraint_db):
 
 def test_is_constrained_empty_pli_false(tmp_constraint_db):
     """A row with NULL pLI must not crash and must return False."""
-    from scripts.db.query_gnomad_constraint import is_constrained
+    from scripts.storage.query_gnomad_constraint import is_constrained
 
     assert is_constrained("EMPTYPLI", tmp_constraint_db) is False
 
 
 def test_is_constrained_none_or_empty_gene(tmp_constraint_db):
-    from scripts.db.query_gnomad_constraint import get_constraint, is_constrained
+    from scripts.storage.query_gnomad_constraint import get_constraint, is_constrained
 
     assert is_constrained("", tmp_constraint_db) is False
     assert is_constrained(None, tmp_constraint_db) is False  # type: ignore[arg-type]
@@ -213,7 +213,7 @@ def test_is_constrained_none_or_empty_gene(tmp_constraint_db):
 
 
 def test_missing_db_returns_none_and_logs_once(tmp_path, caplog):
-    from scripts.db.query_gnomad_constraint import (
+    from scripts.storage.query_gnomad_constraint import (
         get_constraint,
         is_constrained,
         reset_availability_cache,
@@ -235,7 +235,7 @@ def test_missing_db_returns_none_and_logs_once(tmp_path, caplog):
 def test_empty_shell_db_returns_none_and_logs_once(tmp_path, caplog):
     """A SQLite file with no constraint_metrics table is the
     setup_databases.sh half-failure mode. Must log once and short-circuit."""
-    from scripts.db.query_gnomad_constraint import (
+    from scripts.storage.query_gnomad_constraint import (
         get_constraint,
         is_constrained,
         reset_availability_cache,
@@ -255,7 +255,7 @@ def test_empty_shell_db_returns_none_and_logs_once(tmp_path, caplog):
 
 
 def test_reset_cache_refires_warning(tmp_path, caplog):
-    from scripts.db.query_gnomad_constraint import (
+    from scripts.storage.query_gnomad_constraint import (
         get_constraint,
         reset_availability_cache,
     )
@@ -289,8 +289,8 @@ def test_variant_selector_carve_out_uses_constraint(monkeypatch, tmp_constraint_
     been rejected; post-T8 it admits with reason ``VUS_denovo_neurodev``.
     """
     from scripts.clinical_board import variant_selector
-    from scripts.db import query_gnomad_constraint
-    from scripts.db.query_gnomad_constraint import reset_availability_cache
+    from scripts.storage import query_gnomad_constraint
+    from scripts.storage.query_gnomad_constraint import reset_availability_cache
 
     # Wire the variant_selector's lazy import to the fixture DB.
     monkeypatch.setattr(
@@ -330,8 +330,8 @@ def test_variant_selector_rejects_unconstrained_non_ddg2p(monkeypatch, tmp_const
     """Companion sanity test: a de novo missense in an unlisted, low-pLI gene
     must still be rejected — the OR-branch should not become a free pass."""
     from scripts.clinical_board import variant_selector
-    from scripts.db import query_gnomad_constraint
-    from scripts.db.query_gnomad_constraint import reset_availability_cache
+    from scripts.storage import query_gnomad_constraint
+    from scripts.storage.query_gnomad_constraint import reset_availability_cache
 
     monkeypatch.setattr(
         query_gnomad_constraint,

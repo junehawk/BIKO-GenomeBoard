@@ -14,7 +14,7 @@ from datetime import date as _date
 from pathlib import Path
 from typing import Any
 
-from scripts.db.build_kb_db import build_kb_db
+from scripts.storage.build_kb_db import build_kb_db
 
 _ALLOWED_FIELDS = (
     "sample_id",

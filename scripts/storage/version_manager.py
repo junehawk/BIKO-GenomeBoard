@@ -20,7 +20,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
 
     # ClinVar local DB
     try:
-        from scripts.db.query_local_clinvar import get_db_version as get_clinvar_version
+        from scripts.storage.query_local_clinvar import get_db_version as get_clinvar_version
 
         clinvar_meta = get_clinvar_version()
         if clinvar_meta.get("source") != "not available":
@@ -47,7 +47,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
 
     # gnomAD tabix (VCF.bgz) — checked first, takes priority over SQLite
     try:
-        from scripts.db.query_tabix_gnomad import get_db_version as get_tabix_version
+        from scripts.storage.query_tabix_gnomad import get_db_version as get_tabix_version
 
         tabix_meta = get_tabix_version()
         if tabix_meta.get("source") != "not_available":
@@ -58,7 +58,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     # gnomAD local DB (SQLite fallback)
     if "gnomAD" not in versions:
         try:
-            from scripts.db.query_local_gnomad import get_db_version as get_gnomad_version
+            from scripts.storage.query_local_gnomad import get_db_version as get_gnomad_version
 
             gnomad_meta = get_gnomad_version()
             if gnomad_meta.get("source") != "not available":
@@ -139,7 +139,7 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     # gnomAD v4.1 gene constraint metrics — pLI / LOEUF / missense Z used by
     # the de novo carve-out admission OR-branch (v2.3-T8).
     try:
-        from scripts.db.query_gnomad_constraint import get_db_version as get_gnomad_constraint_version
+        from scripts.storage.query_gnomad_constraint import get_db_version as get_gnomad_constraint_version
 
         gc_meta = get_gnomad_constraint_version()
         if gc_meta.get("source") != "not_available":

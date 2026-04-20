@@ -9,7 +9,7 @@ from jinja2 import Environment, FileSystemLoader
 from scripts.common.config import get
 from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant
-from scripts.db.query_civic import get_gene_summary, get_treatment_summary, get_variant_evidence
+from scripts.storage.query_civic import get_gene_summary, get_treatment_summary, get_variant_evidence
 
 
 def _adjust_finding_summary(summary: str, classification: str) -> str:

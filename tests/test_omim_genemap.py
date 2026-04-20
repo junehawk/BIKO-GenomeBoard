@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.db.build_omim_genemap_db import _normalise_inheritance, _parse_phenotypes, build_db
-from scripts.db.query_omim_genemap import get_gene_phenotypes, get_inheritance_patterns
+from scripts.storage.build_omim_genemap_db import _normalise_inheritance, _parse_phenotypes, build_db
+from scripts.storage.query_omim_genemap import get_gene_phenotypes, get_inheritance_patterns
 
 SAMPLE_FILE = Path(__file__).resolve().parent.parent / "data" / "db" / "sample_genemap2.txt"
 

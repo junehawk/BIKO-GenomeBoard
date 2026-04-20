@@ -20,14 +20,14 @@ from typing import Dict, List, Optional
 
 from scripts.common.api_utils import fetch_with_retry
 from scripts.common.config import get
-from scripts.db.query_civic import (
+from scripts.storage.query_civic import (
     get_gene_summary,
     get_treatment_summary,
     get_variant_evidence,
 )
-from scripts.db.query_genreviews import get_genreviews_for_gene as get_genreviews_for_gene_local
-from scripts.db.query_omim_mapping import get_mim_for_gene
-from scripts.db.query_orphanet import get_prevalence_text
+from scripts.storage.query_genreviews import get_genreviews_for_gene as get_genreviews_for_gene_local
+from scripts.storage.query_omim_mapping import get_mim_for_gene
+from scripts.storage.query_orphanet import get_prevalence_text
 from scripts.tools.sources.genreviews import fetch_genreviews_info
 from scripts.tools.sources.ncbi_gene import fetch_gene_summary
 
@@ -98,7 +98,7 @@ def fetch_cpic_gene(gene: str) -> Optional[Dict]:
 def _try_clingen_validity(gene: str) -> Optional[str]:
     """Try local ClinGen DB for gene validity."""
     try:
-        from scripts.db.query_local_clingen import get_gene_validity_local
+        from scripts.storage.query_local_clingen import get_gene_validity_local
 
         return get_gene_validity_local(gene)
     except Exception:
@@ -172,7 +172,7 @@ def _build_gene_entry(gene: str) -> Dict:
         associated_conditions = diseases[:5]
     if not associated_conditions:
         try:
-            from scripts.db.query_orphanet import get_disease_names
+            from scripts.storage.query_orphanet import get_disease_names
 
             associated_conditions = get_disease_names(gene)
         except Exception:

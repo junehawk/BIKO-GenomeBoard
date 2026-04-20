@@ -22,7 +22,7 @@ def get_gene_validity(gene: str) -> Optional[str]:
     Strategy: local DB first → static fallback.
     """
     try:
-        from scripts.db.query_local_clingen import get_gene_validity_local
+        from scripts.storage.query_local_clingen import get_gene_validity_local
 
         result = get_gene_validity_local(gene)
         if result:

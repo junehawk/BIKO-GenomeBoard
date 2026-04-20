@@ -173,7 +173,7 @@ def test_reset_shared_cache_refires_warning(tmp_path, caplog):
 def test_clingen_still_logs_once_after_refactor(tmp_path, caplog):
     """Regression: the ClinGen module's public warning-log contract
     must survive the internal refactor onto AvailabilityCache."""
-    from scripts.db.query_local_clingen import (
+    from scripts.storage.query_local_clingen import (
         get_gene_validity_local,
         reset_availability_cache,
     )
@@ -192,7 +192,7 @@ def test_clingen_still_logs_once_after_refactor(tmp_path, caplog):
 def test_gnomad_constraint_still_logs_once_after_refactor(tmp_path, caplog):
     """Regression: the gnomAD-constraint module's public warning-log
     contract must survive the internal refactor onto AvailabilityCache."""
-    from scripts.db.query_gnomad_constraint import (
+    from scripts.storage.query_gnomad_constraint import (
         get_constraint,
         reset_availability_cache,
     )
@@ -211,10 +211,10 @@ def test_gnomad_constraint_still_logs_once_after_refactor(tmp_path, caplog):
 def test_caches_are_independent_between_modules(tmp_path, caplog):
     """Resetting one call-site's cache must not disturb others — each
     module owns its own AvailabilityCache instance."""
-    from scripts.db.query_gnomad_constraint import (
+    from scripts.storage.query_gnomad_constraint import (
         reset_availability_cache as reset_constraint,
     )
-    from scripts.db.query_local_clingen import (
+    from scripts.storage.query_local_clingen import (
         get_gene_validity_local,
         reset_availability_cache as reset_clingen,
     )

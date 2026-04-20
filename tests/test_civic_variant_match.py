@@ -1,7 +1,7 @@
 import pytest
 
-from scripts.db.build_civic_db import build_db
-from scripts.db.query_civic import reset_civic_connection
+from scripts.storage.build_civic_db import build_db
+from scripts.storage.query_civic import reset_civic_connection
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def civic_db(tmp_path, monkeypatch):
     db_path = str(tmp_path / "civic.sqlite3")
     build_db(str(civic_dir), db_path)
 
-    monkeypatch.setattr("scripts.db.query_civic.get", lambda k, d=None: db_path if k == "paths.civic_db" else d)
+    monkeypatch.setattr("scripts.storage.query_civic.get", lambda k, d=None: db_path if k == "paths.civic_db" else d)
     reset_civic_connection()
 
     yield db_path
@@ -48,7 +48,7 @@ def civic_db(tmp_path, monkeypatch):
 
 def test_get_predictive_evidence_variant_match(civic_db):
     """Variant-specific 매치 시 match_level='variant' 반환."""
-    from scripts.db.query_civic import get_predictive_evidence_for_tier
+    from scripts.storage.query_civic import get_predictive_evidence_for_tier
 
     result = get_predictive_evidence_for_tier("BRAF", "p.Val600Glu")
     assert result["match_level"] == "variant"
@@ -59,7 +59,7 @@ def test_get_predictive_evidence_variant_match(civic_db):
 
 def test_get_predictive_evidence_gene_fallback(civic_db):
     """Variant 못 찾으면 gene-level fallback, match_level='gene'."""
-    from scripts.db.query_civic import get_predictive_evidence_for_tier
+    from scripts.storage.query_civic import get_predictive_evidence_for_tier
 
     result = get_predictive_evidence_for_tier("BRAF", "p.Lys601Glu")
     assert result["match_level"] == "gene"
@@ -67,7 +67,7 @@ def test_get_predictive_evidence_gene_fallback(civic_db):
 
 def test_get_predictive_evidence_no_match(civic_db):
     """CIViC에 없는 유전자는 match_level='none'."""
-    from scripts.db.query_civic import get_predictive_evidence_for_tier
+    from scripts.storage.query_civic import get_predictive_evidence_for_tier
 
     result = get_predictive_evidence_for_tier("FAKEGENE", "p.Ala1Val")
     assert result["match_level"] == "none"
@@ -76,7 +76,7 @@ def test_get_predictive_evidence_no_match(civic_db):
 
 def test_predictive_only_no_prognostic(civic_db):
     """Predictive evidence만 반환, Prognostic 제외."""
-    from scripts.db.query_civic import get_predictive_evidence_for_tier
+    from scripts.storage.query_civic import get_predictive_evidence_for_tier
 
     result = get_predictive_evidence_for_tier("BRAF", "p.Val600Glu")
     for e in result["evidence"]:

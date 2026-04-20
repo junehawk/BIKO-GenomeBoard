@@ -8,8 +8,8 @@ should emit a single WARNING and every subsequent query should return
 produce 100 copies of the same "DB not found" warning.
 
 This module consolidates the pattern first shipped in
-``scripts/db/query_local_clingen.py`` (v2.2 T3 hardening) and
-``scripts/db/query_gnomad_constraint.py``. New call-sites should use
+``scripts/storage/query_local_clingen.py`` (v2.2 T3 hardening) and
+``scripts/storage/query_gnomad_constraint.py``. New call-sites should use
 either the :class:`AvailabilityCache` class (for DB probes with
 multiple failure modes — missing vs empty-shell vs probe error — each
 with a different warning message) or the :func:`check_availability`

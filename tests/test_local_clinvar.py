@@ -15,7 +15,7 @@ from scripts.common.models import Variant
 
 def _make_db(db_path: str):
     """Build the test DB at db_path using the build_test_clinvar_db module."""
-    from scripts.db.build_test_clinvar_db import build_test_db
+    from scripts.storage.build_test_clinvar_db import build_test_db
 
     build_test_db(db_path)
     return db_path
@@ -38,7 +38,7 @@ def test_db_path(tmp_path_factory):
 @pytest.fixture(autouse=True)
 def reset_connection():
     """Reset the module-level DB connection before each test."""
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
 
     qmod.close()
     qmod._conn = None
@@ -70,7 +70,7 @@ def test_build_test_db(tmp_path):
 
 def test_query_by_rsid(test_db_path, monkeypatch):
     monkeypatch.setenv("GB_CONFIG_PATH", "")
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
     from scripts.common.config import reset
 
     reset()
@@ -93,7 +93,7 @@ def test_query_by_rsid(test_db_path, monkeypatch):
 
 
 def test_query_by_position(test_db_path, monkeypatch):
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
     from scripts.common.config import reset
 
     reset()
@@ -115,7 +115,7 @@ def test_query_by_position(test_db_path, monkeypatch):
 
 
 def test_query_not_found(test_db_path, monkeypatch):
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
     from scripts.common.config import reset
 
     reset()
@@ -136,7 +136,7 @@ def test_query_not_found(test_db_path, monkeypatch):
 
 
 def test_derive_acmg_codes_expert_panel():
-    from scripts.db.query_local_clinvar import _derive_acmg_codes
+    from scripts.storage.query_local_clinvar import _derive_acmg_codes
 
     codes = _derive_acmg_codes("Pathogenic", "reviewed by expert panel")
     assert "PS1" in codes
@@ -149,7 +149,7 @@ def test_derive_acmg_codes_expert_panel():
 
 
 def test_derive_acmg_codes_single_submitter():
-    from scripts.db.query_local_clinvar import _derive_acmg_codes
+    from scripts.storage.query_local_clinvar import _derive_acmg_codes
 
     codes = _derive_acmg_codes("Pathogenic", "criteria provided, single submitter")
     assert "PP5" in codes
@@ -162,7 +162,7 @@ def test_derive_acmg_codes_single_submitter():
 
 
 def test_get_db_version(test_db_path, monkeypatch):
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
     from scripts.common.config import reset
 
     reset()
@@ -213,7 +213,7 @@ def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
     reset()
 
     # Reset the local clinvar connection so it picks up the new config
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
 
     qmod.close()
     qmod._conn = None
@@ -254,7 +254,7 @@ def test_pipeline_local_mode(test_db_path, tmp_path, monkeypatch):
 
 def test_pipeline_auto_mode_local_hit(test_db_path, monkeypatch):
     """auto mode should return a result from the local DB without calling the API."""
-    import scripts.db.query_local_clinvar as qmod
+    import scripts.storage.query_local_clinvar as qmod
     from scripts.common.config import reset
 
     reset()

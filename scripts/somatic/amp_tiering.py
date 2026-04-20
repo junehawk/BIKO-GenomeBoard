@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 from scripts.enrichment.oncokb import get_cancer_gene_info
-from scripts.db.query_civic import extract_protein_position, is_hotspot
+from scripts.storage.query_civic import extract_protein_position, is_hotspot
 
 logger = logging.getLogger(__name__)
 

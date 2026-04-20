@@ -31,7 +31,7 @@ from typing import Optional
 from scripts.enrichment.oncokb import is_cancer_gene
 from scripts.common.config import get
 from scripts.common.ddg2p_panel import is_admitted_neurodev_gene
-from scripts.db.query_civic import extract_protein_position, is_hotspot
+from scripts.storage.query_civic import extract_protein_position, is_hotspot
 
 # ACMG SF v3.2 (Miller DT et al. 2023, Genet Med, PMID 37347242) —
 # conservative partial list covering highly actionable cardiac, cancer, and
@@ -630,7 +630,7 @@ def _gene_is_constrained(gene: str) -> bool:
     """Return True if ``gene`` has pLI >= 0.9 AND missense Z >= 3.09.
 
     Sourced from the gnomAD v4.1 constraint metrics SQLite DB built by
-    ``scripts/db/build_gnomad_constraint_db.py``. Both conditions are
+    ``scripts/storage/build_gnomad_constraint_db.py``. Both conditions are
     required per spec Q3.1 — pLI alone admits too many housekeeping genes,
     and the missense-Z gate matches Karczewski 2020 (PMID 32461654) top-1%
     constraint.
@@ -650,7 +650,7 @@ def _gene_is_constrained(gene: str) -> bool:
     # Lazy import: keeps the variant_selector test fixture independent of the
     # db module so unit tests that only exercise the cancer arm need not
     # build a constraint DB stub.
-    from scripts.db.query_gnomad_constraint import is_constrained
+    from scripts.storage.query_gnomad_constraint import is_constrained
 
     try:
         return is_constrained(gene)

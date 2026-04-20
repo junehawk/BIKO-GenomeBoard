@@ -2,7 +2,7 @@
 
 Modules in this package provide cross-cutting services consumed by
 ``scripts/intake``, ``scripts/classification``, ``scripts/clinical_board``,
-``scripts/db``, and ``scripts/orchestrate.py``. They are intentionally
+``scripts/storage``, and ``scripts/orchestrate.py``. They are intentionally
 free of any ACMG / AMP / PGx domain logic — anything here is expected
 to be used from at least two pipeline stages.
 

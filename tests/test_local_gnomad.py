@@ -15,7 +15,7 @@ from scripts.common.models import Variant
 
 def _make_db(db_path: str):
     """Build the test gnomAD DB at db_path."""
-    from scripts.db.build_test_gnomad_db import build_test_db
+    from scripts.storage.build_test_gnomad_db import build_test_db
 
     build_test_db(db_path)
     return db_path
@@ -38,7 +38,7 @@ def test_db_path(tmp_path_factory):
 @pytest.fixture(autouse=True)
 def reset_connection():
     """Reset the module-level DB connection before each test."""
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
 
     qmod.close()
     qmod._conn = None
@@ -69,7 +69,7 @@ def test_build_test_db(tmp_path):
 
 
 def test_query_by_position_exact(test_db_path):
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
     from scripts.common.config import reset
 
     reset()
@@ -91,7 +91,7 @@ def test_query_by_position_exact(test_db_path):
 
 
 def test_query_by_rsid(test_db_path):
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
     from scripts.common.config import reset
 
     reset()
@@ -113,7 +113,7 @@ def test_query_by_rsid(test_db_path):
 
 
 def test_query_not_found(test_db_path):
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
     from scripts.common.config import reset
 
     reset()
@@ -135,7 +135,7 @@ def test_query_not_found(test_db_path):
 
 def test_query_returns_eas_af(test_db_path):
     """EAS-enriched variant (NUDT15 rs116855232) has higher EAS AF than global."""
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
     from scripts.common.config import reset
 
     reset()
@@ -158,7 +158,7 @@ def test_query_returns_eas_af(test_db_path):
 
 
 def test_get_db_version(test_db_path):
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
     from scripts.common.config import reset
 
     reset()
@@ -209,7 +209,7 @@ def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
     reset()
 
     # Reset gnomAD connection so it picks up the new config
-    import scripts.db.query_local_gnomad as qmod
+    import scripts.storage.query_local_gnomad as qmod
 
     qmod.close()
     qmod._conn = None

@@ -177,7 +177,7 @@ def _load_target_regions(target_bed: str) -> list[tuple[str, int, int, str]]:
 def _get_gnomad_af(variant: Variant) -> Optional[float]:
     """Return gnomAD global AF for *variant*, or None if unavailable."""
     try:
-        from scripts.db.query_tabix_gnomad import query_tabix_gnomad
+        from scripts.storage.query_tabix_gnomad import query_tabix_gnomad
 
         result = query_tabix_gnomad(variant)
         if result and result.get("gnomad_all") is not None:

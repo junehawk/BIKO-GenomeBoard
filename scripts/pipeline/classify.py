@@ -68,7 +68,7 @@ def classify_variants(
     # (legacy build) or is absent — the InterVar upstream PM5 path still
     # works in that case.
     try:
-        from scripts.db.query_local_clinvar import get_clinvar_pathogenic_positions
+        from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
 
         _has_clinvar_pm5 = True
     except ImportError:
@@ -180,7 +180,7 @@ def build_variant_records(
     hpo_results: HpoResults,
 ) -> List[VariantRecord]:
     """Build the variant_records list from per-variant results."""
-    from scripts.db.query_civic import get_predictive_evidence_for_tier
+    from scripts.storage.query_civic import get_predictive_evidence_for_tier
     from scripts.somatic.amp_tiering import amp_assign_tier
 
     variant_records = []

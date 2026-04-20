@@ -43,7 +43,7 @@ class CivicEvidence(TypedDict, total=False):
     """A single CIViC predictive-evidence row.
 
     Mirrors the per-row dict assembled by
-    :func:`scripts.db.query_civic.get_predictive_evidence_for_tier`.
+    :func:`scripts.storage.query_civic.get_predictive_evidence_for_tier`.
     """
 
     gene: str

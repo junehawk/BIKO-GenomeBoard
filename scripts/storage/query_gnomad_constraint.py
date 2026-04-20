@@ -69,7 +69,7 @@ def _probe(path: str) -> bool:
             "missense-Z lookups for this run. To enable, download "
             "gnomad.v4.1.constraint_metrics.tsv from "
             "https://gnomad.broadinstitute.org/downloads#v4-constraint "
-            "and run scripts/db/build_gnomad_constraint_db.py (or "
+            "and run scripts/storage/build_gnomad_constraint_db.py (or "
             "scripts/setup_databases.sh).",
             path,
         )
@@ -85,7 +85,7 @@ def _probe(path: str) -> bool:
                 logger.warning(
                     "gnomAD constraint DB at %s has no `constraint_metrics` "
                     "table — it looks like an empty shell. Re-run "
-                    "scripts/db/build_gnomad_constraint_db.py to populate.",
+                    "scripts/storage/build_gnomad_constraint_db.py to populate.",
                     path,
                 )
                 return False

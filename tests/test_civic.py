@@ -14,7 +14,7 @@ DEMO_VCF = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_vari
 @pytest.fixture(scope="module")
 def civic_db(tmp_path_factory):
     """Build a fresh CIViC DB in a temp dir and return its path."""
-    from scripts.db.build_civic_db import build_db
+    from scripts.storage.build_civic_db import build_db
 
     db_path = str(tmp_path_factory.mktemp("civic_db") / "civic_test.sqlite3")
     build_db(civic_dir=CIVIC_DIR, db_path=db_path)
@@ -24,7 +24,7 @@ def civic_db(tmp_path_factory):
 @pytest.fixture(autouse=True)
 def reset_civic_conn():
     """Reset the query_civic connection cache around each test."""
-    from scripts.db import query_civic
+    from scripts.storage import query_civic
 
     query_civic.reset_civic_connection()
     yield
@@ -88,7 +88,7 @@ def test_evidence_has_therapy_ids_column(civic_db):
 def test_civic_therapy_ids_migration_is_idempotent(tmp_path):
     """Rebuilding on top of an existing civic.sqlite3 must not drop data
     and the second invocation must leave therapy_ids in place."""
-    from scripts.db.build_civic_db import build_db
+    from scripts.storage.build_civic_db import build_db
 
     db_path = str(tmp_path / "civic_idempotent.sqlite3")
     build_db(civic_dir=CIVIC_DIR, db_path=db_path)
@@ -117,7 +117,7 @@ def test_civic_therapy_ids_migration_is_idempotent(tmp_path):
 def test_get_gene_summary_kras(civic_db, monkeypatch):
     """get_gene_summary returns a description for KRAS."""
     monkeypatch.setenv("GB_CONFIG_PATH", "")
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -131,7 +131,7 @@ def test_get_gene_summary_kras(civic_db, monkeypatch):
 
 def test_get_gene_summary_unknown(civic_db, monkeypatch):
     """get_gene_summary returns None for unknown genes."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -142,7 +142,7 @@ def test_get_gene_summary_unknown(civic_db, monkeypatch):
 
 def test_get_variant_evidence_kras(civic_db, monkeypatch):
     """get_variant_evidence returns evidence items with therapies for KRAS."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -163,7 +163,7 @@ def test_get_variant_evidence_kras(civic_db, monkeypatch):
 
 def test_get_treatment_summary_braf(civic_db, monkeypatch):
     """get_treatment_summary returns a formatted treatment string for BRAF."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -177,7 +177,7 @@ def test_get_treatment_summary_braf(civic_db, monkeypatch):
 
 def test_get_treatment_summary_empty_for_unknown(civic_db, monkeypatch):
     """get_treatment_summary returns empty string for unknown gene."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -191,7 +191,7 @@ def test_get_treatment_summary_empty_for_unknown(civic_db, monkeypatch):
 
 def test_is_hotspot_tp53_249(civic_db, monkeypatch):
     """TP53 position 249 is a known hotspot."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -201,7 +201,7 @@ def test_is_hotspot_tp53_249(civic_db, monkeypatch):
 
 def test_is_hotspot_tp53_999(civic_db, monkeypatch):
     """TP53 position 999 is not a known hotspot."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -211,7 +211,7 @@ def test_is_hotspot_tp53_999(civic_db, monkeypatch):
 
 def test_is_hotspot_kras_12(civic_db, monkeypatch):
     """KRAS position 12 is a known hotspot."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -221,7 +221,7 @@ def test_is_hotspot_kras_12(civic_db, monkeypatch):
 
 def test_is_hotspot_no_connection():
     """is_hotspot returns False when DB is unavailable."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = None
     # Use a path that doesn't exist to ensure no connection
@@ -239,7 +239,7 @@ def test_is_hotspot_no_connection():
 
 def test_get_hotspot_variants_kras_12(civic_db, monkeypatch):
     """get_hotspot_variants returns multiple variants for KRAS G12."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -255,7 +255,7 @@ def test_get_hotspot_variants_kras_12(civic_db, monkeypatch):
 
 def test_extract_protein_position_3letter():
     """Extracts position from 3-letter HGVSp notation."""
-    from scripts.db.query_civic import extract_protein_position
+    from scripts.storage.query_civic import extract_protein_position
 
     assert extract_protein_position("p.Gly12Asp") == 12
     assert extract_protein_position("p.Val600Glu") == 600
@@ -264,7 +264,7 @@ def test_extract_protein_position_3letter():
 
 def test_extract_protein_position_1letter():
     """Extracts position from 1-letter HGVSp notation."""
-    from scripts.db.query_civic import extract_protein_position
+    from scripts.storage.query_civic import extract_protein_position
 
     assert extract_protein_position("p.R249M") == 249
     assert extract_protein_position("p.V600E") == 600
@@ -273,7 +273,7 @@ def test_extract_protein_position_1letter():
 
 def test_extract_protein_position_none():
     """Returns None for empty/invalid input."""
-    from scripts.db.query_civic import extract_protein_position
+    from scripts.storage.query_civic import extract_protein_position
 
     assert extract_protein_position(None) is None
     assert extract_protein_position("") is None
@@ -282,7 +282,7 @@ def test_extract_protein_position_none():
 
 def test_extract_protein_position_with_transcript_prefix():
     """Handles HGVSp with transcript prefix."""
-    from scripts.db.query_civic import extract_protein_position
+    from scripts.storage.query_civic import extract_protein_position
 
     assert extract_protein_position("NP_004324.2:p.Val600Glu") == 600
 
@@ -325,7 +325,7 @@ def test_hgvsp_to_civic_variant_none():
 
 def test_assign_tier_vus_hotspot_tp53(civic_db, monkeypatch):
     """VUS on TP53 at hotspot position 249 → Tier 2."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -340,7 +340,7 @@ def test_assign_tier_vus_hotspot_tp53(civic_db, monkeypatch):
 
 def test_assign_tier_vus_hotspot_kras_12(civic_db, monkeypatch):
     """VUS on KRAS at hotspot position 12 → Tier 2."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -354,7 +354,7 @@ def test_assign_tier_vus_hotspot_kras_12(civic_db, monkeypatch):
 
 def test_assign_tier_vus_non_hotspot_cancer_gene(civic_db, monkeypatch):
     """VUS on KRAS at non-hotspot position → Tier 3."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
@@ -395,7 +395,7 @@ def test_assign_tier_existing_behavior_unchanged():
 
 def test_pipeline_kras_has_treatment(civic_db, tmp_path, monkeypatch):
     """Run pipeline on demo VCF; any KRAS variant gets treatment_strategies from CIViC."""
-    import scripts.db.query_civic as qc
+    import scripts.storage.query_civic as qc
 
     qc._conn = sqlite3.connect(civic_db)
     qc._conn.row_factory = sqlite3.Row
