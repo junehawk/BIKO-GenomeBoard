@@ -11,7 +11,7 @@ from scripts.population.query_gnomad import query_gnomad
 from scripts.population.query_korea4k import query_korea4k
 from scripts.population.query_krgdb import query_krgdb
 from scripts.population.query_nard2 import query_nard2
-from scripts.pharma.korean_pgx import check_korean_pgx
+from scripts.pharmacogenomics.korean_pgx import check_korean_pgx
 
 logger = logging.getLogger(__name__)
 

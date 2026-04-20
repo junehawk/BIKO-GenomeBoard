@@ -49,7 +49,11 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: python -m scripts.pharma.query_pharmgkb 'chr10:96541616 G>A' [gene]"}))
+        print(
+            json.dumps(
+                {"error": "Usage: python -m scripts.pharmacogenomics.query_pharmgkb 'chr10:96541616 G>A' [gene]"}
+            )
+        )
         sys.exit(1)
     v = Variant.from_string(sys.argv[1])
     if len(sys.argv) > 2:

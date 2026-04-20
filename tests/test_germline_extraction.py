@@ -452,7 +452,7 @@ class TestOrchestrateGermlineIntegration:
             patch("scripts.orchestrate.parse_vcf") as mock_parse,
             patch("scripts.orchestrate.query_variant_databases") as mock_query,
             patch("scripts.orchestrate.compare_frequencies", return_value={"korean_flag": ""}),
-            patch("scripts.pharma.korean_pgx.get_pgx_results") as mock_pgx,
+            patch("scripts.pharmacogenomics.korean_pgx.get_pgx_results") as mock_pgx,
             patch("scripts.orchestrate.classify_variants") as mock_classify,
             patch("scripts.orchestrate.build_variant_records") as mock_build,
             patch(
@@ -550,7 +550,7 @@ class TestOrchestrateGermlineIntegration:
             patch("scripts.orchestrate.parse_vcf") as mock_parse,
             patch("scripts.orchestrate.query_variant_databases") as mock_query,
             patch("scripts.orchestrate.compare_frequencies", return_value={"korean_flag": ""}),
-            patch("scripts.pharma.korean_pgx.get_pgx_results") as mock_pgx,
+            patch("scripts.pharmacogenomics.korean_pgx.get_pgx_results") as mock_pgx,
             patch("scripts.orchestrate.classify_variants") as mock_classify,
             patch("scripts.orchestrate.build_variant_records") as mock_build,
             patch(

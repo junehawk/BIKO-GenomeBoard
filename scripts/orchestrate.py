@@ -194,7 +194,7 @@ def run_pipeline(
     # ── Step 4: Pharmacogenomics ──────────────────────────────────────────────
     _progress("[4/6] Checking pharmacogenomics (PGx)...")
 
-    from scripts.pharma.korean_pgx import get_pgx_results
+    from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
     pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf)
     pgx_source = pgx_data["pgx_source"]

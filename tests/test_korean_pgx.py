@@ -1,6 +1,6 @@
 # tests/test_korean_pgx.py
 from scripts.common.models import Variant
-from scripts.pharma.korean_pgx import check_korean_pgx
+from scripts.pharmacogenomics.korean_pgx import check_korean_pgx
 
 
 def test_cyp2c19_detected():

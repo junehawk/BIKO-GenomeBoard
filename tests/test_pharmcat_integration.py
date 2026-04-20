@@ -39,37 +39,37 @@ class TestIsPharmcatAvailable:
 
     def test_with_jar_and_java(self, tmp_path):
         """JAR + Java 17 present -> True."""
-        from scripts.pharma.pharmcat_runner import is_pharmcat_available
+        from scripts.pharmacogenomics.pharmcat_runner import is_pharmcat_available
 
         jar = tmp_path / "pharmcat-2.13.0.jar"
         jar.touch()
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value="/usr/bin/java"),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value=str(jar)),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value="/usr/bin/java"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value=str(jar)),
         ):
             assert is_pharmcat_available() is True
 
     def test_without_jar(self):
         """No JAR -> False."""
-        from scripts.pharma.pharmcat_runner import is_pharmcat_available
+        from scripts.pharmacogenomics.pharmcat_runner import is_pharmcat_available
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value="/usr/bin/java"),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value=None),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value="/usr/bin/java"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value=None),
         ):
             assert is_pharmcat_available() is False
 
     def test_without_java(self, tmp_path):
         """No Java -> False."""
-        from scripts.pharma.pharmcat_runner import is_pharmcat_available
+        from scripts.pharmacogenomics.pharmcat_runner import is_pharmcat_available
 
         jar = tmp_path / "pharmcat-2.13.0.jar"
         jar.touch()
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value=None),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value=str(jar)),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value=None),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value=str(jar)),
         ):
             assert is_pharmcat_available() is False
 
@@ -83,7 +83,7 @@ class TestFindJava:
     """Tests for ``_find_java`` internal helper."""
 
     def test_finds_java_17(self):
-        from scripts.pharma.pharmcat_runner import _find_java
+        from scripts.pharmacogenomics.pharmcat_runner import _find_java
 
         # On machines with local Java 17 (data/tools/java/) or system Java 17,
         # _find_java succeeds. We just verify it returns a valid path.
@@ -98,7 +98,7 @@ class TestFindJava:
             assert result is not None
 
     def test_rejects_java_11(self):
-        from scripts.pharma.pharmcat_runner import _find_java
+        from scripts.pharmacogenomics.pharmcat_runner import _find_java
 
         fake_proc = subprocess.CompletedProcess(
             args=["java", "-version"],
@@ -114,7 +114,7 @@ class TestFindJava:
             assert result is None
 
     def test_no_java_on_path(self):
-        from scripts.pharma.pharmcat_runner import _find_java
+        from scripts.pharmacogenomics.pharmcat_runner import _find_java
 
         # Simulate no Java at all: shutil.which returns None AND every
         # subprocess version check fails (covers local data/tools/java/ too).
@@ -125,7 +125,7 @@ class TestFindJava:
             assert _find_java() is None
 
     def test_config_java_path(self):
-        from scripts.pharma.pharmcat_runner import _find_java
+        from scripts.pharmacogenomics.pharmcat_runner import _find_java
 
         fake_proc = subprocess.CompletedProcess(
             args=["java", "-version"],
@@ -147,14 +147,14 @@ class TestFindJar:
     """Tests for ``_find_jar`` internal helper."""
 
     def test_config_jar_path(self, tmp_path):
-        from scripts.pharma.pharmcat_runner import _find_jar
+        from scripts.pharmacogenomics.pharmcat_runner import _find_jar
 
         jar = tmp_path / "pharmcat.jar"
         jar.touch()
         assert _find_jar(config={"pharmcat_jar": str(jar)}) == str(jar)
 
     def test_env_var_fallback(self, tmp_path):
-        from scripts.pharma.pharmcat_runner import _find_jar
+        from scripts.pharmacogenomics.pharmcat_runner import _find_jar
 
         jar = tmp_path / "pharmcat-env.jar"
         jar.touch()
@@ -165,7 +165,7 @@ class TestFindJar:
                 assert result == str(jar)
 
     def test_returns_none_when_nothing(self):
-        from scripts.pharma.pharmcat_runner import _find_jar
+        from scripts.pharmacogenomics.pharmcat_runner import _find_jar
 
         with (
             mock.patch("glob.glob", return_value=[]),
@@ -185,7 +185,7 @@ class TestRunPharmcat:
 
     def test_parses_json_output(self, tmp_path):
         """Mock subprocess -> sample PharmCAT JSON -> PharmCATResult parsed."""
-        from scripts.pharma.pharmcat_runner import run_pharmcat
+        from scripts.pharmacogenomics.pharmcat_runner import run_pharmcat
 
         # Prepare a fake germline VCF
         vcf = tmp_path / "germline.vcf"
@@ -205,8 +205,8 @@ class TestRunPharmcat:
             return subprocess.CompletedProcess(args=cmd, returncode=0, stdout="", stderr="")
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value="/usr/bin/java"),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value="/usr/bin/java"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
             mock.patch("subprocess.run", side_effect=fake_subprocess_run),
         ):
             result = run_pharmcat(str(vcf))
@@ -232,15 +232,15 @@ class TestRunPharmcat:
 
     def test_returns_none_on_subprocess_failure(self, tmp_path):
         """Subprocess non-zero exit -> None."""
-        from scripts.pharma.pharmcat_runner import run_pharmcat
+        from scripts.pharmacogenomics.pharmcat_runner import run_pharmcat
 
         vcf = tmp_path / "germline.vcf"
         vcf.write_text("##fileformat=VCFv4.2\n")
 
         failed = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="Error: invalid VCF")
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value="/usr/bin/java"),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value="/usr/bin/java"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
             mock.patch("subprocess.run", return_value=failed),
         ):
             result = run_pharmcat(str(vcf))
@@ -248,28 +248,28 @@ class TestRunPharmcat:
 
     def test_returns_none_when_not_available(self, tmp_path):
         """No Java/JAR -> None immediately."""
-        from scripts.pharma.pharmcat_runner import run_pharmcat
+        from scripts.pharmacogenomics.pharmcat_runner import run_pharmcat
 
         vcf = tmp_path / "germline.vcf"
         vcf.write_text("##fileformat=VCFv4.2\n")
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value=None),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value=None),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value=None),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value=None),
         ):
             result = run_pharmcat(str(vcf))
             assert result is None
 
     def test_returns_none_on_timeout(self, tmp_path):
         """Subprocess timeout -> None."""
-        from scripts.pharma.pharmcat_runner import run_pharmcat
+        from scripts.pharmacogenomics.pharmcat_runner import run_pharmcat
 
         vcf = tmp_path / "germline.vcf"
         vcf.write_text("##fileformat=VCFv4.2\n")
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value="/usr/bin/java"),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value="/usr/bin/java"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
             mock.patch("subprocess.run", side_effect=subprocess.TimeoutExpired(cmd="java", timeout=120)),
         ):
             result = run_pharmcat(str(vcf))
@@ -277,11 +277,11 @@ class TestRunPharmcat:
 
     def test_returns_none_for_missing_vcf(self):
         """Non-existent VCF path -> None."""
-        from scripts.pharma.pharmcat_runner import run_pharmcat
+        from scripts.pharmacogenomics.pharmcat_runner import run_pharmcat
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner._find_java", return_value="/usr/bin/java"),
-            mock.patch("scripts.pharma.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_java", return_value="/usr/bin/java"),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner._find_jar", return_value="/opt/pharmcat.jar"),
         ):
             result = run_pharmcat("/nonexistent/path.vcf")
             assert result is None
@@ -296,7 +296,7 @@ class TestParsePharmcatJson:
     """Direct tests for the JSON parser."""
 
     def test_parses_sample_fixture(self):
-        from scripts.pharma.pharmcat_runner import _parse_pharmcat_json
+        from scripts.pharmacogenomics.pharmcat_runner import _parse_pharmcat_json
 
         result = _parse_pharmcat_json(str(SAMPLE_REPORT))
         assert result is not None
@@ -311,7 +311,7 @@ class TestParsePharmcatJson:
         report = tmp_path / "empty.report.json"
         report.write_text(json.dumps({"genes": []}))
 
-        from scripts.pharma.pharmcat_runner import _parse_pharmcat_json
+        from scripts.pharmacogenomics.pharmcat_runner import _parse_pharmcat_json
 
         result = _parse_pharmcat_json(str(report))
         assert result is not None
@@ -319,7 +319,7 @@ class TestParsePharmcatJson:
         assert result.drug_recommendations == []
 
     def test_handles_missing_file(self):
-        from scripts.pharma.pharmcat_runner import _parse_pharmcat_json
+        from scripts.pharmacogenomics.pharmcat_runner import _parse_pharmcat_json
 
         result = _parse_pharmcat_json("/nonexistent/report.json")
         assert result is None
@@ -328,7 +328,7 @@ class TestParsePharmcatJson:
         report = tmp_path / "bad.report.json"
         report.write_text("not json at all {{{")
 
-        from scripts.pharma.pharmcat_runner import _parse_pharmcat_json
+        from scripts.pharmacogenomics.pharmcat_runner import _parse_pharmcat_json
 
         result = _parse_pharmcat_json(str(report))
         assert result is None
@@ -344,8 +344,8 @@ class TestGetPgxResults:
 
     def test_prefers_pharmcat_when_available(self, tmp_path):
         """germline VCF + PharmCAT available -> source='pharmcat'."""
-        from scripts.pharma.korean_pgx import get_pgx_results
-        from scripts.pharma.pharmcat_runner import PharmCATResult
+        from scripts.pharmacogenomics.korean_pgx import get_pgx_results
+        from scripts.pharmacogenomics.pharmcat_runner import PharmCATResult
 
         vcf = tmp_path / "germline.vcf"
         vcf.write_text("##fileformat=VCFv4.2\n")
@@ -362,8 +362,8 @@ class TestGetPgxResults:
         # get_pgx_results imports from pharmcat_runner inside the function body,
         # so we mock at the pharmcat_runner module level.
         with (
-            mock.patch("scripts.pharma.pharmcat_runner.is_pharmcat_available", return_value=True),
-            mock.patch("scripts.pharma.pharmcat_runner.run_pharmcat", return_value=fake_result),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner.is_pharmcat_available", return_value=True),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner.run_pharmcat", return_value=fake_result),
         ):
             result = get_pgx_results([], germline_vcf=str(vcf))
 
@@ -376,12 +376,12 @@ class TestGetPgxResults:
 
     def test_fallback_to_builtin_when_pharmcat_unavailable(self, tmp_path):
         """germline VCF + PharmCAT NOT available -> source='builtin_limited'."""
-        from scripts.pharma.korean_pgx import get_pgx_results
+        from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
         vcf = tmp_path / "germline.vcf"
         vcf.write_text("##fileformat=VCFv4.2\n")
 
-        with mock.patch("scripts.pharma.pharmcat_runner.is_pharmcat_available", return_value=False):
+        with mock.patch("scripts.pharmacogenomics.pharmcat_runner.is_pharmcat_available", return_value=False):
             result = get_pgx_results([], germline_vcf=str(vcf))
 
         assert result["pgx_source"] == "builtin_limited"
@@ -391,7 +391,7 @@ class TestGetPgxResults:
 
     def test_builtin_when_no_germline(self):
         """No germline VCF -> source='builtin'."""
-        from scripts.pharma.korean_pgx import get_pgx_results
+        from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
         cyp_variant = Variant(chrom="chr10", pos=96541616, ref="G", alt="A", gene="CYP2C19")
         result = get_pgx_results([cyp_variant])
@@ -402,7 +402,7 @@ class TestGetPgxResults:
 
     def test_builtin_hits_contain_expected_keys(self):
         """Builtin results should have all keys the report templates expect."""
-        from scripts.pharma.korean_pgx import get_pgx_results
+        from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
         cyp_variant = Variant(chrom="chr10", pos=96541616, ref="G", alt="A", gene="CYP2C19")
         result = get_pgx_results([cyp_variant])
@@ -424,8 +424,8 @@ class TestGetPgxResults:
 
     def test_pharmcat_hits_contain_expected_keys(self, tmp_path):
         """PharmCAT results should have all keys the report templates expect."""
-        from scripts.pharma.korean_pgx import get_pgx_results
-        from scripts.pharma.pharmcat_runner import PharmCATResult
+        from scripts.pharmacogenomics.korean_pgx import get_pgx_results
+        from scripts.pharmacogenomics.pharmcat_runner import PharmCATResult
 
         vcf = tmp_path / "germline.vcf"
         vcf.write_text("##fileformat=VCFv4.2\n")
@@ -440,8 +440,8 @@ class TestGetPgxResults:
         )
 
         with (
-            mock.patch("scripts.pharma.pharmcat_runner.is_pharmcat_available", return_value=True),
-            mock.patch("scripts.pharma.pharmcat_runner.run_pharmcat", return_value=fake_result),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner.is_pharmcat_available", return_value=True),
+            mock.patch("scripts.pharmacogenomics.pharmcat_runner.run_pharmcat", return_value=fake_result),
         ):
             result = get_pgx_results([], germline_vcf=str(vcf))
 
@@ -563,7 +563,7 @@ class TestPgxWarningOnSomatic:
                 mock.patch.object(orch, "get_all_db_versions", return_value={}),
                 mock.patch.object(orch, "generate_report_html", return_value="<html></html>"),
                 mock.patch(
-                    "scripts.pharma.korean_pgx.get_pgx_results",
+                    "scripts.pharmacogenomics.korean_pgx.get_pgx_results",
                     return_value={
                         "pgx_hits": [],
                         "pgx_source": "builtin",
@@ -596,7 +596,7 @@ class TestPharmCATResultDataclass:
     """Basic dataclass tests."""
 
     def test_defaults(self):
-        from scripts.pharma.pharmcat_runner import PharmCATResult
+        from scripts.pharmacogenomics.pharmcat_runner import PharmCATResult
 
         r = PharmCATResult()
         assert r.diplotypes == {}
@@ -607,7 +607,7 @@ class TestPharmCATResultDataclass:
         assert r.warnings == []
 
     def test_with_data(self):
-        from scripts.pharma.pharmcat_runner import PharmCATResult
+        from scripts.pharmacogenomics.pharmcat_runner import PharmCATResult
 
         r = PharmCATResult(
             diplotypes={"CYP2C19": "*1/*2"},

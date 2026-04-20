@@ -214,7 +214,7 @@ def get_pgx_results(
     # --- PharmCAT path (when germline VCF provided) -----------------------
     if germline_vcf:
         try:
-            from scripts.pharma.pharmcat_runner import is_pharmcat_available, run_pharmcat
+            from scripts.pharmacogenomics.pharmcat_runner import is_pharmcat_available, run_pharmcat
 
             if is_pharmcat_available(config):
                 pharmcat_result = run_pharmcat(germline_vcf, config=config)
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print(json.dumps({"error": "Usage: python -m scripts.pharma.korean_pgx 'chr10:96541616 G>A' [gene]"}))
+        print(json.dumps({"error": "Usage: python -m scripts.pharmacogenomics.korean_pgx 'chr10:96541616 G>A' [gene]"}))
         sys.exit(1)
     v = Variant.from_string(sys.argv[1])
     if len(sys.argv) > 2:

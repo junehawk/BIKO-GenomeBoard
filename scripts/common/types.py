@@ -88,7 +88,7 @@ class PgxHit(TypedDict, total=False):
 
 
 class PgxResultsDict(TypedDict, total=False):
-    """Return shape of :func:`scripts.pharma.korean_pgx.get_pgx_results`."""
+    """Return shape of :func:`scripts.pharmacogenomics.korean_pgx.get_pgx_results`."""
 
     pgx_hits: List[PgxHit]
     pgx_source: str  # "pharmcat" | "builtin" | "builtin_limited"

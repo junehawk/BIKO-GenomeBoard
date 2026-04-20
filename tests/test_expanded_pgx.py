@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from scripts.common.models import Variant
-from scripts.pharma.korean_pgx import PGX_GENES, check_korean_pgx
+from scripts.pharmacogenomics.korean_pgx import PGX_GENES, check_korean_pgx
 
 # ---------------------------------------------------------------------------
 # Helper

@@ -11,7 +11,7 @@ from scripts.intake.parse_vcf import parse_vcf
 from scripts.population.compare_freq import compare_frequencies
 from scripts.population.query_gnomad import query_gnomad
 from scripts.population.query_krgdb import _KRGDB_CACHE, query_krgdb
-from scripts.pharma.korean_pgx import check_korean_pgx
+from scripts.pharmacogenomics.korean_pgx import check_korean_pgx
 
 pytestmark = pytest.mark.integration
 
