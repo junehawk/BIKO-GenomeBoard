@@ -47,6 +47,26 @@ SYSTEM_PROMPT_KO = """당신은 임상유전학 사례 회의의 위원장(Board
 전문의들의 분석은 결정적 분류 엔진의 결과를 변경하지 않습니다.
 분류 결과를 기반으로 임상적 해석과 종합 추론을 제공하세요.
 
+## Phenotype-matched 변이 우선 규칙 (rare disease primary diagnosis)
+환자 HPO 표현형과 매칭되는 유전자에 변이가 있다면 — 해당 변이가 VUS 또는 moderate
+evidence일지라도 — Primary diagnosis 후보로 **먼저** 고려하시오. ACMG classification
+hierarchy(Pathogenic > LP > VUS)가 phenotype-matched 변이를 무조건 밀어내지 않습니다.
+
+근거:
+1. 환자 표현형과 gene 연관성이 명확한 VUS는 후속 검증(가족 분리분석, functional study)
+   로 upgrade 가능성이 있는 "top candidate"입니다.
+2. Phenotype과 무관한 LP/P 변이는 incidental finding / carrier state일 가능성이 높으며,
+   primary diagnosis가 아닌 secondary finding으로 보고해야 합니다.
+
+판단 기준:
+- 제공된 HPO 표현형이 선택 변이의 gene과 OMIM/HPO에서 직접 연관된다면, 해당 변이를
+  primary_diagnosis 후보로 격상하시오. 케이스 정보의 `PHENOTYPE-GENE CORRELATIONS`
+  섹션이 이 매칭을 요약합니다.
+- Phenotype-unrelated LP/P 변이는 `key_findings` 또는 `follow_up`에 **incidental**
+  또는 **secondary finding**으로 분리 명기하시오.
+- De novo 변이는 반드시 primary diagnosis 후보로 평가하시오 (선택 이유에
+  `denovo_*`가 포함된 경우).
+
 ## 응답 언어
 반드시 한국어로 응답하세요.
 
@@ -100,6 +120,29 @@ an integrated diagnostic opinion.
 ## Important Principles
 The specialists' analyses do not alter the outputs of the deterministic classification engine.
 Build clinical interpretation and integrative reasoning on top of the classification results.
+
+## Phenotype-matched variant priority (rare disease primary diagnosis)
+When a submitted HPO phenotype matches a gene carrying any selected variant —
+even a VUS or variant with only moderate evidence — consider that variant
+**first** as the primary-diagnosis candidate. ACMG classification hierarchy
+(Pathogenic > Likely Pathogenic > VUS) does NOT automatically override a
+phenotype-matched variant.
+
+Rationale:
+1. A VUS in a phenotype-concordant gene is a top candidate pending family
+   segregation and functional follow-up — it is the working hypothesis.
+2. A phenotype-unrelated Pathogenic/Likely-Pathogenic variant is more likely
+   an incidental finding or carrier state, not the primary diagnosis.
+
+Decision rules:
+- If submitted HPO phenotypes are linked to the gene of any selected variant
+  in OMIM/HPO, that variant is the primary-diagnosis candidate. The
+  `PHENOTYPE-GENE CORRELATIONS` section of the case briefing summarises this
+  intersection.
+- Phenotype-unrelated LP/P variants must be reported separately in
+  `key_findings` or `follow_up` as an **incidental** or **secondary finding**.
+- De novo variants must always be considered as primary-diagnosis candidates
+  (selection reasons containing `denovo_*`).
 
 ## Response Language
 Respond in English.

@@ -78,6 +78,12 @@ def build_case_briefing(report_data: dict, mode: str) -> str:
         if hpo_section:
             sections.append(hpo_section)
 
+    # 3b. Phenotype-Gene Correlations across selected variants (rare disease)
+    if mode == "rare-disease":
+        correlation_section = _build_phenotype_gene_correlations_section(filtered_variants, report_data)
+        if correlation_section:
+            sections.append(correlation_section)
+
     # 4. OMIM Gene-Disease
     if mode == "rare-disease":
         omim_section = _build_omim_section(report_data)
@@ -340,6 +346,64 @@ def _build_hpo_section(data: dict) -> Optional[str]:
             lines.append("      Do NOT use this match alone to support gene-disease correlation.")
     lines.append("")
     return "\n".join(lines)
+
+
+def _build_phenotype_gene_correlations_section(selected_variants: list, data: dict) -> Optional[str]:
+    """Highlight the subset of selected variants whose gene is HPO-associated.
+
+    Rare-disease primary diagnosis hinges on whether any selected variant's
+    gene is linked to a submitted HPO term. Surfacing the intersection as a
+    dedicated section in the briefing helps the Board Chair prioritise
+    phenotype-matched candidates over phenotype-unrelated Pathogenic/LP
+    incidental findings.
+
+    Returns ``None`` when there is no overlap so the briefing stays compact.
+    """
+    hpo_results = data.get("hpo_results") or []
+    if not hpo_results or not selected_variants:
+        return None
+
+    # Build reverse index: gene_symbol -> list[(hpo_id, hpo_name)]
+    gene_to_hpo: dict[str, list[tuple[str, str]]] = {}
+    for hpo in hpo_results:
+        hpo_id = hpo.get("id", "")
+        hpo_name = hpo.get("name", "")
+        for g in hpo.get("genes") or []:
+            if not g:
+                continue
+            gene_to_hpo.setdefault(g, []).append((hpo_id, hpo_name))
+
+    if not gene_to_hpo:
+        return None
+
+    matched_lines: list[str] = []
+    for v in selected_variants:
+        gene = v.get("gene", "")
+        if not gene or gene not in gene_to_hpo:
+            continue
+        classification = v.get("classification", "VUS")
+        selection_reason = v.get("selection_reason", "")
+        hpo_refs = gene_to_hpo[gene]
+        hpo_str = ", ".join(f"{hid} ({name})" if name else hid for hid, name in hpo_refs)
+        descriptor_parts = [classification]
+        if selection_reason:
+            descriptor_parts.append(selection_reason)
+        descriptor = ", ".join(descriptor_parts)
+        matched_lines.append(f"  {gene} ({descriptor}) — matches {hpo_str}")
+
+    if not matched_lines:
+        return None
+
+    header = [
+        "== PHENOTYPE-GENE CORRELATIONS ==",
+        "",
+        "(Selected variants whose gene is associated with any of the submitted HPO terms.",
+        " These are the phenotype-matched primary-diagnosis candidates — consider them",
+        " first, ahead of phenotype-unrelated Pathogenic/Likely-Pathogenic variants which",
+        " are more likely incidental or carrier findings.)",
+        "",
+    ]
+    return "\n".join(header + matched_lines)
 
 
 def _build_omim_section(data: dict) -> Optional[str]:

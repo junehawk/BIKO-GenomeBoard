@@ -367,3 +367,138 @@ def test_build_briefing_tmb(tmp_path):
     if result.get("tmb"):
         assert "== TUMOR MUTATIONAL BURDEN ==" in briefing
         assert "mutations/Mb" in briefing
+
+
+# ── Phenotype-gene correlations (rare disease) ──────────────────────────────
+
+
+def _build_rare_disease_report_with_hpo(
+    *,
+    selected_gene: str,
+    hpo_genes: list[str],
+    selection_reason: str = "VUS_denovo",
+    classification: str = "VUS",
+) -> dict:
+    """Build a minimal report_data with pre-computed board selection + HPO results."""
+    pre_filtered = [
+        {
+            "variant": "chr14:21385000:A>G",
+            "gene": selected_gene,
+            "classification": classification,
+            "hgvsc": "c.1A>G",
+            "hgvsp": "p.Met1Val",
+            "consequence": "Missense",
+            "acmg_codes": ["PM2_Supporting"],
+            "in_silico": {},
+            "selection_reason": selection_reason,
+        }
+    ]
+    meta = {
+        "mode": "rare-disease",
+        "total_input": 1,
+        "selected": 1,
+        "must_included": 0,
+        "may_included": 1,
+        "excluded": 0,
+        "truncated": False,
+        "n_dropped": 0,
+        "hard_cap_applied": False,
+        "empty": False,
+        "empty_reason": "",
+        "tmb_high_footnote": False,
+        "criteria_summary": "test criteria",
+        "by_selection_reason": {selection_reason: 1},
+    }
+    return {
+        "sample_id": "PHENO_TEST",
+        "date": "2026-04-19",
+        "variants": [{"gene": selected_gene, "classification": classification}],
+        "_board_variants": pre_filtered,
+        "_board_selection_metadata": meta,
+        "summary": {"total": 1},
+        "pgx_results": [],
+        "hpo_results": [
+            {
+                "id": "HP:0000717",
+                "name": "Autism",
+                "genes": hpo_genes,
+            },
+            {
+                "id": "HP:0001263",
+                "name": "Global developmental delay",
+                "genes": hpo_genes,
+            },
+        ],
+    }
+
+
+def test_phenotype_gene_correlations_rendered_when_hpo_matches_selected_variant():
+    """Briefing surfaces PHENOTYPE-GENE CORRELATIONS when a selected gene
+    appears in any submitted HPO term's gene list."""
+    report_data = _build_rare_disease_report_with_hpo(
+        selected_gene="CHD8",
+        hpo_genes=["CHD8", "SHANK3"],
+    )
+    briefing = build_case_briefing(report_data, "rare-disease")
+    assert "== PHENOTYPE-GENE CORRELATIONS ==" in briefing
+    # Matched gene + HPO IDs appear in the correlation block
+    assert "CHD8" in briefing
+    assert "HP:0000717" in briefing
+    assert "HP:0001263" in briefing
+
+
+def test_phenotype_gene_correlations_omitted_when_no_overlap():
+    """When none of the selected genes intersect the HPO-gene index, the
+    correlation section is suppressed (keeps briefing compact)."""
+    report_data = _build_rare_disease_report_with_hpo(
+        selected_gene="CFTR",
+        hpo_genes=["CHD8", "SHANK3"],
+    )
+    briefing = build_case_briefing(report_data, "rare-disease")
+    assert "== PHENOTYPE-GENE CORRELATIONS ==" not in briefing
+
+
+def test_phenotype_gene_correlations_skipped_for_cancer_mode():
+    """Cancer mode must not render the rare-disease-only correlation section
+    even if hpo_results is attached."""
+    report_data = _build_rare_disease_report_with_hpo(
+        selected_gene="CHD8",
+        hpo_genes=["CHD8"],
+    )
+    briefing = build_case_briefing(report_data, "cancer")
+    assert "== PHENOTYPE-GENE CORRELATIONS ==" not in briefing
+
+
+# ── Board Chair phenotype-first rule ────────────────────────────────────────
+
+
+def test_board_chair_prompts_include_phenotype_first_rule():
+    """Both KO and EN rare-disease system prompts carry the phenotype-first
+    rule + the incidental/secondary-finding language."""
+    from scripts.clinical_board.agents.board_chair import (
+        SYSTEM_PROMPT_EN,
+        SYSTEM_PROMPT_KO,
+    )
+
+    # Korean prompt
+    assert "Phenotype-matched" in SYSTEM_PROMPT_KO
+    assert "incidental" in SYSTEM_PROMPT_KO or "secondary finding" in SYSTEM_PROMPT_KO
+    assert "denovo_" in SYSTEM_PROMPT_KO
+
+    # English prompt
+    assert "Phenotype-matched" in SYSTEM_PROMPT_EN or "phenotype-matched" in SYSTEM_PROMPT_EN
+    assert "incidental" in SYSTEM_PROMPT_EN
+    assert "secondary finding" in SYSTEM_PROMPT_EN
+    assert "denovo_" in SYSTEM_PROMPT_EN
+
+
+def test_board_chair_cancer_prompts_not_modified_by_phenotype_rule():
+    """Cancer prompts must not carry the rare-disease phenotype-first rule."""
+    from scripts.clinical_board.agents.board_chair import (
+        CANCER_SYSTEM_PROMPT_EN,
+        CANCER_SYSTEM_PROMPT_KO,
+    )
+
+    # The rare-disease-specific header must not leak into cancer prompts.
+    assert "Phenotype-matched variant priority" not in CANCER_SYSTEM_PROMPT_EN
+    assert "Phenotype-matched 변이 우선 규칙" not in CANCER_SYSTEM_PROMPT_KO
