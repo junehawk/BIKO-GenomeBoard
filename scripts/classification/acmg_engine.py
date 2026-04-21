@@ -37,18 +37,57 @@ def _load_rules() -> dict:
 
 
 def _count_by_strength(evidences: List[AcmgEvidence]) -> dict:
-    """Count evidence codes by ACMG strength prefix."""
+    """Count evidence codes by ACMG strength prefix.
+
+    Handles three strength-modifier suffixes on codes per ClinGen SVI:
+
+    - ``_SUPPORTING`` — downgrade pathogenic PVS/PS/PM to pp, benign
+      BA/BS to bp (existing behavior, e.g. ``PM2_Supporting``,
+      ``PM6_Supporting``, ``PM1_Supporting``).
+    - ``_MODERATE`` — upgrade pathogenic PP to pm, or downgrade PVS/PS
+      to pm (e.g. ``PS2_Moderate`` per ClinGen SVI 2018, or
+      ``PP3_Moderate`` from Pejaver 2022 REVEL 0.773+).
+    - ``_STRONG`` — upgrade PP/PM to ps, or keep PVS/PS at ps (e.g.
+      ``PVS1_Strong``, ``PP3_Strong`` from Pejaver 2022 REVEL 0.932+).
+
+    The Strong suffix counting is the key fix for REVEL 0.932+
+    (PP3_Strong) — previously all PP* variants were counted as pp
+    regardless of suffix, silently under-calling strong in silico
+    pathogenic evidence.
+
+    Plain codes (no suffix, e.g. ``PP3``, ``BP4``) count at their
+    natural prefix strength.
+    """
     counts = {"pvs": 0, "ps": 0, "pm": 0, "pp": 0, "ba": 0, "bs": 0, "bp": 0}
     for e in evidences:
         code_upper = e.code.upper()
-        # Handle _Supporting suffix FIRST — downgrade to supporting level
+
+        # Handle _STRONG suffix (upgrade PP/PM to Strong, keep PVS/PS at Strong)
+        # Exclude _VERY_STRONG to reserve room if ClinGen SVI extends it later.
+        if "_STRONG" in code_upper and "_VERY_STRONG" not in code_upper:
+            if code_upper.startswith(("PVS", "PS", "PM", "PP")):
+                counts["ps"] += 1
+            elif code_upper.startswith(("BA", "BS", "BP")):
+                counts["bs"] += 1
+            continue
+
+        # Handle _MODERATE suffix (upgrade PP to pm; downgrade PVS/PS to pm)
+        if "_MODERATE" in code_upper:
+            if code_upper.startswith(("PVS", "PS", "PM", "PP")):
+                counts["pm"] += 1
+            elif code_upper.startswith(("BA", "BS", "BP")):
+                counts["bs"] += 1
+            continue
+
+        # Handle _SUPPORTING suffix (existing downgrade logic)
         if "_SUPPORTING" in code_upper:
             if code_upper.startswith(("PVS", "PS", "PM")):
                 counts["pp"] += 1
             elif code_upper.startswith(("BA", "BS")):
                 counts["bp"] += 1
             continue
-        # Then normal counting
+
+        # Then normal counting (plain PP3, PS1, PM2, BP4, etc.)
         if code_upper.startswith("PVS"):
             counts["pvs"] += 1
         elif code_upper.startswith("PS"):
