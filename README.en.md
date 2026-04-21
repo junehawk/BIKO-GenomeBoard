@@ -16,7 +16,7 @@ BIKO GenomeBoard takes an already-annotated VCF (VEP/ANNOVAR) and automatically 
 
 BIKO addresses four specific pain points:
 
-1. **WGS/WES results flood in, but Korean-population-filtered outputs are needed.** gnomAD alone is less accurate for Korean patients. KRGDB, Korea4K, and NARD2 must be compared alongside gnomAD EAS/ALL for BA1/BS1/PM2 calls to be clinically meaningful.
+1. **WGS/WES results flood in, but Korean-population-filtered outputs are needed.** gnomAD alone is less accurate for Korean patients. The KOGO / gene2korea **Korean Variant Archive (KOVA) v7** — 43 M variants with homozygote counts — must be compared alongside gnomAD EAS / ALL for BA1 / BS1 / PM2 calls to be clinically meaningful.
 2. **ACMG/AMP 2015 (germline) and AMP/ASCO/CAP 2017 (somatic) must be applied consistently.** Hand-computing evidence codes per case destroys reproducibility.
 3. **Treatment rationale must carry PMIDs and must never hallucinate.** An LLM saying "futibatinib targets KRAS G12D" is not acceptable in a clinical context.
 4. **Everything must run inside the hospital.** Uploading patient VCFs to a hosted API is a privacy non-starter.
@@ -29,7 +29,7 @@ BIKO satisfies all four in a **100% offline, on-premise** environment.
 |---|---|
 | **Clinical geneticists / hemonc oncologists** | Turn annotated VCFs into readable reports immediately |
 | **Bioinformatics researchers** | Bolt-on reporting layer for a WGS pipeline |
-| **Korean-cohort researchers** | Pull KRGDB/Korea4K/NARD2 frequencies directly into the report |
+| **Korean-cohort researchers** | Pull KOVA v7 Korean frequencies (with homozygote counts) directly into the report |
 | **Clinical genomics educators** | Transparent, inspectable example of how ACMG evidence codes combine |
 
 **Restated disclaimer**: This is not a diagnostic instrument. Every generated report carries a "research use only" tag, and the final clinical decision must always be made by a qualified clinician.
@@ -40,7 +40,7 @@ BIKO satisfies all four in a **100% offline, on-premise** environment.
 flowchart TD
     A[Annotated VCF<br/>VEP / ANNOVAR] --> B[1 · VCF parsing<br/>SNV/Indel + CNV/SV]
     B --> C[2 · Local DB lookup<br/>ClinVar · gnomAD · CIViC<br/>OMIM · HPO · ClinGen]
-    C --> D[3 · Korean frequency compare<br/>KRGDB · Korea4K · NARD2<br/>5-tier + Korean enrichment]
+    C --> D[3 · Korean frequency compare<br/>KOVA v7 · gnomAD EAS · gnomAD ALL<br/>3-tier + Korean enrichment + hom counts]
     D --> E[4 · ACMG evidence collection<br/>PVS1 · PM1 · PM5 · PP3/BP4 ...]
     E --> F[5 · Deterministic classification<br/>ACMG/AMP 2015 · AMP 2017]
     F --> G{Mode}
@@ -92,7 +92,7 @@ These two principles together mean LLM hallucinations cannot leak into variant c
 
 ### Feature list
 
-- **5-tier Korean frequency comparison** — KRGDB + Korea4K + NARD2 + gnomAD EAS + gnomAD ALL compared simultaneously for BA1/BS1/PM2 calls; Korean enrichment ratio computed automatically
+- **3-tier Korean frequency comparison (KOVA v7)** — KOVA v7 (43 M variants with homozygote counts) + gnomAD EAS + gnomAD ALL compared simultaneously for BA1/BS1/PM2 calls; Korean enrichment ratio computed automatically. KOVA's homozygote counts are particularly load-bearing for autosomal-recessive calls.
 - **Deterministic ACMG engine** — 28 evidence codes, in silico thresholds (REVEL/CADD/AlphaMissense/SpliceAI → PP3/BP4), ClinVar expert panel override, PMID-backed PM1 hotspot table
 - **AMP 2017 Tiering** — CIViC variant-level evidence + OncoKB + Cancer Hotspots + ClinVar Pathogenic
 - **Curate-then-narrate treatment rationale** — OncoKB + CIViC deterministically curated with PMIDs; LLM narrates only
@@ -171,7 +171,7 @@ This script downloads and builds public databases automatically.
 
 | Automated | Requires manual setup |
 |---|---|
-| ClinVar · gnomAD · CIViC · HPO · Orphanet · GeneReviews · Korea4K · NARD2 · KRGDB · cancerhotspots | OMIM genemap2 (account required) · ClinGen (web export) |
+| ClinVar · gnomAD · CIViC · HPO · Orphanet · GeneReviews · KOVA v7 · cancerhotspots | OMIM genemap2 (account required) · ClinGen (web export) |
 
 Manual steps are printed by the script. See [docs/SETUP.md](docs/SETUP.md) for details.
 
@@ -275,7 +275,7 @@ pip install -r requirements-dev.txt
 python -m pytest tests/ -q
 ```
 
-**901+ tests**, green CI on ubuntu-latest / Python 3.10 · 3.11 · 3.12. Coverage includes ACMG classification, in silico thresholds, ClinVar override, CIViC/OncoKB integration, TMB, CNV/SV, HPO matching, Korean frequency comparison, PGx, AI Clinical Board, variant selector, and report generation.
+**901+ tests**, green CI on ubuntu-latest / Python 3.10 · 3.11 · 3.12. Coverage includes ACMG classification, in silico thresholds, ClinVar override, CIViC/OncoKB integration, TMB, CNV/SV, HPO matching, Korean frequency comparison (KOVA v7), PGx, AI Clinical Board, variant selector, and report generation.
 
 ## Documentation
 
