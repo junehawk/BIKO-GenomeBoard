@@ -1,7 +1,14 @@
 # Rare Disease & General Population Analysis Enhancements
 
+> **2026-04-21 update**: The Korean-frequency expansion described in
+> Feature 1 below (Korea4K AF + NARD2) is **superseded by KOVA v7**
+> (KOGO / gene2korea Korean Variant Archive, 43 M variants with
+> homozygote counts). The earlier multi-cohort sources are not used in
+> the shipped pipeline. This spec is retained for historical reference
+> only — see `docs/KOREAN_STRATEGY.md` for the active design.
+
 **Date:** 2026-04-09
-**Status:** Approved
+**Status:** Superseded (Korean-frequency path replaced by KOVA v7 on 2026-04-21)
 **Scope:** 4 features for rare disease / germline analysis improvement
 
 ---

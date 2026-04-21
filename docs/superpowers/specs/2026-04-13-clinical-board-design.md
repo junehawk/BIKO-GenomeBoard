@@ -1,7 +1,14 @@
 # Clinical Board — Multi-Agent Diagnostic Synthesis System
 
+> **2026-04-21 update**: Any Korean-frequency references in this spec
+> (KRGDB / Korea4K / NARD2 briefing fields, per-cohort mentions) are
+> **superseded by KOVA v7** (KOGO / gene2korea Korean Variant
+> Archive). The Board's Korean-frequency briefing now pulls from KOVA
+> v7 only. The rest of the Clinical Board design — agent roster,
+> curate-then-narrate contract, grounded prompting — remains in force.
+
 **Date:** 2026-04-13
-**Status:** Approved
+**Status:** Approved (Korean-frequency briefing fields superseded by KOVA v7 on 2026-04-21)
 **Scope:** Local LLM 기반 다전문가 종합 진단 추론 시스템
 
 ---

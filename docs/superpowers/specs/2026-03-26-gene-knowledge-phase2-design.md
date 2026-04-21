@@ -1,5 +1,13 @@
 # Gene Knowledge Phase 2: Dynamic Builder with Curated Sources
 
+> **2026-04-21 update**: Any runtime frequency references in this spec
+> (the `gnomAD / KRGDB` runtime source line under Cancer Mode's
+> `frequency_prognosis` row and any similar cross-references) are
+> **superseded by KOVA v7** (KOGO / gene2korea Korean Variant Archive)
+> as of 2026-04-21. The gene-knowledge curation architecture itself
+> (CPIC / CIViC / NCBI / GeneReviews / Orphanet / OMIM priority) is
+> unchanged.
+
 ## Goal
 
 기존 18개 LLM-generated gene knowledge를 폐기하고, VCF에서 만나는 모든 유전자를 공인 소스(NCBI Gene, CIViC, GeneReviews, ClinGen, CPIC)에서 동적으로 빌드하는 시스템을 구축한다. Cancer/Rare Disease 모드별로 소스를 분리한다.

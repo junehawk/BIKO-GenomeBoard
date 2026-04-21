@@ -11,6 +11,33 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Changed — v2.5 (KOVA v7 Korean frequency migration)
+- **Korean frequency source consolidated to KOVA v7.** The earlier
+  multi-cohort Korean-frequency strategy (several parallel Korean-only
+  cohorts) is replaced by a single KOGO / gene2korea Korean Variant
+  Archive (KOVA) v7 source. KOVA v7 ships 43 M variants with per-variant
+  AF **and homozygote counts**; the homozygote count is the feature
+  that drives BS2 candidate flagging for autosomal-recessive review and
+  is the main clinical advantage over gnomAD for Korean patients.
+- `scripts/population/query_kova.py` is the single query module for
+  the Korean cohort. `compare_freq.py` is rewritten to a 3-tier
+  comparison (KOVA v7 / gnomAD EAS / gnomAD ALL) and surfaces KOVA
+  homozygote counts in the `FrequencyData` payload for downstream BS2
+  evaluation.
+- `config.yaml` registers `paths.kova` (default
+  `data/kova_freq.tsv`); the earlier per-cohort path entries are
+  removed. `docs/KOREAN_STRATEGY.md`, `docs/SETUP.md`,
+  `docs/TIERING_PRINCIPLES.md`, and `docs/ARCHITECTURE.md` are updated
+  in lock-step.
+- Historical design specs under `docs/superpowers/specs/` that refer
+  to the prior multi-cohort plan carry a "superseded by KOVA v7
+  (2026-04-21)" banner at the top. The specs themselves are
+  preserved for audit continuity — they are no longer the active
+  implementation target.
+- User-facing docs (README.md / README.en.md / showcase copy) are
+  rewritten around the 3-tier KOVA v7 comparison and call out the
+  homozygote-count advantage explicitly.
+
 ### Added — v2.4 (germline integration & curator expansion)
 - `--germline <vcf>` CLI flag enables somatic + germline dual-input
   pipeline. In rare-disease mode `extract_inherited_variants` intersects
