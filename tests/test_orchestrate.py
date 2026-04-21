@@ -131,10 +131,18 @@ def test_orchestrate_pgx_results(mocker, tmp_path):
     assert "CYP2C19" in pgx_genes or "HLA-B" in pgx_genes
 
 
-def test_orchestrate_krgdb_missing(mocker, tmp_path):
-    """Missing KRGDB file logs a warning but pipeline continues"""
+def test_orchestrate_kova_missing(mocker, tmp_path, monkeypatch):
+    """Missing KOVA DB logs a single warning but pipeline continues"""
     mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
     mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=None)
+
+    # Point query_kova at a non-existent DB path; availability cache should
+    # fire exactly one WARNING and every subsequent query short-circuits to None.
+    from scripts.population import query_kova as qk
+
+    monkeypatch.setattr(qk, "_DEFAULT_DB_PATH", str(tmp_path / "no_such_kova.sqlite3"))
+    mocker.patch.object(qk, "get", return_value=str(tmp_path / "no_such_kova.sqlite3"))
+    qk.reset_availability_cache()
 
     output_path = tmp_path / "report.html"
     from scripts.orchestrate import run_pipeline
@@ -142,13 +150,12 @@ def test_orchestrate_krgdb_missing(mocker, tmp_path):
     result = run_pipeline(
         vcf_path=DEMO_VCF,
         output_path=str(output_path),
-        krgdb_path=str(tmp_path / "no_such_krgdb.tsv"),
     )
 
     assert result is not None
-    # All KRGDB frequencies should be None
+    # All KOVA frequencies should be None
     for v in result["variants"]:
-        assert v["krgdb_freq"] is None
+        assert v.get("kova_freq") is None
 
 
 def test_orchestrate_report_structure(mocker, tmp_path):

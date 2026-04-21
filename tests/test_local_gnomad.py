@@ -187,7 +187,7 @@ def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
         "paths": {
             "gnomad_db": test_db_path,
             "clinvar_db": "data/db/clinvar.sqlite3",
-            "krgdb": "data/krgdb_freq.tsv",
+            "kova_db": "data/db/kova.sqlite3",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -230,7 +230,6 @@ def test_pipeline_local_gnomad(test_db_path, tmp_path, monkeypatch):
     result = run_pipeline(
         vcf_path=vcf_path,
         output_path=output_path,
-        krgdb_path="data/krgdb_freq.tsv",
         skip_api=True,
     )
 

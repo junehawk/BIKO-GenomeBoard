@@ -520,9 +520,8 @@ class TestPgxWarningOnSomatic:
                     return_value={
                         "clinvar": {"clinvar_significance": "Not Found"},
                         "gnomad": {"gnomad_all": None, "gnomad_eas": None},
-                        "krgdb_freq": None,
-                        "korea4k_freq": None,
-                        "nard2_freq": None,
+                        "kova_freq": None,
+                        "kova_homozygote": None,
                         "pgx": None,
                     },
                 ),

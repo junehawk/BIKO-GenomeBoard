@@ -146,9 +146,9 @@ def test_paths_resolved_to_absolute(tmp_path):
     from scripts.common.config import load_config
 
     config_file = tmp_path / "config.yaml"
-    config_file.write_text("paths:\n  krgdb: 'data/krgdb_freq.tsv'\n")
+    config_file.write_text("paths:\n  kova_db: 'data/db/kova.sqlite3'\n")
     config = load_config(config_path=str(config_file))
-    assert os.path.isabs(config["paths"]["krgdb"])
+    assert os.path.isabs(config["paths"]["kova_db"])
 
 
 def test_load_config_with_custom_gb_config_path(tmp_path, monkeypatch):

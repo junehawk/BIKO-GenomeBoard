@@ -79,7 +79,7 @@ FULL_REPORT = {
     ],
     "db_versions": {
         "ClinVar": "2026-03",
-        "KRGDB": "v3.0 (2025-12)",
+        "KOVA": "v7",
         "gnomAD": "v4.1 (2025)",
         "CPIC": "2022",
     },

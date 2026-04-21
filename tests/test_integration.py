@@ -10,7 +10,6 @@ from scripts.reporting.generate_pdf import generate_report_html
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.population.compare_freq import compare_frequencies
 from scripts.population.query_gnomad import query_gnomad
-from scripts.population.query_krgdb import _KRGDB_CACHE, query_krgdb
 from scripts.pharmacogenomics.korean_pgx import check_korean_pgx
 
 pytestmark = pytest.mark.integration
@@ -18,11 +17,8 @@ pytestmark = pytest.mark.integration
 DEMO_VCF_PATH = str(Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants.vcf")
 
 
-def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
+def test_full_pipeline_with_demo_vcf(mocker):
     """End-to-end: demo VCF -> parse -> query (mocked) -> classify -> report"""
-    # Clear KRGDB cache to avoid stale data between test runs
-    _KRGDB_CACHE.clear()
-
     # Mock ClinVar
     mocker.patch(
         "scripts.enrichment.query_clinvar._search_clinvar_variant",
@@ -38,10 +34,6 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
         "scripts.population.query_gnomad._graphql_query",
         return_value={"data": {"variant": {"genome": {"af": 0.0002, "populations": [{"id": "eas", "af": 0.0003}]}}}},
     )
-    # Create temp KRGDB data
-    krgdb_file = tmp_path / "krgdb_freq.tsv"
-    krgdb_file.write_text("chr17\t7577120\tG\tA\t0.0001\n")
-
     # 1. Parse
     variants = parse_vcf(DEMO_VCF_PATH)
     assert len(variants) > 0
@@ -54,9 +46,8 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
         clinical = query_clinvar(v)
         # Korean Pop Geneticist
         gnomad = query_gnomad(v)
-        krgdb_freq = query_krgdb(v, str(krgdb_file))
         freq_data = FrequencyData(
-            krgdb=krgdb_freq,
+            kova=None,
             gnomad_eas=gnomad["gnomad_eas"],
             gnomad_all=gnomad["gnomad_all"],
         )
@@ -100,7 +91,7 @@ def test_full_pipeline_with_demo_vcf(mocker, tmp_path):
             "vus": sum(1 for r in variant_results if r["classification"] == "VUS"),
             "benign": sum(1 for r in variant_results if r["classification"] in ("Benign", "Likely Benign")),
         },
-        "db_versions": {"clinvar": "2026-03-15", "gnomad": "4.0", "krgdb": "2026-03-01"},
+        "db_versions": {"clinvar": "2026-03-15", "gnomad": "4.0", "kova": "v7"},
     }
     html = generate_report_html(report_data)
     assert "BIKO GenomeBoard" in html

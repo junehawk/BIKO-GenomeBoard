@@ -35,9 +35,8 @@ def _min_db(variant_id: str) -> dict:
                 "gnomad_eas": None,
                 "api_available": False,
             },
-            "krgdb_freq": None,
-            "korea4k_freq": None,
-            "nard2_freq": None,
+            "kova_freq": None,
+            "kova_homozygote": None,
             "pgx": None,
         }
     }

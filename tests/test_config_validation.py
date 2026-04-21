@@ -28,7 +28,7 @@ def test_validate_valid_config():
     from scripts.common.config_schema import validate_config
 
     config = {
-        "paths": {"krgdb": "a", "clinvar_db": "b", "templates": "t"},
+        "paths": {"kova_db": "a", "clinvar_db": "b", "templates": "t"},
         "thresholds": {"ba1": 0.05, "bs1": 0.01, "pm2": 0.001},
         "api": {"timeout": 30},
         "cache": {"enabled": True},
@@ -43,7 +43,7 @@ def test_validate_missing_required_key():
     from scripts.common.config_schema import validate_config
 
     config = {
-        "paths": {"krgdb": "a"},
+        "paths": {"kova_db": "a"},
         "thresholds": {"ba1": 0.05, "bs1": 0.01, "pm2": 0.001},
         "api": {"timeout": 30},
         "cache": {"enabled": True},
@@ -58,7 +58,7 @@ def test_validate_wrong_type_threshold():
     from scripts.common.config_schema import validate_config
 
     config = {
-        "paths": {"krgdb": "a", "clinvar_db": "b", "templates": "t"},
+        "paths": {"kova_db": "a", "clinvar_db": "b", "templates": "t"},
         "thresholds": {"ba1": "not_a_number", "bs1": 0.01, "pm2": 0.001},
         "api": {"timeout": 30},
         "cache": {"enabled": True},
@@ -73,7 +73,7 @@ def test_validate_unknown_top_level_key():
     from scripts.common.config_schema import validate_config
 
     config = {
-        "paths": {"krgdb": "a", "clinvar_db": "b", "templates": "t"},
+        "paths": {"kova_db": "a", "clinvar_db": "b", "templates": "t"},
         "thresholds": {"ba1": 0.05, "bs1": 0.01, "pm2": 0.001},
         "api": {"timeout": 30},
         "cache": {"enabled": True},
@@ -110,9 +110,9 @@ def test_validate_partial_config():
     messages = validate_config(config)
     errors = [m for m in messages if m.startswith("ERROR:")]
     assert errors == []
-    # Missing recommended keys like paths.krgdb should warn
+    # Missing recommended keys like paths.kova_db should warn
     warnings = [m for m in messages if m.startswith("WARNING:")]
-    assert any("paths.krgdb" in w for w in warnings)
+    assert any("paths.kova_db" in w for w in warnings)
     # Present keys should NOT appear in warnings about missing keys
     assert not any("paths.templates" in w for w in warnings)
     assert not any("thresholds.ba1" in w for w in warnings)
@@ -123,7 +123,7 @@ def test_validate_int_accepted_as_float():
     from scripts.common.config_schema import validate_config
 
     config = {
-        "paths": {"krgdb": "a", "clinvar_db": "b", "templates": "t"},
+        "paths": {"kova_db": "a", "clinvar_db": "b", "templates": "t"},
         "thresholds": {"ba1": 1, "bs1": 0, "pm2": 0},  # ints, not floats
         "api": {"timeout": 30},
         "cache": {"enabled": True},

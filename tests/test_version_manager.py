@@ -43,7 +43,6 @@ def test_get_all_db_versions_with_local_dbs(tmp_path, monkeypatch):
             "clinvar_db": clinvar_db,
             "gnomad_db": gnomad_db,
             "gnomad_vcf_dir": str(tmp_path / "empty_gnomad_vcf"),
-            "krgdb": "data/krgdb_freq.tsv",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -110,7 +109,6 @@ def test_get_all_db_versions_api_mode(tmp_path, monkeypatch):
             "clinvar_db": str(tmp_path / "nonexistent_clinvar.sqlite3"),
             "gnomad_db": str(tmp_path / "nonexistent_gnomad.sqlite3"),
             "gnomad_vcf_dir": str(tmp_path / "nonexistent_gnomad_vcf"),
-            "krgdb": str(tmp_path / "nonexistent_krgdb.tsv"),
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -168,7 +166,6 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
             "clinvar_db": str(tmp_path / "nonexistent_clinvar.sqlite3"),
             "gnomad_db": str(tmp_path / "nonexistent_gnomad.sqlite3"),
             "gnomad_vcf_dir": str(tmp_path / "nonexistent_gnomad_vcf"),
-            "krgdb": str(tmp_path / "nonexistent_krgdb.tsv"),
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -209,67 +206,7 @@ def test_get_all_db_versions_skip_api_no_local(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# 4. test_get_all_db_versions_includes_krgdb
-# ---------------------------------------------------------------------------
-
-
-def test_get_all_db_versions_includes_krgdb(tmp_path, monkeypatch):
-    """KRGDB file present → versions includes KRGDB with local_file source."""
-    import yaml
-
-    from scripts.common.config import reset
-
-    krgdb_file = tmp_path / "krgdb_freq.tsv"
-    krgdb_file.write_text("chrom\tpos\tref\talt\tfreq\n")
-
-    cfg = {
-        "paths": {
-            "clinvar_db": str(tmp_path / "no_clinvar.sqlite3"),
-            "gnomad_db": str(tmp_path / "no_gnomad.sqlite3"),
-            "krgdb": str(krgdb_file),
-            "gene_knowledge": "data/gene_knowledge.json",
-            "pgx_table": "data/korean_pgx_table.json",
-            "acmg_rules": "data/acmg_rules.json",
-            "templates": "templates",
-        },
-        "annotation": {"source": "local"},
-        "thresholds": {"ba1": 0.05, "bs1": 0.01, "pm2": 0.001},
-        "report": {"default_mode": "cancer", "default_genome_build": "GRCh38"},
-        "pgx": {"genes": [], "risk_factor_genes": []},
-    }
-    cfg_path = str(tmp_path / "test_config.yaml")
-    with open(cfg_path, "w") as f:
-        yaml.dump(cfg, f)
-
-    monkeypatch.setenv("GB_CONFIG_PATH", cfg_path)
-    reset()
-
-    import scripts.storage.query_local_clinvar as cv_mod
-    import scripts.storage.query_local_gnomad as gn_mod
-
-    cv_mod.close()
-    cv_mod._conn = None
-    gn_mod.close()
-    gn_mod._conn = None
-
-    from scripts.storage.version_manager import get_all_db_versions
-
-    versions = get_all_db_versions(skip_api=True)
-
-    assert "KRGDB" in versions
-    assert versions["KRGDB"]["source"] == "local_file"
-    assert "modified" in versions["KRGDB"]
-    assert "size_bytes" in versions["KRGDB"]
-
-    reset()
-    cv_mod.close()
-    cv_mod._conn = None
-    gn_mod.close()
-    gn_mod._conn = None
-
-
-# ---------------------------------------------------------------------------
-# 5. test_get_all_db_versions_includes_acmg
+# 4. test_get_all_db_versions_includes_acmg
 # ---------------------------------------------------------------------------
 
 
@@ -283,7 +220,6 @@ def test_get_all_db_versions_includes_acmg(tmp_path, monkeypatch):
         "paths": {
             "clinvar_db": str(tmp_path / "no_clinvar.sqlite3"),
             "gnomad_db": str(tmp_path / "no_gnomad.sqlite3"),
-            "krgdb": str(tmp_path / "no_krgdb.tsv"),
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -346,7 +282,6 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
             "clinvar_db": clinvar_db,
             "gnomad_db": gnomad_db,
             "gnomad_vcf_dir": str(tmp_path / "empty_gnomad_vcf"),
-            "krgdb": "data/krgdb_freq.tsv",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -395,7 +330,7 @@ def test_report_shows_db_source_type(tmp_path, monkeypatch):
             "benign": 0,
         },
         "db_versions": db_versions,
-        "pipeline": {"skip_api": True, "krgdb_path": ""},
+        "pipeline": {"skip_api": True},
         "mode": "cancer",
         "hpo_results": [],
     }
@@ -431,7 +366,6 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
             "clinvar_db": clinvar_db,
             "gnomad_db": gnomad_db,
             "gnomad_vcf_dir": str(tmp_path / "empty_gnomad_vcf"),
-            "krgdb": "data/krgdb_freq.tsv",
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",
@@ -484,7 +418,7 @@ def test_report_shows_build_date(tmp_path, monkeypatch):
             "benign": 0,
         },
         "db_versions": db_versions,
-        "pipeline": {"skip_api": True, "krgdb_path": ""},
+        "pipeline": {"skip_api": True},
         "mode": "cancer",
         "hpo_results": [],
     }
@@ -514,7 +448,6 @@ def _write_min_config(tmp_path, monkeypatch, **paths):
         "paths": {
             "clinvar_db": str(tmp_path / "no_clinvar.sqlite3"),
             "gnomad_db": str(tmp_path / "no_gnomad.sqlite3"),
-            "krgdb": str(tmp_path / "no_krgdb.tsv"),
             "gene_knowledge": "data/gene_knowledge.json",
             "pgx_table": "data/korean_pgx_table.json",
             "acmg_rules": "data/acmg_rules.json",

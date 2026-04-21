@@ -361,8 +361,8 @@ MINIMAL_RARE_DISEASE_REPORT = {
         "benign": 0,
         "likely_benign": 0,
     },
-    "db_versions": {"clinvar": "2026-03-23", "gnomad": "4.0", "krgdb": "2026-03-01"},
-    "pipeline": {"skip_api": True, "krgdb_path": "data/krgdb_freq.tsv"},
+    "db_versions": {"clinvar": "2026-03-23", "gnomad": "4.0", "kova": "v7"},
+    "pipeline": {"skip_api": True},
 }
 
 

@@ -64,9 +64,8 @@ def _db_stub() -> dict:
             "clinvar_id": "RCV000123456",
         },
         "gnomad": {"gnomad_all": None, "gnomad_eas": None, "api_available": False},
-        "krgdb_freq": None,
-        "korea4k_freq": None,
-        "nard2_freq": None,
+        "kova_freq": None,
+        "kova_homozygote": None,
     }
 
 

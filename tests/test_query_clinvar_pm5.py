@@ -299,7 +299,7 @@ def test_pm5_fires_via_self_computed_path(patched_clinvar_db, monkeypatch):
                 "review_status": "",
             },
             "gnomad": {"gnomad_all": None, "gnomad_eas": None, "api_available": False},
-            "krgdb_freq": None,
+            "kova_freq": None,
         }
     }
     freq_results = {variant.variant_id: {"acmg_codes": [], "korean_flag": ""}}

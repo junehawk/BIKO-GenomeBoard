@@ -381,7 +381,7 @@ class TestVariantRecordSource:
             variant.variant_id: {
                 "clinvar": {"clinvar_significance": "Pathogenic", "acmg_codes": []},
                 "gnomad": {"gnomad_all": 0.0001, "gnomad_eas": 0.0002},
-                "krgdb_freq": None,
+                "kova_freq": None,
                 "pgx": None,
             }
         }
@@ -413,7 +413,7 @@ class TestVariantRecordSource:
             variant.variant_id: {
                 "clinvar": {"clinvar_significance": "VUS", "acmg_codes": []},
                 "gnomad": {"gnomad_all": None, "gnomad_eas": None},
-                "krgdb_freq": None,
+                "kova_freq": None,
                 "pgx": None,
             }
         }
@@ -481,7 +481,7 @@ class TestOrchestrateGermlineIntegration:
             mock_query.return_value = {
                 "clinvar": {"clinvar_significance": "Pathogenic", "acmg_codes": []},
                 "gnomad": {"gnomad_all": 0.0001, "gnomad_eas": 0.0002},
-                "krgdb_freq": None,
+                "kova_freq": None,
                 "pgx": None,
             }
 
@@ -577,7 +577,7 @@ class TestOrchestrateGermlineIntegration:
             mock_query.return_value = {
                 "clinvar": {"clinvar_significance": "Pathogenic", "acmg_codes": []},
                 "gnomad": {"gnomad_all": 0.0001, "gnomad_eas": 0.0002},
-                "krgdb_freq": None,
+                "kova_freq": None,
                 "pgx": None,
             }
 
