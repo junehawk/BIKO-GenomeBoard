@@ -395,12 +395,13 @@ def _build_phenotype_gene_correlations_section(selected_variants: list, data: di
         return None
 
     header = [
-        "== PHENOTYPE-GENE CORRELATIONS ==",
+        "== PRIMARY DIAGNOSIS CANDIDATES (phenotype-matched) ==",
         "",
-        "(Selected variants whose gene is associated with any of the submitted HPO terms.",
-        " These are the phenotype-matched primary-diagnosis candidates — consider them",
-        " first, ahead of phenotype-unrelated Pathogenic/Likely-Pathogenic variants which",
-        " are more likely incidental or carrier findings.)",
+        "These variants are the ONLY primary_diagnosis candidates for this case.",
+        "The Board Chair MUST name a variant/gene from this list in primary_diagnosis.",
+        "Any Pathogenic/Likely-Pathogenic variant NOT in this list is an incidental",
+        "finding (unrelated to the submitted phenotype) and MUST be reported under",
+        "key_findings or follow_up, never as the primary diagnosis.",
         "",
     ]
     return "\n".join(header + matched_lines)

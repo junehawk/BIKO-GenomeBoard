@@ -440,7 +440,7 @@ def test_phenotype_gene_correlations_rendered_when_hpo_matches_selected_variant(
         hpo_genes=["CHD8", "SHANK3"],
     )
     briefing = build_case_briefing(report_data, "rare-disease")
-    assert "== PHENOTYPE-GENE CORRELATIONS ==" in briefing
+    assert "== PRIMARY DIAGNOSIS CANDIDATES (phenotype-matched) ==" in briefing
     # Matched gene + HPO IDs appear in the correlation block
     assert "CHD8" in briefing
     assert "HP:0000717" in briefing
@@ -455,7 +455,7 @@ def test_phenotype_gene_correlations_omitted_when_no_overlap():
         hpo_genes=["CHD8", "SHANK3"],
     )
     briefing = build_case_briefing(report_data, "rare-disease")
-    assert "== PHENOTYPE-GENE CORRELATIONS ==" not in briefing
+    assert "== PRIMARY DIAGNOSIS CANDIDATES (phenotype-matched) ==" not in briefing
 
 
 def test_phenotype_gene_correlations_skipped_for_cancer_mode():
@@ -466,7 +466,7 @@ def test_phenotype_gene_correlations_skipped_for_cancer_mode():
         hpo_genes=["CHD8"],
     )
     briefing = build_case_briefing(report_data, "cancer")
-    assert "== PHENOTYPE-GENE CORRELATIONS ==" not in briefing
+    assert "== PRIMARY DIAGNOSIS CANDIDATES (phenotype-matched) ==" not in briefing
 
 
 # ── Board Chair phenotype-first rule ────────────────────────────────────────
@@ -481,15 +481,15 @@ def test_board_chair_prompts_include_phenotype_first_rule():
     )
 
     # Korean prompt
-    assert "Phenotype-matched" in SYSTEM_PROMPT_KO
+    assert "phenotype-matched" in SYSTEM_PROMPT_KO
     assert "incidental" in SYSTEM_PROMPT_KO or "secondary finding" in SYSTEM_PROMPT_KO
-    assert "denovo_" in SYSTEM_PROMPT_KO
+    assert "PRIMARY DIAGNOSIS CANDIDATES" in SYSTEM_PROMPT_KO
 
     # English prompt
-    assert "Phenotype-matched" in SYSTEM_PROMPT_EN or "phenotype-matched" in SYSTEM_PROMPT_EN
+    assert "phenotype-matched" in SYSTEM_PROMPT_EN
     assert "incidental" in SYSTEM_PROMPT_EN
     assert "secondary finding" in SYSTEM_PROMPT_EN
-    assert "denovo_" in SYSTEM_PROMPT_EN
+    assert "PRIMARY DIAGNOSIS CANDIDATES" in SYSTEM_PROMPT_EN
 
 
 def test_board_chair_cancer_prompts_not_modified_by_phenotype_rule():
@@ -500,5 +500,5 @@ def test_board_chair_cancer_prompts_not_modified_by_phenotype_rule():
     )
 
     # The rare-disease-specific header must not leak into cancer prompts.
-    assert "Phenotype-matched variant priority" not in CANCER_SYSTEM_PROMPT_EN
-    assert "Phenotype-matched 변이 우선 규칙" not in CANCER_SYSTEM_PROMPT_KO
+    assert "PRIMARY DIAGNOSIS CANDIDATES" not in CANCER_SYSTEM_PROMPT_EN
+    assert "PRIMARY DIAGNOSIS CANDIDATES" not in CANCER_SYSTEM_PROMPT_KO
