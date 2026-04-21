@@ -44,13 +44,15 @@ VCF Input          AnnotSV TSV (optional --sv)
 [2] Database Queries
     ├── ClinVar      → query_local_clinvar.py / query_clinvar.py (API fallback)
     ├── gnomAD       → query_tabix_gnomad.py → query_local_gnomad.py → query_gnomad.py
-    ├── KRGDB        → query_krgdb.py (local TSV)
+    ├── KOVA v7      → query_kova.py (KOGO / gene2korea Korean Variant Archive,
+    │                  43M variants + homozygote counts)
     └── PGx          → korean_pgx.py (local lookup)
     │
     ▼
 [3] Frequency Comparison (compare_freq.py)
-    - KRGDB → gnomAD EAS → gnomAD ALL (3-tier Korean enrichment)
+    - KOVA v7 → gnomAD EAS → gnomAD ALL (3-tier Korean enrichment)
     - Produces BA1, BS1, PM2_Supporting ACMG codes
+    - KOVA homozygote count surfaces BS2 candidates for AR review
     │
     ▼
 [4] ACMG Classification (acmg_engine.py)
@@ -298,8 +300,8 @@ gb/
 │   │   ├── query_local_gnomad.py   # gnomAD SQLite queries (fallback)
 │   │   ├── query_civic.py          # CIViC evidence + hotspot queries
 │   │   └── version_manager.py      # DB version metadata
-│   ├── korean_pop/
-│   │   ├── query_krgdb.py          # KRGDB local TSV
+│   ├── population/
+│   │   ├── query_kova.py           # KOVA v7 (KOGO / gene2korea, Korean Variant Archive)
 │   │   ├── query_gnomad.py         # gnomAD GraphQL API
 │   │   └── compare_freq.py         # Frequency comparison + ACMG codes
 │   ├── pharma/
@@ -312,7 +314,7 @@ gb/
 │       ├── config.py              # config.yaml loader
 │       └── hgvs_utils.py          # HGVSp↔CIViC variant name conversion (shared)
 ├── data/
-│   ├── krgdb_freq.tsv              # Korean population frequencies
+│   ├── kova_freq.tsv               # KOVA v7 Korean population frequencies + homozygote counts
 │   ├── oncokb_cancer_genes.json    # OncoKB gene list
 │   ├── acmg_rules.json             # ACMG classification rules
 │   ├── gene_knowledge.json         # Gene metadata

@@ -115,7 +115,7 @@ ACMG 분류 후, 다음 기준으로 후보 유전자를 순위화한다:
 | HPO gene-phenotype | 로컬 SQLite (329K associations) | 후보 순위화 |
 | ClinGen validity | 로컬 SQLite | 유전자-질환 연관 신뢰도 |
 | OMIM | 정적 데이터 + API | 질환 표현형, 유전 패턴 |
-| Korean frequency (KRGDB) | 로컬 TSV | 한국인 특이 변이 플래그 |
+| Korean frequency (KOVA v7) | 로컬 AF + homozygote count (43M variants) | 한국인 특이 변이 플래그, AR BS2 후보 |
 
 ---
 
@@ -133,9 +133,10 @@ ACMG 분류 후, 다음 기준으로 후보 유전자를 순위화한다:
 
 ### 3. 한국인 특이성
 
-- KRGDB 빈도 데이터로 한국인 특이 변이 플래그
+- **KOVA v7** (Korean Variant Archive, KOGO / gene2korea) 빈도로 한국인 특이 변이 플래그 — 43M variants, homozygote count 포함
 - gnomAD EAS vs ALL 비교로 동아시아 빈도 이상 탐지
 - 한국인 PGx 12개 유전자 특이 유병률 비교
+- KOVA v7 homozygote count는 AR 질환 판정 시 BS2 후보 플래그로 활용
 
 ### 4. 보수적 분류
 

@@ -8,7 +8,15 @@ BIKO GenomeBoard의 핵심 차별점은 한국인 집단 특이 데이터를 ACM
 
 ### 대립유전자 빈도 차이
 
-한국인 집단은 유럽인 중심으로 구축된 gnomAD 전체(ALL) 데이터와 유의미한 빈도 차이를 보이는 변이들이 존재한다. 유럽인 집단에서 희귀한 변이가 한국인에서는 흔하거나, 반대의 경우도 있다. gnomAD EAS(동아시아) 데이터도 있지만 한국인 단일 집단 데이터인 KRGDB가 더 정확한 한국인 빈도를 제공한다.
+한국인 집단은 유럽인 중심으로 구축된 gnomAD 전체(ALL) 데이터와 유의미한 빈도 차이를 보이는 변이들이 존재한다. 유럽인 집단에서 희귀한 변이가 한국인에서는 흔하거나, 반대의 경우도 있다. gnomAD EAS(동아시아) 데이터도 있지만 한국인 단일 집단 데이터인 **KOVA v7** (Korean Variant Archive, KOGO / gene2korea 발표)가 더 정확한 한국인 빈도를 제공한다.
+
+### Homozygote count의 임상적 의미
+
+KOVA v7은 단순 대립유전자 빈도(AF) 뿐 아니라 각 변이의 **homozygote count**를 제공한다. 이 정보는 상염색체 열성(AR) 질환 해석에 결정적이다:
+
+- gnomAD도 homozygote count를 제공하지만 한국인 특이적 AR 변이가 과소대표될 수 있다
+- KOVA에서 homozygote가 다수 관찰되면 해당 변이는 고빈도 AR 보인자 변이일 가능성이 높다 (BS2 계열 증거)
+- 반대로 homozygote가 0이면서 heterozygote만 관찰되는 경우 AR에서 병원성 가능성이 높아진다
 
 ### 약물유전체(PGx) 대사 차이
 
@@ -19,19 +27,19 @@ BIKO GenomeBoard의 핵심 차별점은 한국인 집단 특이 데이터를 ACM
 
 ---
 
-## 5-tier 빈도 비교 전략
+## 3-tier 빈도 비교 전략 (KOVA v7 기반)
 
-`scripts/korean_pop/compare_freq.py`가 구현하는 5-tier 한국인-인지 빈도 비교:
+`scripts/population/compare_freq.py`가 구현하는 3-tier 한국인-인지 빈도 비교:
 
 ```
-Tier 1: KRGDB        →  한국인 단일 코호트 빈도 (가장 높은 우선순위)
-Tier 2: Korea4K      →  한국인 4K WGS 코호트 빈도
-Tier 3: NARD2        →  북아시아 참조 데이터베이스 v2 빈도
-Tier 4: gnomAD EAS   →  동아시아 집단 빈도
-Tier 5: gnomAD ALL   →  전세계 집단 빈도
+Tier 1: KOVA v7       →  한국인 Korean Variant Archive (43M variants, homozygote counts 포함)
+Tier 2: gnomAD EAS    →  동아시아 집단 빈도
+Tier 3: gnomAD ALL    →  전세계 집단 빈도
 ```
 
-다섯 출처를 동시에 비교하고, 가용한 최대 빈도값을 ACMG 분류 기준(BA1/BS1/PM2)에 적용한다. 한국인 단독 코호트(KRGDB / Korea4K / NARD2) 빈도가 있으면 gnomAD 보다 우선시한다. Korean enrichment ratio(한국인 빈도 ÷ gnomAD ALL 빈도)는 각 변이마다 자동으로 계산되어 리포트에 반영된다.
+세 출처를 동시에 비교하고, 가용한 최대 빈도값을 ACMG 분류 기준(BA1/BS1/PM2)에 적용한다. 한국인 단독 코호트인 **KOVA v7** 빈도가 있으면 gnomAD 보다 우선시한다. Korean enrichment ratio(한국인 빈도 ÷ gnomAD ALL 빈도)는 각 변이마다 자동으로 계산되어 리포트에 반영된다.
+
+> **과거 멀티-코호트 전략에서의 이행**: 프로젝트 초창기 설계에서는 한국인 단독 코호트 여러 종을 병렬 참조하도록 설계했었다. 공개 접근이 안정적으로 보장되지 않거나 배포 조건이 제한적이어서, 2026-04-21부터 KOGO / gene2korea가 발표한 **Korean Variant Archive v7 (KOVA v7)** 단일 소스로 통합되었다. KOVA v7은 43M variants와 homozygote count를 함께 제공하며, 이전 한국인 단독 코호트들이 커버하던 판정 시나리오를 모두 대체한다. 과거 설계에 대한 감사 추적은 `docs/superpowers/specs/` 아래 설계 스펙 파일에서 "superseded by KOVA v7" 주석과 함께 보존된다.
 
 ---
 
@@ -41,15 +49,18 @@ Tier 5: gnomAD ALL   →  전세계 집단 빈도
 |-----------|------|-----------|------|
 | `BA1` | Benign (Stand-alone) | > 5% | 매우 흔한 변이 — 단독으로 양성 판정 |
 | `BS1` | Benign (Strong) | ≥ 1% | 흔한 변이 |
+| `BS2` | Benign (Strong) | 관찰된 homozygote 다수 | AR / XL 질환에서 건강한 homozygote가 관찰 |
 | `PM2_Supporting` | Pathogenic (Supporting) | ≤ 0.1% | 희귀 변이 |
 
-> **한국인 특화 플래그**: KRGDB 빈도가 gnomAD ALL 대비 5배 이상 높으면 "한국인 빈도 글로벌 대비 5배 이상 높음" 플래그가 추가된다. 이는 유럽인 기준 데이터베이스에서 과소평가될 수 있는 변이를 식별한다.
+> **한국인 특화 플래그**: KOVA v7 빈도가 gnomAD ALL 대비 5배 이상 높으면 "한국인 빈도 글로벌 대비 5배 이상 높음" 플래그가 추가된다. 이는 유럽인 기준 데이터베이스에서 과소평가될 수 있는 변이를 식별한다.
+
+> **Homozygote 플래그**: KOVA v7에서 homozygote가 다수 관찰되는 변이는 AR 질환 해석 시 BS2 증거 후보로 표시된다. 단독 판정은 아니며, 표현형/유전 패턴 확인이 병행되어야 한다.
 
 ---
 
 ## 한국인 PGx 5대 유전자
 
-`scripts/pharma/korean_pgx.py`가 관리하는 한국인 특화 PGx 유전자:
+`scripts/pharmacogenomics/korean_pgx.py`가 관리하는 한국인 특화 PGx 유전자:
 
 ### 1. CYP2D6 — 마약성 진통제, 항우울제
 
@@ -75,33 +86,34 @@ Tier 5: gnomAD ALL   →  전세계 집단 빈도
 
 ---
 
-## KRGDB 데이터 관리
+## KOVA v7 데이터 관리
 
 ### 데이터 형식
 
-KRGDB 빈도 테이블은 `data/krgdb_freq.tsv`에 TSV 형식으로 저장한다 (`config.yaml`의 `paths.krgdb`로 등록되어 있음). Korea4K(`data/korea4k_freq.tsv`)와 NARD2(`data/nard2_freq.tsv`)도 동일한 위치 패턴을 따른다.
+KOVA v7 빈도 테이블은 `config.yaml`의 `paths.kova`로 등록된다. 레코드는 대립유전자 빈도(AF)와 homozygote count를 함께 제공한다.
 
 ```
-chrom   pos     ref     alt     af_korean
-chr1    925952  G       A       0.0023
-chr17   43057051 A      G       0.00041
+chrom   pos      ref   alt   af_korean    hom_count    het_count
+chr1    925952   G     A     0.0023       0            12
+chr17   43057051 A     G     0.00041      0            2
 ...
 ```
 
 ### 조회 방식
 
-`scripts/korean_pop/query_krgdb.py`는 로컬 TSV를 직접 읽어 빈도를 반환한다. 외부 API 의존 없이 빠른 응답이 가능하다.
+`scripts/population/query_kova.py`가 KOVA v7 로컬 소스를 직접 읽어 `KovaRecord(af, hom_count, het_count, total_an)` 형태로 반환한다. 외부 API 의존 없이 빠른 응답이 가능하다.
 
 ### 업데이트 절차
 
-1. KRGDB 공식 사이트(https://www.krgdb.org/)에서 최신 데이터 다운로드
-2. TSV로 변환:
+1. KOGO / gene2korea 공식 KOVA 배포본 (v7 이상) 입수
+2. 배포 VCF → 내부 TSV로 변환:
    ```bash
-   bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/AF\n' krgdb.vcf > data/krgdb_freq.tsv
+   bcftools query -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/AF\t%INFO/AC_Hom\t%INFO/AC_Het\t%INFO/AN\n' \
+     kova_v7.vcf.gz > data/kova_freq.tsv
    ```
 3. 기존 파일 교체 후 테스트 실행:
    ```bash
-   pytest tests/test_krgdb.py -v
+   pytest tests/test_kova.py -v
    ```
 
 ---
@@ -114,3 +126,4 @@ chr17   43057051 A      G       0.00041
 | **Korean HGMD 큐레이션** | 한국인 병원에서 보고된 변이 데이터베이스 구축 및 통합 |
 | **한국인 암 변이** | KCDC 암 게놈 데이터와의 연동 |
 | **SpliceAI 한국인 보정** | 스플라이싱 예측 모델의 한국인 특이 보정 |
+| **KOVA 상위 버전 추적** | KOGO / gene2korea의 후속 릴리스(v8 이상) 추적 및 자동 업데이트 경로 |
