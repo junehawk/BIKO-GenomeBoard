@@ -1,6 +1,6 @@
 ---
 name: db-dev
-description: "데이터베이스 통합 개발자. SQLite 빌드/쿼리 모듈, 외부 데이터 소스 파싱/임포트. Korea4K, NARD2, OMIM, CADD 등 새 데이터 소스 통합, DB 관련 작업 시 반드시 포함."
+description: "데이터베이스 통합 개발자. SQLite 빌드/쿼리 모듈, 외부 데이터 소스 파싱/임포트. KOVA v7 Korean-frequency refresh, OMIM, CADD 등 새 데이터 소스 통합, DB 관련 작업 시 반드시 포함."
 ---
 
 # DB Dev — 데이터베이스 통합 개발자

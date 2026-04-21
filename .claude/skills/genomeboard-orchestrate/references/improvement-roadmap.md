@@ -31,7 +31,7 @@
 | Cancer/Rare-disease 이중 리포트 모드 | ✅ | templates/cancer/, templates/rare-disease/ |
 | CNV/SV 리포트 섹션 (Class 4-5 소견, Class 3 DS, 통계) | ✅ | shared/sv_section.html |
 | SV VUS dosage sensitivity 필터링 | ✅ | models.py (is_dosage_sensitive) |
-| 한국인 빈도 비교 (KRGDB vs gnomAD EAS vs ALL) | ✅ | compare_freq.py |
+| 한국인 빈도 비교 (KOVA v7 vs gnomAD EAS vs ALL, homozygote count 포함) | ✅ | compare_freq.py |
 
 ---
 
@@ -44,17 +44,14 @@
 - **에이전트:** db-dev + pipeline-dev
 - **예상 소요:** 반나절
 
-### 2. Korea4K AF 통합
-- **내용:** korea4k.10000genomes.org AF 데이터. KRGDB 패턴과 동일 (TSV → 로컬 조회)
-- **작업:** build_korea4k_db.py, query_korea4k.py, compare_freq.py 확장
+### 2. KOVA v7 Korean-frequency 소스 갱신
+- **내용:** KOGO / gene2korea Korean Variant Archive v7 (43M variants, homozygote count 포함)을 한국인 빈도 단일 소스로 사용한다. 이전 멀티-코호트 구상(2026-04 이전 설계 스펙의 Feature 1)은 2026-04-21에 이 소스로 통합되었다.
+- **작업:** query_kova.py 유지보수, 새 배포본 반영, compare_freq.py 3-tier 경로(KOVA v7 / gnomAD EAS / gnomAD ALL) 검증
 - **에이전트:** db-dev + pipeline-dev + qa-engineer
-- **의존성:** 없음
+- **의존성:** 없음 (차기 KOGO 릴리스 시 반복 작업)
 
-### 3. NARD2 통합
-- **내용:** nard.macrogen.com 빈도 데이터
-- **작업:** Korea4K와 동일 패턴
-- **에이전트:** db-dev + pipeline-dev + qa-engineer
-- **의존성:** Korea4K와 병렬 가능
+### 3. (reserved)
+이전 로드맵에서 개별 한국인 단독 코호트 통합으로 분리되어 있던 항목은 KOVA v7 통합으로 흡수되었다. 향후 별도 한국인 단독 코호트 소스가 공개되면 이 슬롯에 추가 설계한다.
 
 ---
 
@@ -159,7 +156,7 @@
 - **시퀀싱:** WGS 기반
 - **Variant Callers:** SNV/Indel (Mutect2 등) + Canvas (CNV) + Manta (SV)
 - **주석:** ANNOVAR + VEP (SNP/Indel), AnnotSV (CNV/SV)
-- **주석 DB:** OMIM genemap2.txt, ClinVar, InterVar, REVEL, CADD, AlphaMissense, SpliceAI, gnomAD v4, NARD2, Korea4K AF
+- **주석 DB:** OMIM genemap2.txt, ClinVar, InterVar, REVEL, CADD, AlphaMissense, SpliceAI, gnomAD v4, KOVA v7 (Korean Variant Archive, homozygote count 포함)
 - **Gene info:** pLI/O-E/missense Z (gnomAD), ClinGen dosage sensitivity, MANE transcript
 - **Family:** trio 기본, quartet/quintet 가능
 
@@ -170,7 +167,7 @@
 | 우선순위 | 항목 | 임상 가치 | 구현 난이도 | 의존성 |
 |---------|------|----------|-----------|--------|
 | 🔴 1 | OMIM genemap2.txt | 높음 | 낮음 | 승인 대기 |
-| 🔴 2 | Korea4K AF + NARD2 | 높음 (한국인 특화) | 낮음 | 없음 |
+| 🔴 2 | KOVA v7 refresh cycle | 높음 (한국인 특화) | 낮음 | KOGO / gene2korea 차기 릴리스 |
 | 🟠 3 | In silico predictions | 높음 | 중간 | VEP 파싱 확장 |
 | 🟠 4 | Config 스키마 검증 | 중간 (안정성) | 낮음 | 없음 |
 | 🟠 5 | 모니터링/로깅 | 중간 (운영) | 낮음 | 없음 |

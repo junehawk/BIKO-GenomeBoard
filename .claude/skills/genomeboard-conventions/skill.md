@@ -24,7 +24,7 @@ scripts/
 ├── db/                      — 로컬 DB 빌드/쿼리 (10 build + 9 query 모듈)
 ├── classification/          — ACMG/AMP 2015 분류 엔진
 ├── somatic/                 — AMP tiering + TMB
-├── korean_pop/              — 한국인 빈도 (KRGDB, gnomAD, 비교)
+├── population/              — 한국인 빈도 (KOVA v7, gnomAD, 비교)
 ├── pharma/                  — PGx (Korean PGx, PharmGKB)
 ├── counselor/               — 리포트 생성 (Jinja2 → HTML → PDF)
 └── tools/                   — 빌드 유틸 (gene knowledge, sources)

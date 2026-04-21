@@ -1,6 +1,6 @@
 ---
 name: genomeboard-orchestrate
-description: "BIKO GenomeBoard 기능 개발 오케스트레이터. 새 기능 추가, 데이터 소스 통합, 파이프라인 수정, 리포트 개선, 리팩토링 등 모든 BIKO GenomeBoard 개발 작업을 에이전트 팀으로 조율. '구현', '통합', '추가', '개선', '개발', '만들어', '수정', 'implement', 'integrate', 'add', 'improve', 'develop', 'fix', 'refactor' 등 개발 작업 요청 시 반드시 이 스킬을 사용. BIKO GenomeBoard 프로젝트의 개발 계획을 수립하거나 현재 상태를 파악할 때도 사용."
+description: "BIKO GenomeBoard 기능 개발 오케스트레이터. 새 기능 추가, 데이터 소스 통합(예: KOVA v7), 파이프라인 수정, 리포트 개선, 리팩토링 등 모든 BIKO GenomeBoard 개발 작업을 에이전트 팀으로 조율. '구현', '통합', '추가', '개선', '개발', '만들어', '수정', 'implement', 'integrate', 'add', 'improve', 'develop', 'fix', 'refactor' 등 개발 작업 요청 시 반드시 이 스킬을 사용. BIKO GenomeBoard 프로젝트의 개발 계획을 수립하거나 현재 상태를 파악할 때도 사용."
 ---
 
 # BIKO GenomeBoard Orchestrator
@@ -27,7 +27,7 @@ BIKO GenomeBoard 프로젝트의 모든 개발 작업을 에이전트 팀으로 
 
 | 작업 유형 | 필수 에이전트 | 선택 에이전트 |
 |----------|-------------|-------------|
-| 데이터 소스 통합 (Korea4K, NARD2 등) | db-dev, pipeline-dev, qa-engineer | report-dev |
+| 데이터 소스 통합 (KOVA v7, OMIM 확장 등) | db-dev, pipeline-dev, qa-engineer | report-dev |
 | 분류 로직 변경 (InterVar, in silico 등) | clinical-advisor, pipeline-dev, qa-engineer | — |
 | 리포트 개선 (새 섹션, 레이아웃) | report-dev, qa-engineer | clinical-advisor |
 | 전체 기능 (MSI, Trio, Fusion 등) | 전원 | — |
@@ -127,19 +127,19 @@ TaskCreate(tasks: [
 
 ## 테스트 시나리오
 
-### 정상 흐름: Korea4K AF 데이터 소스 통합
+### 정상 흐름: KOVA v7 Korean-frequency 데이터 소스 통합
 
 1. 리더가 작업 분석 → db-dev + pipeline-dev + qa-engineer 선정
-2. db-dev: build_korea4k_db.py + query_korea4k.py 작성
-3. pipeline-dev: orchestrate.py에 Korea4K 조회 추가, compare_freq.py 확장
-4. qa-engineer: test_korea4k.py 작성 + 전체 테스트 실행
+2. db-dev: query_kova.py 작성 (KOGO / gene2korea KOVA v7 TSV 파싱, AF + homozygote count)
+3. pipeline-dev: orchestrate.py에 KOVA 조회 추가, compare_freq.py 3-tier 재작성 (KOVA / gnomAD EAS / gnomAD ALL)
+4. qa-engineer: test_kova.py 작성 + 전체 테스트 실행
 5. 전체 통과 → 결과 보고
 
 ### 에러 흐름: DB 빌드 실패
 
-1. db-dev가 Korea4K 데이터 형식 오류로 빌드 실패
+1. db-dev가 KOVA v7 데이터 형식 오류(예: homozygote count 컬럼 누락)로 빌드 실패
 2. db-dev가 리더에게 실패 보고 + 데이터 형식 분석 결과 공유
-3. 리더가 사용자에게 데이터 형식 확인 요청
+3. 리더가 사용자에게 KOGO / gene2korea 배포본 버전 확인 요청
 4. 수정된 데이터로 재빌드 → 계속 진행
 
 ## 개선 로드맵 참조

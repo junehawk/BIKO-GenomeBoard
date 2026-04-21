@@ -20,9 +20,10 @@ BIKO GenomeBoard의 모든 변이 분류와 tiering이 국제 가이드라인에
 - Benign: BA1, BS1-4, BP1-7 (Stand-alone → Supporting)
 
 **한국인 특화 빈도 기준:**
-- BA1: AF > 5% (gnomAD ALL 또는 KRGDB)
+- BA1: AF > 5% (gnomAD ALL 또는 KOVA v7)
 - BS1: AF > 1%
-- PM2_Supporting: AF < 0.1% (gnomAD EAS 또는 KRGDB 기준)
+- PM2_Supporting: AF < 0.1% (gnomAD EAS 또는 KOVA v7 기준)
+- BS2 후보: KOVA v7에서 homozygote 다수 관찰 (AR 질환 해석 시)
 
 **ClinVar override 규칙:**
 - Expert panel/practice guideline → 직접 분류 적용 (ACMG 엔진 우회)

@@ -232,7 +232,7 @@ def test_query_no_db(monkeypatch):
 **빌드:** `build_civic_db.py` — TSV 자동 다운로드, genes/variants/evidence/hotspots 4개 테이블
 **쿼리:** `query_civic.py` — get_gene_summary(), get_variant_evidence(), is_hotspot(), get_predictive_evidence_for_tier()
 
-새 DB 통합 시 CIViC 수준의 복잡도가 필요한 경우는 드물다. 대부분 KRGDB 패턴(단일 테이블, 단일 쿼리 함수)으로 충분하다.
+새 DB 통합 시 CIViC 수준의 복잡도가 필요한 경우는 드물다. 대부분 단일 테이블 + 단일 쿼리 함수 패턴(KOVA v7 Korean-frequency 모듈이 대표 예시)으로 충분하다.
 
 ---
 
