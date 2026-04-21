@@ -71,7 +71,7 @@ def mock_gnomad_not_found():
 
 @pytest.fixture
 def sample_frequency_data():
-    return FrequencyData(krgdb=0.0001, gnomad_eas=0.0003, gnomad_all=0.0002)
+    return FrequencyData(kova=0.0001, gnomad_eas=0.0003, gnomad_all=0.0002)
 
 
 @pytest.fixture

@@ -1,3 +1,10 @@
+"""3-tier allele-frequency comparator (KOVA + gnomAD EAS + gnomAD ALL).
+
+KOVA v7 replaced the legacy KRGDB / Korea4K / NARD2 TSV sources in v2.4.
+The Korean-enrichment ratio is defined as ``kova / gnomad_eas`` to compare
+Korean allele frequencies against the broader East Asian reference.
+"""
+
 from typing import Dict, List
 
 from scripts.common.config import get
@@ -9,10 +16,11 @@ PM2_THRESHOLD = get("thresholds.pm2", 0.001)  # for PM2_Supporting
 
 
 def compare_frequencies(freq: FrequencyData) -> Dict:
+    """Compare a variant's 3-tier frequency record and derive ACMG/korean flags."""
     acmg_codes: List[str] = []
     flags: List[str] = []
 
-    all_freqs = [freq.krgdb, freq.korea4k, freq.nard2, freq.gnomad_eas, freq.gnomad_all]
+    all_freqs = [freq.kova, freq.gnomad_eas, freq.gnomad_all]
     max_freq = max(f for f in all_freqs if f is not None) if any(f is not None for f in all_freqs) else None
 
     if max_freq is None:
@@ -39,23 +47,16 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
         acmg_codes.append("PM2")
         flags.append("Low frequency variant")
 
-    # Korean-specific flags
-    korean_max = freq.korean_max
-    if korean_max is not None and freq.gnomad_all is not None and freq.gnomad_all > 0:
-        ratio = korean_max / freq.gnomad_all
+    # Korean-specific flags — KOVA vs gnomAD EAS enrichment
+    kova_af = freq.kova
+    if kova_af is not None and freq.gnomad_eas is not None and freq.gnomad_eas > 0:
+        ratio = kova_af / freq.gnomad_eas
         if ratio >= 5:
-            flags.append("Korean frequency 5x+ higher than global")
+            flags.append("Korean frequency 5x+ higher than East Asian")
         elif ratio <= 0.2:
-            flags.append("Korean frequency much lower than global")
-    elif korean_max is not None and freq.gnomad_eas is None and freq.gnomad_all is None:
-        korean_sources = []
-        if freq.krgdb is not None:
-            korean_sources.append("KRGDB")
-        if freq.korea4k is not None:
-            korean_sources.append("Korea4K")
-        if freq.nard2 is not None:
-            korean_sources.append("NARD2")
-        flags.append(f"Korean-specific variant ({'/'.join(korean_sources)} only)")
+            flags.append("Korean frequency much lower than East Asian")
+    elif kova_af is not None and freq.gnomad_eas is None and freq.gnomad_all is None:
+        flags.append("Korean-specific variant (KOVA only)")
 
     return {
         "acmg_codes": acmg_codes,
@@ -68,15 +69,14 @@ if __name__ == "__main__":
     import json
     import sys
 
-    krgdb = float(sys.argv[1]) if len(sys.argv) > 1 else None
+    kova_af = float(sys.argv[1]) if len(sys.argv) > 1 else None
     eas = float(sys.argv[2]) if len(sys.argv) > 2 else None
     gnomad_all = float(sys.argv[3]) if len(sys.argv) > 3 else None
-    freq = FrequencyData(krgdb=krgdb, gnomad_eas=eas, gnomad_all=gnomad_all)
+    freq = FrequencyData(kova=kova_af, gnomad_eas=eas, gnomad_all=gnomad_all)
     result = compare_frequencies(freq)
     result["frequencies"] = {
-        "krgdb": freq.krgdb,
-        "korea4k": freq.korea4k,
-        "nard2": freq.nard2,
+        "kova": freq.kova,
+        "kova_homozygote": freq.kova_homozygote,
         "gnomad_eas": freq.gnomad_eas,
         "gnomad_all": freq.gnomad_all,
     }

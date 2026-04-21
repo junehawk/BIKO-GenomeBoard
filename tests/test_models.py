@@ -35,8 +35,10 @@ def test_acmg_evidence_strength_mapping():
 
 
 def test_frequency_data():
-    f = FrequencyData(krgdb=0.001, gnomad_eas=0.002, gnomad_all=0.003)
-    assert f.korean_vs_global_ratio() == pytest.approx(0.333, rel=0.01)
+    f = FrequencyData(kova=0.001, gnomad_eas=0.002, gnomad_all=0.003)
+    # Enrichment is now KOVA / gnomAD EAS (Korean vs broader East Asian)
+    assert f.korean_vs_global_ratio() == pytest.approx(0.5, rel=0.01)
+    assert f.korean_max == pytest.approx(0.001)
 
 
 def test_pgx_result():

@@ -85,22 +85,26 @@ class AcmgEvidence:
 
 @dataclass
 class FrequencyData:
-    krgdb: Optional[float] = None
+    """3-tier population frequency record (KOVA + gnomAD EAS + gnomAD ALL).
+
+    KOVA v7 (43.3M rows) is the authoritative Korean population source; the
+    legacy KRGDB/Korea4K/NARD2 TSVs were retired in v2.4.
+    """
+
+    kova: Optional[float] = None
     gnomad_eas: Optional[float] = None
     gnomad_all: Optional[float] = None
-    korea4k: Optional[float] = None
-    nard2: Optional[float] = None
+    kova_homozygote: Optional[int] = None
 
     @property
     def korean_max(self) -> Optional[float]:
-        """Maximum frequency across all Korean population sources."""
-        korean_freqs = [f for f in [self.krgdb, self.korea4k, self.nard2] if f is not None]
-        return max(korean_freqs) if korean_freqs else None
+        """Korean population allele frequency (KOVA)."""
+        return self.kova
 
     def korean_vs_global_ratio(self) -> Optional[float]:
-        kr = self.korean_max
-        if kr is not None and self.gnomad_all and self.gnomad_all > 0:
-            return kr / self.gnomad_all
+        """KOVA vs gnomAD EAS enrichment ratio (Korean Han vs broader East Asian)."""
+        if self.kova is not None and self.gnomad_eas and self.gnomad_eas > 0:
+            return self.kova / self.gnomad_eas
         return None
 
 
