@@ -5,8 +5,21 @@ Based on ClinGen SVI 2022 recommendations for computational evidence.
 References:
   - Pejaver et al. (2022) "Calibration of computational tools for missense
     variant pathogenicity classification and ClinGen recommendations for
-    PP3/BP4 criteria" AJHG 109(12):2163-2177
+    PP3/BP4 criteria" AJHG 109(12):2163-2177 (PMID 36413997)
   - Tavtigian et al. (2023) SpliceAI thresholds for PP3/BP4
+
+REVEL thresholds follow Pejaver 2022 Table 2 (4-tier calibration):
+  - PP3 Supporting  = 0.644  (pathogenic, moderate LR+)
+  - PP3 Moderate    = 0.773  (pathogenic, stronger LR+)
+  - PP3 Strong      = 0.932  (pathogenic, very strong LR+)
+  - PP3 Very Strong = 0.994  (not recommended for REVEL by ClinGen SVI)
+  - BP4 Supporting  = 0.290  (benign, moderate LR-)
+  - BP4 Moderate    = 0.183  (benign, stronger LR-)
+  - BP4 Strong      = 0.016  (benign, very strong LR-)
+
+Plain ``PP3`` / ``BP4`` evidence codes (no suffix) represent Supporting
+strength per ACMG/AMP 2015 — downstream ``_count_by_strength`` treats
+them as pp / bp.
 """
 
 from __future__ import annotations
@@ -15,16 +28,19 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 # ---------------------------------------------------------------------------
-# Default ClinGen SVI 2022 thresholds
+# Default ClinGen SVI 2022 thresholds (Pejaver et al. 2022, PMID 36413997)
 # ---------------------------------------------------------------------------
 
 DEFAULT_THRESHOLDS: Dict[str, Any] = {
-    # REVEL (missense primary predictor)
+    # REVEL — Pejaver 2022 4-tier (Very Strong 0.994 not recommended for REVEL)
+    "revel_pp3_supporting": 0.644,
+    "revel_pp3_moderate": 0.773,
     "revel_pp3_strong": 0.932,
-    "revel_pp3_moderate": 0.644,
-    "revel_bp4_strong": 0.016,
+    # BP4 mirror — Pejaver 2022 (Very Strong 0.003 not used)
+    "revel_bp4_supporting": 0.290,
     "revel_bp4_moderate": 0.183,
-    # SpliceAI (splice primary predictor)
+    "revel_bp4_strong": 0.016,
+    # SpliceAI (splice primary predictor) — Tavtigian 2023
     "spliceai_pp3_strong": 0.5,
     "spliceai_pp3_moderate": 0.2,
     "spliceai_bp4": 0.1,
@@ -232,10 +248,16 @@ _STRENGTH_RANK = {
 
 
 def _strength_of(code: str) -> int:
-    """Return numeric rank of an evidence code's strength suffix."""
+    """Return numeric rank of an evidence code's strength suffix.
+
+    Plain ``PP3`` / ``BP4`` (no suffix) represent Supporting strength.
+    """
     for suffix, rank in _STRENGTH_RANK.items():
         if code.endswith(suffix):
             return rank
+    # Plain PP3 / BP4 (no suffix) = Supporting by ACMG convention
+    if code in ("PP3", "BP4"):
+        return 1
     return 0
 
 
@@ -248,7 +270,11 @@ def _evaluate_spliceai(
     scores: InSilicoScores,
     t: Dict[str, Any],
 ) -> Optional[str]:
-    """Evaluate SpliceAI score against thresholds."""
+    """Evaluate SpliceAI score against thresholds (Tavtigian 2023).
+
+    Plain ``BP4`` (no suffix) = Supporting; matches _count_by_strength
+    treating bare PP3/BP4 as pp/bp.
+    """
     if scores.spliceai_max is None:
         return None
 
@@ -259,7 +285,7 @@ def _evaluate_spliceai(
     if val >= t["spliceai_pp3_moderate"]:
         return "PP3_Moderate"
     if val < t["spliceai_bp4"]:
-        return "BP4_Supporting"
+        return "BP4"  # Supporting — plain code
 
     # Between moderate and BP4 threshold — indeterminate
     return None
@@ -279,16 +305,31 @@ def _evaluate_missense(
 
 
 def _revel_evidence(revel: float, t: Dict[str, Any]) -> Optional[str]:
-    """Map a REVEL score to an evidence code."""
+    """Map a REVEL score to a Pejaver 2022 4-tier evidence code.
+
+    Pathogenic side (highest match wins):
+        >= 0.932 → PP3_Strong
+        >= 0.773 → PP3_Moderate
+        >= 0.644 → PP3          (Supporting — plain code)
+
+    Benign side (lowest match wins):
+        <= 0.016 → BP4_Strong
+        <= 0.183 → BP4_Moderate
+        <= 0.290 → BP4          (Supporting — plain code)
+    """
     if revel >= t["revel_pp3_strong"]:
         return "PP3_Strong"
     if revel >= t["revel_pp3_moderate"]:
         return "PP3_Moderate"
+    if revel >= t["revel_pp3_supporting"]:
+        return "PP3"  # Supporting — plain code
     if revel <= t["revel_bp4_strong"]:
         return "BP4_Strong"
     if revel <= t["revel_bp4_moderate"]:
         return "BP4_Moderate"
-    # In the indeterminate zone — no evidence
+    if revel <= t["revel_bp4_supporting"]:
+        return "BP4"  # Supporting — plain code
+    # In the indeterminate zone (0.290 < revel < 0.644) — no evidence
     return None
 
 
@@ -296,7 +337,11 @@ def _fallback_cadd_am(
     scores: InSilicoScores,
     t: Dict[str, Any],
 ) -> Optional[str]:
-    """Fallback when REVEL is unavailable: CADD + AlphaMissense."""
+    """Fallback when REVEL is unavailable: CADD + AlphaMissense.
+
+    Emits plain ``PP3`` / ``BP4`` (Supporting) since the fallback carries
+    no stronger calibrated LR+/LR- than Supporting.
+    """
     cadd_ok = scores.cadd_phred is not None and scores.cadd_phred >= t["cadd_pathogenic"]
     am_pathogenic = scores.alphamissense_class is not None and scores.alphamissense_class.lower() in (
         "likely_pathogenic",
@@ -304,7 +349,7 @@ def _fallback_cadd_am(
     )
 
     if cadd_ok and am_pathogenic:
-        return "PP3_Supporting"
+        return "PP3"  # Supporting — plain code
 
     # Check for benign fallback: low CADD + benign AlphaMissense
     cadd_benign = scores.cadd_phred is not None and scores.cadd_phred < 15.0
@@ -314,7 +359,7 @@ def _fallback_cadd_am(
     )
 
     if cadd_benign and am_benign:
-        return "BP4_Supporting"
+        return "BP4"  # Supporting — plain code
 
     return None
 
