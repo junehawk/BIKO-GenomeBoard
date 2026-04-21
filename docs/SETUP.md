@@ -42,7 +42,7 @@ pip install cyvcf2
 
 Local databases eliminate API rate limits and enable fully offline operation. Build order: ClinVar → gnomAD → CIViC.
 
-> **Quick path:** `bash scripts/setup_databases.sh` automates ClinVar, gnomAD, CIViC, HPO, Orphanet, GeneReviews, Korea4K, NARD2, KRGDB, and cancerhotspots. The per-step instructions below describe what the script does and which sources still require manual setup (OMIM genemap2, ClinGen).
+> **Quick path:** `bash scripts/setup_databases.sh` automates ClinVar, gnomAD, CIViC, HPO, Orphanet, GeneReviews, KOVA v7 (Korean Variant Archive), and cancerhotspots. The per-step instructions below describe what the script does and which sources still require manual setup (OMIM genemap2, ClinGen, KOVA v7 bundle).
 
 ### ClinVar SQLite (4.4M variants)
 
@@ -145,6 +145,35 @@ python scripts/db/build_genreviews_db.py \
 # Output: data/db/genreviews.sqlite3
 ```
 
+### KOVA v7 — Korean Variant Archive (Korean frequency cohort)
+
+KOVA (Korean Variant Archive) v7 is the KOGO / gene2korea release used as
+BIKO GenomeBoard's Korean population cohort. It supplies 43 million
+variants with per-variant allele frequency **and homozygote counts**,
+the latter being the feature that gives the strongest Korean-specific
+signal for autosomal-recessive review (BS2 candidates).
+
+```bash
+# 1. Obtain the KOVA v7 bundle from KOGO / gene2korea
+#    (license-gated; follow the publisher's distribution terms)
+#    Place the VCF + tabix index locally, then convert to the BIKO TSV layout:
+bcftools query \
+  -f '%CHROM\t%POS\t%REF\t%ALT\t%INFO/AF\t%INFO/AC_Hom\t%INFO/AC_Het\t%INFO/AN\n' \
+  kova_v7.vcf.gz > data/kova_freq.tsv
+
+# 2. Register the TSV path in config.yaml (default):
+#    paths:
+#      kova: "data/kova_freq.tsv"
+
+# 3. Verify the query path picks it up
+python -m pytest tests/test_kova.py -v
+```
+
+KOVA v7 replaces the earlier multi-cohort Korean-frequency strategy
+(see `docs/KOREAN_STRATEGY.md`). The historical multi-cohort design is
+preserved in `docs/superpowers/specs/` under superseded notes for
+audit continuity.
+
 ### OMIM Gene→MIM Mapping
 
 Maps gene symbols to OMIM MIM numbers for cross-reference links.
@@ -174,7 +203,7 @@ paths:
   civic_db: "data/db/civic.sqlite3"
   hpo_db: "data/db/hpo.sqlite3"
   clingen_db: "data/db/clingen.sqlite3"
-  krgdb: "data/krgdb_freq.tsv"
+  kova: "data/kova_freq.tsv"       # KOVA v7 (KOGO / gene2korea Korean Variant Archive)
 
 thresholds:
   ba1: 0.05     # Stand-alone benign (>5%)
@@ -270,7 +299,7 @@ bgzip filtered.vcf
 tabix -p vcf filtered.vcf.gz
 ```
 
-> GRCh38 is required. KRGDB and gnomAD v4.1 coordinates are GRCh38.
+> GRCh38 is required. KOVA v7 and gnomAD v4.1 coordinates are GRCh38.
 
 ---
 
@@ -324,7 +353,7 @@ python -m pytest tests/test_batch.py -q
 python -m pytest tests/test_rare_disease.py -q
 ```
 
-901+ tests pass on Python 3.10 / 3.11 / 3.12. Coverage includes ACMG engine, in silico thresholds, ClinVar override, CIViC/OncoKB integration, TMB, AnnotSV CNV/SV, HPO matching, Korean frequency comparison (KRGDB / Korea4K / NARD2), PGx, AI Clinical Board (curate-then-narrate), variant selector, and report generation.
+901+ tests pass on Python 3.10 / 3.11 / 3.12. Coverage includes ACMG engine, in silico thresholds, ClinVar override, CIViC/OncoKB integration, TMB, AnnotSV CNV/SV, HPO matching, Korean frequency comparison (KOVA v7), PGx, AI Clinical Board (curate-then-narrate), variant selector, and report generation.
 
 ---
 
