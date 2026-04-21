@@ -294,3 +294,76 @@ def test_classify_plain_pp3_does_not_inflate_pm():
     codes = [_ev("PM1"), _ev("PP3")]
     result = classify_variant(codes)
     assert result.classification == "VUS"
+
+
+# ─── v2.5.3 ClinGen SVI 2018 PP5 / BP6 deprecation ──────────────────────────
+# PP5 / BP6 double-count the same ClinVar evidence already captured by PS1 /
+# PM5 / population / function / segregation codes. SVI 2018 therefore retired
+# them from scoring. BIKO v2.5.3 drops PP5 / BP6 from _count_by_strength by
+# default while keeping emission (query_clinvar / query_local_clinvar /
+# parse_intervar) unchanged, so the codes still land in the report evidence
+# list — only the counter is affected.
+
+
+def test_count_by_strength_pp5_excluded_by_default():
+    """PP5 must NOT contribute to counts['pp'] under default config (SVI 2018)."""
+    counts = _count_by_strength([_ev("PS1"), _ev("PP5"), _ev("PM2_Supporting")])
+    # PM2_Supporting downgrades to pp → counts['pp'] == 1 (PM2_Supporting only).
+    # PP5 is silently skipped from scoring.
+    assert counts["pp"] == 1
+    assert counts["ps"] == 1
+    assert counts["pm"] == 0
+
+
+def test_count_by_strength_bp6_excluded_by_default():
+    """BP6 must NOT contribute to counts['bp'] under default config (SVI 2018)."""
+    counts = _count_by_strength([_ev("BA1"), _ev("BP6"), _ev("BP4")])
+    # BP4 alone should be counted; BP6 skipped.
+    assert counts["bp"] == 1
+    assert counts["ba"] == 1
+
+
+def test_count_by_strength_pp5_bp6_restored_via_config(monkeypatch):
+    """acmg.use_pp5_bp6 = true restores pre-v2.5.3 scoring for back-compat."""
+    from scripts.common import config as _cfg
+
+    original_get = _cfg.get
+
+    def _patched_get(key, default=None):
+        if key == "acmg.use_pp5_bp6":
+            return True
+        return original_get(key, default)
+
+    monkeypatch.setattr("scripts.classification.acmg_engine.get", _patched_get)
+
+    counts = _count_by_strength([_ev("PS1"), _ev("PP5"), _ev("BP6")])
+    # Legacy behaviour: PP5 counted as pp, BP6 as bp.
+    assert counts["pp"] == 1
+    assert counts["bp"] == 1
+    assert counts["ps"] == 1
+
+
+def test_classify_clinvar_pathogenic_no_double_count():
+    """ClinVar Pathogenic emits both PS1 and PP5 (expert-panel path). Under
+    SVI 2018 scoring only PS1 should drive classification — i.e. 1 PS alone
+    does NOT reach LP (requires 1 PS + 1 PM or 2 PS).
+    """
+    codes = [_ev("PS1"), _ev("PP5")]  # as emitted by query_local_clinvar for expert-panel Pathogenic
+    result = classify_variant(codes)
+    # With PP5 ignored: counts = {ps: 1}. 1 PS alone is VUS, not LP.
+    # If PP5 were still counted: {ps: 1, pp: 1} → still VUS under Richards 2015
+    # (LP needs 1 PS + 1 PM or 1 PS + 2 PP), so this test mainly anchors the
+    # scoring floor: PS1 + PP5 never reaches LP on its own.
+    assert result.classification == "VUS"
+    # Annotation still carries both codes — scoring and annotation are independent.
+    assert "PS1" in result.evidence_codes
+    assert "PP5" in result.evidence_codes
+
+
+def test_classify_pp5_alone_is_vus():
+    """A bare PP5 (no other codes) must not lift a variant above VUS."""
+    codes = [_ev("PP5")]
+    result = classify_variant(codes)
+    assert result.classification == "VUS"
+    # Annotation retained
+    assert "PP5" in result.evidence_codes
