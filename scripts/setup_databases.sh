@@ -43,24 +43,32 @@ mkdir -p "$DATA_DIR/civic"
 
 SKIP_GNOMAD=true
 SKIP_MANUAL=true
+SKIP_KOVA=true
+KOVA_INPUT="$PROJECT_ROOT/data/db/1_KOVA.v7.tsv.gz"
 
 for arg in "$@"; do
     case "$arg" in
-        --all)        SKIP_GNOMAD=false; SKIP_MANUAL=false ;;
+        --all)        SKIP_GNOMAD=false; SKIP_MANUAL=false; SKIP_KOVA=false ;;
         --skip-gnomad) SKIP_GNOMAD=true ;;
         --include-gnomad) SKIP_GNOMAD=false ;;
+        --include-kova) SKIP_KOVA=false ;;
+        --kova-input=*) SKIP_KOVA=false; KOVA_INPUT="${arg#*=}" ;;
         --help|-h)
             echo "Usage: bash scripts/setup_databases.sh [OPTIONS]"
             echo ""
             echo "Options:"
-            echo "  --all             Download everything including gnomAD (~700 GB)"
+            echo "  --all             Download everything including gnomAD (~700 GB) and build KOVA"
             echo "  --skip-gnomad     Skip gnomAD download (default)"
             echo "  --include-gnomad  Download gnomAD exome VCFs (requires ~700 GB disk)"
+            echo "  --include-kova    Build KOVA v7 SQLite from \$KOVA_INPUT (default off — ~3.3 GB TSV,"
+            echo "                    30–60 min build)"
+            echo "  --kova-input=PATH Override KOVA v7 TSV path (default data/db/1_KOVA.v7.tsv.gz)"
             echo "  -h, --help        Show this help"
             echo ""
             echo "Databases requiring manual download:"
             echo "  - OMIM genemap2.txt (requires OMIM account)"
             echo "  - ClinGen gene_validity CSV (manual export from website)"
+            echo "  - KOVA v7 1_KOVA.v7.tsv.gz (KOBIC KOVA portal — https://www.kobic.re.kr/kova/)"
             echo ""
             echo "Place manual files in: data/db/"
             exit 0
@@ -441,6 +449,57 @@ elif [ -f "$PHARMCAT_SCRIPT" ]; then
 else
     log_warn "PharmCAT setup script not found at $PHARMCAT_SCRIPT"
     SKIPPED+=("PharmCAT (setup script missing)")
+fi
+
+# ============================================================================
+# Optional: KOVA v7 (Korean Variant Archive — 3.3 GB TSV → SQLite, 30–60 min)
+# ============================================================================
+if [ "$SKIP_KOVA" = false ]; then
+    log_step "OPTIONAL  KOVA v7 (kobic.re.kr/kova)"
+
+    KOVA_DB="$DATA_DIR/kova.sqlite3"
+
+    if [ -f "$KOVA_DB" ]; then
+        # Empty-shell guard — same pattern as ClinGen / gnomAD constraint.
+        if python3 -c "
+import sqlite3, sys
+try:
+    c = sqlite3.connect('$KOVA_DB')
+    if c.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='kova_af'\").fetchone():
+        sys.exit(0)
+    sys.exit(1)
+finally:
+    c.close()
+" 2>/dev/null; then
+            log_info "KOVA DB already exists, skipping"
+            SUCCESS+=("KOVA v7")
+            KOVA_DONE=1
+        else
+            log_warn "KOVA DB at $KOVA_DB is an empty shell — removing so build can re-trigger"
+            rm -f "$KOVA_DB"
+        fi
+    fi
+
+    if [ -z "${KOVA_DONE:-}" ]; then
+        if [ -f "$KOVA_INPUT" ]; then
+            log_info "Building KOVA v7 SQLite from $KOVA_INPUT (30–60 min expected)..."
+            if python "$PROJECT_ROOT/scripts/storage/build_kova_db.py" \
+                --input "$KOVA_INPUT" --output "$KOVA_DB" 2>&1; then
+                SUCCESS+=("KOVA v7")
+            else
+                FAILED+=("KOVA v7 (build)")
+            fi
+        else
+            log_warn "KOVA input TSV not found at $KOVA_INPUT"
+            log_warn "  1. Register at https://www.kobic.re.kr/kova/"
+            log_warn "  2. Download 1_KOVA.v7.tsv.gz"
+            log_warn "  3. Place it at the default location or pass --kova-input=PATH"
+            SKIPPED+=("KOVA v7 (manual download)")
+        fi
+    fi
+else
+    log_step "OPTIONAL  KOVA — skipped (use --include-kova to build, ~3.3 GB TSV)"
+    SKIPPED+=("KOVA (use --include-kova)")
 fi
 
 # ============================================================================

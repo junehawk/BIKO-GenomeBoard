@@ -147,6 +147,17 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     except Exception:
         pass
 
+    # KOVA v7 — Korean population allele-frequency SQLite (v2.5 migration,
+    # supersedes KRGDB / Korea4K / NARD2 TSV inputs).
+    try:
+        from scripts.population.query_kova import get_db_version as get_kova_version
+
+        kova_meta = get_kova_version()
+        if kova_meta.get("source") != "not_available":
+            versions["KOVA"] = kova_meta
+    except Exception:
+        pass
+
     # Annotation source config
     versions["_annotation_source"] = get("annotation.source", "auto")
 
