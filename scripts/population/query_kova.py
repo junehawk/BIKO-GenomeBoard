@@ -1,8 +1,8 @@
 """Query local KOVA (Korean Variant Archive) allele-frequency SQLite database.
 
-KOVA v7 is the unified Korean population allele-frequency resource that
-supersedes the older KRGDB TSV, Korea4K TSV and NARD2 TSV inputs. The
-upstream release covers ~43.3M variants with ``kova_AC`` / ``kova_AF`` /
+KOVA v7 is the unified Korean population allele-frequency resource and
+is the sole Korean-cohort source in the BIKO pipeline. The upstream
+release covers ~43.3M variants with ``kova_AC`` / ``kova_AF`` /
 ``kova_AN`` / ``KOVA_homozygote_count`` pulled from the KOVA v7 cohort.
 
 This module provides :func:`query_kova`, a variant-level lookup that

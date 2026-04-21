@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 # required=True means load_config will raise ValueError if missing.
 SCHEMA: dict[str, tuple[type, bool]] = {
     # paths — templates is critical (used by report generation)
-    "paths.krgdb": (str, False),
+    "paths.kova_db": (str, False),
     "paths.clinvar_db": (str, False),
     "paths.templates": (str, True),  # critical — report generation fails without it
     # thresholds — must be numeric

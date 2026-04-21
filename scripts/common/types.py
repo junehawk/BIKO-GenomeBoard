@@ -159,9 +159,8 @@ class VariantRecord(TypedDict, total=False):
     # ── Population frequency ──────────────────────────────────────────
     gnomad_all: Optional[float]
     gnomad_eas: Optional[float]
-    krgdb_freq: Optional[float]
-    korea4k_freq: Optional[float]
-    nard2_freq: Optional[float]
+    kova_freq: Optional[float]
+    kova_homozygote: Optional[int]
     korean_flag: str
 
     # ── Annotation ────────────────────────────────────────────────────

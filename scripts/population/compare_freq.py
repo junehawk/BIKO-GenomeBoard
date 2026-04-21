@@ -1,8 +1,8 @@
 """3-tier allele-frequency comparator (KOVA + gnomAD EAS + gnomAD ALL).
 
-KOVA v7 replaced the legacy KRGDB / Korea4K / NARD2 TSV sources in v2.4.
-The Korean-enrichment ratio is defined as ``kova / gnomad_eas`` to compare
-Korean allele frequencies against the broader East Asian reference.
+KOVA v7 is the sole Korean-cohort allele-frequency source. The Korean-
+enrichment ratio is defined as ``kova / gnomad_eas`` to compare Korean
+allele frequencies against the broader East Asian reference.
 """
 
 from typing import Dict, List

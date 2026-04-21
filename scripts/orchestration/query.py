@@ -8,28 +8,32 @@ from scripts.common.config import get
 from scripts.storage.query_local_clinvar import query_local_clinvar
 from scripts.storage.query_tabix_gnomad import query_tabix_gnomad
 from scripts.population.query_gnomad import query_gnomad
-from scripts.population.query_korea4k import query_korea4k
-from scripts.population.query_krgdb import query_krgdb
-from scripts.population.query_nard2 import query_nard2
+from scripts.population.query_kova import query_kova
 from scripts.pharmacogenomics.korean_pgx import check_korean_pgx
 
 logger = logging.getLogger(__name__)
 
 
-def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
-    """Run ClinVar, gnomAD, KRGDB, Korea4K, NARD2, and PGx queries for a single variant.
+def query_variant_databases(variant, skip_api: bool) -> dict:
+    """Run ClinVar, gnomAD, KOVA, and PGx queries for a single variant.
 
     ClinVar and gnomAD are run in parallel (unless skip_api is True).
     Respects annotation.source config: "local", "api", or "auto" (local-first with API fallback).
+
+    KOVA v7 (Korean Variant Archive) is the sole Korean population source.
     """
     clinvar_result = {"clinvar_significance": "Not Found", "acmg_codes": [], "api_available": False}
     gnomad_result = {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
-    krgdb_freq = None
-    korea4k_freq = None
-    nard2_freq = None
+    kova_freq = None
+    kova_homozygote = None
     pgx_result = None
 
     annotation_source = get("annotation.source", "auto")
+
+    def _unpack_kova(result):
+        if result is None:
+            return None, None
+        return result.get("kova_af"), result.get("kova_homozygote")
 
     if skip_api:
         try:
@@ -41,17 +45,9 @@ def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
         except Exception as e:
             logger.warning(f"Local gnomAD lookup failed for {variant.variant_id}: {e}")
         try:
-            krgdb_freq = query_krgdb(variant, krgdb_path)
+            kova_freq, kova_homozygote = _unpack_kova(query_kova(variant))
         except Exception as e:
-            logger.warning(f"KRGDB lookup failed for {variant.variant_id}: {e}")
-        try:
-            korea4k_freq = query_korea4k(variant)
-        except Exception as e:
-            logger.warning(f"Korea4K lookup failed for {variant.variant_id}: {e}")
-        try:
-            nard2_freq = query_nard2(variant)
-        except Exception as e:
-            logger.warning(f"NARD2 lookup failed for {variant.variant_id}: {e}")
+            logger.warning(f"KOVA lookup failed for {variant.variant_id}: {e}")
         try:
             pgx_result = check_korean_pgx(variant)
         except Exception as e:
@@ -90,11 +86,11 @@ def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
                 logger.warning(f"gnomAD query failed for {variant.variant_id}: {e}")
                 return {"gnomad_all": None, "gnomad_eas": None, "api_available": False}
 
-        def _run_krgdb():
+        def _run_kova():
             try:
-                return query_krgdb(variant, krgdb_path)
+                return query_kova(variant)
             except Exception as e:
-                logger.warning(f"KRGDB lookup failed for {variant.variant_id}: {e}")
+                logger.warning(f"KOVA lookup failed for {variant.variant_id}: {e}")
                 return None
 
         def _run_pgx():
@@ -104,27 +100,11 @@ def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
                 logger.warning(f"PGx check failed for {variant.variant_id}: {e}")
                 return None
 
-        def _run_korea4k():
-            try:
-                return query_korea4k(variant)
-            except Exception as e:
-                logger.warning(f"Korea4K lookup failed for {variant.variant_id}: {e}")
-                return None
-
-        def _run_nard2():
-            try:
-                return query_nard2(variant)
-            except Exception as e:
-                logger.warning(f"NARD2 lookup failed for {variant.variant_id}: {e}")
-                return None
-
-        with ThreadPoolExecutor(max_workers=6) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             futures = {
                 executor.submit(_run_clinvar): "clinvar",
                 executor.submit(_run_gnomad): "gnomad",
-                executor.submit(_run_krgdb): "krgdb",
-                executor.submit(_run_korea4k): "korea4k",
-                executor.submit(_run_nard2): "nard2",
+                executor.submit(_run_kova): "kova",
                 executor.submit(_run_pgx): "pgx",
             }
             for future in as_completed(futures):
@@ -135,12 +115,8 @@ def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
                         clinvar_result = result
                     elif key == "gnomad":
                         gnomad_result = result
-                    elif key == "krgdb":
-                        krgdb_freq = result
-                    elif key == "korea4k":
-                        korea4k_freq = result
-                    elif key == "nard2":
-                        nard2_freq = result
+                    elif key == "kova":
+                        kova_freq, kova_homozygote = _unpack_kova(result)
                     elif key == "pgx":
                         pgx_result = result
                 except Exception as e:
@@ -149,8 +125,7 @@ def query_variant_databases(variant, krgdb_path: str, skip_api: bool) -> dict:
     return {
         "clinvar": clinvar_result,
         "gnomad": gnomad_result,
-        "krgdb_freq": krgdb_freq,
-        "korea4k_freq": korea4k_freq,
-        "nard2_freq": nard2_freq,
+        "kova_freq": kova_freq,
+        "kova_homozygote": kova_homozygote,
         "pgx": pgx_result,
     }

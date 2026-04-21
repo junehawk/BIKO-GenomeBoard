@@ -288,19 +288,16 @@ def _build_variants_section(variants: list, mode: str) -> str:
         freq_parts = []
         gnomad_all = v.get("gnomad_all")
         gnomad_eas = v.get("gnomad_eas")
-        krgdb = v.get("krgdb_freq")
-        korea4k = v.get("korea4k_freq")
-        nard2 = v.get("nard2_freq")
+        kova = v.get("kova_freq")
+        kova_hom = v.get("kova_homozygote")
         if gnomad_all is not None:
             freq_parts.append(f"gnomAD_all={gnomad_all:.5f}")
         if gnomad_eas is not None:
             freq_parts.append(f"gnomAD_EAS={gnomad_eas:.5f}")
-        if krgdb is not None:
-            freq_parts.append(f"KRGDB={krgdb:.5f}")
-        if korea4k is not None:
-            freq_parts.append(f"Korea4K={korea4k:.5f}")
-        if nard2 is not None:
-            freq_parts.append(f"NARD2={nard2:.5f}")
+        if kova is not None:
+            freq_parts.append(f"KOVA={kova:.5f}")
+        if kova_hom is not None:
+            freq_parts.append(f"KOVA_hom={kova_hom}")
         if freq_parts:
             lines.append(f"  Frequencies: {', '.join(freq_parts)}")
 

@@ -52,7 +52,7 @@ def load_config(config_path: Optional[str] = None) -> dict:
         # Set defaults for missing values
         defaults = {
             "paths": {
-                "krgdb": "data/krgdb_freq.tsv",
+                "kova_db": "data/db/kova.sqlite3",
                 "gene_knowledge": "data/gene_knowledge.json",
                 "pgx_table": "data/korean_pgx_table.json",
                 "acmg_rules": "data/acmg_rules.json",

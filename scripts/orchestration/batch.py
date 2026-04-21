@@ -10,7 +10,6 @@ from datetime import date
 from pathlib import Path
 
 from scripts.enrichment.hpo_matcher import resolve_hpo_terms
-from scripts.common.config import get
 from scripts.common.models import FrequencyData
 from scripts.storage.version_manager import get_all_db_versions
 from scripts.intake.parse_vcf import parse_vcf
@@ -75,14 +74,14 @@ def collect_unique_variants(samples: list) -> tuple:
     return unique_variants, sample_map
 
 
-def _bulk_annotate_variants(unique_variants: dict, krgdb_path: str, skip_api: bool, max_workers: int = 8) -> dict:
+def _bulk_annotate_variants(unique_variants: dict, skip_api: bool, max_workers: int = 8) -> dict:
     """Annotate all unique variants. Returns {variant_key: annotation_dict}."""
     annotations = {}
     rate_limiter = threading.Semaphore(10)
 
     def _annotate_one(key, variant):
         with rate_limiter:
-            return key, query_variant_databases(variant, krgdb_path, skip_api)
+            return key, query_variant_databases(variant, skip_api)
 
     _progress(f"[2/5] Annotating {len(unique_variants):,} unique variants ({max_workers} workers)...")
 
@@ -100,7 +99,7 @@ def _bulk_annotate_variants(unique_variants: dict, krgdb_path: str, skip_api: bo
 
 
 def _assemble_sample_report(
-    sample, variant_keys, annotations, unique_variants, mode, hpo_ids, hpo_results, krgdb_path, hide_vus=False
+    sample, variant_keys, annotations, unique_variants, mode, hpo_ids, hpo_results, hide_vus=False
 ):
     """Build report_data dict for one sample using pre-computed annotations."""
     variants = [unique_variants[k] for k in variant_keys]
@@ -113,11 +112,10 @@ def _assemble_sample_report(
     for variant in variants:
         db = db_results[variant.variant_id]
         freq_data = FrequencyData(
-            krgdb=db["krgdb_freq"],
+            kova=db.get("kova_freq"),
             gnomad_eas=db["gnomad"].get("gnomad_eas"),
             gnomad_all=db["gnomad"].get("gnomad_all"),
-            korea4k=db.get("korea4k_freq"),
-            nard2=db.get("nard2_freq"),
+            kova_homozygote=db.get("kova_homozygote"),
         )
         freq_results[variant.variant_id] = compare_frequencies(freq_data)
 
@@ -164,7 +162,7 @@ def _assemble_sample_report(
         ],
         "summary": summary,
         "db_versions": get_all_db_versions(skip_api=False),
-        "pipeline": {"skip_api": False, "krgdb_path": str(krgdb_path)},
+        "pipeline": {"skip_api": False},
         "mode": mode,
         "hpo_results": hpo_results,
     }
@@ -214,7 +212,6 @@ def run_batch_pipeline(
     mode: str = "cancer",
     workers: int = None,
     skip_api: bool = False,
-    krgdb_path: str = None,
     hpo_ids: list = None,
     hide_vus: bool = True,
     _skip_reports: bool = False,
@@ -243,8 +240,7 @@ def run_batch_pipeline(
     cache_hits = total_variants - len(unique_variants)
     _progress(f"  → {total_variants:,} total variants, {len(unique_variants):,} unique ({cache_hits:,} deduplicated)")
 
-    krgdb_file = krgdb_path or get("paths.krgdb", "data/krgdb_freq.tsv")
-    annotations = _bulk_annotate_variants(unique_variants, krgdb_file, skip_api, max_workers=min(workers, 10))
+    annotations = _bulk_annotate_variants(unique_variants, skip_api, max_workers=min(workers, 10))
 
     hpo_results = []
     if mode == "rare-disease" and hpo_ids:
@@ -263,7 +259,6 @@ def run_batch_pipeline(
                 mode,
                 hpo_ids,
                 hpo_results,
-                krgdb_file,
                 hide_vus=hide_vus,
             )
             sample_reports.append(report_data)

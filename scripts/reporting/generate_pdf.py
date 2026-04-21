@@ -138,8 +138,10 @@ def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
                 kf = v["agents"]["korean_pop"].get("korean_flag", "")
             if kf and kf not in ("No notable findings", "No frequency data available"):
                 freq_parts.append(f"Korean: {kf}")
-            if v.get("krgdb_freq") is not None:
-                freq_parts.append(f"KRGDB Korean AF: {v['krgdb_freq']}")
+            if v.get("kova_freq") is not None:
+                freq_parts.append(f"KOVA Korean AF: {v['kova_freq']}")
+            if v.get("kova_homozygote") is not None:
+                freq_parts.append(f"KOVA homozygote count: {v['kova_homozygote']}")
             if freq_parts:
                 v["frequency_prognosis"] = ". ".join(freq_parts) + "."
             elif v.get("gnomad_all") is None:

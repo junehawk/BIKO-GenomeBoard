@@ -87,8 +87,7 @@ class AcmgEvidence:
 class FrequencyData:
     """3-tier population frequency record (KOVA + gnomAD EAS + gnomAD ALL).
 
-    KOVA v7 (43.3M rows) is the authoritative Korean population source; the
-    legacy KRGDB/Korea4K/NARD2 TSVs were retired in v2.4.
+    KOVA v7 (~43M rows) is the authoritative Korean population source.
     """
 
     kova: Optional[float] = None

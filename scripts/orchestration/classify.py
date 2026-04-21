@@ -209,9 +209,8 @@ def build_variant_records(
                 "review_status": clinvar.get("review_status"),
                 "gnomad_all": db["gnomad"].get("gnomad_all"),
                 "gnomad_eas": db["gnomad"].get("gnomad_eas"),
-                "krgdb_freq": db["krgdb_freq"],
-                "korea4k_freq": db.get("korea4k_freq"),
-                "nard2_freq": db.get("nard2_freq"),
+                "kova_freq": db.get("kova_freq"),
+                "kova_homozygote": db.get("kova_homozygote"),
                 "korean_flag": freq.get("korean_flag", ""),
                 # Annotation fields
                 "hgvsc": variant.hgvsc or "",
@@ -246,9 +245,8 @@ def build_variant_records(
                     "korean_pop": {
                         "gnomad_all": db["gnomad"].get("gnomad_all"),
                         "gnomad_eas": db["gnomad"].get("gnomad_eas"),
-                        "krgdb_freq": db["krgdb_freq"],
-                        "korea4k_freq": db.get("korea4k_freq"),
-                        "nard2_freq": db.get("nard2_freq"),
+                        "kova_freq": db.get("kova_freq"),
+                        "kova_homozygote": db.get("kova_homozygote"),
                         "korean_flag": freq.get("korean_flag", ""),
                         "api_available": db["gnomad"].get("api_available", False),
                     },

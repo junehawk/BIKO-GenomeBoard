@@ -1,12 +1,11 @@
 # BIKO GenomeBoard Configuration
 
 # Docker paths (when running in container):
-# paths.krgdb: /app/data/krgdb_freq.tsv
+# paths.kova_db: /app/data/db/kova.sqlite3
 # paths.clinvar_db: /app/data/db/clinvar.sqlite3
 # paths.gnomad_db: /app/data/db/gnomad.sqlite3
 # cache.path: /app/data/cache/variant_cache.sqlite3
 paths:
-  krgdb: "data/krgdb_freq.tsv"
   gene_knowledge: "data/gene_knowledge.json"
   pgx_table: "data/korean_pgx_table.json"
   acmg_rules: "data/acmg_rules.json"
@@ -23,8 +22,6 @@ paths:
   genreviews_db: "data/db/genreviews.sqlite3"
   omim_mapping_db: "data/db/omim_mapping.sqlite3"
   omim_genemap_db: "data/db/omim_genemap.sqlite3"
-  korea4k_freq: "data/korea4k_freq.tsv"
-  nard2_freq: "data/nard2_freq.tsv"
   pm1_hotspots_json: "data/pm1_hotspot_domains.json"
   pm1_hotspots_overrides: "data/pm1_hotspot_overrides.yaml"
   cancerhotspots_tsv: "data/db/hotspots/hotspots_v2_single.tsv"

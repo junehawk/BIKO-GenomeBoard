@@ -82,19 +82,6 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     elif "gnomAD" not in versions:
         versions["gnomAD"] = {"source": "not_available", "version": "N/A"}
 
-    # KRGDB
-    krgdb_path = get("paths.krgdb", "data/krgdb_freq.tsv")
-    if Path(krgdb_path).exists():
-        stat = Path(krgdb_path).stat()
-        versions["KRGDB"] = {
-            "source": "local_file",
-            "path": str(krgdb_path),
-            "modified": datetime.fromtimestamp(stat.st_mtime).strftime("%Y-%m-%d"),
-            "size_bytes": stat.st_size,
-        }
-    else:
-        versions["KRGDB"] = {"source": "not_available"}
-
     # ACMG Rules
     versions["ACMG"] = {
         "standard": "ACMG/AMP 2015 + ClinGen SVI updates",
@@ -147,8 +134,8 @@ def get_all_db_versions(skip_api: bool = False) -> Dict:
     except Exception:
         pass
 
-    # KOVA v7 — Korean population allele-frequency SQLite (v2.5 migration,
-    # supersedes KRGDB / Korea4K / NARD2 TSV inputs).
+    # KOVA v7 — Korean population allele-frequency SQLite (sole Korean
+    # population source).
     try:
         from scripts.population.query_kova import get_db_version as get_kova_version
 

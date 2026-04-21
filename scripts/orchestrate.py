@@ -76,7 +76,6 @@ def _format_board_summary(board_opinion) -> str:
 def run_pipeline(
     vcf_path: str,
     output_path: str = "output/report.html",
-    krgdb_path: str = "data/krgdb_freq.tsv",
     sample_id: str = None,
     json_output: str = None,
     skip_api: bool = False,
@@ -128,28 +127,24 @@ def run_pipeline(
     if ped_path:
         _progress(f"  → Trio resolution: PED file ({ped_path})")
 
-    krgdb_file = Path(krgdb_path)
-    if not krgdb_file.exists():
-        logger.warning(f"KRGDB file not found: {krgdb_path} — continuing without Korean frequency data")
-
     # ── Step 2: Query databases per variant ──────────────────────────────────
-    _progress("[2/6] Querying databases (ClinVar, gnomAD, KRGDB)...")
+    _progress("[2/6] Querying databases (ClinVar, gnomAD, KOVA)...")
     if skip_api:
         _progress("  [skip-api mode: external API calls disabled, using local DBs only]")
 
     db_results = {}
     for variant in variants:
-        result = query_variant_databases(variant, str(krgdb_file), skip_api)
+        result = query_variant_databases(variant, skip_api)
         db_results[variant.variant_id] = result
 
         clinvar_sig = result["clinvar"].get("clinvar_significance", "Not Found")
         gnomad_all = result["gnomad"].get("gnomad_all")
-        krgdb_val = result["krgdb_freq"]
+        kova_val = result["kova_freq"]
 
         gnomad_str = f"{gnomad_all:.5f}" if gnomad_all is not None else "N/A"
-        krgdb_str = f"{krgdb_val:.5f}" if krgdb_val is not None else "N/A"
+        kova_str = f"{kova_val:.5f}" if kova_val is not None else "N/A"
         gene_label = variant.gene or variant.variant_id
-        _progress(f"  → {gene_label}: ClinVar={clinvar_sig}, gnomAD={gnomad_str}, KRGDB={krgdb_str}")
+        _progress(f"  → {gene_label}: ClinVar={clinvar_sig}, gnomAD={gnomad_str}, KOVA={kova_str}")
 
     # ── Step 2b: Extract inherited variants from germline VCF (rare-disease) ─
     inherited_variants: list = []
@@ -165,7 +160,7 @@ def run_pipeline(
             if inherited_variants:
                 _progress(f"  [Germline] Extracted {len(inherited_variants)} inherited target variants")
                 for iv in inherited_variants:
-                    result = query_variant_databases(iv, str(krgdb_file), skip_api)
+                    result = query_variant_databases(iv, skip_api)
                     db_results[iv.variant_id] = result
                     gene_label = iv.gene or iv.variant_id
                     clinvar_sig = result["clinvar"].get("clinvar_significance", "Not Found")
@@ -183,11 +178,10 @@ def run_pipeline(
     for variant in variants:
         db = db_results[variant.variant_id]
         freq_data = FrequencyData(
-            krgdb=db["krgdb_freq"],
+            kova=db.get("kova_freq"),
             gnomad_eas=db["gnomad"].get("gnomad_eas"),
             gnomad_all=db["gnomad"].get("gnomad_all"),
-            korea4k=db.get("korea4k_freq"),
-            nard2=db.get("nard2_freq"),
+            kova_homozygote=db.get("kova_homozygote"),
         )
         freq_results[variant.variant_id] = compare_frequencies(freq_data)
 
@@ -295,7 +289,6 @@ def run_pipeline(
         "db_versions": get_all_db_versions(skip_api=skip_api),
         "pipeline": {
             "skip_api": skip_api,
-            "krgdb_path": str(krgdb_file),
             "ped_used": bool(ped_path),
             "ped_path": str(ped_path) if ped_path else None,
         },
@@ -452,7 +445,6 @@ EXAMPLES
     )
     parser.add_argument("vcf_path", nargs="?", default=None, help="Path to input VCF file (omit when using --batch)")
     parser.add_argument("--output", "-o", default="output/report.html", help="Output file path (.html or .pdf)")
-    parser.add_argument("--krgdb", default="data/krgdb_freq.tsv", help="KRGDB frequency data file")
     parser.add_argument("--sample-id", default=None, dest="sample_id", help="Sample ID for the report")
     parser.add_argument(
         "--json", nargs="?", const=True, default=None, dest="json_flag", metavar="PATH", help="Also write raw JSON data"
@@ -553,7 +545,6 @@ EXAMPLES
             mode=mode,
             workers=args.workers,
             skip_api=args.skip_api,
-            krgdb_path=args.krgdb,
             hpo_ids=hpo_ids,
             hide_vus=effective_hide_vus,
         )
@@ -588,7 +579,6 @@ EXAMPLES
         result = run_pipeline(
             vcf_path=args.vcf_path,
             output_path=args.output,
-            krgdb_path=args.krgdb,
             sample_id=args.sample_id,
             json_output=json_output,
             skip_api=args.skip_api,
