@@ -57,10 +57,31 @@ def _count_by_strength(evidences: List[AcmgEvidence]) -> dict:
 
     Plain codes (no suffix, e.g. ``PP3``, ``BP4``) count at their
     natural prefix strength.
+
+    **ClinGen SVI 2018 PP5/BP6 deprecation (v2.5.3).** ClinGen SVI
+    explicitly recommends retiring PP5/BP6 from ACMG scoring because
+    they double-count the same ClinVar evidence already captured by
+    PS1 / PM5 / population / function / segregation codes (see
+    `docs/TIERING.md` §1.1 footnote ⁰ and ClinGen SVI 2018 Q&A).
+    ``_count_by_strength`` therefore skips PP5 and BP6 entries by
+    default. The codes remain in ``ClassificationResult.evidence_codes``
+    for report annotation — this function only governs scoring. The
+    legacy behavior (counting PP5 into ``pp`` and BP6 into ``bp``) can
+    be restored with ``acmg.use_pp5_bp6: true`` in ``config.yaml``; use
+    that toggle only for back-compat benchmarking against pre-v2.5.3
+    reports.
     """
+    use_pp5_bp6 = bool(get("acmg.use_pp5_bp6", False))
+
     counts = {"pvs": 0, "ps": 0, "pm": 0, "pp": 0, "ba": 0, "bs": 0, "bp": 0}
     for e in evidences:
         code_upper = e.code.upper()
+
+        # SVI 2018: PP5/BP6 deprecated — drop from scoring by default.
+        # Annotation path (evidence_codes list on ClassificationResult) is
+        # unaffected because this function does not mutate that list.
+        if not use_pp5_bp6 and code_upper in ("PP5", "BP6"):
+            continue
 
         # Handle _STRONG suffix (upgrade PP/PM to Strong, keep PVS/PS at Strong)
         # Exclude _VERY_STRONG to reserve room if ClinGen SVI extends it later.

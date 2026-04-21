@@ -64,6 +64,14 @@ acmg:
   # ClinVar without touching logic. See _workspace/v22-phaseA/artifacts/
   # 00_clinical_review.md §5 for rollback criteria.
   allow_engine_override_on_conflict: true
+  # ClinGen SVI 2018 recommended retiring PP5 / BP6 from ACMG scoring because
+  # they double-count the same ClinVar evidence already carried by PS1 / PM5 /
+  # population / function / segregation codes. BIKO v2.5.3 implements that
+  # recommendation: _count_by_strength drops PP5 and BP6 by default while
+  # emission (ClinVar / InterVar annotation paths) is unchanged, so the codes
+  # still appear in the report evidence list. Flip to true only to reproduce
+  # pre-v2.5.3 scoring behaviour for back-compat benchmarks.
+  use_pp5_bp6: false
 
 somatic:
   tiering_strategy: "B"  # "A" (CIViC priority), "B" (combined), "C" (OncoKB only)
