@@ -277,10 +277,17 @@ def build_db(
 
     # Post-load compaction — switch back to WAL and shrink. VACUUM must run
     # outside of any open transaction, hence the fresh connection.
+    # ``sqlite3.connect`` as a context manager commits/rollbacks on exit but
+    # does NOT close the connection (CPython quirk), so close explicitly to
+    # release the file lock for subsequent callers (notably the idempotent
+    # rebuild path).
     logger.info("VACUUMing %s ...", db_p)
-    with sqlite3.connect(str(db_p)) as vac:
+    vac = sqlite3.connect(str(db_p))
+    try:
         vac.execute("PRAGMA journal_mode=WAL")
         vac.execute("VACUUM")
+    finally:
+        vac.close()
 
     elapsed = time.time() - t0
     size_mb = db_p.stat().st_size / (1024 * 1024)
