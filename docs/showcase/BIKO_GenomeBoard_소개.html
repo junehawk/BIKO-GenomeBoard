@@ -206,7 +206,7 @@
     BIKO GenomeBoard는 <strong>VEP/ANNOVAR 주석이 완료된 VCF 파일</strong>을 입력으로 받아,
     국제 가이드라인(ACMG/AMP)에 기반한 변이 분류와 임상 해석을 수행하고
     <strong>전문 임상 리포트(HTML/PDF)</strong>를 생성하는 온프레미스 파이프라인입니다.
-    한국인 인구집단 빈도 데이터(KRGDB, Korea4K, NARD2)를 통합하여
+    한국인 인구집단 빈도 데이터(KOVA v7, 43.3M variants)를 통합하여
     한국인 환자에 최적화된 변이 해석을 제공합니다.
   </p>
 
@@ -247,7 +247,7 @@
     <div class="flow-step">
       <div class="step-num">2</div>
       <div class="step-label">DB 조회</div>
-      <div class="step-detail">ClinVar, gnomAD<br>KRGDB, Korea4K, NARD2</div>
+      <div class="step-detail">ClinVar, gnomAD<br>KOVA v7</div>
     </div>
     <div style="text-align:center;" class="flow-arrow">&rarr;</div>
     <div class="flow-step">
@@ -347,7 +347,7 @@
     <div class="card">
       <div class="card-icon">&#127472;&#127479;</div>
       <h3>한국인 인구집단 빈도</h3>
-      <p><strong>KRGDB + Korea4K + NARD2</strong> 3종 한국인 빈도와 gnomAD EAS/ALL 비교. 5-tier 빈도 비교 체계. 한국인 최대 빈도(korean_max)로 BA1/BS1/PM2 판정. Korean enrichment ratio 자동 계산.</p>
+      <p><strong>KOVA v7</strong>(43.3M Korean variants)와 gnomAD EAS/ALL 비교. BA1/BS1/PM2 판정과 Korean enrichment ratio(kova/gnomad_eas)를 자동 계산.</p>
       <span class="tag tag-both">Cancer + Rare Disease</span>
     </div>
 
@@ -460,9 +460,7 @@
       <tr><td><strong>GeneReviews</strong></td><td>SQLite</td><td>유전자 문헌 참조 (NBK ID, PMID)</td><td>NCBI FTP 기반</td></tr>
       <tr><td><strong>OMIM genemap2</strong></td><td>SQLite</td><td>유전자-질환-유전패턴 매핑</td><td>~4,500 유전자</td></tr>
       <tr><td><strong>OMIM mim2gene</strong></td><td>SQLite</td><td>MIM 번호 ↔ 유전자 매핑</td><td>mim2gene.txt 기반</td></tr>
-      <tr><td><strong>KRGDB</strong></td><td>TSV (in-memory)</td><td>한국인 대립유전자 빈도</td><td>Korea Reference Genome DB</td></tr>
-      <tr><td><strong>Korea4K</strong></td><td>TSV (in-memory)</td><td>한국인 대립유전자 빈도</td><td>10,000 Genomes Project</td></tr>
-      <tr><td><strong>NARD2</strong></td><td>TSV (in-memory)</td><td>한국인 대립유전자 빈도</td><td>Macrogen NARD</td></tr>
+      <tr><td><strong>KOVA</strong></td><td>SQLite</td><td>한국인 대립유전자 빈도 + 동형접합자 수</td><td>Korean Variant Archive v7 (43.3M variants)</td></tr>
     </tbody>
   </table>
 </div>
@@ -581,7 +579,7 @@
     ├── classification/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ACMG 엔진, In Silico, Evidence</span><br>
     ├── somatic/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— AMP Tiering, TMB</span><br>
     ├── clinical/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— ClinVar, OncoKB, HPO, OMIM, ClinGen</span><br>
-    ├── korean_pop/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— KRGDB, Korea4K, NARD2, gnomAD</span><br>
+    ├── korean_pop/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— KOVA v7, gnomAD</span><br>
     ├── db/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— 10 build + 9 query 모듈</span><br>
     ├── pharma/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— Korean PGx, PharmGKB</span><br>
     └── counselor/&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--gray);">— Jinja2 HTML + WeasyPrint PDF</span><br>
