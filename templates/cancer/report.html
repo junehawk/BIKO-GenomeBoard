@@ -1168,7 +1168,7 @@
     {% if korean_variants %}
     <div class="korean-callout">
       <div class="korean-callout-title">Korean-Specific Annotations</div>
-      <p>The following variants carry population-specific annotations relevant to the Korean genome cohort (KRGDB):</p>
+      <p>The following variants carry population-specific annotations relevant to the Korean genome cohort (KOVA v7):</p>
       <table style="margin:8px 0 0 0;">
         <thead>
           <tr>
@@ -1192,7 +1192,7 @@
       </table>
     </div>
     {% else %}
-    <p style="font-size:9pt;color:#64748b;">No Korean population-specific findings identified for this sample. KRGDB frequency data was not available for the variants in this sample.</p>
+    <p style="font-size:9pt;color:#64748b;">No Korean population-specific findings identified for this sample. KOVA frequency data was not available for the variants in this sample.</p>
     {% endif %}
 
     <!-- PGx summary -->
@@ -1508,30 +1508,23 @@
             </div>
           {% endif %}
 
-          {% if kp.krgdb_freq is defined and kp.krgdb_freq %}
+          {% if kp.kova_freq is defined and kp.kova_freq %}
             <div class="freq-stat">
-              <div class="freq-num">{{ kp.krgdb_freq }}</div>
-              <div class="freq-label">KRGDB Korean AF</div>
+              <div class="freq-num">{{ kp.kova_freq }}</div>
+              <div class="freq-label">KOVA Korean AF</div>
             </div>
           {% endif %}
 
-          {% if kp.korea4k_freq is defined and kp.korea4k_freq %}
+          {% if kp.kova_homozygote is defined and kp.kova_homozygote is not none %}
             <div class="freq-stat">
-              <div class="freq-num">{{ kp.korea4k_freq }}</div>
-              <div class="freq-label">Korea4K AF</div>
-            </div>
-          {% endif %}
-
-          {% if kp.nard2_freq is defined and kp.nard2_freq %}
-            <div class="freq-stat">
-              <div class="freq-num">{{ kp.nard2_freq }}</div>
-              <div class="freq-label">NARD2 AF</div>
+              <div class="freq-num">{{ kp.kova_homozygote }}</div>
+              <div class="freq-label">KOVA Homozygote Count</div>
             </div>
           {% endif %}
 
           {% if kp.enrichment_ratio is defined and kp.enrichment_ratio %}
             <div class="freq-enrichment">
-              Korean enrichment: {{ kp.enrichment_ratio }}x vs global
+              Korean enrichment: {{ kp.enrichment_ratio }}x vs gnomAD EAS
             </div>
           {% endif %}
 
@@ -1540,7 +1533,7 @@
             <div class="detail-value">{{ v.frequency_prognosis }}</div>
           {% endif %}
 
-          {% if not (v.gnomad_all is defined and v.gnomad_all is not none) and not (kp.krgdb_freq is defined and kp.krgdb_freq) and not (kp.korea4k_freq is defined and kp.korea4k_freq) and not (kp.nard2_freq is defined and kp.nard2_freq) and not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
+          {% if not (v.gnomad_all is defined and v.gnomad_all is not none) and not (kp.kova_freq is defined and kp.kova_freq) and not (v.frequency_prognosis is defined and v.frequency_prognosis) %}
             <p class="no-data">No population frequency data available.</p>
           {% endif %}
         </div>
@@ -2088,19 +2081,19 @@
       <p>
         The BIKO GenomeBoard Consilium pipeline performs multi-agent variant interpretation
         integrating ACMG/AMP 2015 classification criteria with Korean population-specific
-        frequency data from KRGDB, Korea4K, and NARD2. Each variant undergoes parallel
-        evaluation across multiple evidence sources:
+        frequency data from KOVA v7 (Korean Variant Archive, ~43M variants).
+        Each variant undergoes parallel evaluation across multiple evidence sources:
       </p>
       <ul>
         <li><strong>Clinical Evidence</strong> — queries ClinVar for significance calls, associated conditions, and review star ratings</li>
-        <li><strong>Korean Population Frequency</strong> — compares allele frequencies across KRGDB, Korea4K, NARD2, and gnomAD (EAS/global); highest Korean frequency used for BA1/BS1/PM2 assessment</li>
+        <li><strong>Korean Population Frequency</strong> — compares KOVA v7 against gnomAD (EAS/global); KOVA frequency drives BA1/BS1/PM2 assessment</li>
         <li><strong>In Silico Predictions</strong> — REVEL, CADD, AlphaMissense, SpliceAI scores from VEP annotations; PP3/BP4 evidence generated per ClinGen SVI 2022 recommendations</li>
         <li><strong>ACMG Evidence Collection</strong> — automated PVS1 (null variant + LOF intolerance), PM1 (functional domain), PM4 (in-frame indel), PP2 (constrained gene), BP7 (synonymous)</li>
         <li><strong>Pharmacogenomics</strong> — cross-references CPIC and PharmGKB guidelines with Korean-specific prevalence adjustments</li>
       </ul>
       <p>
         Final classification follows ACMG/AMP 2015 criteria with ClinGen SVI updates.
-        Korean enrichment ratio is calculated as max(KRGDB, Korea4K, NARD2) / gnomAD global frequency.
+        Korean enrichment ratio is calculated as KOVA AF / gnomAD EAS AF (Korean Han vs broader East Asian).
       </p>
     </div>
 
@@ -2141,7 +2134,7 @@
     <div class="method-block">
       <ul>
         <li>This report is generated for <strong>research purposes only</strong> and has not been validated in a CLIA-certified or CAP-accredited laboratory.</li>
-        <li>KRGDB frequency data reflects the Korean genome cohort; individual ancestry may vary.</li>
+        <li>KOVA frequency data reflects the Korean genome cohort; individual ancestry may vary.</li>
         <li>ClinVar entries reflect community-submitted evidence and may contain conflicting interpretations.</li>
         <li>PGx phenotype predictions are probabilistic; functional testing (e.g., HLA typing for HLA-B*5801) is required for confirmatory clinical use.</li>
         <li>Variants of uncertain significance (VUS) may be reclassified as new evidence accrues; periodic re-analysis is recommended.</li>
@@ -2192,7 +2185,7 @@
         <tr><td><span class="acmg-code">PS3</span></td><td>Strong</td><td>Well-established functional studies show a deleterious effect on the gene product</td></tr>
         <tr><td><span class="acmg-code">PS4</span></td><td>Strong</td><td>Prevalence of the variant in affected individuals is significantly increased compared to controls</td></tr>
         <tr><td><span class="acmg-code">PM1</span></td><td>Moderate</td><td>Located in a mutational hotspot and/or critical, well-established functional domain</td></tr>
-        <tr><td><span class="acmg-code">PM2</span></td><td>Moderate</td><td>Absent or extremely low frequency in population databases (gnomAD, KRGDB)</td></tr>
+        <tr><td><span class="acmg-code">PM2</span></td><td>Moderate</td><td>Absent or extremely low frequency in population databases (gnomAD, KOVA)</td></tr>
         <tr><td><span class="acmg-code">PM2_Supporting</span></td><td>Supporting</td><td>Low frequency in population databases — downgraded from Moderate per ClinGen SVI 2020 recommendation</td></tr>
         <tr><td><span class="acmg-code">PM4</span></td><td>Moderate</td><td>Protein length change due to in-frame deletion/insertion or stop-loss variant</td></tr>
         <tr><td><span class="acmg-code">PM5</span></td><td>Moderate</td><td>Missense change at residue where a different pathogenic missense has been seen before</td></tr>
@@ -2207,7 +2200,7 @@
         <tr><th style="width:120px;">Code</th><th style="width:130px;">Strength</th><th>Description</th></tr>
       </thead>
       <tbody>
-        <tr><td><span class="acmg-code">BA1</span></td><td>Stand-alone</td><td>Allele frequency &gt;5% in any general continental population dataset (gnomAD, KRGDB) — classified as Benign</td></tr>
+        <tr><td><span class="acmg-code">BA1</span></td><td>Stand-alone</td><td>Allele frequency &gt;5% in any general continental population dataset (gnomAD, KOVA) — classified as Benign</td></tr>
         <tr><td><span class="acmg-code">BS1</span></td><td>Strong</td><td>Allele frequency greater than expected for the disorder (typically &ge;1%)</td></tr>
         <tr><td><span class="acmg-code">BS2</span></td><td>Strong</td><td>Observed in a healthy adult individual for a fully penetrant early-onset condition</td></tr>
         <tr><td><span class="acmg-code">BP1</span></td><td>Supporting</td><td>Missense variant in a gene for which primarily truncating variants are known to cause disease</td></tr>
@@ -2291,7 +2284,7 @@
         <tr><td><strong>HPO</strong></td><td>Human Phenotype Ontology — standardized vocabulary for describing clinical features</td></tr>
         <tr><td><strong>OMIM</strong></td><td>Online Mendelian Inheritance in Man — catalog of human genes and genetic disorders</td></tr>
         <tr><td><strong>HGVS</strong></td><td>Human Genome Variation Society nomenclature — standard notation for describing sequence variants (c. = coding DNA, p. = protein)</td></tr>
-        <tr><td><strong>KRGDB</strong></td><td>Korean Reference Genome Database — Korean population allele frequency resource</td></tr>
+        <tr><td><strong>KOVA</strong></td><td>Korean Variant Archive v7 — 43M-variant Korean population allele frequency resource (~5,000 Korean individuals)</td></tr>
         <tr><td><strong>gnomAD</strong></td><td>Genome Aggregation Database — large-scale population allele frequency database</td></tr>
       </tbody>
     </table>
