@@ -30,10 +30,12 @@ query($variantId: String!, $dataset: DatasetId!) {
 
 logger = logging.getLogger(__name__)
 
+_session = requests.Session()
+
 
 def _graphql_query(query: str, variables: dict) -> Optional[dict]:
     try:
-        resp = requests.post(GNOMAD_API, json={"query": query, "variables": variables}, timeout=30)
+        resp = _session.post(GNOMAD_API, json={"query": query, "variables": variables}, timeout=30)
         resp.raise_for_status()
         return resp.json()
     except Exception:
