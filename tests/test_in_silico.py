@@ -170,16 +170,34 @@ class TestPP3BP4Generation:
         assert result == ["PP3_Strong"]
 
     def test_pp3_moderate_revel(self):
-        """REVEL >= 0.644 (below Strong) → PP3_Moderate."""
-        scores = InSilicoScores(revel=0.70)
+        """REVEL >= 0.773 (below Strong) → PP3_Moderate (Pejaver 2022)."""
+        scores = InSilicoScores(revel=0.80)
         result = generate_pp3_bp4(scores)
         assert result == ["PP3_Moderate"]
 
     def test_pp3_moderate_revel_boundary(self):
-        """REVEL == 0.644 (exactly at threshold) → PP3_Moderate."""
-        scores = InSilicoScores(revel=0.644)
+        """REVEL == 0.773 (exactly at Moderate threshold) → PP3_Moderate."""
+        scores = InSilicoScores(revel=0.773)
         result = generate_pp3_bp4(scores)
         assert result == ["PP3_Moderate"]
+
+    def test_pp3_supporting_revel(self):
+        """REVEL in [0.644, 0.773) → plain PP3 (Supporting, Pejaver 2022)."""
+        scores = InSilicoScores(revel=0.70)
+        result = generate_pp3_bp4(scores)
+        assert result == ["PP3"]
+
+    def test_pp3_supporting_revel_boundary(self):
+        """REVEL == 0.644 (exactly at Supporting threshold) → plain PP3."""
+        scores = InSilicoScores(revel=0.644)
+        result = generate_pp3_bp4(scores)
+        assert result == ["PP3"]
+
+    def test_pp3_supporting_revel_just_below_moderate(self):
+        """REVEL == 0.772 (just below Moderate) → plain PP3."""
+        scores = InSilicoScores(revel=0.772)
+        result = generate_pp3_bp4(scores)
+        assert result == ["PP3"]
 
     def test_bp4_strong_revel(self):
         """REVEL <= 0.016 → BP4_Strong."""
@@ -200,14 +218,38 @@ class TestPP3BP4Generation:
         assert result == ["BP4_Moderate"]
 
     def test_bp4_moderate_revel_boundary(self):
-        """REVEL == 0.183 (exactly at threshold) → BP4_Moderate."""
+        """REVEL == 0.183 (exactly at Moderate threshold) → BP4_Moderate."""
         scores = InSilicoScores(revel=0.183)
         result = generate_pp3_bp4(scores)
         assert result == ["BP4_Moderate"]
 
+    def test_bp4_supporting_revel(self):
+        """REVEL in (0.183, 0.290] → plain BP4 (Supporting, Pejaver 2022)."""
+        scores = InSilicoScores(revel=0.25)
+        result = generate_pp3_bp4(scores)
+        assert result == ["BP4"]
+
+    def test_bp4_supporting_revel_boundary(self):
+        """REVEL == 0.290 (exactly at BP4 Supporting threshold) → plain BP4."""
+        scores = InSilicoScores(revel=0.290)
+        result = generate_pp3_bp4(scores)
+        assert result == ["BP4"]
+
     def test_revel_indeterminate(self):
-        """REVEL in the middle (0.3) — no evidence."""
-        scores = InSilicoScores(revel=0.30)
+        """REVEL in the middle (0.5 — between 0.290 and 0.644) — no evidence."""
+        scores = InSilicoScores(revel=0.50)
+        result = generate_pp3_bp4(scores)
+        assert result == []
+
+    def test_revel_indeterminate_just_below_supporting(self):
+        """REVEL == 0.640 (just below 0.644 PP3 Supporting) — no evidence."""
+        scores = InSilicoScores(revel=0.640)
+        result = generate_pp3_bp4(scores)
+        assert result == []
+
+    def test_revel_indeterminate_just_above_bp4(self):
+        """REVEL == 0.291 (just above 0.290 BP4 Supporting) — no evidence."""
+        scores = InSilicoScores(revel=0.291)
         result = generate_pp3_bp4(scores)
         assert result == []
 
@@ -242,7 +284,7 @@ class TestPP3BP4Generation:
         assert result == ["PP3_Moderate"]
 
     def test_bp4_splice(self):
-        """SpliceAI max < 0.1 → BP4_Supporting."""
+        """SpliceAI max < 0.1 → plain BP4 (Supporting)."""
         scores = InSilicoScores(
             spliceai_ds_ag=0.02,
             spliceai_ds_al=0.01,
@@ -251,7 +293,7 @@ class TestPP3BP4Generation:
             spliceai_max=0.03,
         )
         result = generate_pp3_bp4(scores)
-        assert result == ["BP4_Supporting"]
+        assert result == ["BP4"]
 
     def test_spliceai_indeterminate(self):
         """SpliceAI in indeterminate range (0.1-0.2) — no evidence from splice."""
@@ -265,14 +307,14 @@ class TestPP3BP4Generation:
     # --- Fallback: CADD + AlphaMissense ---
 
     def test_pp3_fallback_cadd_am(self):
-        """No REVEL, CADD >= 25 + AM pathogenic → PP3_Supporting."""
+        """No REVEL, CADD >= 25 + AM pathogenic → plain PP3 (Supporting)."""
         scores = InSilicoScores(
             cadd_phred=32.5,
             alphamissense_class="likely_pathogenic",
             alphamissense_score=0.92,
         )
         result = generate_pp3_bp4(scores)
-        assert result == ["PP3_Supporting"]
+        assert result == ["PP3"]
 
     def test_fallback_cadd_only_no_am(self):
         """No REVEL, high CADD but no AM class → no evidence."""
@@ -299,14 +341,14 @@ class TestPP3BP4Generation:
         assert result == []
 
     def test_fallback_bp4_benign(self):
-        """No REVEL, low CADD + AM benign → BP4_Supporting."""
+        """No REVEL, low CADD + AM benign → plain BP4 (Supporting)."""
         scores = InSilicoScores(
             cadd_phred=8.0,
             alphamissense_class="likely_benign",
             alphamissense_score=0.05,
         )
         result = generate_pp3_bp4(scores)
-        assert result == ["BP4_Supporting"]
+        assert result == ["BP4"]
 
     # --- Missing / edge cases ---
 
@@ -540,13 +582,17 @@ class TestVCFIntegration:
         evidence = generate_pp3_bp4(scores)
         assert evidence == ["PP3_Strong"]
 
-    def test_brca2_moderate_revel_pp3_moderate(self, vcf_records):
-        """BRCA2 variant: REVEL=0.70 → PP3_Moderate."""
+    def test_brca2_moderate_revel_pp3_supporting(self, vcf_records):
+        """BRCA2 variant: REVEL=0.70 → plain PP3 (Supporting, Pejaver 2022).
+
+        0.70 lies in [0.644, 0.773), the Supporting band under the
+        3-tier Pejaver 2022 calibration.
+        """
         csq, gene = next((r for r in vcf_records if r[1] == "BRCA2"), (None, None))
         scores = parse_in_silico_from_csq(csq)
         assert scores.revel == pytest.approx(0.70)
         evidence = generate_pp3_bp4(scores)
-        assert evidence == ["PP3_Moderate"]
+        assert evidence == ["PP3"]
 
     def test_apoe_low_revel_bp4(self, vcf_records):
         """APOE variant: REVEL=0.05 → BP4_Moderate."""
@@ -572,18 +618,18 @@ class TestVCFIntegration:
         assert scores.cadd_phred is None
         # Only SpliceAI present (all zeros)
         evidence = generate_pp3_bp4(scores)
-        # SpliceAI zeros < 0.1 → BP4_Supporting
-        assert evidence == ["BP4_Supporting"]
+        # SpliceAI zeros < 0.1 → plain BP4 (Supporting)
+        assert evidence == ["BP4"]
 
     def test_msh2_fallback_cadd_am(self, vcf_records):
-        """MSH2 variant: no REVEL, CADD=32.5 + AM=likely_pathogenic → PP3_Supporting."""
+        """MSH2 variant: no REVEL, CADD=32.5 + AM=likely_pathogenic → plain PP3 (Supporting)."""
         csq, gene = next((r for r in vcf_records if r[1] == "MSH2"), (None, None))
         scores = parse_in_silico_from_csq(csq)
         assert scores.revel is None
         assert scores.cadd_phred == pytest.approx(32.5)
         assert scores.alphamissense_class == "likely_pathogenic"
         evidence = generate_pp3_bp4(scores)
-        assert evidence == ["PP3_Supporting"]
+        assert evidence == ["PP3"]
 
     def test_apc_low_revel_bp4(self, vcf_records):
         """APC variant: REVEL=0.01 → BP4_Strong."""
