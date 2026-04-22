@@ -449,14 +449,14 @@ class TestOrchestrateGermlineIntegration:
         ]
 
         with (
-            patch("scripts.orchestrate.parse_vcf") as mock_parse,
-            patch("scripts.orchestrate.query_variant_databases") as mock_query,
-            patch("scripts.orchestrate.compare_frequencies", return_value={"korean_flag": ""}),
+            patch("scripts.orchestration.canonical.parse_vcf") as mock_parse,
+            patch("scripts.orchestration.canonical.query_variant_databases") as mock_query,
+            patch("scripts.orchestration.canonical.compare_frequencies", return_value={"korean_flag": ""}),
             patch("scripts.pharmacogenomics.korean_pgx.get_pgx_results") as mock_pgx,
-            patch("scripts.orchestrate.classify_variants") as mock_classify,
-            patch("scripts.orchestrate.build_variant_records") as mock_build,
+            patch("scripts.orchestration.canonical.classify_variants") as mock_classify,
+            patch("scripts.orchestration.canonical.build_variant_records") as mock_build,
             patch(
-                "scripts.orchestrate.build_summary",
+                "scripts.orchestration.canonical.build_summary",
                 return_value={
                     "total": 2,
                     "pathogenic": 1,
@@ -468,10 +468,10 @@ class TestOrchestrateGermlineIntegration:
                     "risk_factor": 0,
                 },
             ),
-            patch("scripts.orchestrate.split_variants_for_display", return_value=([], [], [], 0, [], [])),
-            patch("scripts.orchestrate.get_all_db_versions", return_value={}),
+            patch("scripts.orchestration.canonical.split_variants_for_display", return_value=([], [], [], 0, [], [])),
+            patch("scripts.orchestration.canonical.get_all_db_versions", return_value={}),
             patch("scripts.orchestrate.generate_report_html", return_value="<html></html>"),
-            patch("scripts.orchestrate.resolve_hpo_terms", return_value=[]),
+            patch("scripts.orchestration.canonical.resolve_hpo_terms", return_value=[]),
             patch("scripts.orchestration.extract_germline.extract_inherited_variants", return_value=inherited),
         ):
             # Primary VCF returns one variant
@@ -547,14 +547,14 @@ class TestOrchestrateGermlineIntegration:
         from scripts.orchestrate import run_pipeline
 
         with (
-            patch("scripts.orchestrate.parse_vcf") as mock_parse,
-            patch("scripts.orchestrate.query_variant_databases") as mock_query,
-            patch("scripts.orchestrate.compare_frequencies", return_value={"korean_flag": ""}),
+            patch("scripts.orchestration.canonical.parse_vcf") as mock_parse,
+            patch("scripts.orchestration.canonical.query_variant_databases") as mock_query,
+            patch("scripts.orchestration.canonical.compare_frequencies", return_value={"korean_flag": ""}),
             patch("scripts.pharmacogenomics.korean_pgx.get_pgx_results") as mock_pgx,
-            patch("scripts.orchestrate.classify_variants") as mock_classify,
-            patch("scripts.orchestrate.build_variant_records") as mock_build,
+            patch("scripts.orchestration.canonical.classify_variants") as mock_classify,
+            patch("scripts.orchestration.canonical.build_variant_records") as mock_build,
             patch(
-                "scripts.orchestrate.build_summary",
+                "scripts.orchestration.canonical.build_summary",
                 return_value={
                     "total": 1,
                     "pathogenic": 1,
@@ -566,8 +566,8 @@ class TestOrchestrateGermlineIntegration:
                     "risk_factor": 0,
                 },
             ),
-            patch("scripts.orchestrate.split_variants_for_display", return_value=([], [], [], 0, [], [])),
-            patch("scripts.orchestrate.get_all_db_versions", return_value={}),
+            patch("scripts.orchestration.canonical.split_variants_for_display", return_value=([], [], [], 0, [], [])),
+            patch("scripts.orchestration.canonical.get_all_db_versions", return_value={}),
             patch("scripts.orchestrate.generate_report_html", return_value="<html></html>"),
             patch("scripts.orchestration.extract_germline.extract_inherited_variants") as mock_extract,
         ):

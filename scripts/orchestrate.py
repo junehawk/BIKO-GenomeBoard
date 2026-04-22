@@ -13,35 +13,47 @@ import json
 import logging
 import sys
 import time
-from dataclasses import asdict, is_dataclass
-from datetime import date
 from pathlib import Path
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.enrichment.hpo_matcher import resolve_hpo_terms
 from scripts.common.config import get
-from scripts.common.models import FrequencyData
 from scripts.reporting.generate_pdf import generate_pdf, generate_report_html
-from scripts.storage.version_manager import get_all_db_versions
-from scripts.intake.parse_vcf import parse_vcf
-from scripts.population.compare_freq import compare_frequencies
 from scripts.orchestration.batch import (
     collect_unique_variants,
     discover_samples,
     run_batch_pipeline,
 )
+from scripts.orchestration.canonical import (
+    build_sample_report,
+    normalize_sample_id,
+    report_data_for_json,
+)
 from scripts.orchestration.classify import (
     build_summary,
     build_variant_records,
     classify_variants,
-    split_variants_for_display,
+    split_variants_for_display,  # re-exported for tests that monkey-patch this path
     sv_to_dict,
 )
 
 # Pipeline modules (extracted from this file)
 from scripts.orchestration.query import query_variant_databases
+
+__all__ = [
+    "run_pipeline",
+    "build_summary",
+    "build_variant_records",
+    "classify_variants",
+    "split_variants_for_display",
+    "sv_to_dict",
+    "query_variant_databases",
+    "normalize_sample_id",
+    "collect_unique_variants",
+    "discover_samples",
+    "run_batch_pipeline",
+]
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("genomeboard")
@@ -94,273 +106,70 @@ def run_pipeline(
 ) -> dict:
     """Run the full BIKO GenomeBoard analysis pipeline.
 
-    Returns the assembled report data dict (or None on fatal error).
+    Thin CLI-facing wrapper over ``canonical.build_sample_report``. Handles
+    progress logging, path setup, HTML / PDF emission, and JSON dump.
+    The actual assembly logic lives in
+    ``scripts.orchestration.canonical.build_sample_report``.
+
+    Returns the assembled report_data dict (or ``None`` on fatal error).
     """
     mode = mode or get("report.default_mode", "cancer")
     start_time = time.time()
 
-    # HPO processing (rare disease mode)
-    hpo_results = []
-    if mode == "rare-disease" and hpo_ids:
-        logger.info("[HPO] Resolving phenotype terms...")
-        hpo_results = resolve_hpo_terms(hpo_ids)
-        for h in hpo_results:
-            logger.info(f"  → {h['id']}: {h['name']} ({len(h['genes'])} associated genes)")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     if sample_id is None:
-        sample_id = Path(vcf_path).stem.upper()
+        # v2.5.4 — previously used .stem.upper(); the canonical helper now
+        # strips .vcf / .vcf.gz / .vcf.bgz and preserves case. Batch mode
+        # uses the same helper so sample_id agrees between modes.
+        sample_id = normalize_sample_id(vcf_path)
 
-    # ── Step 1: Parse VCF ────────────────────────────────────────────────────
     _progress(f"[1/6] Parsing VCF: {vcf_path}")
-    vcf_file = Path(vcf_path)
-    if not vcf_file.exists():
-        logger.error(f"VCF file not found: {vcf_path}")
-        return None
-
-    variants = parse_vcf(str(vcf_file), ped_path=ped_path)
-    if not variants:
-        logger.error(f"No variants parsed from {vcf_path}")
-        return None
-    _progress(f"  → Found {len(variants)} variants")
     if ped_path:
         _progress(f"  → Trio resolution: PED file ({ped_path})")
-
-    # ── Step 2: Query databases per variant ──────────────────────────────────
-    _progress("[2/6] Querying databases (ClinVar, gnomAD, KOVA)...")
     if skip_api:
         _progress("  [skip-api mode: external API calls disabled, using local DBs only]")
 
-    db_results = {}
-    for variant in variants:
-        result = query_variant_databases(variant, skip_api)
-        db_results[variant.variant_id] = result
-
-        clinvar_sig = result["clinvar"].get("clinvar_significance", "Not Found")
-        gnomad_all = result["gnomad"].get("gnomad_all")
-        kova_val = result["kova_freq"]
-
-        gnomad_str = f"{gnomad_all:.5f}" if gnomad_all is not None else "N/A"
-        kova_str = f"{kova_val:.5f}" if kova_val is not None else "N/A"
-        gene_label = variant.gene or variant.variant_id
-        _progress(f"  → {gene_label}: ClinVar={clinvar_sig}, gnomAD={gnomad_str}, KOVA={kova_str}")
-
-    # ── Step 2b: Extract inherited variants from germline VCF (rare-disease) ─
-    inherited_variants: list = []
-    if germline_vcf and mode == "rare-disease":
-        try:
-            from scripts.orchestration.extract_germline import extract_inherited_variants
-
-            primary_ids = {v.variant_id for v in variants}
-            inherited_variants = extract_inherited_variants(
-                germline_vcf,
-                primary_variant_ids=primary_ids,
-            )
-            if inherited_variants:
-                _progress(f"  [Germline] Extracted {len(inherited_variants)} inherited target variants")
-                for iv in inherited_variants:
-                    result = query_variant_databases(iv, skip_api)
-                    db_results[iv.variant_id] = result
-                    gene_label = iv.gene or iv.variant_id
-                    clinvar_sig = result["clinvar"].get("clinvar_significance", "Not Found")
-                    _progress(f"  → {gene_label} (inherited): ClinVar={clinvar_sig}")
-                # Merge into main variant list (primary takes precedence via dedup above)
-                variants = list(variants) + inherited_variants
-            else:
-                _progress("  [Germline] No inherited target variants found")
-        except Exception as e:
-            logger.warning("Germline inherited variant extraction failed: %s", e)
-
-    # ── Step 3: Frequency comparison ─────────────────────────────────────────
-    _progress("[3/6] Running frequency comparison...")
-    freq_results = {}
-    for variant in variants:
-        db = db_results[variant.variant_id]
-        freq_data = FrequencyData(
-            kova=db.get("kova_freq"),
-            gnomad_eas=db["gnomad"].get("gnomad_eas"),
-            gnomad_all=db["gnomad"].get("gnomad_all"),
-            kova_homozygote=db.get("kova_homozygote"),
-        )
-        freq_results[variant.variant_id] = compare_frequencies(freq_data)
-
-    # ── Step 4: Pharmacogenomics ──────────────────────────────────────────────
-    _progress("[4/6] Checking pharmacogenomics (PGx)...")
-
-    from scripts.pharmacogenomics.korean_pgx import get_pgx_results
-
-    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf)
-    pgx_source = pgx_data["pgx_source"]
-    _progress(f"  [PGx engine: {pgx_source}]")
-
-    if pgx_data["warnings"]:
-        for w in pgx_data["warnings"]:
-            _progress(f"  [PGx warning] {w}")
-
-    # Warn when primary VCF is somatic/de novo and no germline provided
+    # Warn when primary VCF is somatic/de novo and no germline provided.
+    # This used to live inside the PGx step — now surfaced here before we
+    # delegate so the warning order matches pre-refactor logs.
     if not germline_vcf and mode in ("cancer", "rare-disease"):
         logger.warning(
             "PGx results from somatic/de novo input may be incomplete. "
             "Provide --germline for accurate pharmacogenomics assessment."
         )
 
-    # Backward-compat: collect PgxResult objects from per-variant db_results
-    # for the legacy pgx_hits list (used when builtin engine runs via query)
-    pgx_hits = []
-    if pgx_source in ("builtin", "builtin_limited"):
-        for variant in variants:
-            pgx = db_results[variant.variant_id]["pgx"]
-            if pgx:
-                pgx_hits.append(pgx)
-                cpic_str = getattr(pgx, "cpic_level", "")
-                _progress(f"  -> {pgx.gene}: {pgx.phenotype}, CPIC Level {cpic_str}")
-    else:
-        # PharmCAT path: log from the unified results
-        for hit in pgx_data["pgx_hits"]:
-            _progress(f"  -> {hit['gene']}: {hit.get('phenotype', '')}")
-
-    # ── Step 5: ACMG classification ───────────────────────────────────────────
-    _progress("[5/6] Running ACMG classification engine...")
-
-    intervar_data = None
-    if intervar_path:
-        try:
-            from scripts.annotation.parse_intervar import parse_intervar
-
-            intervar_data = parse_intervar(intervar_path)
-            _progress(f"  [InterVar] Loaded evidence for {len(intervar_data)} variants")
-        except Exception as e:
-            logger.warning(f"InterVar parsing failed: {e}")
-
-    classification_results = classify_variants(variants, db_results, freq_results, intervar_data=intervar_data)
-    for variant in variants:
-        classification = classification_results[variant.variant_id]
-        codes_str = "+".join(classification.evidence_codes) if classification.evidence_codes else "no codes"
-        gene_label = variant.gene or variant.variant_id
-        _progress(f"  → {gene_label}: {classification.classification} ({codes_str})")
-
-    # ── Step 6: Assemble report data ──────────────────────────────────────────
-    variant_records = build_variant_records(
-        variants, db_results, freq_results, classification_results, mode, hpo_results
-    )
-    summary = build_summary(variant_records)
-
-    tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = split_variants_for_display(
-        variant_records, hide_vus
+    report_data = build_sample_report(
+        vcf_path=vcf_path,
+        sample_id=sample_id,
+        mode=mode,
+        skip_api=skip_api,
+        hpo_ids=hpo_ids,
+        hide_vus=hide_vus,
+        sv_path=sv_path,
+        panel_size_mb=panel_size_mb,
+        bed_path=bed_path,
+        intervar_path=intervar_path,
+        clinical_board=clinical_board,
+        board_lang=board_lang,
+        clinical_note=clinical_note,
+        germline_vcf=germline_vcf,
+        ped_path=ped_path,
     )
 
-    # Build pgx_results list — prefer PharmCAT hits when available,
-    # otherwise serialise from per-variant PgxResult objects.
-    if pgx_source == "pharmcat":
-        pgx_results_list = pgx_data["pgx_hits"]
-    else:
-        pgx_results_list = [
-            {
-                "gene": p.gene,
-                "star_allele": p.star_allele,
-                "phenotype": p.phenotype,
-                "cpic_level": p.cpic_level,
-                "korean_prevalence": p.korean_prevalence,
-                "western_prevalence": p.western_prevalence,
-                "clinical_impact": p.clinical_impact,
-                "cpic_recommendation": p.cpic_recommendation,
-                "korean_flag": p.korean_flag,
-            }
-            for p in pgx_hits
-        ]
+    if report_data is None:
+        # build_sample_report already logged the reason (missing VCF or
+        # zero parsed variants). Keep the CLI contract: return None so
+        # main() can exit with a non-zero status.
+        return None
 
-    report_data = {
-        "sample_id": sample_id,
-        "date": str(date.today()),
-        "variants": variant_records,
-        "detailed_variants": detailed_variants,
-        "omitted_variants": omitted_variants,
-        "hide_vus": hide_vus,
-        "tier1_variants": tier1,
-        "tier2_variants": tier2,
-        "tier3_variants": tier3,
-        "tier4_count": tier4_count,
-        "pgx_results": pgx_results_list,
-        "pgx_source": pgx_source,
-        "germline_provided": pgx_data["germline_provided"],
-        "pharmcat_version": pgx_data["pharmcat_version"],
-        "summary": summary,
-        "db_versions": get_all_db_versions(skip_api=skip_api),
-        "pipeline": {
-            "skip_api": skip_api,
-            "ped_used": bool(ped_path),
-            "ped_path": str(ped_path) if ped_path else None,
-        },
-        "mode": mode,
-        "hpo_results": hpo_results,
-    }
+    summary = report_data["summary"]
+    _progress(f"  → Found {len(report_data['variants'])} variants")
+    _progress(f"  [PGx engine: {report_data.get('pgx_source', '')}]")
 
-    # Parse structural variants if provided
-    sv_variants = []
-    if sv_path:
-        from scripts.intake.parse_annotsv import parse_annotsv
-
-        sv_variants = parse_annotsv(sv_path)
-        logger.info(f"[SV] Parsed {len(sv_variants)} structural variants")
-
-    sv_class45 = [sv for sv in sv_variants if sv.acmg_class in (4, 5)]
-    sv_class3_all = [sv for sv in sv_variants if sv.acmg_class == 3]
-    sv_class3_display = [sv for sv in sv_class3_all if sv.is_dosage_sensitive(mode)]
-    sv_class3_hidden = len(sv_class3_all) - len(sv_class3_display)
-    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_class in (1, 2))
-
-    report_data["sv_variants"] = [sv_to_dict(sv) for sv in sv_variants]
-    report_data["sv_class45"] = [sv_to_dict(sv) for sv in sv_class45]
-    report_data["sv_class3_display"] = [sv_to_dict(sv) for sv in sv_class3_display]
-    report_data["sv_class3_hidden"] = sv_class3_hidden
-    report_data["sv_benign_count"] = sv_benign_count
-
-    # Calculate TMB (cancer mode only)
-    if mode == "cancer":
-        from scripts.somatic.tmb import calculate_panel_size_from_bed, calculate_tmb
-
-        tmb_panel = panel_size_mb
-        if bed_path:
-            tmb_panel = calculate_panel_size_from_bed(bed_path)
-        tmb_result = calculate_tmb(variants, panel_size_mb=tmb_panel)
-        report_data["tmb"] = {
-            "score": tmb_result.score,
-            "level": tmb_result.level,
-            "variant_count": tmb_result.variant_count,
-            "total_variants": tmb_result.total_variants,
-            "panel_size_mb": tmb_result.panel_size_mb,
-            "counted_consequences": tmb_result.counted_consequences,
-        }
-        logger.info(
-            f"[TMB] {tmb_result.score} mut/Mb ({tmb_result.level}) — "
-            f"{tmb_result.variant_count}/{tmb_result.total_variants} variants, "
-            f"{tmb_result.panel_size_mb} Mb panel"
-        )
-    else:
-        report_data["tmb"] = None
-
-    # ── Clinical Board (optional LLM diagnostic synthesis) ────────────────────
-    if clinical_note:
-        report_data["clinical_note"] = clinical_note
-    if clinical_board:
-        try:
-            from scripts.clinical_board.render import render_board_opinion_html
-            from scripts.clinical_board.runner import run_clinical_board
-
-            _progress("[Board] Running Clinical Board diagnostic synthesis...")
-            board_opinion = run_clinical_board(report_data, mode, language=board_lang)
-            if board_opinion:
-                report_data["clinical_board"] = board_opinion
-                report_data["clinical_board_html"] = render_board_opinion_html(
-                    board_opinion, language=board_lang or get("clinical_board.language", "en")
-                )
-                _progress(_format_board_summary(board_opinion))
-            else:
-                _progress("  → Clinical Board skipped (Ollama not available)")
-        except Exception as e:
-            logger.warning(f"Clinical Board failed: {e}")
-            _progress(f"  → Clinical Board error: {e}")
+    if clinical_board and report_data.get("clinical_board"):
+        _progress(_format_board_summary(report_data["clinical_board"]))
 
     # ── Generate report ───────────────────────────────────────────────────────
     _progress("[6/6] Generating report...")
@@ -381,13 +190,7 @@ def run_pipeline(
     if json_output:
         json_path = Path(json_output)
         json_path.parent.mkdir(parents=True, exist_ok=True)
-        # Unwrap the BoardOpinion/CancerBoardOpinion dataclass so that
-        # rerender_report.py can round-trip it back to a dataclass instance.
-        # json.dumps(default=str) would otherwise stringify it as a repr.
-        dump_data = report_data
-        cb = report_data.get("clinical_board")
-        if cb is not None and is_dataclass(cb):
-            dump_data = {**report_data, "clinical_board": asdict(cb)}
+        dump_data = report_data_for_json(report_data)
         json_path.write_text(
             json.dumps(dump_data, indent=2, default=str, ensure_ascii=False),
             encoding="utf-8",

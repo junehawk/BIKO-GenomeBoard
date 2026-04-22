@@ -218,7 +218,7 @@ def test_rare_disease_pipeline_with_hpo(tmp_path):
         {"id": "HP:0001263", "name": "Global developmental delay", "genes": ["TP53"]},
     ]
 
-    with patch("scripts.orchestrate.resolve_hpo_terms", return_value=mock_hpo):
+    with patch("scripts.orchestration.canonical.resolve_hpo_terms", return_value=mock_hpo):
         result = run_pipeline(
             vcf_path=RARE_DISEASE_VCF,
             output_path=str(tmp_path / "report.html"),
@@ -276,7 +276,7 @@ def test_rare_disease_pipeline_sorts_by_classification_then_hpo(tmp_path):
         {"id": "HP:0001250", "name": "Seizures", "genes": ["TP53"]},
     ]
 
-    with patch("scripts.orchestrate.resolve_hpo_terms", return_value=mock_hpo):
+    with patch("scripts.orchestration.canonical.resolve_hpo_terms", return_value=mock_hpo):
         result = run_pipeline(
             vcf_path=RARE_DISEASE_VCF,
             output_path=str(tmp_path / "report.html"),

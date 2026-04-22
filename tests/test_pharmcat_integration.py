@@ -510,12 +510,16 @@ class TestPgxWarningOnSomatic:
         with caplog.at_level(logging.WARNING, logger="genomeboard"):
             # Import inside to avoid side effects
             import scripts.orchestrate as orch
+            import scripts.orchestration.canonical as canonical
 
-            # Mock the entire pipeline but check the warning is emitted
+            # Mock the entire pipeline but check the warning is emitted.
+            # v2.5.4: pipeline internals moved to scripts.orchestration.canonical;
+            # orch.run_pipeline is now a thin CLI wrapper that emits the PGx
+            # warning before delegating. Patches target canonical's bound names.
             with (
-                mock.patch.object(orch, "parse_vcf", return_value=fake_variants),
+                mock.patch.object(canonical, "parse_vcf", return_value=fake_variants),
                 mock.patch.object(
-                    orch,
+                    canonical,
                     "query_variant_databases",
                     return_value={
                         "clinvar": {"clinvar_significance": "Not Found"},
@@ -526,7 +530,7 @@ class TestPgxWarningOnSomatic:
                     },
                 ),
                 mock.patch.object(
-                    orch,
+                    canonical,
                     "compare_frequencies",
                     return_value={
                         "acmg_codes": [],
@@ -534,7 +538,7 @@ class TestPgxWarningOnSomatic:
                     },
                 ),
                 mock.patch.object(
-                    orch,
+                    canonical,
                     "classify_variants",
                     return_value={
                         fake_variants[0].variant_id: mock.MagicMock(
@@ -544,9 +548,9 @@ class TestPgxWarningOnSomatic:
                         ),
                     },
                 ),
-                mock.patch.object(orch, "build_variant_records", return_value=[]),
+                mock.patch.object(canonical, "build_variant_records", return_value=[]),
                 mock.patch.object(
-                    orch,
+                    canonical,
                     "build_summary",
                     return_value={
                         "total": 1,
@@ -558,8 +562,8 @@ class TestPgxWarningOnSomatic:
                         "likely_benign": 0,
                     },
                 ),
-                mock.patch.object(orch, "split_variants_for_display", return_value=([], [], [], 0, [], [])),
-                mock.patch.object(orch, "get_all_db_versions", return_value={}),
+                mock.patch.object(canonical, "split_variants_for_display", return_value=([], [], [], 0, [], [])),
+                mock.patch.object(canonical, "get_all_db_versions", return_value={}),
                 mock.patch.object(orch, "generate_report_html", return_value="<html></html>"),
                 mock.patch(
                     "scripts.pharmacogenomics.korean_pgx.get_pgx_results",
