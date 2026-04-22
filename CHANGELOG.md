@@ -11,6 +11,75 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Changed — v2.5.4 (batch-canonical refactor + report assembly hygiene)
+- **Single source of truth for per-sample assembly.** New
+  `scripts/orchestration/canonical.py` holds the canonical
+  single-sample pipeline (`build_sample_report`). Both
+  `scripts/orchestrate.py::run_pipeline` (CLI wrapper) and
+  `scripts/orchestration/batch.py::run_batch_pipeline` (per-sample loop)
+  route through it. The pre-v2.5.4 `batch.py` had its own ad-hoc
+  pipeline that diverged from single-mode on half a dozen behaviours;
+  that divergence is gone.
+- **H1 — Variant reuse across samples fixed.** Pre-v2.5.4 batch mode
+  keyed a shared `unique_variants` dict on `chrom:pos:ref:alt` and
+  re-used the **first sample's Variant object** for every later sample.
+  Variant carries per-sample annotation state (canonical transcript,
+  HGVSp, trio genotype, selection_reason_list, source, matching_hpo,
+  …) so later samples' reports silently inherited earlier samples'
+  annotations — a correctness bug. The new batch calls
+  `build_sample_report` once per VCF; Variant identity never crosses a
+  sample boundary.
+- **M2 — CIViC priority fix.** The pre-v2.5.4 renderer chained
+  `setdefault()` calls on `finding_summary`, `treatment_strategies`,
+  `references`, and `content_status`, filling from gene_knowledge
+  first and CIViC second. Because `setdefault` cannot overwrite, the
+  order meant **gene_knowledge always beat CIViC** — the opposite of
+  what the comment claimed and of the v2.2 curate-then-narrate
+  contract. Enrichment now lives in canonical (assembly time), and
+  CIViC values win over gene_knowledge for the overlapping clinical
+  fields. Caller-supplied values (e.g. a Board scrubber setting
+  `content_status="ai-generated"`) are still preserved verbatim.
+- **L7 — `generate_report_html` is pure.** The renderer used to mutate
+  `report_data["variants"][*]` / `report_data["pgx_results"]` via
+  `setdefault`. It now deep-copies those lists into a render-scoped
+  view model so the caller's dict is never touched. Re-running the
+  same report through the renderer is idempotent.
+- **M3 — Real `skip_api` in batch provenance.** Pre-v2.5.4 batch wrote
+  `pipeline.skip_api = False` and `db_versions = get_all_db_versions(skip_api=False)`
+  regardless of the `--skip-api` CLI flag. The per-sample `report_data`
+  now reflects the caller's actual value; research reproducibility is
+  no longer dependent on the runner remembering to ignore these fields.
+- **M4 — `sample_id` consistency across modes.** Single mode used
+  `Path(vcf_path).stem.upper()` (gives `SAMPLE.VCF` for
+  `sample.vcf.gz` — the inner `.vcf` survived and everything was
+  uppercased). Batch mode stripped extensions properly but kept case.
+  The two disagreed on the same file. The new `normalize_sample_id`
+  helper — used by both modes — strips `.vcf.bgz` / `.vcf.gz` / `.vcf`
+  in that order and preserves case. **Breaking**: single-mode sample
+  id changes from `SAMPLE.VCF` to `sample`. Update downstream consumers
+  that parse sample id from the report filename.
+- **M5 — `.vcf.bgz` batch discovery.** Directory-mode discovery now
+  globs `.vcf` + `.vcf.gz` + `.vcf.bgz`. The CLI + VCF parser
+  already supported `.vcf.bgz`; batch discovery silently skipped them
+  before.
+- **M6 — Per-sample feature parity in batch.** `BatchSample` dataclass
+  carries optional `germline_vcf`, `ped_path`, `hpo_ids`, `sv_path`,
+  `intervar_path`, `clinical_note`, and `panel_size_mb`. Manifest CSV
+  can opt into these columns; the legacy two-column
+  (`sample_id,vcf_path`) manifest keeps working. HPO IDs merge (batch
+  default + per-sample override). When `--clinical-board` is enabled
+  batch assembly falls back to serial because the LLM layer is not
+  thread-safe.
+- **Side effect — `content_status="curated-civic"` frequency rises.**
+  Because CIViC now wins over gene_knowledge on cancer reports, the
+  curated-civic watermark appears on more rows than before. Downstream
+  filters that tracked this value should re-baseline. (Annotated-VCF
+  smoke: 0 → 6 rows carrying `curated-civic` on the demo fixture.)
+- **Non-goals held.** Classification (ACMG / AMP tiering), ClinVar /
+  gnomAD / KOVA query logic, Clinical Board prompts / LLM choice, and
+  the Jinja template engine are untouched.
+- Rollback tag: `pre-batch-refactor`.
+
 ### Changed — v2.5 (KOVA v7 Korean frequency migration)
 - **Korean frequency source consolidated to KOVA v7.** The earlier
   multi-cohort Korean-frequency strategy (several parallel Korean-only
