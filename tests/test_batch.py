@@ -59,7 +59,12 @@ def test_discover_samples_invalid_path():
 
 
 def test_collect_unique_variants():
-    """_collect_unique_variants correctly deduplicates shared variants.
+    """Legacy helper is still importable for external harnesses.
+
+    v2.5.4: the batch pipeline no longer reuses Variant objects across
+    samples (the reuse caused the H1 annotation-leak bug). This helper
+    stays as a VCF-overlap diagnostic only and no longer feeds the
+    annotation loop.
 
     sample_001 has TP53, BRCA2, CFTR
     sample_002 has CFTR, CYP2C19, HLA-B      (CFTR shared with 001)
@@ -73,16 +78,19 @@ def test_collect_unique_variants():
     unique_variants, sample_map = _collect_unique_variants(samples)
 
     total = sum(len(keys) for keys in sample_map.values())
-
-    # 3 samples × 3 variants each = 9 total references
     assert total == 9
-    # TP53 shared between 001 and 003, CFTR shared between 001 and 002 → 7 unique
     assert len(unique_variants) == 7
-    assert total > len(unique_variants), "Expected deduplication (total > unique)"
+    assert total > len(unique_variants)
 
 
-def test_batch_pipeline_dedup_count():
-    """run_batch_pipeline reports unique_variants < total_variants due to shared TP53/CFTR."""
+def test_batch_pipeline_multi_sample_processing():
+    """run_batch_pipeline processes every sample independently (v2.5.4).
+
+    Replaces the pre-v2.5.4 ``test_batch_pipeline_dedup_count`` — dedup
+    no longer runs because it was the source of the H1 annotation-leak
+    bug. total_variants now counts the variants each sample's report
+    actually renders; unique_variants mirrors it (no cross-sample sharing).
+    """
     from scripts.orchestrate import run_batch_pipeline
 
     result = run_batch_pipeline(
@@ -94,9 +102,13 @@ def test_batch_pipeline_dedup_count():
         _skip_reports=True,
     )
 
+    assert result["samples_processed"] == 3
+    # Each of the three samples renders 3 variants -> 9 total.
     assert result["total_variants"] == 9
-    assert result["unique_variants"] == 7
-    assert result["cache_hits"] == 2  # TP53 + CFTR each seen a second time
+    # Post-H1-fix: no dedup, so unique == total and cache_hits == 0.
+    assert result["unique_variants"] == 9
+    assert result["cache_hits"] == 0
+    assert result["errors"] == []
 
 
 # ── End-to-end tests ───────────────────────────────────────────────────────────
