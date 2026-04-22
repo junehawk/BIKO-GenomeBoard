@@ -449,16 +449,20 @@ def test_evidence_source_in_report():
 
 
 def test_civic_enrichment_called_in_cancer_mode(monkeypatch):
-    """CIViC enrichment runs when mode='cancer'."""
+    """CIViC enrichment runs when mode='cancer'.
+
+    v2.5.4: enrichment was moved to scripts.orchestration.canonical so
+    the renderer stays pure. We patch the canonical module's bound names.
+    """
     calls = []
 
     def mock_get_gene_summary(gene):
         calls.append(("get_gene_summary", gene))
         return {"description": "Mock CIViC description for " + gene}
 
-    monkeypatch.setattr("scripts.reporting.generate_pdf.get_gene_summary", mock_get_gene_summary)
-    monkeypatch.setattr("scripts.reporting.generate_pdf.get_treatment_summary", lambda g, v: None)
-    monkeypatch.setattr("scripts.reporting.generate_pdf.get_variant_evidence", lambda g, v=None: [])
+    monkeypatch.setattr("scripts.orchestration.canonical.get_gene_summary", mock_get_gene_summary)
+    monkeypatch.setattr("scripts.orchestration.canonical.get_treatment_summary", lambda g, v: None)
+    monkeypatch.setattr("scripts.orchestration.canonical.get_variant_evidence", lambda g, v=None: [])
 
     generate_report_html(MINIMAL_REPORT, mode="cancer")
     assert any(fn == "get_gene_summary" for fn, _ in calls), "CIViC get_gene_summary should be called in cancer mode"
@@ -472,9 +476,9 @@ def test_civic_enrichment_skipped_in_rare_disease_mode(monkeypatch):
         calls.append(("get_gene_summary", gene))
         return {"description": "Should not be called"}
 
-    monkeypatch.setattr("scripts.reporting.generate_pdf.get_gene_summary", mock_get_gene_summary)
-    monkeypatch.setattr("scripts.reporting.generate_pdf.get_treatment_summary", lambda g, v: None)
-    monkeypatch.setattr("scripts.reporting.generate_pdf.get_variant_evidence", lambda g, v=None: [])
+    monkeypatch.setattr("scripts.orchestration.canonical.get_gene_summary", mock_get_gene_summary)
+    monkeypatch.setattr("scripts.orchestration.canonical.get_treatment_summary", lambda g, v: None)
+    monkeypatch.setattr("scripts.orchestration.canonical.get_variant_evidence", lambda g, v=None: [])
 
     generate_report_html(MINIMAL_REPORT, mode="rare_disease")
     assert not calls, "CIViC get_gene_summary must NOT be called in rare_disease mode"

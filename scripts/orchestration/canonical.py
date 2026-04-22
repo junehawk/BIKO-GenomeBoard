@@ -20,6 +20,7 @@ Design contract:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import asdict, is_dataclass
 from datetime import date
 from pathlib import Path
@@ -44,6 +45,82 @@ from scripts.storage.query_civic import get_gene_summary, get_treatment_summary,
 from scripts.storage.version_manager import get_all_db_versions
 
 logger = logging.getLogger(__name__)
+
+
+# ── Narrative shaping helpers (moved from generate_pdf for render purity) ────
+
+
+def _adjust_finding_summary(summary: str, classification: str) -> str:
+    """Adjust gene knowledge finding_summary to match actual variant classification.
+
+    Replacement order matters: replace longer phrases first to avoid
+    partial matches (e.g. "A likely pathogenic variant" before "A pathogenic variant").
+    """
+    cls_lower = classification.lower()
+    vus_label = "A variant of uncertain significance (VUS)"
+    if "vus" in cls_lower or "uncertain" in cls_lower:
+        summary = summary.replace("A likely pathogenic variant", vus_label)
+        summary = summary.replace("A pathogenic variant", vus_label)
+        summary = summary.replace("A pharmacogenomic variant", vus_label)
+        if "further evidence is needed" not in summary.lower():
+            summary = summary.replace(
+                "was identified in this specimen",
+                "was identified in this specimen. Further evidence is needed to determine clinical significance",
+            )
+    elif "benign" in cls_lower:
+        summary = summary.replace("A likely pathogenic variant", "A benign variant")
+        summary = summary.replace("A pathogenic variant", "A benign variant")
+    elif "drug response" in cls_lower:
+        summary = summary.replace("A likely pathogenic variant", "A pharmacogenomic variant")
+        summary = summary.replace("A pathogenic variant", "A pharmacogenomic variant")
+    elif "risk factor" in cls_lower:
+        summary = summary.replace("A likely pathogenic variant", "A risk factor variant")
+        summary = summary.replace("A pathogenic variant", "A risk factor variant")
+    elif "likely pathogenic" in cls_lower:
+        summary = summary.replace("A pathogenic variant", "A likely pathogenic variant")
+    return summary
+
+
+def _linkify_pmids(text: str) -> str:
+    """Convert PMID references in text to PubMed links."""
+    if not text:
+        return text
+
+    def _replace_pmid(match: re.Match) -> str:
+        pmid = match.group(1)
+        return (
+            f'<a href="https://pubmed.ncbi.nlm.nih.gov/{pmid}/" target="_blank" '
+            f'rel="noopener" style="color:#1d4ed8;text-decoration:none;">PMID:{pmid}</a>'
+        )
+
+    return re.sub(r"PMID:\s*(\d+)", _replace_pmid, text)
+
+
+def _build_frequency_text(v: dict) -> str:
+    """Assemble a human-readable frequency summary from available data.
+
+    Extracted from ``generate_report_html``; runs once per variant at
+    assembly time rather than on every render.
+    """
+    freq_parts: list[str] = []
+    if v.get("gnomad_all") is not None:
+        freq_parts.append(f"gnomAD global AF: {v['gnomad_all']:.6f}")
+    if v.get("gnomad_eas") is not None:
+        freq_parts.append(f"gnomAD East Asian AF: {v['gnomad_eas']:.6f}")
+    kf = ""
+    if v.get("agents") and v["agents"].get("korean_pop"):
+        kf = v["agents"]["korean_pop"].get("korean_flag", "")
+    if kf and kf not in ("No notable findings", "No frequency data available"):
+        freq_parts.append(f"Korean: {kf}")
+    if v.get("kova_freq") is not None:
+        freq_parts.append(f"KOVA Korean AF: {v['kova_freq']}")
+    if v.get("kova_homozygote") is not None:
+        freq_parts.append(f"KOVA homozygote count: {v['kova_homozygote']}")
+    if freq_parts:
+        return ". ".join(freq_parts) + "."
+    if v.get("gnomad_all") is None:
+        return "Not observed in gnomAD population database (absent or extremely rare)."
+    return ""
 
 
 # ── Shared helpers ───────────────────────────────────────────────────────────
@@ -259,37 +336,56 @@ def _enrich_with_gene_knowledge_and_civic(variant_records: list[dict], mode: str
             except Exception as e:
                 logger.debug("CIViC treatment / evidence lookup failed for %s: %s", gene, e)
 
-        # ── Clinical fields (CIViC wins when present) ────────────────────────
+        # ── Clinical fields ──────────────────────────────────────────────────
+        # Precedence (M2 fix): explicit caller-provided value > CIViC
+        # > gene_knowledge > empty string. The pre-v2.5.4 setdefault chain
+        # gave gene_knowledge the win over CIViC — this block flips the
+        # gk-vs-civic tie in CIViC's favour without dropping explicit values
+        # the Board / curator already wrote to the record.
         civic_summary = ""
         if civic_gene and civic_gene.get("description"):
             civic_summary = civic_gene["description"][:500]
-        if civic_summary:
-            v["finding_summary"] = civic_summary
-        elif not v.get("finding_summary"):
-            v["finding_summary"] = gk.get("finding_summary", "")
+        if not v.get("finding_summary"):
+            v["finding_summary"] = civic_summary or gk.get("finding_summary", "")
 
-        if civic_treatment:
-            v["treatment_strategies"] = civic_treatment
-        elif not v.get("treatment_strategies"):
-            v["treatment_strategies"] = gk.get("treatment_strategies", "")
+        if not v.get("treatment_strategies"):
+            v["treatment_strategies"] = civic_treatment or gk.get("treatment_strategies", "")
 
-        if civic_evidence:
-            refs = [
-                {
-                    "pmid": e["pmid"],
-                    "source": e["citation"],
-                    "note": f"{e['evidence_type']} — {e['significance']}",
-                }
-                for e in civic_evidence[:5]
-                if e.get("pmid")
-            ]
-            if refs:
-                v["references"] = refs
-                v["content_status"] = "curated-civic"
+        # References: CIViC evidence rows replace (tagged with
+        # ``content_status="curated-civic"``); otherwise fall back to
+        # gene_knowledge. Caller-provided references are always kept.
+        # ``content_status`` semantics (test_references coverage):
+        #   - caller-supplied → preserved verbatim (plain "ai-generated"
+        #     watermark survives even when references slot is empty)
+        #   - no caller value + CIViC evidence attached → "curated-civic"
+        #   - no caller value + gene_knowledge has references → inherit
+        #     gk.content_status if present
+        #   - no caller value + no CIViC + no gk data → leave unset so
+        #     the watermark div stays out of the template (FAKEGENE case)
+        caller_supplied_content_status = "content_status" in v and v.get("content_status")
         if not v.get("references"):
-            v["references"] = gk.get("references", [])
-        if not v.get("content_status"):
-            v["content_status"] = gk.get("content_status", "ai-generated")
+            if civic_evidence:
+                refs = [
+                    {
+                        "pmid": e["pmid"],
+                        "source": e["citation"],
+                        "note": f"{e['evidence_type']} — {e['significance']}",
+                    }
+                    for e in civic_evidence[:5]
+                    if e.get("pmid")
+                ]
+                if refs:
+                    v["references"] = refs
+                    if not caller_supplied_content_status:
+                        v["content_status"] = "curated-civic"
+            if not v.get("references"):
+                gk_refs = gk.get("references", [])
+                if gk_refs:
+                    v["references"] = gk_refs
+        if not v.get("content_status") and "content_status" not in v:
+            gk_status = gk.get("content_status")
+            if gk_status:
+                v["content_status"] = gk_status
 
         # ── Non-clinical fallbacks (gene_knowledge only) ─────────────────────
         if not v.get("frequency_prognosis"):
@@ -318,7 +414,43 @@ def _enrich_with_gene_knowledge_and_civic(variant_records: list[dict], mode: str
             if not v.get("variant_effect"):
                 v["variant_effect"] = gk.get("hgvs", {}).get("variant_effect", "")
 
+        # ── Frequency narrative ──────────────────────────────────────────────
+        if not v.get("frequency_prognosis"):
+            v["frequency_prognosis"] = _build_frequency_text(v)
+
+        # ── AMP tier defaults ────────────────────────────────────────────────
+        v.setdefault("tier_evidence_source", "")
+        v.setdefault("civic_match_level", "none")
+
+        # ── Classification-aware finding_summary adjustment + PMID linkify ──
+        classification = v.get("classification", "VUS")
+        raw_summary = v.get("finding_summary", "")
+        if raw_summary:
+            v["finding_summary"] = _adjust_finding_summary(raw_summary, classification)
+
+        if v.get("treatment_strategies") and "<a href=" not in v["treatment_strategies"]:
+            v["treatment_strategies"] = _linkify_pmids(v["treatment_strategies"])
+        if v.get("finding_summary") and "<a href=" not in v["finding_summary"]:
+            v["finding_summary"] = _linkify_pmids(v["finding_summary"])
+
     return variant_records
+
+
+def _enrich_pgx_with_gene_knowledge(pgx_results: list[dict]) -> list[dict]:
+    """Fill HGVS / variant_effect on PGx rows from gene_knowledge (defaults).
+
+    Moved from generate_report_html for render purity. Mutates and returns
+    the same list.
+    """
+    for pgx in pgx_results:
+        gene = pgx.get("gene")
+        if not gene:
+            continue
+        info = get_gene_info(gene)
+        if info:
+            pgx.setdefault("hgvs", info.get("hgvs", {}))
+            pgx.setdefault("variant_effect", info.get("hgvs", {}).get("variant_effect", ""))
+    return pgx_results
 
 
 # ── Top-level entry point ────────────────────────────────────────────────────
@@ -376,6 +508,8 @@ def build_sample_report(
 
     # ── PGx ───────────────────────────────────────────────────────────────
     pgx_bundle = _run_pgx(variants, germline_vcf, db_results)
+    # Phase 2 (L7): enrich PGx rows here, not in render.
+    _enrich_pgx_with_gene_knowledge(pgx_bundle["pgx_results_list"])
 
     # ── ACMG classification ───────────────────────────────────────────────
     classification_results = _classify_all(variants, db_results, freq_results, intervar_path)
@@ -384,10 +518,12 @@ def build_sample_report(
     variant_records = build_variant_records(
         variants, db_results, freq_results, classification_results, mode, hpo_results
     )
-    # NOTE: v2.5.4 Phase 1 keeps gene_knowledge / CIViC enrichment inside
-    # ``generate_report_html`` for byte-for-byte backward compatibility.
-    # Phase 2 will move it here via ``_enrich_with_gene_knowledge_and_civic``
-    # and make the renderer pure (M2, L7 fix).
+    # v2.5.4 Phase 2 (M2 + L7 fix): enrichment happens here at assembly
+    # time rather than inside generate_report_html. CIViC data now wins
+    # over gene_knowledge for clinical fields (finding_summary,
+    # treatment_strategies, references, content_status) — the previous
+    # setdefault chain had the priorities inverted.
+    _enrich_with_gene_knowledge_and_civic(variant_records, mode)
 
     summary = build_summary(variant_records)
     tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = split_variants_for_display(

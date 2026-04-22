@@ -1,197 +1,98 @@
-# scripts/reporting/generate_pdf.py
+"""HTML + PDF rendering.
+
+v2.5.4 Phase 2: this module is a **pure renderer**. The variant and PGx
+enrichment logic that previously lived here (gene_knowledge fallback,
+CIViC override, PMID linkification, classification-aware finding_summary
+rewrite, frequency text synthesis) has moved to
+``scripts.orchestration.canonical``. ``generate_report_html`` now:
+
+    * Does **not** mutate its input dict. A shallow copy of the
+      ``variants`` + ``pgx_results`` lists (with deep-copied items) is
+      used for any defensive enrichment.
+    * Runs the canonical enrichment helpers only when the input looks
+      un-enriched (legacy test fixtures, rerender_report callers that
+      loaded a pre-Phase-2 JSON dump). When the input is already enriched
+      (the default path from ``build_sample_report``) the helpers are
+      idempotent — every field guard uses ``not v.get(...)`` rather than
+      ``setdefault`` — so calling them twice is safe.
+    * Never changes which data source wins for overlapping fields. The
+      CIViC-over-gene_knowledge priority (M2 fix) is enforced inside the
+      canonical enrichment helper.
+"""
+
+from __future__ import annotations
+
+import copy
 import os
-import re
 from pathlib import Path
-from typing import Dict
+from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
 from scripts.common.config import get
-from scripts.common.gene_knowledge import get_gene_info
-from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant
-from scripts.storage.query_civic import get_gene_summary, get_treatment_summary, get_variant_evidence
+from scripts.orchestration.canonical import (
+    _enrich_pgx_with_gene_knowledge,
+    _enrich_with_gene_knowledge_and_civic,
+)
+
+# Re-export for tests that monkey-patch the old module paths.
+from scripts.common.gene_knowledge import get_gene_info  # noqa: F401
+from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant  # noqa: F401
+from scripts.storage.query_civic import (  # noqa: F401
+    get_gene_summary,
+    get_treatment_summary,
+    get_variant_evidence,
+)
 
 
-def _adjust_finding_summary(summary: str, classification: str) -> str:
-    """Adjust gene knowledge finding_summary to match actual variant classification.
+def _maybe_enrich_view_model(report_data: dict, mode: str) -> dict:
+    """Build a render-ready view model without mutating ``report_data``.
 
-    Replacement order matters: replace longer phrases first to avoid
-    partial matches (e.g. "A likely pathogenic variant" before "A pathogenic variant").
+    Deep-copies the ``variants`` and ``pgx_results`` lists so the caller's
+    dict and its variant/pgx dicts stay untouched (L7 fix). Then runs the
+    canonical enrichment helpers on the copies — idempotent if already
+    enriched by ``build_sample_report``.
     """
-    cls_lower = classification.lower()
-    vus_label = "A variant of uncertain significance (VUS)"
-    if "vus" in cls_lower or "uncertain" in cls_lower:
-        summary = summary.replace("A likely pathogenic variant", vus_label)
-        summary = summary.replace("A pathogenic variant", vus_label)
-        summary = summary.replace("A pharmacogenomic variant", vus_label)
-        if "further evidence is needed" not in summary.lower():
-            summary = summary.replace(
-                "was identified in this specimen",
-                "was identified in this specimen. Further evidence is needed to determine clinical significance",
-            )
-    elif "benign" in cls_lower:
-        summary = summary.replace("A likely pathogenic variant", "A benign variant")
-        summary = summary.replace("A pathogenic variant", "A benign variant")
-    elif "drug response" in cls_lower:
-        summary = summary.replace("A likely pathogenic variant", "A pharmacogenomic variant")
-        summary = summary.replace("A pathogenic variant", "A pharmacogenomic variant")
-    elif "risk factor" in cls_lower:
-        summary = summary.replace("A likely pathogenic variant", "A risk factor variant")
-        summary = summary.replace("A pathogenic variant", "A risk factor variant")
-    elif "likely pathogenic" in cls_lower:
-        summary = summary.replace("A pathogenic variant", "A likely pathogenic variant")
-    return summary
+    view: dict[str, Any] = dict(report_data)
+    view["variants"] = copy.deepcopy(report_data.get("variants", []))
+    view["pgx_results"] = copy.deepcopy(report_data.get("pgx_results", []))
+    _enrich_with_gene_knowledge_and_civic(view["variants"], mode)
+    _enrich_pgx_with_gene_knowledge(view["pgx_results"])
+    return view
 
 
-def _linkify_pmids(text):
-    """Convert PMID references in text to PubMed links."""
-    if not text:
-        return text
+def generate_report_html(report_data: dict, mode: str = "cancer") -> str:
+    """Render ``report_data`` to an HTML document.
 
-    def _replace_pmid(match):
-        pmid = match.group(1)
-        return f'<a href="https://pubmed.ncbi.nlm.nih.gov/{pmid}/" target="_blank" rel="noopener" style="color:#1d4ed8;text-decoration:none;">PMID:{pmid}</a>'
-
-    return re.sub(r"PMID:\s*(\d+)", _replace_pmid, text)
-
-
-def generate_report_html(report_data: Dict, mode: str = "cancer") -> str:
+    The input is not mutated. All variant / PGx enrichment is performed
+    on a defensive copy returned to the Jinja environment.
+    """
     # Determine template directory based on mode
     templates_base = get("paths.templates") or str(Path(__file__).parent.parent.parent / "templates")
     template_dir = os.path.join(templates_base, mode)
-
-    # Fall back to cancer if mode-specific template doesn't exist
     if not os.path.exists(os.path.join(template_dir, "report.html")):
         template_dir = os.path.join(templates_base, "cancer")
 
-    # Enrich variants with gene knowledge
-    for v in report_data.get("variants", []):
-        gene = v.get("gene")
-        if gene:
-            info = get_gene_info(gene)
-            if info:
-                v.setdefault("treatment_strategies", info.get("treatment_strategies", ""))
-                v.setdefault("frequency_prognosis", info.get("frequency_prognosis", ""))
-                v.setdefault("gene_full_name", info.get("full_name", ""))
-                v.setdefault("associated_conditions", info.get("associated_conditions", []))
-                v.setdefault("korean_specific_note", info.get("korean_specific_note"))
-                v.setdefault("finding_summary", info.get("finding_summary", ""))
-                v.setdefault("references", info.get("references", []))
-                v.setdefault("content_status", info.get("content_status", "ai-generated"))
-                # VCF annotation takes priority over static gene_knowledge for hgvs/variant_effect
-                if v.get("hgvsc") or v.get("hgvsp"):
-                    v.setdefault(
-                        "hgvs",
-                        {
-                            "transcript": v.get("transcript", ""),
-                            "cdna": v.get("hgvsc", ""),
-                            "protein": v.get("hgvsp", ""),
-                            "variant_effect": v.get("consequence", ""),
-                        },
-                    )
-                    v.setdefault("variant_effect", v.get("consequence", ""))
-                else:
-                    v.setdefault("hgvs", info.get("hgvs", {}))
-                    hgvs = info.get("hgvs", {})
-                    v.setdefault("variant_effect", hgvs.get("variant_effect", ""))
+    view = _maybe_enrich_view_model(report_data, mode)
 
-            if mode == "cancer":
-                # CIViC enrichment (takes priority over gene_knowledge for clinical content)
-                civic_gene = get_gene_summary(gene)
-                if civic_gene and civic_gene.get("description"):
-                    v.setdefault("finding_summary", civic_gene["description"][:500])
-
-                # Treatment from CIViC
-                hgvsp = v.get("hgvsp", "")
-                civic_variant_name = _hgvsp_to_civic_variant(hgvsp)
-                civic_treatment = get_treatment_summary(gene, civic_variant_name)
-                if civic_treatment:
-                    v.setdefault("treatment_strategies", civic_treatment)
-
-                # Evidence references from CIViC
-                civic_evidence = get_variant_evidence(gene, civic_variant_name) if civic_variant_name else []
-                if not civic_evidence:
-                    civic_evidence = get_variant_evidence(gene)
-                if civic_evidence:
-                    refs = [
-                        {
-                            "pmid": e["pmid"],
-                            "source": e["citation"],
-                            "note": f"{e['evidence_type']} — {e['significance']}",
-                        }
-                        for e in civic_evidence[:5]
-                        if e["pmid"]
-                    ]
-                    if refs:
-                        v.setdefault("references", refs)
-                        v.setdefault("content_status", "curated-civic")
-
-        # Build frequency text from available data if frequency_prognosis is empty
-        if not v.get("frequency_prognosis"):
-            freq_parts = []
-            if v.get("gnomad_all") is not None:
-                freq_parts.append(f"gnomAD global AF: {v['gnomad_all']:.6f}")
-            if v.get("gnomad_eas") is not None:
-                freq_parts.append(f"gnomAD East Asian AF: {v['gnomad_eas']:.6f}")
-            kf = ""
-            if v.get("agents") and v["agents"].get("korean_pop"):
-                kf = v["agents"]["korean_pop"].get("korean_flag", "")
-            if kf and kf not in ("No notable findings", "No frequency data available"):
-                freq_parts.append(f"Korean: {kf}")
-            if v.get("kova_freq") is not None:
-                freq_parts.append(f"KOVA Korean AF: {v['kova_freq']}")
-            if v.get("kova_homozygote") is not None:
-                freq_parts.append(f"KOVA homozygote count: {v['kova_homozygote']}")
-            if freq_parts:
-                v["frequency_prognosis"] = ". ".join(freq_parts) + "."
-            elif v.get("gnomad_all") is None:
-                v["frequency_prognosis"] = "Not observed in gnomAD population database (absent or extremely rare)."
-
-        # Ensure AMP tier fields have defaults (set by orchestrate.py in cancer mode)
-        v.setdefault("tier_evidence_source", "")
-        v.setdefault("civic_match_level", "none")
-
-        # Always apply classification-aware adjustment to finding_summary
-        classification = v.get("classification", "VUS")
-        raw_summary = v.get("finding_summary", "")
-        if raw_summary:
-            v["finding_summary"] = _adjust_finding_summary(raw_summary, classification)
-
-        # Convert PMID references to clickable HTML links (safe — we control this text)
-        # Guard against double-linkifying if already processed (e.g. called twice on same dict)
-        if v.get("treatment_strategies") and "<a href=" not in v["treatment_strategies"]:
-            v["treatment_strategies"] = _linkify_pmids(v["treatment_strategies"])
-        if v.get("finding_summary") and "<a href=" not in v["finding_summary"]:
-            v["finding_summary"] = _linkify_pmids(v["finding_summary"])
-
-    for pgx in report_data.get("pgx_results", []):
-        gene = pgx.get("gene")
-        if gene:
-            info = get_gene_info(gene)
-            if info:
-                pgx.setdefault("hgvs", info.get("hgvs", {}))
-                pgx.setdefault("variant_effect", info.get("hgvs", {}).get("variant_effect", ""))
+    # SV / TMB default keys (render-time defaults, not mutation of caller).
+    view.setdefault("sv_class45", [])
+    view.setdefault("sv_class3_display", [])
+    view.setdefault("sv_class3_hidden", 0)
+    view.setdefault("sv_benign_count", 0)
+    view.setdefault("sv_variants", [])
+    view.setdefault("tmb", None)
 
     # Add shared templates directory to loader
     shared_dir = os.path.join(templates_base, "shared")
     loader = FileSystemLoader([template_dir, templates_base, shared_dir])
 
-    # Ensure SV fields have defaults
-    report_data.setdefault("sv_class45", [])
-    report_data.setdefault("sv_class3_display", [])
-    report_data.setdefault("sv_class3_hidden", 0)
-    report_data.setdefault("sv_benign_count", 0)
-    report_data.setdefault("sv_variants", [])
-
-    # TMB default
-    report_data.setdefault("tmb", None)
-
     env = Environment(loader=loader, autoescape=True)
     template = env.get_template("report.html")
-    return template.render(**report_data)
+    return template.render(**view)
 
 
-def generate_pdf(report_data: Dict, output_path: str, mode: str = "cancer") -> str:
+def generate_pdf(report_data: dict, output_path: str, mode: str = "cancer") -> str:
     html = generate_report_html(report_data, mode=mode)
     try:
         from weasyprint import HTML
