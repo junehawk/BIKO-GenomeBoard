@@ -47,15 +47,18 @@ def _load_agents(
             ClinicalEvidenceAnalyst(client=client, model=model, language=language),
         ]
 
+    # v2.5.5: PGx Specialist excluded from rare-disease mode. Empirically the
+    # agent always returns 0 findings on rare-disease cases (no curated PGx
+    # data path), wasting ~15 s of GPU time per run with no clinical signal.
+    # If PGx becomes relevant for a future rare-disease subtype, re-introduce
+    # it conditionally on the case briefing rather than unconditionally here.
     from scripts.clinical_board.agents.disease_geneticist import DiseaseGeneticist
     from scripts.clinical_board.agents.literature_analyst import LiteratureAnalyst
-    from scripts.clinical_board.agents.pgx_specialist import PGxSpecialist
     from scripts.clinical_board.agents.variant_pathologist import VariantPathologist
 
     return [
         VariantPathologist(client=client, model=model, language=language),
         DiseaseGeneticist(client=client, model=model, language=language),
-        PGxSpecialist(client=client, model=model, language=language),
         LiteratureAnalyst(client=client, model=model, language=language),
     ]
 
