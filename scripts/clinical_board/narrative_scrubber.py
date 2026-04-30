@@ -1,10 +1,15 @@
-"""Narrative scrubber (AI Clinical Board v2.2 · A2).
+"""Narrative scrubber (AI Clinical Board v2.2 · A2, v2.5.5 lookup backfill).
 
 Post-processor that walks the full ``CancerBoardOpinion`` dataclass and:
 
-1. Drops any ``treatment_options`` row whose ``(curated_id, variant_key)``
-   pair was not emitted by the curator (catches copy-paste attacks where an
-   LLM reuses a valid curated_id under the wrong variant).
+1. Validates each ``treatment_options`` row against the curator and drops any
+   row whose ``curated_id`` is not in the curator output. The ``variant_key``
+   is **deterministically backfilled** from the curator dict — the scrubber
+   does not trust the LLM's variant_key field. This pins each row to the
+   variant the curator originally associated with that curated_id, closing
+   the v2.2 paste-attack threat model: pasting a valid curated_id under a
+   different variant in the LLM narrative is a no-op (the row is reassigned
+   to the original variant).
 2. Scrubs banned drug tokens out of every prose field — headline, body,
    evidence paragraph, action lists, monitoring plan, agent-opinion findings
    and recommendations. "Banned" = a drug name that appeared in a dropped
@@ -12,6 +17,16 @@ Post-processor that walks the full ``CancerBoardOpinion`` dataclass and:
 
 The scrubber is the patient-safety gate enforced *after* the LLM response is
 parsed and *before* it is serialised to ``raw_opinion_json`` or rendered.
+
+v2.5.5 (2026-04-30): switched from ``(curated_id, variant_key)`` pair-matching
+to ``curated_id`` lookup with variant_key backfill. Motivation: supergemma4-31b
+miscopied variant_key on long Cancer Chair prompts (e.g., ``chr13:32356550:C:T``
+→ ``chr13:32356 own:C:T``), causing 25 % drop rate on real demo runs. Pair
+matching is mathematically equivalent to lookup-then-backfill, but the latter
+is robust to BPE/SentencePiece-level token confusion in the LLM's variant_key
+copy. Paste-attack defence is preserved (and arguably strengthened): a pasted
+curated_id is reassigned to its original variant_key, never to a different
+variant.
 """
 
 from __future__ import annotations
@@ -34,8 +49,29 @@ def _allowed_drug_set(curated_by_variant: Dict[str, list]) -> Set[str]:
     return allowed
 
 
+def _curated_lookup(curated_by_variant: Dict[str, list]) -> Dict[str, Tuple[str, Any]]:
+    """Map ``curated_id`` → ``(variant_key, original_curated_row)``.
+
+    The curator deduplicates curated_ids per variant; cross-variant collisions
+    are not expected (curated_ids are high-entropy hex). On a hypothetical
+    collision, last-wins.
+    """
+    lookup: Dict[str, Tuple[str, Any]] = {}
+    for variant_key, rows in (curated_by_variant or {}).items():
+        for row in rows or []:
+            cid = _row_attr(row, "curated_id")
+            if cid:
+                lookup[cid] = (variant_key, row)
+    return lookup
+
+
 def _valid_pair_set(curated_by_variant: Dict[str, list]) -> Set[Tuple[str, str]]:
-    """Set of ``(curated_id, variant_key)`` pairs the curator emitted."""
+    """Set of ``(curated_id, variant_key)`` pairs the curator emitted.
+
+    Retained for backward compatibility with callers that still want the
+    pair-set view. The scrubber itself uses ``_curated_lookup`` so that
+    variant_key is treated as derived data, not a verification key.
+    """
     pairs: Set[Tuple[str, str]] = set()
     for variant_key, rows in (curated_by_variant or {}).items():
         for row in rows or []:
@@ -67,18 +103,17 @@ def _scrub_text(text: str, banned: Iterable[str]) -> str:
 
 
 def validate_treatment_option(option: Dict[str, Any], curated_by_variant: Dict[str, list]) -> bool:
-    """Return True iff the row's ``(curated_id, variant_key)`` pair is valid.
+    """Return True iff the row's ``curated_id`` is present in the curator output.
 
-    A row is valid iff:
-    * it carries a non-empty ``curated_id`` AND a non-empty ``variant_key``
-    * that exact pair is present in the curator output (the curator is
-      authoritative — if it didn't emit the pair, the row is hallucinated)
+    A row is valid iff it carries a non-empty ``curated_id`` and that id is
+    present in the curator's lookup. ``variant_key`` is ignored at validation
+    time — :func:`scrub_opinion` overwrites it with the curator's authoritative
+    value before keeping the row.
     """
-    cid = str(option.get("curated_id", "") or "")
-    vk = str(option.get("variant_key", "") or "")
-    if not cid or not vk:
+    cid = str(option.get("curated_id", "") or "").strip()
+    if not cid:
         return False
-    return (cid, vk) in _valid_pair_set(curated_by_variant)
+    return cid in _curated_lookup(curated_by_variant)
 
 
 _PROSE_STR_FIELDS = (
@@ -103,7 +138,7 @@ _PROSE_LIST_FIELDS = (
 
 
 def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str, int]:
-    """Walk ``opinion`` in place: drop bad rows, scrub banned tokens.
+    """Walk ``opinion`` in place: drop bad rows, backfill variant_key, scrub banned tokens.
 
     Args:
         opinion: a ``CancerBoardOpinion`` (or ``BoardOpinion``) instance —
@@ -115,7 +150,7 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
         for caller-side logging.
     """
     allowed_drugs = _allowed_drug_set(curated_by_variant)
-    valid_pairs = _valid_pair_set(curated_by_variant)
+    lookup = _curated_lookup(curated_by_variant)
 
     banned: Set[str] = set()
     kept: List[Dict[str, Any]] = []
@@ -125,12 +160,24 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
     for row in rows:
         if not isinstance(row, dict):
             continue
-        cid = str(row.get("curated_id", "") or "")
-        vk = str(row.get("variant_key", "") or "")
+        cid = str(row.get("curated_id", "") or "").strip()
         drug = str(row.get("drug", "") or "").strip()
-        if (cid, vk) in valid_pairs and drug.lower() in allowed_drugs:
+        llm_vk = str(row.get("variant_key", "") or "").strip()
+
+        if cid in lookup and drug.lower() in allowed_drugs:
+            true_vk, _ = lookup[cid]
+            if llm_vk and llm_vk != true_vk:
+                logger.info(
+                    "[narrative_scrubber] backfilled variant_key for curated_id=%r: "
+                    "LLM emitted %r, curator says %r — using curator value",
+                    cid,
+                    llm_vk,
+                    true_vk,
+                )
+            row["variant_key"] = true_vk
             kept.append(row)
             continue
+
         dropped += 1
         if drug and drug.lower() not in allowed_drugs:
             banned.add(drug.lower())
@@ -138,7 +185,7 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
             "[narrative_scrubber] dropped treatment row drug=%r curated_id=%r variant_key=%r",
             drug,
             cid,
-            vk,
+            llm_vk,
         )
 
     if hasattr(opinion, "treatment_options"):
