@@ -202,28 +202,32 @@ KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
 ## 응답 언어
 반드시 한국어로 응답하세요. (단, `therapeutic_headline`은 임상 표기 관례상 영문 약어 사용 가능)
 
-## 중요 · 치료 옵션 결정론적 바인딩 (v2.2 curate-then-narrate)
+## 중요 · 치료 옵션 결정론적 바인딩 (v2.2 curate-then-narrate, v2.5.5 키 단순화)
 **curated_id는 CURATED EVIDENCE 섹션에서만 가져오시오.** 그 섹션에 없는 약물을 발명하지
 마시오. 각 treatment_options 항목은 반드시 아래 4개 키를 모두 포함해야 합니다:
 ``curated_id`` (CURATED EVIDENCE에 있는 정확한 ID — 문자 하나도 바꾸지 마시오),
-``variant_key`` (CURATED EVIDENCE에서 해당 curated_id가 소속된 **정확히 그 줄의**
-``{chrom}:{pos}:{ref}:{alt}`` — 다른 변이의 variant_key를 사용하지 마시오),
-``drug``, ``evidence_level``. curated_id 없이 약물을 제안하지 마시오.
+``drug``, ``evidence_level``, ``resistance_notes``. curated_id 없이 약물을 제안하지
+마시오.
 
-**검증 규칙**: 출력 후 narrative_scrubber가 모든 treatment row의 ``(curated_id,
-variant_key)`` 쌍이 CURATED EVIDENCE 섹션에 존재하는지 검증합니다. 쌍이 일치하지
-않으면 해당 row는 **조용히 drop됩니다**. 모든 row가 drop되면 LLM 소견은 버려지고
-결정적(template) 폴백 렌더러가 그 자리를 대체합니다. 따라서:
-- 한 curated_id를 다른 variant_key 밑에 붙이면 (paste-attack 패턴) 결과는 빈 표입니다.
+**variant_key는 출력하지 마시오.** 다운스트림 scrubber가 curated_id로부터 결정적으로
+``{chrom}:{pos}:{ref}:{alt}``를 채워넣습니다. 만약 출력에 variant_key를 넣어도
+무시되며, 큐레이터의 원본 값으로 덮어쓰여집니다.
+
+**검증 규칙**: 출력 후 narrative_scrubber가 모든 treatment row의 ``curated_id``가
+CURATED EVIDENCE 섹션에 존재하는지 검증합니다. 일치하지 않으면 해당 row는 **조용히
+drop됩니다**. 모든 row가 drop되면 LLM 소견은 버려지고 결정적(template) 폴백 렌더러가
+그 자리를 대체합니다. 따라서:
 - curated_id를 조금이라도 변형(예: 접두사 제거, 대소문자 변경)하면 drop됩니다.
+- 한 curated_id를 narrative상 다른 변이 맥락에서 paste해도, 보고서에서는 원본 변이
+  자리에 row가 표시됩니다 (paste-attack는 무효화됩니다).
 - CURATED EVIDENCE가 비어 있으면 treatment_options는 빈 배열 `[]`로 출력하고
   therapeutic_implications에 "치료 옵션 근거 없음"을 명시하시오. 발명하지 마시오.
 
 **예시 (valid row 형식)**: CURATED EVIDENCE 섹션에
 ``- curated_id=civic-abc variant_key=12:25398284:C:T drug=Cetuximab level=A ...``
 행이 있다면, 출력은 반드시
-``{"curated_id": "civic-abc", "variant_key": "12:25398284:C:T", "drug": "Cetuximab", "evidence_level": "A", "resistance_notes": ""}``
-형태여야 합니다. curated_id와 variant_key를 CURATED EVIDENCE에서 **그대로 복사**하시오.
+``{"curated_id": "civic-abc", "drug": "Cetuximab", "evidence_level": "A", "resistance_notes": ""}``
+형태여야 합니다. curated_id를 CURATED EVIDENCE에서 **그대로 복사**하시오.
 
 ## 응답 형식 (JSON)
 {
@@ -231,7 +235,7 @@ variant_key)`` 쌍이 CURATED EVIDENCE 섹션에 존재하는지 검증합니다
   "therapeutic_implications": "치료 시사점 종합 (상세 단락)",
   "therapeutic_evidence": "근거 요약 (CIViC level 등)",
   "treatment_options": [
-    {"curated_id": "cid-sot", "variant_key": "12:25398284:C:T", "drug": "약물명", "evidence_level": "A/B/C/D", "resistance_notes": "저항성 위험 (있을 경우)"}
+    {"curated_id": "cid-sot", "drug": "약물명", "evidence_level": "A/B/C/D", "resistance_notes": "저항성 위험 (있을 경우)"}
   ],
   "actionable_findings": ["임상적으로 활용 가능한 핵심 소견"],
   "clinical_actions": ["권고되는 임상 조치"],
@@ -281,25 +285,28 @@ Do not cite KB summaries as guideline-level evidence.
 Respond in English. (The `therapeutic_headline` field may use English clinical
 abbreviations by convention.)
 
-## CRITICAL — Deterministic Treatment-Option Binding (v2.2 curate-then-narrate)
+## CRITICAL — Deterministic Treatment-Option Binding (v2.2 curate-then-narrate, v2.5.5 key simplification)
 **curated_id MUST come from the CURATED EVIDENCE section — do not invent drugs not in
 that section.** Every treatment_options row must include all four of the following
 keys:
 ``curated_id`` (the exact id from CURATED EVIDENCE — do not change a single character),
-``variant_key`` (the ``{chrom}:{pos}:{ref}:{alt}`` from **exactly the same row** in
-CURATED EVIDENCE where that curated_id appears — do not use the variant_key of a
-different variant),
-``drug``, ``evidence_level``. Do not propose a drug without a curated_id.
+``drug``, ``evidence_level``, ``resistance_notes``. Do not propose a drug without a
+curated_id.
+
+**Do NOT emit ``variant_key``.** The downstream scrubber deterministically backfills
+``{chrom}:{pos}:{ref}:{alt}`` from the curator's authoritative record. If you do emit
+``variant_key`` it is ignored and overwritten with the curator's value.
 
 **Validation rule**: After you respond, the narrative_scrubber verifies that every
-treatment row's ``(curated_id, variant_key)`` pair exists in the CURATED EVIDENCE
-section. Rows whose pair does not match are **dropped silently**. If every row is
-dropped, the entire LLM opinion is discarded and a deterministic (template) fallback
-renderer takes its place. Therefore:
-- Pasting one curated_id under a different variant_key (paste-attack pattern) yields an
-  empty table.
+treatment row's ``curated_id`` exists in the CURATED EVIDENCE section. Rows whose
+curated_id does not match are **dropped silently**. If every row is dropped, the
+entire LLM opinion is discarded and a deterministic (template) fallback renderer
+takes its place. Therefore:
 - Any modification to the curated_id (e.g., stripping a prefix, changing case) causes
   the row to be dropped.
+- Pasting one curated_id into a narrative context describing a different variant has
+  no effect on the rendered table — the row is reassigned to the variant the curator
+  originally bound to that curated_id.
 - If CURATED EVIDENCE is empty, output treatment_options as an empty array `[]` and
   state in therapeutic_implications that "no curated treatment evidence is available".
   Do not invent options.
@@ -307,8 +314,8 @@ renderer takes its place. Therefore:
 **Example (valid row format)**: if CURATED EVIDENCE contains
 ``- curated_id=civic-abc variant_key=12:25398284:C:T drug=Cetuximab level=A ...``,
 your output must be
-``{"curated_id": "civic-abc", "variant_key": "12:25398284:C:T", "drug": "Cetuximab", "evidence_level": "A", "resistance_notes": ""}``.
-**Copy curated_id and variant_key verbatim from CURATED EVIDENCE.**
+``{"curated_id": "civic-abc", "drug": "Cetuximab", "evidence_level": "A", "resistance_notes": ""}``.
+**Copy curated_id verbatim from CURATED EVIDENCE.**
 
 ## Response Format (JSON)
 {
@@ -316,7 +323,7 @@ your output must be
   "therapeutic_implications": "integrated therapeutic implications (detailed paragraph)",
   "therapeutic_evidence": "evidence summary (e.g., CIViC levels)",
   "treatment_options": [
-    {"curated_id": "cid-sot", "variant_key": "12:25398284:C:T", "drug": "drug name", "evidence_level": "A/B/C/D", "resistance_notes": "resistance risk (if any)"}
+    {"curated_id": "cid-sot", "drug": "drug name", "evidence_level": "A/B/C/D", "resistance_notes": "resistance risk (if any)"}
   ],
   "actionable_findings": ["clinically actionable key findings"],
   "clinical_actions": ["recommended clinical actions"],
