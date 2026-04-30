@@ -11,6 +11,53 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Changed — v2.5.5 (Chair JSON simplification + rare-disease PGx skip)
+- **Cancer Chair `variant_key` is now backfilled deterministically.** Before
+  v2.5.5 the Cancer Board Chair LLM was required to emit
+  `{curated_id, variant_key, drug, evidence_level, resistance_notes}` and the
+  `narrative_scrubber` validated each row against a `(curated_id, variant_key)`
+  pair set. Empirically (`data/sample_vcf/demo_variants_grch38_annotated.vcf`,
+  NSCLC, 2026-04-30) supergemma4-31b miscopied `variant_key` on the long
+  Chair prompt (23K chars), rewriting `chr13:32356550:C:T` as
+  `chr13:32356 own:C:T` — a BPE/SentencePiece-level token confusion the
+  prompt-side `"copy character-by-character"` instruction could not prevent.
+  This dropped 25 % of LLM-emitted treatment rows on the demo and silently
+  removed the BRCA2 platinum chemotherapy line (CIViC EID:879, OncoKB Level
+  3B; NCCN NSCLC v.3.2024 first-line standard) from the report.
+  The Chair prompt now omits `variant_key` from the required keys, and
+  `scrub_opinion` looks up the curator's authoritative `variant_key` via
+  `curated_id` and writes it onto the row before keeping it. `validate_treatment_option`
+  validates `curated_id` only.
+- **v2.2 Phase A "curate-then-narrate" contract strengthened, not weakened.**
+  Pasting a valid `curated_id` into a narrative paragraph describing a
+  different variant no longer silently drops the row — it is reassigned to
+  the variant the curator originally bound to that `curated_id`. The
+  EGFR-curated_id-pasted-under-TP53 attack still cannot put an EGFR drug
+  under a TP53 row in the rendered table; instead the row appears under
+  EGFR. `tests/test_board_chair_curated_id.py::test_cross_variant_paste_pinned_to_origin_by_scrubber`
+  pins this new semantic.
+- **Rare-disease mode no longer runs the PGx Specialist agent.**
+  `scripts/clinical_board/runner.py::_load_agents` returns three agents
+  (Variant Pathologist, Disease Geneticist, Literature Analyst) for
+  `mode == "rare-disease"`. The PGx Specialist always returned 0 findings
+  on rare-disease cases (no curated PGx data path), wasting ~15 s of GPU
+  time per run. Cancer mode still runs four agents including PGx.
+- **Non-goal preserved.** The `template_renderer_chair` fallback trigger
+  (`post_scrub_count == 0 AND curator_nonempty`) is unchanged. The fallback
+  still fires when the LLM emits zero treatment rows (or every row has a
+  hallucinated `curated_id`); the only change is that variant_key
+  miscopies no longer reach the trigger. Phase A fixture #1 (fabricated
+  `curated_id`) regression remains green.
+- **Therapeutic Target Analyst empty response (deferred).** The Cancer
+  measurement also showed Therapeutic Target Analyst returning `{}` on
+  the demo VCF (n=1). Hypothesis: medgemma:27b sees the curator's 88
+  authoritative rows and concludes there is nothing to add. v2.5.5 does
+  not modify this — the deterministic curator continues to produce its
+  rows, the Chair narrative continues to integrate the other three
+  agents, and the visible report is preserved. Treated as a separate
+  agent-prompt-fit issue to be measured (n≥10) and addressed in v2.6.
+- Rollback tag: `pre-v2.5.5`.
+
 ### Changed — v2.5.4 (batch-canonical refactor + report assembly hygiene)
 - **Single source of truth for per-sample assembly.** New
   `scripts/orchestration/canonical.py` holds the canonical
