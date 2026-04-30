@@ -11,6 +11,46 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Added — v2.6.0 (OMIM static-fallback expansion)
+- **`scripts/enrichment/query_omim.py::_STATIC_OMIM` expanded from 11 to 89 genes.**
+  The OMIM genemap2.txt SQLite DB requires a licensed download that has
+  not yet landed for this deployment, so `query_omim()` falls back to
+  the hard-coded dict. The pre-v2.6 dict only covered TP53 / BRCA2 /
+  CFTR / ATM / MUTYH / PALB2 / PTPN11 / APOE / NUDT15 / CYP2C19 / HLA-B,
+  leaving the rare-disease report's `inheritance` column blank for
+  the bulk of ACMG SF v3.2 secondary-findings genes and the common
+  neurodevelopmental / cardiomyopathy / connective-tissue / RASopathy
+  panels seen in real Korean WGS workloads.
+  The expanded dict now covers HBOC (BRCA1/2, PALB2, ATM, CHEK2,
+  BARD1, BRIP1, RAD51C/D), Lynch (MLH1, MSH2/6, PMS2, EPCAM),
+  polyposis (APC, MUTYH, POLE, POLD1, STK11, SMAD4, BMPR1A), other
+  tumor predisposition (CDH1, VHL, RET, MEN1, NF1/2, PTEN, RB1,
+  TSC1/2), cardiomyopathy + arrhythmia (MYH7, MYBPC3, TNNT2/I3,
+  TPM1, MYL2/3, ACTC1, PRKAG2, LMNA, KCNQ1/H2, SCN5A, RYR2),
+  connective tissue (FBN1, TGFBR1/2, SMAD3, ACTA2, MYH11, COL3A1),
+  familial hypercholesterolemia (LDLR, APOB, PCSK9), RASopathies
+  (PTPN11, SOS1, RAF1, KRAS, BRAF), neurodevelopmental + chromatin
+  (CHD7/8, ARID1A/B, KMT2A/D, MECP2, FMR1, SCN1A/2A, KCNQ2, STXBP1,
+  CASZ1), hematology (HBB, HBA1/2, F8/9), renal/pulmonary (CFTR,
+  PKD1/2), and neuromuscular (DMD, SMN1, HTT). Each entry was
+  cross-checked against OMIM's public gene MIM number catalogue;
+  phenotype labels are short, ASCII-only summaries (no licensed
+  text reused). The licensed `query_omim_genemap` SQLite-backed
+  lookup still wins when the genemap2.txt build is present.
+- **Backlog audit confirmed two prior items already shipped.** The
+  v2.5.5 retrospective surfaced two backlog items as already complete:
+  (1) **InterVar wiring** — `scripts/annotation/parse_intervar.py`
+  (181 lines) plus `scripts/orchestration/canonical.py::_classify_all`
+  plus `tests/test_intervar.py` (13 tests, all green) cover parsing,
+  evidence-code injection, and the `--intervar` CLI flag end-to-end;
+  (2) **In-silico predictor display** — `scripts/intake/parse_vcf.py`
+  extracts REVEL / CADD / AlphaMissense / SpliceAI from the VEP CSQ
+  field and both `templates/cancer/report.html` and
+  `templates/rare-disease/report.html` render the values.
+  `data/sample_vcf/demo_with_in_silico.vcf` is the ground-truth
+  fixture; production VCFs with these CSQ fields populate the
+  `in_silico` dict end-to-end. No code change needed for these two.
+
 ### Changed — v2.5.5 (Chair JSON simplification + rare-disease PGx skip)
 - **Cancer Chair `variant_key` is now backfilled deterministically.** Before
   v2.5.5 the Cancer Board Chair LLM was required to emit
