@@ -11,6 +11,33 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Fixed — v2.6.0 (Therapeutic Target Analyst empty-response, F2)
+- **Therapeutic Target Analyst prompt differentiated.** Empirically (n=5
+  reproducibility, 2026-04-30) the prior prompt produced an empty `{}`
+  response on every Cancer demo run; the in-session clinical-advisor
+  consult attributed this to medgemma:27b seeing the curator's 88-row
+  treatment list in the case briefing and concluding there was nothing
+  to add. The rewritten prompt explicitly forbids restating curated
+  drugs and orients the agent toward the interpretation the curator
+  cannot produce: sequencing / line-of-therapy reasoning,
+  resistance mechanisms, off-label / investigational / emerging
+  combinations, druggability gaps, and sensitivity-resistance
+  co-occurrence. Two output principles installed: *do not restate
+  curated drugs* and a *never-empty-response* floor (if curator
+  coverage is already comprehensive, emit a finding describing that
+  adequacy and any sequencing implications). Both KO and EN
+  variants rewritten symmetrically.
+- **Verification (post-fix, demo cancer VCF, 2026-04-30):** Therapeutic
+  Target Analyst findings 0 → 6, confidence moderate → high,
+  raw_response 2 chars → 3 664 chars. Wall time +77 s (~20 %)
+  trade-off acceptable. Scrubber drop = 0 maintained. Chair narrative
+  preserved (high confidence with MDM2 / PARPi / HRD / TMB
+  integration).
+- `tests/test_therapeutic_target_prompt.py` (9 tests) pins the new
+  contract: curator-acknowledgement, do-not-restate, anti-empty
+  floor, added-value-category coverage, and exclusion of Chair-side
+  keys (`variant_key`, `curated_id`) from the agent prompt.
+
 ### Added — v2.6.0 (OMIM static-fallback expansion)
 - **`scripts/enrichment/query_omim.py::_STATIC_OMIM` expanded from 11 to 89 genes.**
   The OMIM genemap2.txt SQLite DB requires a licensed download that has
