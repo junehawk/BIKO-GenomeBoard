@@ -59,12 +59,16 @@ def test_prompt_requires_curated_id_in_schema():
     assert "variant_key" in CANCER_SYSTEM_PROMPT
 
 
-def test_cross_variant_binding_rejected_by_scrubber():
-    """Fixture-2 regression at the scrubber layer (not end-to-end).
+def test_cross_variant_paste_pinned_to_origin_by_scrubber():
+    """Fixture-2 paste-attack regression at the scrubber layer.
 
-    Even when the LLM pastes a valid EGFR curated_id under a TP53 row,
-    ``scrub_opinion`` drops the row because the (cid, variant_key) pair
-    was never emitted by the curator.
+    v2.5.5 reframes the v2.2 Phase A defence: instead of dropping a row whose
+    LLM-emitted ``variant_key`` does not match the curator, the scrubber now
+    overwrites ``variant_key`` with the curator's authoritative value. The
+    practical effect against the EGFR-curated_id-pasted-under-TP53 attack is
+    the same — the rendered table never associates the EGFR drug with the
+    TP53 variant. The row is reassigned to EGFR (its true origin), so a
+    reviewer reading the table sees the correct variant attribution.
     """
     from scripts.clinical_board.models import CancerBoardOpinion
     from scripts.clinical_board.narrative_scrubber import scrub_opinion
@@ -80,4 +84,10 @@ def test_cross_variant_binding_rejected_by_scrubber():
         ],
     )
     scrub_opinion(opinion, curated)
-    assert opinion.treatment_options == [], "cross-variant paste attack not caught by narrative_scrubber"
+    # Row is kept, but reassigned to EGFR (the curator's record).
+    assert len(opinion.treatment_options) == 1, "row should survive — curated_id is real"
+    assert opinion.treatment_options[0]["variant_key"] == "7:55:T:G", (
+        "scrubber must overwrite the pasted variant_key with the curator's value"
+    )
+    # The TP53 variant_key (17:76:G:A) must not appear under cid-osi anywhere.
+    assert opinion.treatment_options[0]["variant_key"] != "17:76:G:A"

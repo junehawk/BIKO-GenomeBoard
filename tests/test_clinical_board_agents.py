@@ -580,7 +580,12 @@ def test_runner_loads_cancer_agents():
 
 
 def test_runner_loads_rare_disease_agents_default():
-    """Default mode loads rare disease agents (backward compatible)."""
+    """Rare-disease mode loads three agents — PGx Specialist is excluded.
+
+    v2.5.5: PGx Specialist used to run unconditionally and always returned 0
+    findings on rare-disease cases, wasting ~15 s of GPU time. The runner
+    now excludes it from the rare-disease agent list.
+    """
     from scripts.clinical_board.runner import _load_agents
 
     client = MagicMock()
@@ -588,7 +593,9 @@ def test_runner_loads_rare_disease_agents_default():
     names = [a.agent_name for a in agents]
     assert "Variant Pathologist" in names
     assert "Disease Geneticist" in names
-    assert len(agents) == 4
+    assert "Literature Analyst" in names
+    assert "PGx Specialist" not in names
+    assert len(agents) == 3
 
 
 # ---------------------------------------------------------------------------
