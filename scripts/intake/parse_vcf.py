@@ -411,8 +411,11 @@ def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
                     variant.impact = annotation.get("impact") or None
                     variant.sift = annotation.get("sift") or None
                     variant.polyphen = annotation.get("polyphen") or None
-                    # In silico prediction scores (from VEP dbNSFP plugin)
-                    _in_silico = {}
+                    # In silico prediction scores (from VEP dbNSFP plugin).
+                    # Annotated as a plain dict (mixed str + computed float
+                    # spliceai_max values) so the spliceai_max write below is
+                    # type-clean.
+                    _in_silico: dict = {}
                     for _isf in (
                         "revel_score",
                         "cadd_phred",

@@ -56,7 +56,7 @@ def get_prevalence_text(gene: str, db_path: Optional[str] = None) -> str:
         has_class = 1 if (e.get("prevalence_class") or "").strip() else 0
         return (has_class, e.get("val_moy") or 0)
 
-    best = {}
+    best: dict = {}
     for e in entries:
         name = e["disease_name"]
         if name not in best or _rank(e) > _rank(best[name]):
