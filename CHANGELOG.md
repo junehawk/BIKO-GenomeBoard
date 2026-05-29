@@ -44,7 +44,12 @@ robustness sweep. All fixes are no-new-data. Grouped by workstream:
   formula vs the PgxResult property); raised PharmCAT pre-filter failures from
   DEBUG/swallowed to WARNING (silent full-genome timeout precursor); fixed
   multi-sample report selection (substring match always picked the first report)
-  with an optional proband `sample_id`.
+  with an optional proband `sample_id`. **PGX-02:** the gene-only builtin path no
+  longer asserts a star-allele metabolizer phenotype for any variant in a PGx
+  gene — it is now non-attributive (empty star_allele, "requires PharmCAT"),
+  preserving gene-level facts. This reverses the v2.4 `default_phenotype` contract
+  for the builtin path; the curated strings remain in the JSON for the PharmCAT
+  path.
 - **E — orchestration/CLI.** `--batch` silently dropped `--clinical-board` /
   `--board-lang` (now threaded; per-sample CLI flags warn that they are
   manifest-only); directory `sample_id` collisions now disambiguate instead of
@@ -61,14 +66,12 @@ robustness sweep. All fixes are no-new-data. Grouped by workstream:
   Board language the pipeline persists (Korean reports no longer re-render as
   English).
 
-Test suite 1237 → 1281 (+44), 1 xfailed. ruff lint + format clean.
+Test suite 1237 → 1282 (+45), 1 xfailed. ruff lint + format clean.
 
-Deferred (need their own focused / clinical pass): PGX-02 (gene-only builtin PGx
-asserting a star-allele phenotype — reverses the deliberate v2.4
-`default_phenotype` contract; product/clinical decision), render.py HTML escaping
-of LLM/CIViC strings (`| safe` injection hardening), prose-level drug-vocabulary
-redaction, ORCH-04 (germline-path in-silico scores), ENRI-13 (HPO caching), and
-the 60 low-severity findings.
+Deferred (need their own focused pass): render.py HTML escaping of LLM/CIViC
+strings (`| safe` injection hardening — needs visual verification), prose-level
+drug-vocabulary redaction (over-redaction risk), ORCH-04 (germline-path in-silico
+scores), ENRI-13 (HPO caching), and the 60 low-severity findings.
 
 ### Fixed — v2.6.0 (Therapeutic Target Analyst empty-response, F2)
 - **Therapeutic Target Analyst prompt differentiated.** Empirically (n=5
