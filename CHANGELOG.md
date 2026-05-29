@@ -11,6 +11,65 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Fixed — v2.7 (comprehensive review pass)
+
+A multi-dimensional adversarial code review (10 reviewer dimensions →
+129 findings → 103 confirmed after refutation) drove a correctness +
+robustness sweep. All fixes are no-new-data. Grouped by workstream:
+
+- **A — SpliceAI data-flow + consequence normalization (the systemic bug).**
+  `parse_in_silico_from_csq` computed `spliceai_max` but it was never written
+  back into `variant.in_silico`, and `evidence_collector._get_spliceai_max` read
+  a `variant.spliceai_max` attribute the dataclass never defines. On production
+  data this made **BP7 fire on every synonymous variant** (false-benign, can
+  mask a pathogenic splice variant), silently dropped the **de-novo PS2/PM6
+  SpliceAI rescue**, and killed the **Clinical Board splice rescue**. Separately,
+  `format_consequence` joined compound calls with `" / "` and title-cased
+  `splice_region_variant`, while three divergent inverse maps split only on `&`
+  — so compound / splice-region consequences silently vanished from board
+  selection. Fixed with one canonical `spliceai_delta_max` reader (parse_vcf
+  populates the key; all consumers route through it) and one shared
+  `canonical_consequence` helper (selector / evidence_collector / tmb delegate).
+- **B — ACMG evidence-code correctness.** Stopped emitting a generic `PS1` for
+  any ClinVar-pathogenic hit (PS1 means *same amino-acid change*; it collided
+  with the engine's PM5 and could manufacture a Pathogenic call) — now `PP5`
+  only, with the classification weight applied by `apply_clinvar_override`; added
+  a PS1/PM5 mutual-exclusivity guard. Fixed the PM2 strength inversion
+  (moderately-rare band emitted full-strength PM2 while rarer variants got
+  PM2_Supporting) — both bands now `PM2_Supporting` per ClinGen SVI 2020.
+- **I — multi-allelic CSQ.** `parse_csq_value` ignored the VEP `Allele` field and
+  could annotate a variant with another allele's consequence; it now scopes to
+  the called ALT (conservative — keeps all entries when none match).
+- **F — PGx.** Unified `korean_flag` (the PharmCAT path used an incompatible
+  formula vs the PgxResult property); raised PharmCAT pre-filter failures from
+  DEBUG/swallowed to WARNING (silent full-genome timeout precursor); fixed
+  multi-sample report selection (substring match always picked the first report)
+  with an optional proband `sample_id`.
+- **E — orchestration/CLI.** `--batch` silently dropped `--clinical-board` /
+  `--board-lang` (now threaded; per-sample CLI flags warn that they are
+  manifest-only); directory `sample_id` collisions now disambiguate instead of
+  overwriting; inherited germline variants now carry the BIKO consequence label.
+- **C/D — Board robustness.** `generate_json` gained retry/backoff + truncation
+  detection (a transient stall previously emptied the whole synthesis silently);
+  the narrative scrubber now scrubs free-text on *kept* rows; rare-disease mode
+  gained an empty-Chair backstop (marks confidence=low instead of presenting a
+  moderate-confidence empty diagnosis).
+- **G/R — robustness + reproducibility.** HTTP 429 is now retried honoring
+  Retry-After; `gene_knowledge` degrades gracefully on malformed JSON; Orphanet
+  prevalence selection prefers an entry with a class; Ollama calls inject a
+  config-driven `seed` (reproducible reports); `rerender_report` now gets the
+  Board language the pipeline persists (Korean reports no longer re-render as
+  English).
+
+Test suite 1237 → 1281 (+44), 1 xfailed. ruff lint + format clean.
+
+Deferred (need their own focused / clinical pass): PGX-02 (gene-only builtin PGx
+asserting a star-allele phenotype — reverses the deliberate v2.4
+`default_phenotype` contract; product/clinical decision), render.py HTML escaping
+of LLM/CIViC strings (`| safe` injection hardening), prose-level drug-vocabulary
+redaction, ORCH-04 (germline-path in-silico scores), ENRI-13 (HPO caching), and
+the 60 low-severity findings.
+
 ### Fixed — v2.6.0 (Therapeutic Target Analyst empty-response, F2)
 - **Therapeutic Target Analyst prompt differentiated.** Empirically (n=5
   reproducibility, 2026-04-30) the prior prompt produced an empty `{}`
