@@ -27,6 +27,32 @@ def _config_genes():
     return cfg["pgx"]["genes"]
 
 
+def _default_phenotype(gene: str) -> str:
+    """The curated default_phenotype for *gene* from the JSON table.
+
+    v2.7 PGX-02: the gene-only builtin path no longer surfaces this as the
+    patient's phenotype (it would falsely assert a genotype) — it is the
+    curated reference the PharmCAT path uses once a diplotype is actually
+    called. These tests assert the curated data is intact here, separately
+    from check_korean_pgx's (now non-attributive) behavior.
+    """
+    for e in _pgx_table()["genes"]:
+        if e.get("gene") == gene:
+            return e.get("default_phenotype", "")
+    return ""
+
+
+def _assert_builtin_gene_level(result, gene: str) -> None:
+    """The builtin (gene-symbol-only) path must be non-attributive (PGX-02)."""
+    assert result is not None, f"{gene} check_korean_pgx returned None"
+    assert result.gene == gene
+    assert result.star_allele == "", f"{gene} builtin path must not assert a star allele"
+    assert gene.lower() in result.phenotype.lower()
+    assert "pharmcat" in result.phenotype.lower()
+    assert "carrier" not in result.phenotype.lower(), f"{gene} must not claim a carrier from a gene match"
+    assert "metabolizer" not in result.phenotype.lower(), f"{gene} must not assert a metabolizer phenotype"
+
+
 # ---------------------------------------------------------------------------
 # 1. Table completeness
 # ---------------------------------------------------------------------------
@@ -42,68 +68,64 @@ def test_pgx_table_has_24_genes():
 # ---------------------------------------------------------------------------
 
 
+# Each gene's builtin result must be gene-level / non-attributive (PGX-02),
+# while gene-level facts (cpic_level, korean_flag) are preserved, and the drug
+# keyword still lives in the curated JSON default_phenotype (PharmCAT path).
 def test_check_korean_pgx_cyp3a5():
     variant = Variant(chrom="chr7", pos=99245146, ref="A", alt="G", gene="CYP3A5")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "CYP3A5"
+    _assert_builtin_gene_level(result, "CYP3A5")
     assert result.cpic_level == "A"
-    assert "tacrolimus" in result.phenotype.lower()
+    assert "tacrolimus" in _default_phenotype("CYP3A5").lower()
 
 
 def test_check_korean_pgx_ugt1a1():
     variant = Variant(chrom="chr2", pos=234668879, ref="G", alt="A", gene="UGT1A1")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "UGT1A1"
+    _assert_builtin_gene_level(result, "UGT1A1")
     assert result.cpic_level == "A"
-    assert "irinotecan" in result.phenotype.lower()
+    assert "irinotecan" in _default_phenotype("UGT1A1").lower()
 
 
 def test_check_korean_pgx_vkorc1():
     """VKORC1 -1639A allele freq 0.90 vs 0.37 → ratio ~2.43 → korean_flag=True."""
     variant = Variant(chrom="chr16", pos=31096368, ref="G", alt="A", gene="VKORC1")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "VKORC1"
+    _assert_builtin_gene_level(result, "VKORC1")
     assert result.korean_flag is True
-    assert "warfarin" in result.phenotype.lower()
+    assert "warfarin" in _default_phenotype("VKORC1").lower()
 
 
 def test_check_korean_pgx_slco1b1():
     """SLCO1B1 *15 freq 0.16 vs 0.15 → ratio ~1.07 → korean_flag=False (no significant enrichment)."""
     variant = Variant(chrom="chr12", pos=21178615, ref="T", alt="C", gene="SLCO1B1")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "SLCO1B1"
+    _assert_builtin_gene_level(result, "SLCO1B1")
     assert result.korean_flag is False
-    assert "statin" in result.phenotype.lower()
+    assert "statin" in _default_phenotype("SLCO1B1").lower()
 
 
 def test_check_korean_pgx_g6pd():
     variant = Variant(chrom="chrX", pos=154531391, ref="G", alt="T", gene="G6PD")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "G6PD"
+    _assert_builtin_gene_level(result, "G6PD")
     assert result.cpic_level == "A"
-    assert "rasburicase" in result.phenotype.lower()
+    assert "rasburicase" in _default_phenotype("G6PD").lower()
 
 
 def test_check_korean_pgx_ifnl3():
     variant = Variant(chrom="chr19", pos=39738525, ref="C", alt="T", gene="IFNL3")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "IFNL3"
+    _assert_builtin_gene_level(result, "IFNL3")
     assert result.cpic_level == "A"
-    assert "ifnl3" in result.phenotype.lower()
+    assert "ifnl3" in _default_phenotype("IFNL3").lower()
 
 
 def test_check_korean_pgx_cyp1a2():
     variant = Variant(chrom="chr15", pos=74749576, ref="G", alt="A", gene="CYP1A2")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "CYP1A2"
-    assert "cyp1a2" in result.phenotype.lower()
+    _assert_builtin_gene_level(result, "CYP1A2")
+    assert "cyp1a2" in _default_phenotype("CYP1A2").lower()
 
 
 # ---------------------------------------------------------------------------
@@ -152,19 +174,19 @@ def test_config_pgx_genes_includes_new():
 def test_existing_pgx_genes_still_work_cyp2c19():
     variant = Variant(chrom="chr10", pos=96541616, ref="G", alt="A", gene="CYP2C19")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.gene == "CYP2C19"
-    assert result.phenotype == "Intermediate Metabolizer (*2 carrier)"
+    _assert_builtin_gene_level(result, "CYP2C19")
     assert result.korean_flag is True
     assert result.cpic_level == "A"
+    # Curated diplotype phenotype remains in the JSON for the PharmCAT path.
+    assert _default_phenotype("CYP2C19") == "Intermediate Metabolizer (*2 carrier)"
 
 
 def test_existing_pgx_genes_still_work_hla_b():
     variant = Variant(chrom="chr6", pos=31353875, ref="C", alt="A", gene="HLA-B")
     result = check_korean_pgx(variant)
-    assert result is not None
-    assert result.phenotype == "HLA-B*5701 carrier — abacavir hypersensitivity risk"
+    _assert_builtin_gene_level(result, "HLA-B")
     assert result.cpic_level == "A"
+    assert _default_phenotype("HLA-B") == "HLA-B*5701 carrier — abacavir hypersensitivity risk"
 
 
 # ---------------------------------------------------------------------------
@@ -189,16 +211,17 @@ _LEGACY_12_GENE_PHENOTYPE_SNAPSHOTS: dict[str, str] = {
 
 
 @pytest.mark.parametrize("gene,expected_phenotype", sorted(_LEGACY_12_GENE_PHENOTYPE_SNAPSHOTS.items()))
-def test_legacy_12_genes_phenotype_unchanged(gene: str, expected_phenotype: str):
-    """Regression: snapshot-match phenotype strings for the 10 genes that
-    had hardcoded phenotypes pre-refactor (CYP2D6/CYP2C9 were not in the
-    elif chain — they are covered separately below)."""
-    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene=gene)
-    result = check_korean_pgx(variant)
-    assert result is not None, f"{gene} check_korean_pgx returned None"
-    assert result.phenotype == expected_phenotype, (
-        f"{gene} phenotype drifted from snapshot: {result.phenotype!r} != {expected_phenotype!r}"
+def test_legacy_12_genes_curated_phenotype_unchanged(gene: str, expected_phenotype: str):
+    """Regression: the curated default_phenotype strings in the JSON must stay
+    byte-identical (the PharmCAT path surfaces them). v2.7 PGX-02: the gene-only
+    builtin path no longer ASSERTS these — it returns a non-attributive
+    gene-level result — but the curated data itself must not drift."""
+    assert _default_phenotype(gene) == expected_phenotype, (
+        f"{gene} curated phenotype drifted from snapshot: {_default_phenotype(gene)!r} != {expected_phenotype!r}"
     )
+    # And the builtin path must NOT assert this phenotype on a gene match.
+    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene=gene)
+    _assert_builtin_gene_level(check_korean_pgx(variant), gene)
 
 
 # Keyword probes for the 12 newly-curated genes. Each entry asserts
@@ -222,16 +245,17 @@ _NEW_12_GENE_KEYWORDS: list[tuple[str, str]] = [
 
 
 @pytest.mark.parametrize("gene,expected_keyword", _NEW_12_GENE_KEYWORDS)
-def test_new_12_genes_phenotype_populated(gene: str, expected_keyword: str):
-    """Every newly-curated gene must return a non-empty phenotype
-    containing the expected drug/mechanism keyword."""
-    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene=gene)
-    result = check_korean_pgx(variant)
-    assert result is not None, f"{gene} returned None — likely missing from PGX_GENES"
-    assert result.phenotype != "", f"{gene} has empty phenotype (JSON default_phenotype missing?)"
-    assert expected_keyword.lower() in result.phenotype.lower(), (
-        f"{gene} phenotype missing expected keyword {expected_keyword!r}: {result.phenotype!r}"
+def test_new_12_genes_curated_phenotype_populated(gene: str, expected_keyword: str):
+    """Every newly-curated gene must have a non-empty curated default_phenotype
+    in the JSON containing the expected drug/mechanism keyword, and the builtin
+    path must return a (non-attributive) gene-level result for it."""
+    curated = _default_phenotype(gene)
+    assert curated != "", f"{gene} has empty curated default_phenotype in the JSON"
+    assert expected_keyword.lower() in curated.lower(), (
+        f"{gene} curated phenotype missing expected keyword {expected_keyword!r}: {curated!r}"
     )
+    variant = Variant(chrom="chr1", pos=1, ref="A", alt="T", gene=gene)
+    _assert_builtin_gene_level(check_korean_pgx(variant), gene)
 
 
 def test_pgx_genes_set_covers_all_24():

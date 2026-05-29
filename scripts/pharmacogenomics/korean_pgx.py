@@ -3,8 +3,10 @@
 
 Provides two levels of API:
 
-* ``check_korean_pgx(variant)`` -- per-variant SNV matching against the
-  local ``korean_pgx_table.json`` (builtin engine, always available).
+* ``check_korean_pgx(variant)`` -- **gene-level** flagging against the local
+  ``korean_pgx_table.json`` (builtin engine, always available). It matches on
+  gene symbol only and therefore reports population context + a non-attributive
+  phenotype; it does NOT assert a star-allele genotype (that needs PharmCAT).
 * ``get_pgx_results(variants, germline_vcf, config)`` -- unified entry
   point that prefers PharmCAT when a germline VCF is supplied and
   PharmCAT is installed, falling back to the builtin engine otherwise.
@@ -96,10 +98,22 @@ PGX_GENES = _get_pgx_genes()
 
 
 def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
-    """Return a :class:`PgxResult` if *variant* matches a known PGx gene.
+    """Return a **gene-level** :class:`PgxResult` if *variant* lies in a PGx gene.
 
-    Phenotype is sourced from the JSON ``default_phenotype`` field; no
-    hardcoded gene → phenotype mapping remains in this module.
+    IMPORTANT: this builtin path matches on **gene symbol only** — the table
+    carries no locus / star-allele coordinates, so it cannot determine which
+    star allele (if any) the patient actually carries. It therefore reports
+    *gene-level population context* (CPIC level, Korean/Western prevalence,
+    clinical impact) plus an explicitly **non-attributive** phenotype, and an
+    empty ``star_allele``. It must NOT assert that the patient is a specific
+    metabolizer / star-allele carrier — that requires PharmCAT over a germline
+    VCF.
+
+    Before v2.7 (PGX-02) this returned the gene's ``default_phenotype`` (e.g.
+    "Intermediate Metabolizer (*2 carrier)") for *any* variant in the gene — a
+    false genotype assertion for a patient who may carry an unrelated variant and
+    a normal-function diplotype. The licensed ``default_phenotype`` field is now
+    surfaced only via the PharmCAT path, where the diplotype is actually called.
     """
     if variant.gene not in PGX_GENES:
         return None
@@ -109,8 +123,13 @@ def check_korean_pgx(variant: Variant) -> Optional[PgxResult]:
         if entry["gene"] == variant.gene:
             return PgxResult(
                 gene=variant.gene,
-                star_allele=entry.get("variant", ""),
-                phenotype=entry.get("default_phenotype", ""),
+                # No star allele is determinable from a gene match alone.
+                star_allele="",
+                phenotype=(
+                    f"PGx-relevant gene ({variant.gene}) detected — genotype call "
+                    "requires PharmCAT over a germline VCF; builtin table reports "
+                    "population context only"
+                ),
                 cpic_level=entry.get("cpic_level", ""),
                 korean_prevalence=entry.get("korean_freq", 0),
                 western_prevalence=entry.get("western_freq", 0),

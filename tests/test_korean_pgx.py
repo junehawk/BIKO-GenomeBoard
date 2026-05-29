@@ -18,19 +18,35 @@ def test_non_pgx_gene():
     assert result is None  # TP53 is not a PGx gene
 
 
-def test_cyp2c19_phenotype_intermediate_metabolizer():
+def test_cyp2c19_builtin_does_not_assert_star_allele():
+    """v2.7 PGX-02: the gene-only builtin path must NOT assert a star-allele
+    metabolizer phenotype — it has no locus to verify the genotype."""
     variant = Variant(chrom="chr10", pos=96541616, ref="G", alt="A", gene="CYP2C19")
     result = check_korean_pgx(variant)
     assert result is not None
-    assert result.phenotype == "Intermediate Metabolizer (*2 carrier)"
+    assert result.star_allele == ""
+    assert "carrier" not in result.phenotype.lower()
+    assert "metabolizer" not in result.phenotype.lower()
+    assert "PharmCAT" in result.phenotype
+    assert "CYP2C19" in result.phenotype
+    assert result.cpic_level == "A"  # gene-level fact preserved
 
 
-def test_hla_b_phenotype():
+def test_arbitrary_variant_in_pgx_gene_not_called_a_carrier():
+    """An unrelated variant in a PGx gene must not be reported as a *2 carrier."""
+    variant = Variant(chrom="chr10", pos=1, ref="T", alt="C", gene="CYP2C19")
+    result = check_korean_pgx(variant)
+    assert result is not None
+    assert "*2" not in result.phenotype
+    assert result.star_allele == ""
+
+
+def test_hla_b_builtin_no_carrier_assertion():
     variant = Variant(chrom="chr6", pos=31353875, ref="C", alt="A", gene="HLA-B")
     result = check_korean_pgx(variant)
-    # HLA-B may or may not be in the data file; if it is, check phenotype
     if result is not None:
-        assert result.phenotype == "HLA-B*5701 carrier — abacavir hypersensitivity risk"
+        assert result.star_allele == ""
+        assert "carrier" not in result.phenotype.lower()
 
 
 def test_korean_flag_unified_across_paths():
