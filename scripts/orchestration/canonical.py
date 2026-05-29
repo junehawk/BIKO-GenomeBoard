@@ -611,10 +611,14 @@ def build_sample_report(
 
             board_opinion = run_clinical_board(report_data, mode, language=board_lang)
             if board_opinion:
+                effective_lang = board_lang or get("clinical_board.language", "en")
                 report_data["clinical_board"] = board_opinion
-                report_data["clinical_board_html"] = render_board_opinion_html(
-                    board_opinion, language=board_lang or get("clinical_board.language", "en")
-                )
+                # Persist the effective Board language so rerender_report.py can
+                # regenerate the fragment in the original language instead of
+                # silently defaulting Korean reports back to English
+                # (v2.7 review — rerender language drift).
+                report_data["clinical_board_language"] = effective_lang
+                report_data["clinical_board_html"] = render_board_opinion_html(board_opinion, language=effective_lang)
         except Exception as e:
             logger.warning("Clinical Board failed: %s", e)
 

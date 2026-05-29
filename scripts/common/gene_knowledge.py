@@ -1,8 +1,11 @@
 import json
+import logging
 from pathlib import Path
 from typing import Dict, Optional
 
 from scripts.common.config import get
+
+logger = logging.getLogger(__name__)
 
 _KNOWLEDGE = None
 
@@ -14,8 +17,12 @@ def _load_knowledge() -> dict:
         try:
             with open(path) as f:
                 data = json.load(f)
-            _KNOWLEDGE = {g["gene"]: g for g in data["genes"]}
-        except (FileNotFoundError, json.JSONDecodeError):
+            # Degrade gracefully on a structurally-valid-but-wrong file (missing
+            # "genes" key, or entries lacking a "gene" key) instead of raising a
+            # KeyError that would crash the whole pipeline (v2.7 review ENRI-04).
+            _KNOWLEDGE = {g["gene"]: g for g in data.get("genes", []) if isinstance(g, dict) and g.get("gene")}
+        except (FileNotFoundError, json.JSONDecodeError, TypeError, AttributeError) as exc:
+            logger.warning("gene_knowledge load failed (%s): %s", path, exc)
             _KNOWLEDGE = {}
     return _KNOWLEDGE
 

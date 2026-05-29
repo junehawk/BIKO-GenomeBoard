@@ -42,6 +42,19 @@ def fetch_with_retry(
             else:
                 resp = session.get(url, params=params, headers=headers, timeout=timeout)
 
+            if resp.status_code == 429:
+                # Rate limited — retryable, not a hard 4xx. Honor Retry-After
+                # when the server provides it, else fall back to exponential
+                # backoff (v2.7 review ENRI-01).
+                if attempt < max_retries - 1:
+                    retry_after = resp.headers.get("Retry-After")
+                    try:
+                        delay = float(retry_after) if retry_after else backoff_base * (2**attempt)
+                    except (TypeError, ValueError):
+                        delay = backoff_base * (2**attempt)
+                    time.sleep(delay)
+                    continue
+                return None
             if resp.status_code >= 500:
                 if attempt < max_retries - 1:
                     time.sleep(backoff_base * (2**attempt))

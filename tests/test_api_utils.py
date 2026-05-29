@@ -52,3 +52,34 @@ def test_fetch_all_retries_fail(mocker):
 
     result = fetch_with_retry("https://example.com/api", max_retries=3)
     assert result is None
+
+
+def test_fetch_retries_on_429_honoring_retry_after(mocker):
+    """429 is retryable (not a hard 4xx) and Retry-After is honored (ENRI-01)."""
+    busy = MagicMock()
+    busy.status_code = 429
+    busy.headers = {"Retry-After": "0"}
+
+    ok = MagicMock()
+    ok.status_code = 200
+    ok.json.return_value = {"result": "ok"}
+
+    _mock_session(mocker, get_side_effect=[busy, ok])
+    sleep_mock = mocker.patch("time.sleep")
+
+    result = fetch_with_retry("https://example.com/api", max_retries=3)
+    assert result == {"result": "ok"}
+    sleep_mock.assert_called_once_with(0.0)  # Retry-After respected, not exponential
+
+
+def test_fetch_429_exhausted_returns_none(mocker):
+    """A persistent 429 (no Retry-After) eventually returns None, not on first hit."""
+    busy = MagicMock()
+    busy.status_code = 429
+    busy.headers = {}
+    sess = _mock_session(mocker, get_return=busy)
+    mocker.patch("time.sleep")
+
+    result = fetch_with_retry("https://example.com/api", max_retries=3)
+    assert result is None
+    assert sess.get.call_count == 3  # retried, not abandoned after the first 429

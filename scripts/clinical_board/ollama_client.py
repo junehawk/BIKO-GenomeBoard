@@ -23,6 +23,18 @@ class OllamaClient:
     def __init__(self, base_url: str = None, timeout: int = None):
         self.base_url = base_url or get("clinical_board.ollama_url", DEFAULT_URL)
         self.timeout = timeout or get("clinical_board.timeout", 120)
+        # Deterministic sampling seed so the Board narrative is reproducible
+        # run-to-run (a stable research-reference document). Set
+        # clinical_board.seed: null in config to restore non-deterministic
+        # sampling (v2.7 review — reproducibility).
+        self.seed = get("clinical_board.seed", 42)
+
+    def _sampling_options(self, **extra) -> dict:
+        """Build the Ollama ``options`` dict, injecting the reproducibility seed."""
+        options = dict(extra)
+        if self.seed is not None:
+            options["seed"] = self.seed
+        return options
 
     # ── Health & Discovery ───────────────────────────────────────────────────
 
@@ -82,9 +94,7 @@ class OllamaClient:
             "model": model,
             "prompt": prompt,
             "stream": False,
-            "options": {
-                "temperature": temperature,
-            },
+            "options": self._sampling_options(temperature=temperature),
         }
         if system:
             payload["system"] = system
@@ -160,10 +170,7 @@ class OllamaClient:
             "prompt": prompt,
             "stream": False,
             "format": "json",
-            "options": {
-                "temperature": temperature,
-                "num_predict": num_predict,
-            },
+            "options": self._sampling_options(temperature=temperature, num_predict=num_predict),
         }
         if system:
             payload["system"] = system

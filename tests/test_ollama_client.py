@@ -282,3 +282,27 @@ def test_generate_json_truncation_logs_warning(mock_post, client, caplog):
     with caplog.at_level(logging.WARNING, logger="scripts.clinical_board.ollama_client"):
         client.generate_json("gemma4:31b", "synthesize", max_retries=0)
     assert any("truncated" in r.message.lower() for r in caplog.records)
+
+
+@patch("scripts.clinical_board.ollama_client.requests.post")
+def test_generate_injects_seed_for_reproducibility(mock_post, client):
+    """generate() must pass a sampling seed so reports are reproducible (v2.7)."""
+    mock_post.return_value = _mock_response({"response": "ok"})
+    client.generate("medgemma:27b", "p", max_retries=0)
+    opts = mock_post.call_args[1]["json"]["options"]
+    assert opts.get("seed") == 42  # default reproducibility seed
+
+
+@patch("scripts.clinical_board.ollama_client.requests.post")
+def test_generate_json_injects_seed(mock_post, client):
+    mock_post.return_value = _mock_response({"response": "{}"})
+    client.generate_json("gemma4:31b", "p", max_retries=0)
+    opts = mock_post.call_args[1]["json"]["options"]
+    assert opts.get("seed") == 42
+
+
+def test_seed_can_be_disabled_via_none():
+    """A None seed (clinical_board.seed: null) omits seed → non-deterministic."""
+    c = OllamaClient()
+    c.seed = None
+    assert "seed" not in c._sampling_options(temperature=0.3)

@@ -45,11 +45,21 @@ def get_prevalence_text(gene: str, db_path: Optional[str] = None) -> str:
     entries = get_prevalence_by_gene(gene, db_path)
     if not entries:
         return ""
-    # Group by disease, keep best (most specific) prevalence per disease
+
+    # Group by disease, keep the most informative prevalence per disease.
+    # Selection key (v2.7 review DATA-12): prefer an entry that actually carries
+    # a prevalence_class (so the displayed text shows a class rather than a bare
+    # disease name), then break ties by the higher mean prevalence value. This
+    # matches the docstring intent rather than blindly maximising val_moy across
+    # entries that may lack a class entirely.
+    def _rank(e: dict) -> tuple:
+        has_class = 1 if (e.get("prevalence_class") or "").strip() else 0
+        return (has_class, e.get("val_moy") or 0)
+
     best = {}
     for e in entries:
         name = e["disease_name"]
-        if name not in best or (e["val_moy"] and (not best[name]["val_moy"] or e["val_moy"] > best[name]["val_moy"])):
+        if name not in best or _rank(e) > _rank(best[name]):
             best[name] = e
     parts = []
     for name, e in list(best.items())[:3]:
