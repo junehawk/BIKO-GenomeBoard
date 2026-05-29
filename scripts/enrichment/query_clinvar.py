@@ -72,19 +72,21 @@ def _extract_significance(clinvar_data: dict) -> tuple:
 
 
 def _derive_acmg_codes(clinvar_data: dict) -> List[str]:
-    """Derive ACMG evidence codes from ClinVar data."""
+    """Derive ACMG evidence codes from a ClinVar API result.
+
+    Mirror of ``scripts.storage.query_local_clinvar._derive_acmg_codes``: a
+    generic ClinVar-pathogenic hit is annotated with PP5 only (scoring-excluded
+    per SVI 2018). PS1 is intentionally not emitted — it would mislabel the
+    evidence and collide with the engine's self-computed PM5. The classification
+    weight of a high-confidence ClinVar verdict is applied by
+    ``apply_clinvar_override`` (v2.7 review CLAS-04).
+    """
     codes = []
-    sig, review = _extract_significance(clinvar_data)
+    sig, _ = _extract_significance(clinvar_data)
     sig_lower = sig.lower()
 
     if "pathogenic" in sig_lower and "conflict" not in sig_lower:
-        if "expert panel" in review.lower() or "practice guideline" in review.lower():
-            codes.append("PS1")
-            codes.append("PP5")
-        elif "multiple submitters" in review.lower():
-            codes.append("PS1")
-        else:
-            codes.append("PP5")
+        codes.append("PP5")
 
     return codes
 

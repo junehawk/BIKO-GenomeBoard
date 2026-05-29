@@ -131,16 +131,23 @@ def test_query_not_found(test_db_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# 5. _derive_acmg_codes — expert panel → PS1 + PP5
+# 5. _derive_acmg_codes — pathogenic hit → PP5 only (v2.7 CLAS-04)
 # ---------------------------------------------------------------------------
 
 
 def test_derive_acmg_codes_expert_panel():
+    """Expert-panel Pathogenic → PP5 annotation only (no generic PS1).
+
+    PS1 specifically means "same amino-acid change as a known pathogenic
+    variant", which this gene+position lookup does not verify, and it collides
+    with the engine's self-computed PM5. The classification weight of the
+    expert-panel verdict is applied independently by apply_clinvar_override.
+    """
     from scripts.storage.query_local_clinvar import _derive_acmg_codes
 
     codes = _derive_acmg_codes("Pathogenic", "reviewed by expert panel")
-    assert "PS1" in codes
-    assert "PP5" in codes
+    assert codes == ["PP5"]
+    assert "PS1" not in codes
 
 
 # ---------------------------------------------------------------------------
@@ -154,6 +161,26 @@ def test_derive_acmg_codes_single_submitter():
     codes = _derive_acmg_codes("Pathogenic", "criteria provided, single submitter")
     assert "PP5" in codes
     assert "PS1" not in codes
+
+
+def test_derive_acmg_codes_multiple_submitters_no_ps1():
+    """Multiple-submitter Pathogenic → PP5 only (no PS1).
+
+    v2.7 CLAS-04: this tier previously emitted PS1; the multiple-submitter
+    classification weight is now applied via apply_clinvar_override instead.
+    """
+    from scripts.storage.query_local_clinvar import _derive_acmg_codes
+
+    codes = _derive_acmg_codes("Pathogenic", "criteria provided, multiple submitters, no conflicts")
+    assert codes == ["PP5"]
+
+
+def test_derive_acmg_codes_conflicting_emits_nothing():
+    """A conflicting ClinVar entry derives no ACMG code (unchanged)."""
+    from scripts.storage.query_local_clinvar import _derive_acmg_codes
+
+    codes = _derive_acmg_codes("Conflicting classifications of pathogenicity", "multiple submitters")
+    assert codes == []
 
 
 # ---------------------------------------------------------------------------

@@ -50,18 +50,29 @@ def get_db_version() -> Dict:
 
 
 def _derive_acmg_codes(significance: str, review_status: str) -> List[str]:
-    """Derive ACMG evidence codes from ClinVar local data."""
+    """Derive ACMG evidence codes from a ClinVar local-DB hit.
+
+    A generic "ClinVar reports pathogenic" hit is annotated with **PP5 only**
+    (scoring-excluded per ClinGen SVI 2018 — see
+    ``acmg_engine._count_by_strength``). PS1 is intentionally NOT emitted here.
+
+    PS1 means specifically "same amino-acid change as a previously established
+    pathogenic variant" — a claim this gene+position lookup does not verify.
+    Emitting PS1 for *any* pathogenic ClinVar hit (a) mislabels the evidence and
+    (b) collides with the engine's self-computed PM5 (PS1/PM5 are mutually
+    exclusive per ACMG — same vs different AA change), which could manufacture a
+    spurious Pathogenic call (ps:1 + pm:n) from a single ClinVar entry. The
+    actual classification weight of a high-confidence ClinVar verdict is applied
+    independently by ``acmg_engine.apply_clinvar_override`` for exactly the same
+    expert-panel / multiple-submitter review tiers, so dropping PS1 here does
+    not under-call (v2.7 review CLAS-04). ``review_status`` is retained in the
+    signature for callers and a future hgvsp-gated true PS1 path.
+    """
     codes = []
     sig_lower = significance.lower()
-    review_lower = review_status.lower()
 
     if "pathogenic" in sig_lower and "conflict" not in sig_lower:
-        if "expert panel" in review_lower or "practice guideline" in review_lower:
-            codes.extend(["PS1", "PP5"])
-        elif "multiple submitters" in review_lower:
-            codes.append("PS1")
-        else:
-            codes.append("PP5")
+        codes.append("PP5")
 
     return codes
 

@@ -38,13 +38,18 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     elif max_freq >= BS1_THRESHOLD:
         acmg_codes.append("BS1")
         flags.append("Common variant")
-    # PM2_Supporting: rare
+    # PM2_Supporting: rare. ClinGen SVI 2020 recommends PM2 at Supporting
+    # strength by default. Both rare bands therefore fire PM2_Supporting — the
+    # prior code emitted full-strength PM2 for the *moderately*-rare band while
+    # the *rarer* band got PM2_Supporting, an evidence-strength inversion that
+    # over-called borderline-frequency variants (v2.7 review CLAS-06).
     elif max_freq <= PM2_THRESHOLD:
         acmg_codes.append("PM2_Supporting")
         flags.append("Rare variant")
-    # PM2: moderately rare (between PM2_Supporting and BS1 thresholds)
+    # Moderately rare (between PM2_Supporting and BS1 thresholds) — still only
+    # Supporting strength, but flagged distinctly for the reader.
     elif max_freq < BS1_THRESHOLD:
-        acmg_codes.append("PM2")
+        acmg_codes.append("PM2_Supporting")
         flags.append("Low frequency variant")
 
     # Korean-specific flags — KOVA vs gnomAD EAS enrichment

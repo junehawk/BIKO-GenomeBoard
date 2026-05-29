@@ -16,6 +16,10 @@ SAMPLE_CLINVAR_RESPONSE = {
 
 
 def test_query_clinvar_pathogenic(mocker):
+    # Bypass the persistent on-disk cache so the test exercises _derive_acmg_codes
+    # rather than returning a previously-cached (possibly stale) acmg_codes list.
+    mocker.patch("scripts.enrichment.query_clinvar.get_cached", return_value=None)
+    mocker.patch("scripts.enrichment.query_clinvar.set_cached")
     mocker.patch(
         "scripts.enrichment.query_clinvar._search_clinvar_variant",
         return_value=SAMPLE_CLINVAR_RESPONSE["result"]["12375"],
@@ -24,7 +28,10 @@ def test_query_clinvar_pathogenic(mocker):
     result = query_clinvar(variant)
     assert result is not None
     assert result["clinvar_significance"] == "Pathogenic"
-    assert "PVS1" in result["acmg_codes"] or "PS1" in result["acmg_codes"]
+    # v2.7 CLAS-04: a generic ClinVar-pathogenic hit annotates PP5 only — PS1
+    # (same-AA-change) is no longer emitted from a significance string alone.
+    assert "PP5" in result["acmg_codes"]
+    assert "PS1" not in result["acmg_codes"]
 
 
 def test_query_clinvar_not_found(mocker):

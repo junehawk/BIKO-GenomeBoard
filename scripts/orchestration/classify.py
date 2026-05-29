@@ -23,6 +23,25 @@ from scripts.common.types import HpoResults, VariantRecord
 logger = logging.getLogger(__name__)
 
 
+def _resolve_ps1_pm5_exclusivity(evidences: List[AcmgEvidence]) -> List[AcmgEvidence]:
+    """Enforce ACMG PS1 / PM5 mutual exclusivity on a variant's evidence list.
+
+    PS1 (same amino-acid change as an established pathogenic variant) and PM5
+    (a *different* change at a residue with a known pathogenic variant) describe
+    incompatible facts — a variant cannot be both. When both co-occur (e.g. an
+    InterVar-supplied PS1 alongside the engine's self-computed PM5), drop PS1 and
+    keep PM5: PM5 preserves the A4 ClinVar-conflict reconciliation gate
+    (PM1+PM5) and is the conservative (Moderate, not Strong) contribution, so a
+    single contradictory pair can never manufacture a Pathogenic call
+    (v2.7 review CLAS-04).
+    """
+    has_ps1 = any(e.code.upper().startswith("PS1") for e in evidences)
+    has_pm5 = any(e.code.upper().startswith("PM5") for e in evidences)
+    if has_ps1 and has_pm5:
+        return [e for e in evidences if not e.code.upper().startswith("PS1")]
+    return evidences
+
+
 def classify_variants(
     variants: List[Variant],
     db_results: Dict[str, Dict[str, Any]],
@@ -134,6 +153,7 @@ def classify_variants(
                 if code not in existing_codes:
                     evidences.append(AcmgEvidence(code=code, source="intervar", description=""))
 
+        evidences = _resolve_ps1_pm5_exclusivity(evidences)
         classification = classify_variant(evidences, gene=variant.gene)
         clinvar_sig = db["clinvar"].get("clinvar_significance", "Not Found")
         review_status = db["clinvar"].get("review_status", "")

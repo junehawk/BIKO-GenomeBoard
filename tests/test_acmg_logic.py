@@ -344,11 +344,14 @@ def test_count_by_strength_pp5_bp6_restored_via_config(monkeypatch):
 
 
 def test_classify_clinvar_pathogenic_no_double_count():
-    """ClinVar Pathogenic emits both PS1 and PP5 (expert-panel path). Under
-    SVI 2018 scoring only PS1 should drive classification — i.e. 1 PS alone
-    does NOT reach LP (requires 1 PS + 1 PM or 2 PS).
+    """Scoring floor: a PS1 + PP5 pair (PP5 scoring-excluded under SVI 2018)
+    must not reach LP — 1 PS alone is VUS (LP requires 1 PS + 1 PM or 2 PS).
+
+    Note (v2.7 CLAS-04): query_local_clinvar no longer auto-emits PS1 for a
+    generic ClinVar-pathogenic hit (it emits PP5 only). This test now stands as
+    a pure engine-scoring anchor for the hypothetical PS1+PP5 combination.
     """
-    codes = [_ev("PS1"), _ev("PP5")]  # as emitted by query_local_clinvar for expert-panel Pathogenic
+    codes = [_ev("PS1"), _ev("PP5")]
     result = classify_variant(codes)
     # With PP5 ignored: counts = {ps: 1}. 1 PS alone is VUS, not LP.
     # If PP5 were still counted: {ps: 1, pp: 1} → still VUS under Richards 2015
@@ -367,3 +370,43 @@ def test_classify_pp5_alone_is_vus():
     assert result.classification == "VUS"
     # Annotation retained
     assert "PP5" in result.evidence_codes
+
+
+# ── PS1 / PM5 mutual exclusivity (v2.7 CLAS-04) ───────────────────────────────
+
+
+def test_ps1_pm5_exclusivity_drops_ps1():
+    """When PS1 and PM5 co-occur, PS1 is dropped (PM5 kept)."""
+    from scripts.orchestration.classify import _resolve_ps1_pm5_exclusivity
+
+    evidences = [_ev("PS1"), _ev("PM5"), _ev("PM2_Supporting")]
+    out = {e.code for e in _resolve_ps1_pm5_exclusivity(evidences)}
+    assert "PS1" not in out
+    assert "PM5" in out
+    assert "PM2_Supporting" in out
+
+
+def test_ps1_pm5_exclusivity_no_change_when_only_one_present():
+    """PS1 alone (or PM5 alone) is untouched."""
+    from scripts.orchestration.classify import _resolve_ps1_pm5_exclusivity
+
+    only_ps1 = [_ev("PS1"), _ev("PM2_Supporting")]
+    assert {e.code for e in _resolve_ps1_pm5_exclusivity(only_ps1)} == {"PS1", "PM2_Supporting"}
+    only_pm5 = [_ev("PM5"), _ev("PM1")]
+    assert {e.code for e in _resolve_ps1_pm5_exclusivity(only_pm5)} == {"PM5", "PM1"}
+
+
+def test_ps1_pm5_exclusivity_prevents_manufactured_pathogenic():
+    """A contradictory PS1+PM5 pair must not reach Pathogenic via ps:1 + pm inflation.
+
+    With the generic ClinVar-derived PS1 counted as ``ps``, PS1 + PM5 + PM1 + PM4
+    is ps:1 + pm:3 → Pathogenic per the {ps:1, pm:3} rule. Dropping the
+    contradictory PS1 leaves pm:3 → Likely Pathogenic, the conservative call.
+    """
+    from scripts.orchestration.classify import _resolve_ps1_pm5_exclusivity
+
+    raw = [_ev("PS1"), _ev("PM5"), _ev("PM1"), _ev("PM4")]
+    before = classify_variant(raw).classification
+    after = classify_variant(_resolve_ps1_pm5_exclusivity(raw)).classification
+    assert before == "Pathogenic"  # the manufactured call the guard prevents
+    assert after == "Likely Pathogenic"

@@ -47,20 +47,24 @@ def test_korean_depletion_vs_eas():
     assert "Korean frequency much lower than East Asian" in result["korean_flag"]
 
 
-# I-5b: PM2 moderate for freq between PM2_THRESHOLD and BS1_THRESHOLD
-def test_pm2_moderate_freq_mid_range():
-    """Freq 0.005 is between 0.001 and 0.01 → PM2 (moderate)."""
+# I-5b: PM2 fires at Supporting strength across both rare bands.
+# ClinGen SVI 2020 recommends PM2 at Supporting by default; the prior code's
+# full-strength PM2 for the moderately-rare band was an evidence-strength
+# inversion (rarer variants got *weaker* PM2_Supporting) — v2.7 CLAS-06.
+def test_pm2_supporting_freq_mid_range():
+    """Freq 0.005 (between 0.001 and 0.01) → PM2_Supporting, not full PM2."""
     freq = FrequencyData(kova=0.005, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
-    assert "PM2" in result["acmg_codes"]
-    assert "PM2_Supporting" not in result["acmg_codes"]
+    assert "PM2_Supporting" in result["acmg_codes"]
+    assert "PM2" not in result["acmg_codes"]
 
 
-def test_pm2_moderate_at_low_end():
-    """Freq 0.0011 just above PM2_Supporting threshold → PM2."""
+def test_pm2_supporting_at_low_end():
+    """Freq 0.0011 just above the PM2_Supporting threshold → PM2_Supporting."""
     freq = FrequencyData(kova=0.0011, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
-    assert "PM2" in result["acmg_codes"]
+    assert "PM2_Supporting" in result["acmg_codes"]
+    assert "PM2" not in result["acmg_codes"]
 
 
 def test_pm2_supporting_at_threshold():
