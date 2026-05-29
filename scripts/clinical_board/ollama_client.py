@@ -140,11 +140,21 @@ class OllamaClient:
         prompt: str,
         system: str = "",
         temperature: float = 0.1,
+        max_retries: int = None,
     ) -> dict:
         """Generate structured JSON output.
 
-        Returns a parsed dict on success, or an empty dict on failure.
+        Returns a parsed dict on success, or an empty dict on failure. Like
+        :meth:`generate`, transient transport failures (timeout / connection /
+        HTTP) are retried with exponential backoff — the entire Clinical Board
+        synthesis depends on this call, so a single transient stall must not
+        silently empty the report (v2.7 review BOAR-01). Truncation at the
+        ``num_predict`` ceiling is detected and logged (BOAR-03).
         """
+        if max_retries is None:
+            max_retries = get("clinical_board.max_retries", 2)
+        num_predict = get("clinical_board.num_predict", 2048)
+
         payload = {
             "model": model,
             "prompt": prompt,
@@ -152,48 +162,71 @@ class OllamaClient:
             "format": "json",
             "options": {
                 "temperature": temperature,
-                "num_predict": 2048,
+                "num_predict": num_predict,
             },
         }
         if system:
             payload["system"] = system
 
-        t0 = time.time()
-        try:
-            logger.debug(
-                "Ollama generate_json: model=%s prompt_len=%d",
-                model,
-                len(prompt),
-            )
-            resp = requests.post(
-                f"{self.base_url}/api/generate",
-                json=payload,
-                timeout=self.timeout,
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            response_text = data.get("response", "")
-            elapsed = time.time() - t0
-            logger.debug(
-                "Ollama JSON response: model=%s response_len=%d elapsed=%.1fs",
-                model,
-                len(response_text),
-                elapsed,
-            )
-
-            # Parse the response as JSON
+        last_error = ""
+        for attempt in range(max_retries + 1):
+            t0 = time.time()
             try:
-                return json.loads(response_text)
-            except json.JSONDecodeError:
-                # Try to extract JSON from the response text
-                return _extract_json(response_text)
+                logger.debug(
+                    "Ollama generate_json: model=%s prompt_len=%d attempt=%d",
+                    model,
+                    len(prompt),
+                    attempt,
+                )
+                resp = requests.post(
+                    f"{self.base_url}/api/generate",
+                    json=payload,
+                    timeout=self.timeout,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                response_text = data.get("response", "")
+                elapsed = time.time() - t0
+                logger.debug(
+                    "Ollama JSON response: model=%s response_len=%d elapsed=%.1fs",
+                    model,
+                    len(response_text),
+                    elapsed,
+                )
 
-        except requests.Timeout:
-            logger.warning("Ollama JSON timeout after %ds", self.timeout)
-        except requests.ConnectionError:
-            logger.warning("Ollama JSON connection error — is Ollama running?")
-        except (requests.HTTPError, ValueError, KeyError) as exc:
-            logger.warning("Ollama JSON error: %s", exc)
+                # Truncation detection: a response cut off at the token ceiling
+                # almost always yields invalid/incomplete JSON. Surface it.
+                if data.get("done_reason") == "length":
+                    logger.warning(
+                        "Ollama JSON for model=%s was truncated at num_predict=%d "
+                        "(done_reason=length); JSON may be incomplete — raise "
+                        "clinical_board.num_predict if this recurs",
+                        model,
+                        num_predict,
+                    )
+
+                # A successful HTTP response is authoritative — do not retry a
+                # parse failure (it will not differ on the next attempt at this
+                # temperature). Retry is reserved for transport errors below.
+                try:
+                    return json.loads(response_text)
+                except json.JSONDecodeError:
+                    return _extract_json(response_text)
+
+            except requests.Timeout:
+                last_error = f"Timeout after {self.timeout}s (attempt {attempt + 1})"
+                logger.warning("Ollama JSON timeout: %s", last_error)
+            except requests.ConnectionError:
+                last_error = "Connection refused — is Ollama running?"
+                logger.warning("Ollama JSON connection error: %s", last_error)
+            except (requests.HTTPError, ValueError, KeyError) as exc:
+                last_error = f"Request error: {exc}"
+                logger.warning("Ollama JSON error: %s", last_error)
+
+            if attempt < max_retries:
+                backoff = 2**attempt
+                logger.debug("Retrying generate_json in %ds...", backoff)
+                time.sleep(backoff)
 
         return {}
 

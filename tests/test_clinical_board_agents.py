@@ -720,3 +720,29 @@ def test_runner_uses_selector_and_records_metadata(monkeypatch):
     # Metadata propagated onto the opinion for render.py
     assert opinion.selection_metadata is not None
     assert opinion.selection_metadata["selected"] == 1
+
+
+# ── v2.7 BOAR-07: rare-disease empty-Chair backstop ──────────────────────────
+
+
+def test_mark_incomplete_if_empty_downgrades_empty_opinion():
+    """An empty rare-disease BoardOpinion → confidence=low + synthesis-incomplete."""
+    from scripts.clinical_board.runner import _mark_incomplete_if_empty
+
+    op = BoardOpinion()  # all defaults: empty diagnosis/findings, confidence="moderate"
+    assert op.confidence == "moderate"  # the misleading default we guard against
+    _mark_incomplete_if_empty(op)
+    assert op.confidence == "low"
+    assert op.agent_consensus == "synthesis-incomplete"
+    assert "Synthesis incomplete" in op.primary_diagnosis
+
+
+def test_mark_incomplete_if_empty_leaves_populated_opinion():
+    """A populated opinion is untouched (only empty/degenerate ones downgrade)."""
+    from scripts.clinical_board.runner import _mark_incomplete_if_empty
+
+    op = BoardOpinion(primary_diagnosis="Li-Fraumeni syndrome", confidence="high", key_findings=["TP53 LP"])
+    _mark_incomplete_if_empty(op)
+    assert op.confidence == "high"
+    assert op.primary_diagnosis == "Li-Fraumeni syndrome"
+    assert op.agent_consensus != "synthesis-incomplete"

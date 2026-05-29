@@ -136,6 +136,19 @@ _PROSE_LIST_FIELDS = (
     "follow_up",
 )
 
+# Free-text string sub-fields carried on a (kept) treatment_options row. These
+# are scrubbed for banned drug tokens too — a surviving row's prose could still
+# mention a hallucinated drug that was banned via a *different* dropped row
+# (v2.7 review BOAR-02). Structured fields (drug, curated_id, variant_key,
+# evidence_level, source) are deliberately excluded.
+_ROW_TEXT_FIELDS = (
+    "resistance_notes",
+    "rationale",
+    "notes",
+    "evidence",
+    "disease_context",
+)
+
 
 def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str, int]:
     """Walk ``opinion`` in place: drop bad rows, backfill variant_key, scrub banned tokens.
@@ -201,6 +214,14 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
 
     # Scrub prose fields
     if banned:
+        # Kept treatment rows: scrub their free-text sub-fields too — a surviving
+        # row could mention a drug banned via a different dropped row.
+        for row in kept:
+            for rf in _ROW_TEXT_FIELDS:
+                val = row.get(rf)
+                if isinstance(val, str) and val:
+                    row[rf] = _scrub_text(val, banned)
+
         for field in _PROSE_STR_FIELDS:
             val = getattr(opinion, field, None)
             if isinstance(val, str):

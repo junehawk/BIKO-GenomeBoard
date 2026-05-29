@@ -85,6 +85,34 @@ def _summarize_context(report_data: Dict[str, Any]) -> str:
     return "|".join(parts)
 
 
+def _mark_incomplete_if_empty(board_opinion: Any) -> Any:
+    """Mark an empty/degenerate rare-disease BoardOpinion as low-confidence.
+
+    Rare-disease mode has no curated-treatment backstop (unlike cancer mode's
+    template_renderer_chair fallback). When the Chair returns an empty or failed
+    response — no primary diagnosis, no key findings, no differentials — the
+    default ``confidence="moderate"`` would misrepresent a non-result as a
+    moderate-confidence empty diagnosis. Downgrade to low confidence with an
+    explicit ``synthesis-incomplete`` marker so the reviewer is not misled
+    (v2.7 review BOAR-07). Returns the same (mutated) opinion.
+    """
+    primary = (getattr(board_opinion, "primary_diagnosis", "") or "").strip()
+    findings = getattr(board_opinion, "key_findings", None) or []
+    differentials = getattr(board_opinion, "differential_diagnoses", None) or []
+    if not primary and not findings and not differentials:
+        logger.warning(
+            "[Clinical Board] Rare-disease Chair returned an empty/degenerate opinion "
+            "— marking confidence=low (synthesis incomplete)."
+        )
+        board_opinion.confidence = "low"
+        board_opinion.agent_consensus = "synthesis-incomplete"
+        board_opinion.primary_diagnosis = (
+            "Synthesis incomplete — the Clinical Board returned no diagnosis "
+            "(empty or failed LLM response). Review the agent opinions directly."
+        )
+    return board_opinion
+
+
 def run_clinical_board(
     report_data: Dict[str, Any],
     mode: str,
@@ -355,6 +383,10 @@ def run_clinical_board(
                 # Chair produced no useful narrative either — full fallback.
                 fallback.selection_metadata = selection_metadata
                 board_opinion = fallback
+    else:
+        # Rare-disease mode has no curated-treatment backstop; apply the
+        # empty/degenerate-Chair guard instead (v2.7 review BOAR-07).
+        _mark_incomplete_if_empty(board_opinion)
 
     # Step 4: Save decisions to Knowledge Base
     if get("knowledge_base.enabled", False):

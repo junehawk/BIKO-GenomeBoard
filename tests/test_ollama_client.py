@@ -240,3 +240,45 @@ def test_explicit_args_override_config():
     c = OllamaClient(base_url="http://custom:1234", timeout=99)
     assert c.base_url == "http://custom:1234"
     assert c.timeout == 99
+
+
+# ── generate_json robustness (v2.7 BOAR-01 / BOAR-03) ─────────────────────────
+
+
+@patch("scripts.clinical_board.ollama_client.time.sleep")  # skip backoff
+@patch("scripts.clinical_board.ollama_client.requests.post")
+def test_generate_json_retries_on_timeout(mock_post, mock_sleep, client):
+    """Transient timeout on the first attempt → retried, then succeeds.
+
+    Before v2.7 generate_json had no retry, so one transient stall silently
+    emptied the entire Board synthesis.
+    """
+    expected = {"diagnosis": "X", "confidence": "high"}
+    mock_post.side_effect = [
+        requests.Timeout("timed out"),
+        _mock_response({"response": json.dumps(expected)}),
+    ]
+    result = client.generate_json("gemma4:31b", "synthesize", max_retries=1)
+    assert result == expected
+    assert mock_post.call_count == 2
+
+
+@patch("scripts.clinical_board.ollama_client.time.sleep")
+@patch("scripts.clinical_board.ollama_client.requests.post")
+def test_generate_json_all_retries_fail_returns_empty(mock_post, mock_sleep, client):
+    """All transport retries exhausted → empty dict (no raise)."""
+    mock_post.side_effect = requests.ConnectionError("refused")
+    result = client.generate_json("gemma4:31b", "synthesize", max_retries=2)
+    assert result == {}
+    assert mock_post.call_count == 3  # initial + 2 retries
+
+
+@patch("scripts.clinical_board.ollama_client.requests.post")
+def test_generate_json_truncation_logs_warning(mock_post, client, caplog):
+    """done_reason=length must emit a truncation WARNING (BOAR-03)."""
+    import logging
+
+    mock_post.return_value = _mock_response({"response": '{"diagnosis": "X"}', "done_reason": "length"})
+    with caplog.at_level(logging.WARNING, logger="scripts.clinical_board.ollama_client"):
+        client.generate_json("gemma4:31b", "synthesize", max_retries=0)
+    assert any("truncated" in r.message.lower() for r in caplog.records)

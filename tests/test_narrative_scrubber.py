@@ -309,3 +309,33 @@ def test_scrub_returns_stats():
     stats = scrub_opinion(op, curated)
     assert stats["kept"] == 1
     assert stats["dropped"] == 1
+
+
+def test_scrub_redacts_banned_drug_in_kept_row_resistance_notes():
+    """v2.7 BOAR-02: a SURVIVING row's free-text resistance_notes must be
+    scrubbed for a drug banned via a DIFFERENT dropped row."""
+    from scripts.clinical_board.narrative_scrubber import scrub_opinion
+
+    curated = {"v1": [_stub_curated("olaparib", "v1", "c1")]}
+    rows = [
+        {
+            "curated_id": "c1",
+            "drug": "olaparib",
+            "variant_key": "v1",
+            # Mentions a drug that is hallucinated/dropped in the other row.
+            "resistance_notes": "Acquired resistance reported with futibatinib rechallenge.",
+        },
+        {
+            "curated_id": "bogus",
+            "drug": "futibatinib",
+            "variant_key": "v1",
+            "resistance_notes": "",
+        },
+    ]
+    op = _opinion_with_rows(rows)
+    stats = scrub_opinion(op, curated)
+    assert stats["kept"] == 1
+    assert stats["dropped"] == 1
+    kept_row = op.treatment_options[0]
+    assert "futibatinib" not in kept_row["resistance_notes"].lower()
+    assert "REDACTED-DRUG" in kept_row["resistance_notes"]
