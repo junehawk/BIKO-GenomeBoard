@@ -624,3 +624,28 @@ class TestOrchestrateGermlineIntegration:
                     os.unlink(germline_path)
             finally:
                 os.unlink(vcf_path)
+
+
+# ── v2.7 ORCH-03: inherited variants carry the BIKO consequence label ─────────
+
+
+def test_parse_vcf_line_formats_consequence_label():
+    """_parse_vcf_line must store the BIKO short label (e.g. 'Missense'), not the
+    raw VEP SO term, consistent with the primary parse_vcf path (ORCH-03)."""
+    from scripts.orchestration.extract_germline import _parse_vcf_line
+
+    line = "chr17\t7675088\trs1\tC\tA\t.\tPASS\tCSQ=A|missense_variant|MODERATE|TP53|ENSG0|Transcript|ENST0|protein_coding|4/11||c.524G>T|p.Arg175Leu"
+    v = _parse_vcf_line(line)
+    assert v is not None
+    assert v.gene == "TP53"
+    assert v.consequence == "Missense"
+
+
+def test_parse_vcf_line_consequence_none_when_absent():
+    """A line with no CSQ/ANN consequence leaves consequence as None, not ''."""
+    from scripts.orchestration.extract_germline import _parse_vcf_line
+
+    line = "chr1\t12345\t.\tA\tT\t.\tPASS\tGENEINFO=FOO:1"
+    v = _parse_vcf_line(line)
+    assert v is not None
+    assert v.consequence is None

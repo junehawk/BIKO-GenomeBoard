@@ -18,6 +18,7 @@ import re
 from pathlib import Path
 from typing import List, Optional, Set
 
+from scripts.annotation.parse_annotation import format_consequence
 from scripts.common.models import Variant
 
 logger = logging.getLogger(__name__)
@@ -113,7 +114,10 @@ def _parse_vcf_line(line: str, fallback_gene: str = "") -> Optional[Variant]:
         alt=alt,
         gene=gene or None,
         rsid=rsid,
-        consequence=consequence,
+        # Store the BIKO short label (e.g. "Missense"), consistent with the
+        # primary parse_vcf path, so the report and any consequence-based gating
+        # see the same form on inherited variants (v2.7 review ORCH-03).
+        consequence=format_consequence(consequence) if consequence else None,
         hgvsc=hgvsc,
         hgvsp=hgvsp,
         source="germline_inherited",

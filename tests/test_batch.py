@@ -205,3 +205,57 @@ def test_batch_result_schema():
         "elapsed_seconds",
     ):
         assert key in result, f"Missing key in batch result: {key}"
+
+
+# ── v2.7 ORCH-01: batch CLI dispatch threads clinical_board / board_lang ──────
+
+
+def test_batch_dispatch_passes_clinical_board(monkeypatch, tmp_path):
+    """orchestrate.main(--batch --clinical-board) must thread clinical_board and
+    board_lang into run_batch_pipeline. Before v2.7 (ORCH-01) the batch dispatch
+    dropped these flags, so --clinical-board silently ran no board.
+    """
+    import scripts.orchestrate as orch
+
+    captured: dict = {}
+
+    def _fake_batch(**kwargs):
+        captured.update(kwargs)
+        return {"errors": [], "samples": [], "reports_generated": 0}
+
+    monkeypatch.setattr(orch, "run_batch_pipeline", _fake_batch)
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "orchestrate",
+            "--batch",
+            str(tmp_path),
+            "--clinical-board",
+            "--board-lang",
+            "ko",
+            "--output-dir",
+            str(tmp_path / "out"),
+        ],
+    )
+    orch.main()
+    assert captured.get("clinical_board") is True
+    assert captured.get("board_lang") == "ko"
+
+
+# ── v2.7 ORCH-05: directory sample_id collisions are disambiguated ────────────
+
+
+def test_discover_samples_disambiguates_colliding_ids(tmp_path):
+    """sample.vcf and sample.vcf.gz normalize to the same id; discover_samples
+    must disambiguate so the second does not overwrite the first's report."""
+    from scripts.orchestration.batch import discover_samples
+
+    (tmp_path / "sample.vcf").write_text("##fileformat=VCFv4.2\n")
+    (tmp_path / "sample.vcf.gz").write_text("")  # content irrelevant; only globbed
+
+    samples = discover_samples(str(tmp_path))
+    ids = [s["sample_id"] for s in samples]
+    assert len(ids) == 2
+    assert len(set(ids)) == 2, f"sample_ids collided: {ids}"
+    assert "sample" in ids
+    assert any(i.startswith("sample_") for i in ids)

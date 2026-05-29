@@ -342,6 +342,29 @@ EXAMPLES
     effective_hide_vus = not args.show_all_variants
 
     if args.batch:
+        # Per-sample inputs (germline / ped / sv / intervar / clinical-note /
+        # panel-size) are taken from manifest CSV columns in batch mode, not from
+        # CLI flags. Warn loudly if any were passed on the command line so a
+        # dropped flag is never silent (v2.7 review ORCH-01).
+        _ignored_in_batch = [
+            name
+            for name, val in (
+                ("--germline", getattr(args, "germline", None)),
+                ("--ped", getattr(args, "ped_path", None)),
+                ("--sv", args.sv_path),
+                ("--intervar", getattr(args, "intervar_path", None)),
+                ("--clinical-note", getattr(args, "clinical_note", None)),
+                ("--clinical-note-file", getattr(args, "clinical_note_file", None)),
+                ("--panel-size", args.panel_size),
+            )
+            if val
+        ]
+        if _ignored_in_batch:
+            logger.warning(
+                "Batch mode ignores per-sample CLI flags %s — set these as manifest "
+                "columns instead. They were NOT applied to the batch.",
+                ", ".join(_ignored_in_batch),
+            )
         result = run_batch_pipeline(
             batch_path=args.batch,
             output_dir=args.output_dir,
@@ -350,6 +373,8 @@ EXAMPLES
             skip_api=args.skip_api,
             hpo_ids=hpo_ids,
             hide_vus=effective_hide_vus,
+            clinical_board=getattr(args, "clinical_board", False),
+            board_lang=getattr(args, "board_lang", None),
         )
 
         if args.json_flag is not None:

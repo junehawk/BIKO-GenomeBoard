@@ -141,13 +141,27 @@ def discover_samples(batch_path: str) -> list:
     if path.is_dir():
         samples: list[dict[str, Any]] = []
         vcf_files = sorted(path.glob("*.vcf")) + sorted(path.glob("*.vcf.gz")) + sorted(path.glob("*.vcf.bgz"))
+        # Two files can normalize to the same sample_id (e.g. sample.vcf and
+        # sample.vcf.gz). Left unchecked they write to the same report path and
+        # the later sample silently overwrites the earlier one. Disambiguate
+        # with a numeric suffix and warn (v2.7 review ORCH-05).
+        seen_ids: dict[str, int] = {}
         for vcf_file in vcf_files:
-            samples.append(
-                {
-                    "sample_id": normalize_sample_id(str(vcf_file)),
-                    "vcf_path": str(vcf_file),
-                }
-            )
+            sid = normalize_sample_id(str(vcf_file))
+            if sid in seen_ids:
+                seen_ids[sid] += 1
+                disambiguated = f"{sid}_{seen_ids[sid]}"
+                logger.warning(
+                    "Batch directory: sample_id %r collides (file %s); using %r so it "
+                    "does not overwrite the earlier sample's report.",
+                    sid,
+                    vcf_file.name,
+                    disambiguated,
+                )
+                sid = disambiguated
+            else:
+                seen_ids[sid] = 1
+            samples.append({"sample_id": sid, "vcf_path": str(vcf_file)})
         return samples
     elif path.suffix == ".csv":
         samples = []
