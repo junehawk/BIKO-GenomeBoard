@@ -121,6 +121,52 @@ def test_parse_csq_value_mane_select_preferred():
     assert result["transcript"] == "ENST00000269305"
 
 
+# ── Multi-allelic allele scoping (v2.7 CROS-03) ───────────────────────────────
+
+
+def test_parse_csq_value_multiallelic_scopes_to_called_allele():
+    """Two-allele CSQ → the entry for the called ALT wins, not by-impact.
+
+    Without allele scoping, _pick_best_transcript would pick the HIGH-impact
+    G/stop_gained entry even when the called allele is the T/synonymous one.
+    """
+    fields = parse_csq_header(CSQ_HEADER)
+    csq = (
+        "T|synonymous_variant|LOW|BRCA2|ENSG00000139618|Transcript|ENST00000380152|protein_coding|"
+        "11/27||ENST00000380152.8:c.6402A>G||||||YES|NM_000059.4||,"
+        "G|stop_gained|HIGH|BRCA2|ENSG00000139618|Transcript|ENST00000380152|protein_coding|"
+        "11/27||ENST00000380152.8:c.6402A>C||||||YES|NM_000059.4||"
+    )
+    # Called allele is T → must get the synonymous (LOW) consequence.
+    result = parse_csq_value(csq, fields, alt="T")
+    assert result is not None
+    assert result["allele"] == "T"
+    assert result["consequence"] == "synonymous_variant"
+    # Called allele is G → must get the stop_gained (HIGH) consequence.
+    result_g = parse_csq_value(csq, fields, alt="G")
+    assert result_g["allele"] == "G"
+    assert result_g["consequence"] == "stop_gained"
+
+
+def test_parse_csq_value_allele_filter_falls_back_when_no_match():
+    """When no CSQ entry matches the called ALT (e.g. indel mismatch), keep all."""
+    fields = parse_csq_header(CSQ_HEADER)
+    csq = "A|missense_variant|MODERATE|TP53|ENSG00000141510|Transcript|ENST00000269305|protein_coding|4/11||c.524G>T|p.Arg175Leu|||||YES|NM_000546.6||"
+    # Called ALT "-" (a deletion minimal-rep) matches no entry → fall back, not None.
+    result = parse_csq_value(csq, fields, alt="-")
+    assert result is not None
+    assert result["consequence"] == "missense_variant"
+
+
+def test_parse_csq_value_no_alt_unchanged():
+    """Omitting alt preserves the prior by-impact / canonical selection."""
+    fields = parse_csq_header(CSQ_HEADER)
+    csq = "A|missense_variant|MODERATE|TP53|ENSG00000141510|Transcript|ENST00000269305|protein_coding|4/11||c.524G>T|p.Arg175Leu|||||YES|NM_000546.6||"
+    result = parse_csq_value(csq, fields)
+    assert result is not None
+    assert result["consequence"] == "missense_variant"
+
+
 def test_parse_csq_value_gene_filter():
     """Gene filter should restrict to matching gene entries."""
     fields = parse_csq_header(CSQ_HEADER)

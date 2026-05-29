@@ -391,7 +391,7 @@ def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
                     info = fields[7]
                     for item in info.split(";"):
                         if item.startswith("CSQ=") and csq_fields:
-                            annotation = parse_csq_value(item[4:], csq_fields, gene)
+                            annotation = parse_csq_value(item[4:], csq_fields, gene, alt=alt)
                             break
                         elif item.startswith("ANN=") and ann_fields:
                             annotation = parse_ann_value(item[4:], ann_fields, gene)

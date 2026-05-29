@@ -63,8 +63,19 @@ def _pick_best_transcript(entries: List[Dict[str, str]], gene: Optional[str] = N
     return entries[0]
 
 
-def parse_csq_value(csq_string: str, fields: List[str], gene: Optional[str] = None) -> Optional[Dict[str, str]]:
-    """Parse a CSQ INFO value into annotation dict. Picks best transcript."""
+def parse_csq_value(
+    csq_string: str, fields: List[str], gene: Optional[str] = None, alt: Optional[str] = None
+) -> Optional[Dict[str, str]]:
+    """Parse a CSQ INFO value into an annotation dict. Picks the best transcript.
+
+    ``alt`` is the called ALT allele(s) from the VCF (comma-separated for
+    multi-allelic lines). When supplied, entries are restricted to those whose
+    VEP ``Allele`` field matches a called allele, so a multi-allelic locus is
+    never annotated with a *different* allele's consequence (v2.7 review
+    CROS-03). The filter is conservative: if no entry matches (e.g. an indel
+    minimal-representation mismatch) all entries are kept, so annotation is
+    never silently lost.
+    """
     entries = []
     for entry_str in csq_string.split(","):
         values = entry_str.split("|")
@@ -83,6 +94,7 @@ def parse_csq_value(csq_string: str, fields: List[str], gene: Optional[str] = No
                     break
 
         mapped = {
+            "allele": entry.get("allele", ""),
             "gene": entry.get("symbol", ""),
             "consequence": entry.get("consequence", ""),
             "impact": entry.get("impact", ""),
@@ -108,6 +120,14 @@ def parse_csq_value(csq_string: str, fields: List[str], gene: Optional[str] = No
             "domains": entry.get("domains", ""),
         }
         entries.append(mapped)
+
+    # Multi-allelic safety: scope to the called ALT allele(s) when known so a
+    # multi-allelic locus is never annotated with another allele's consequence.
+    if alt:
+        called = {a.strip() for a in str(alt).split(",") if a.strip()}
+        matched = [e for e in entries if e.get("allele", "") in called]
+        if matched:
+            entries = matched
 
     return _pick_best_transcript(entries, gene)
 
