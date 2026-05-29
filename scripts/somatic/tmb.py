@@ -10,6 +10,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import List, Optional
 
+from scripts.annotation.parse_annotation import canonical_consequence_parts
 from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
@@ -65,20 +66,8 @@ def calculate_tmb(
     )
     consequences = counted_consequences or get("somatic.tmb_counted_consequences") or DEFAULT_COUNTED_CONSEQUENCES
 
-    # Build normalized lookup set (lowercase) for matching both
-    # VEP raw (missense_variant) and formatted (Missense) consequence names
-    _FORMATTED_TO_RAW = {
-        "missense": "missense_variant",
-        "nonsense": "stop_gained",
-        "nonsense / stop gain": "stop_gained",
-        "stop gain": "stop_gained",
-        "frameshift": "frameshift_variant",
-        "splice donor": "splice_donor_variant",
-        "splice acceptor": "splice_acceptor_variant",
-        "inframe deletion": "inframe_deletion",
-        "inframe insertion": "inframe_insertion",
-        "splice region variant": "splice_region_variant",
-    }
+    # Match the counted SO terms against both the VEP raw form (missense_variant)
+    # and the BIKO formatted label (Missense / "Missense / Splice region").
     csq_set = set(consequences)
     csq_lower_set = {c.lower() for c in csq_set}
 
@@ -86,23 +75,20 @@ def calculate_tmb(
     counted = 0
     for v in variants:
         csq = getattr(v, "consequence", None) or ""
-        # Direct match (VEP raw format)
+        # Direct match (VEP raw form)
         if csq in csq_set:
             counted += 1
             continue
-        # Normalized match (formatted consequence)
-        csq_lower = csq.lower()
-        if csq_lower in csq_lower_set:
+        # Normalized match (formatted label string, case-insensitive)
+        if csq.lower() in csq_lower_set:
             counted += 1
             continue
-        # Check formatted → raw mapping (e.g., "Missense" → "missense_variant")
-        # Also handle compound consequences like "Missense / Splice Region Variant"
-        for part in csq_lower.split(" / "):
-            part = part.strip()
-            raw = _FORMATTED_TO_RAW.get(part, "")
-            if raw in csq_set:
-                counted += 1
-                break
+        # Canonicalize the (possibly compound) label to SO terms and count if any
+        # component is a counted consequence. Uses the single shared
+        # canonicalization table (v2.7 review CROS-11) so TMB, the Clinical Board
+        # selector, and the classification engine can never drift apart again.
+        if any(part in csq_set for part in canonical_consequence_parts(csq)):
+            counted += 1
 
     score = round(counted / panel_size, 1) if panel_size > 0 else 0.0
 

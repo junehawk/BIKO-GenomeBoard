@@ -1,7 +1,10 @@
 # tests/test_evidence_collector.py
 """Tests for ACMG evidence collector module."""
 
-from scripts.classification.evidence_collector import collect_additional_evidence
+from scripts.classification.evidence_collector import (
+    collect_additional_evidence,
+    collect_denovo_evidence,
+)
 from scripts.common.models import Variant
 
 
@@ -228,6 +231,87 @@ def test_bp7_not_synonymous():
     v = _make_variant(consequence="missense_variant", gene="CDH1")
     codes = collect_additional_evidence(v)
     assert "BP7" not in codes
+
+
+# ── BP7 — production storage path (v2.7 regression, CROS-02) ──────────────────
+#
+# The tests above inject ``v.spliceai_max`` (an attribute the real pipeline never
+# sets). These pin the bug they masked: BP7 must read the *raw* SpliceAI delta
+# keys that ``parse_vcf`` actually stores in ``in_silico``, and must NOT fire on
+# a synonymous variant with a real splice signal.
+
+
+def test_bp7_suppressed_by_raw_spliceai_keys():
+    """synonymous + raw spliceai_pred_ds_* deltas with max >= 0.1 -> no BP7.
+
+    Uses the production storage shape (raw delta keys, no pre-computed
+    spliceai_max), which is what parse_vcf emits. Before v2.7 _get_spliceai_max
+    read a non-existent attribute and returned None, so BP7 fired here anyway.
+    """
+    v = _make_variant(
+        consequence="synonymous_variant",
+        gene="CDH1",
+        in_silico={"spliceai_pred_ds_dg": "0.85", "spliceai_pred_ds_al": "0.10"},
+    )
+    codes = collect_additional_evidence(v)
+    assert "BP7" not in codes
+
+
+def test_bp7_fires_with_low_raw_spliceai_keys():
+    """synonymous + raw deltas all < 0.1 -> BP7 (benign-supporting, correct)."""
+    v = _make_variant(
+        consequence="synonymous_variant",
+        gene="CDH1",
+        in_silico={
+            "spliceai_pred_ds_ag": "0.01",
+            "spliceai_pred_ds_al": "0.00",
+            "spliceai_pred_ds_dg": "0.02",
+            "spliceai_pred_ds_dl": "0.00",
+        },
+    )
+    codes = collect_additional_evidence(v)
+    assert "BP7" in codes
+
+
+def test_bp7_suppressed_with_biko_label_consequence():
+    """The BIKO short label 'Synonymous' (not the raw SO term) must still gate BP7."""
+    v = _make_variant(
+        consequence="Synonymous",
+        gene="CDH1",
+        in_silico={"spliceai_pred_ds_dg": "0.85"},
+    )
+    codes = collect_additional_evidence(v)
+    assert "BP7" not in codes
+
+
+# ── De-novo PS2/PM6 SpliceAI rescue — production path (v2.7 regression) ────────
+
+
+def test_denovo_splice_rescue_from_raw_keys():
+    """Confirmed de-novo synonymous variant with raw SpliceAI max >= 0.2 -> PS2_Moderate.
+
+    Reuses the production storage shape (raw delta keys). Before v2.7 the rescue
+    read a never-populated in_silico['spliceai_max'], so PS2 was silently dropped
+    and the variant stayed VUS.
+    """
+    v = _make_variant(
+        consequence="synonymous_variant",
+        gene="ARID1B",
+        confirmed_denovo=True,
+        in_silico={"spliceai_pred_ds_dg": "0.45"},
+    )
+    assert collect_denovo_evidence(v) == ["PS2_Moderate"]
+
+
+def test_denovo_splice_rescue_blocked_without_signal():
+    """De-novo intronic variant with no splice signal -> no PS2/PM6 (gate holds)."""
+    v = _make_variant(
+        consequence="intron_variant",
+        gene="ARID1B",
+        confirmed_denovo=True,
+        in_silico={"spliceai_pred_ds_dg": "0.05"},
+    )
+    assert collect_denovo_evidence(v) == []
 
 
 # ── Edge cases ───────────────────────────────────────────────────────────────

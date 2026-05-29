@@ -4,6 +4,8 @@
 from pathlib import Path
 
 from scripts.annotation.parse_annotation import (
+    canonical_consequence,
+    canonical_consequence_parts,
     format_consequence,
     parse_ann_header,
     parse_ann_value,
@@ -14,6 +16,7 @@ from scripts.intake.parse_vcf import parse_vcf
 
 ANNOTATED_VCF = Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants_grch38_annotated.vcf"
 PLAIN_VCF = Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_variants.vcf"
+IN_SILICO_VCF = Path(__file__).parent.parent / "data" / "sample_vcf" / "demo_with_in_silico.vcf"
 
 CSQ_HEADER = (
     '##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. '
@@ -207,6 +210,72 @@ def test_format_consequence_unknown_term():
 
 def test_format_consequence_empty():
     assert format_consequence("") == ""
+
+
+def test_format_consequence_splice_region():
+    """splice_region_variant must map to a 2-word label the inverse map knows.
+
+    v2.7 BOAR-01 / CROS-03: before the fix this fell through to the title-cased
+    'Splice Region Variant', which no consumer's canonicalizer matched, so
+    splice-region variants silently vanished from board selection.
+    """
+    assert format_consequence("splice_region_variant") == "Splice region"
+
+
+# ── canonical_consequence — shared canonicalizer (v2.7) ───────────────────────
+
+
+def test_canonical_consequence_round_trip_from_biko_label():
+    """The label format_consequence emits round-trips back to the SO term."""
+    for so in (
+        "missense_variant",
+        "splice_region_variant",
+        "synonymous_variant",
+        "stop_gained",
+        "intron_variant",
+        "frameshift_variant",
+    ):
+        assert canonical_consequence(format_consequence(so)) == so
+
+
+def test_canonical_consequence_compound_biko_label():
+    """Compound BIKO label ' / '-joined → primary (most-severe) SO term."""
+    assert canonical_consequence("Missense / Splice region") == "missense_variant"
+    assert canonical_consequence("Splice region / Intronic") == "splice_region_variant"
+
+
+def test_canonical_consequence_raw_so_terms():
+    """Raw VEP SO terms (incl. '&'-compound) pass through / split correctly."""
+    assert canonical_consequence("missense_variant") == "missense_variant"
+    assert canonical_consequence("splice_acceptor_variant&intron_variant") == "splice_acceptor_variant"
+    # Unknown term passes through lowercased.
+    assert canonical_consequence("novel_variant_type") == "novel_variant_type"
+    assert canonical_consequence("") == ""
+
+
+def test_canonical_consequence_parts_lists_all_components():
+    assert canonical_consequence_parts("Missense / Splice region") == [
+        "missense_variant",
+        "splice_region_variant",
+    ]
+    assert canonical_consequence_parts("") == []
+
+
+def test_parse_vcf_populates_spliceai_max():
+    """parse_vcf must write in_silico['spliceai_max'] from the raw delta keys.
+
+    v2.7 INTA-01: the canonical key was never populated, leaving every
+    downstream SpliceAI consumer reading None on real data. This integration
+    test does NOT inject the key — it parses the real fixture.
+    """
+    variants = parse_vcf(str(IN_SILICO_VCF))
+    by_gene = {v.gene: v for v in variants}
+    # CYP2C19 splice_donor: AG/AL/DG/DL = 0.10/0.85/0.05/0.03 → max 0.85
+    assert by_gene["CYP2C19"].in_silico["spliceai_max"] == 0.85
+    # ATM splice_acceptor: 0.02/0.01/0.60/0.03 → max 0.60
+    assert by_gene["ATM"].in_silico["spliceai_max"] == 0.60
+    # APOE deltas are all 0.00 → max 0.0 (preserved, not dropped to None).
+    assert by_gene["APOE"].in_silico["spliceai_max"] == 0.0
 
 
 # ── Integration: parse_vcf with CSQ annotations ───────────────────────────────

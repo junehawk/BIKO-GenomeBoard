@@ -1,6 +1,7 @@
 """Parse VEP CSQ or SnpEff ANN fields from pre-annotated VCFs."""
 
 import logging
+import re
 from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
@@ -146,6 +147,7 @@ def format_consequence(consequence: str) -> str:
         "frameshift_variant": "Frameshift",
         "splice_donor_variant": "Splice donor",
         "splice_acceptor_variant": "Splice acceptor",
+        "splice_region_variant": "Splice region",
         "inframe_deletion": "In-frame deletion",
         "inframe_insertion": "In-frame insertion",
         "synonymous_variant": "Synonymous",
@@ -164,3 +166,78 @@ def format_consequence(consequence: str) -> str:
     for part in parts:
         readable.append(mapping.get(part, part.replace("_", " ").title()))
     return " / ".join(readable[:2])  # Show max 2
+
+
+# ---------------------------------------------------------------------------
+# Canonical consequence resolution — single source of truth
+# ---------------------------------------------------------------------------
+#
+# The real pipeline stores ``variant.consequence`` as a BIKO short label
+# produced by :func:`format_consequence` (e.g. ``"Missense"``,
+# ``"Splice region"``, or the compound ``"Missense / Splice region"``), while
+# tests and some upstream callers pass raw VEP SO terms (``"missense_variant"``,
+# ``"missense_variant&splice_region_variant"``). Both forms must resolve to the
+# same canonical VEP SO term or downstream membership checks become silent dead
+# code on production data (see v2.7 review — BOAR-01 / CROS-03 / CROS-11).
+#
+# This map and the two helpers below are the ONE place that knowledge lives.
+# ``variant_selector``, ``evidence_collector``, and ``tmb`` all delegate here
+# instead of carrying their own (previously divergent) copies.
+
+# Inverse of ``format_consequence`` — lowercased BIKO label → canonical SO term.
+# Includes both the canonical 2-word forms emitted by ``format_consequence`` and
+# the title-cased / legacy variants seen in older data so the round-trip is
+# bullet-proof regardless of which label form a caller supplies.
+_FORMATTED_TO_SO: Dict[str, str] = {
+    "missense": "missense_variant",
+    "nonsense": "stop_gained",
+    "nonsense / stop gain": "stop_gained",
+    "stop gain": "stop_gained",
+    "frameshift": "frameshift_variant",
+    "splice donor": "splice_donor_variant",
+    "splice acceptor": "splice_acceptor_variant",
+    "splice region": "splice_region_variant",
+    "splice region variant": "splice_region_variant",
+    "in-frame deletion": "inframe_deletion",
+    "inframe deletion": "inframe_deletion",
+    "in-frame insertion": "inframe_insertion",
+    "inframe insertion": "inframe_insertion",
+    "synonymous": "synonymous_variant",
+    "start loss": "start_lost",
+    "stop loss": "stop_lost",
+    "intronic": "intron_variant",
+    "5' utr": "5_prime_utr_variant",
+    "3' utr": "3_prime_utr_variant",
+    "intergenic": "intergenic_variant",
+}
+
+# A consequence label may be compound — joined by " / " (``format_consequence``)
+# or "&" (raw VEP). Split on either delimiter.
+_CONSEQUENCE_SPLIT = re.compile(r"\s*/\s*|&")
+
+
+def canonical_consequence_parts(label: str) -> List[str]:
+    """Return every consequence component of ``label`` as canonical SO terms.
+
+    Handles raw VEP SO terms, BIKO short labels, and compound labels joined by
+    " / " or "&". Components that are not in the inverse map pass through
+    unchanged (they are already SO terms, or genuinely unknown). Order is
+    preserved, so element 0 is the primary (most-severe) consequence.
+    """
+    if not label:
+        return []
+    parts = []
+    for raw in _CONSEQUENCE_SPLIT.split(label.strip().lower()):
+        part = raw.strip()
+        if part:
+            parts.append(_FORMATTED_TO_SO.get(part, part))
+    return parts
+
+
+def canonical_consequence(label: str) -> str:
+    """Return the primary (most-severe) consequence of ``label`` as an SO term.
+
+    Empty input → ``""``. See :func:`canonical_consequence_parts`.
+    """
+    parts = canonical_consequence_parts(label)
+    return parts[0] if parts else ""

@@ -17,6 +17,8 @@ import os
 import re
 from typing import Any, Dict, List, Optional, Set
 
+from scripts.annotation.parse_annotation import canonical_consequence
+from scripts.classification.in_silico import spliceai_delta_max
 from scripts.common.hgvs_utils import extract_protein_position
 from scripts.common.models import Variant
 
@@ -86,34 +88,22 @@ def _pm1_hotspot_match(gene: Optional[str], protein_position: Optional[int]) -> 
 
 # ── Consequence groups ────────────────────────────────────────────────────────
 #
-# Inverse of scripts/annotation/parse_annotation.py::format_consequence mapping.
-# Real pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
-# variant dict, but evidence_collector's tests use the raw VEP SO term. Both
-# must resolve to the same internal canonical form.
-_FORMATTED_TO_SO = {
-    "missense": "missense_variant",
-    "nonsense": "stop_gained",
-    "nonsense / stop gain": "stop_gained",
-    "frameshift": "frameshift_variant",
-    "splice donor": "splice_donor_variant",
-    "splice acceptor": "splice_acceptor_variant",
-    "in-frame deletion": "inframe_deletion",
-    "in-frame insertion": "inframe_insertion",
-    "synonymous": "synonymous_variant",
-    "start loss": "start_lost",
-    "stop loss": "stop_lost",
-    "intronic": "intron_variant",
-}
+# Consequence canonicalization (raw VEP SO term *or* BIKO short label *or*
+# compound "X / Y" → primary SO term) lives in
+# scripts/annotation/parse_annotation.py::canonical_consequence — the single
+# source of truth shared with the Clinical Board selector and TMB. This module
+# previously carried its own divergent copy that split on neither " / " nor
+# (in this function) "&", silently mis-canonicalizing compound and
+# splice-region labels on production data (v2.7 review CROS-03 / CROS-11).
 
 
 def _canonicalize_so_term(raw: str) -> str:
-    """Return the canonical VEP SO term for either a raw SO term or a
-    BIKO-formatted label. Lowercased input is compared against the inverse
-    map first; unknown terms pass through unchanged."""
-    if not raw:
-        return ""
-    key = raw.strip().lower()
-    return _FORMATTED_TO_SO.get(key, key)
+    """Return the canonical VEP SO term for a raw term or BIKO label.
+
+    Thin wrapper over :func:`canonical_consequence`; retained for the call
+    sites and tests that reference it by name.
+    """
+    return canonical_consequence(raw)
 
 
 NULL_CONSEQUENCES = frozenset(
@@ -175,17 +165,15 @@ _DENOVO_SPLICEAI_RESCUE_THRESHOLD = 0.2
 
 
 def _get_consequence(variant: Variant) -> Optional[str]:
-    """Return the primary VEP consequence term, normalised to lowercase.
+    """Return the primary VEP consequence as a canonical SO term, or None.
 
-    Handles multi-consequence strings like ``missense_variant&splice_region_variant``
-    by returning the first (most severe) term.
+    Delegates to :func:`canonical_consequence`, which handles raw SO terms,
+    BIKO short labels, and compound labels joined by " / " (``format_consequence``)
+    or "&" (raw VEP) — returning the first/most-severe component.
     """
     if not variant.consequence:
         return None
-    raw = variant.consequence.strip().lower()
-    if "&" in raw:
-        raw = raw.split("&")[0]
-    return _canonicalize_so_term(raw)
+    return canonical_consequence(variant.consequence) or None
 
 
 def _is_null(consequence: str) -> bool:
@@ -272,17 +260,28 @@ def _extract_aa_change(hgvsp: str) -> Optional[str]:
 
 
 def _get_spliceai_max(variant: Variant) -> Optional[float]:
-    """Extract max SpliceAI delta score from variant if available.
+    """Extract the max SpliceAI delta score for ``variant``, or None.
 
-    Looks for a ``spliceai_max`` attribute or parses the ``sift`` field
-    as a fallback (some pipelines embed SpliceAI in INFO).
-    Returns None if SpliceAI data is not available.
+    Reads ``variant.in_silico`` — the real-pipeline storage location — via the
+    canonical :func:`spliceai_delta_max` helper, which prefers a pre-computed
+    ``in_silico['spliceai_max']`` and otherwise derives the max from the four
+    raw ``spliceai_pred_ds_*`` keys. Falls back to a legacy ``spliceai_max``
+    attribute if present.
+
+    Before v2.7 this read a ``variant.spliceai_max`` attribute that the
+    ``Variant`` dataclass never defines, so it always returned None — which made
+    the BP7 synonymous-no-splice guard fire on *every* synonymous variant,
+    including splice-disrupting ones (a false-benign safety regression).
     """
-    # Check for explicit spliceai_max attribute
-    val = getattr(variant, "spliceai_max", None)
+    in_silico = getattr(variant, "in_silico", None)
+    val = spliceai_delta_max(in_silico)
     if val is not None:
+        return val
+    # Legacy attribute fallback (no production path sets it, kept for safety).
+    raw = getattr(variant, "spliceai_max", None)
+    if raw is not None:
         try:
-            return float(val)
+            return float(raw)
         except (ValueError, TypeError):
             return None
     return None
@@ -414,22 +413,14 @@ def collect_additional_evidence(
 def _denovo_spliceai_rescue(variant: Variant) -> bool:
     """Return True if the variant has SpliceAI delta_max >= 0.2.
 
-    Reads ``variant.in_silico["spliceai_max"]`` (the real-pipeline storage
-    location) with a fall-back to the historical ``spliceai_max`` attribute.
-    Unparseable or missing values return False.
+    Uses :func:`_get_spliceai_max`, which derives the delta-max from the raw
+    ``spliceai_pred_ds_*`` keys when the pre-computed ``spliceai_max`` is
+    absent. Before v2.7 this read a never-populated ``in_silico['spliceai_max']``
+    key, so the de-novo PS2/PM6 splice rescue was silent dead code on
+    production data.
     """
-    in_silico = getattr(variant, "in_silico", None)
-    raw: Any = None
-    if isinstance(in_silico, dict):
-        raw = in_silico.get("spliceai_max")
-    if raw is None:
-        raw = getattr(variant, "spliceai_max", None)
-    if raw is None:
-        return False
-    try:
-        return float(raw) >= _DENOVO_SPLICEAI_RESCUE_THRESHOLD
-    except (TypeError, ValueError):
-        return False
+    val = _get_spliceai_max(variant)
+    return val is not None and val >= _DENOVO_SPLICEAI_RESCUE_THRESHOLD
 
 
 def collect_denovo_evidence(variant: Variant) -> List[str]:

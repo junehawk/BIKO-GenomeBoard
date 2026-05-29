@@ -9,6 +9,7 @@ from scripts.classification.in_silico import (
     format_scores_for_display,
     generate_pp3_bp4,
     parse_in_silico_from_csq,
+    spliceai_delta_max,
 )
 
 # ---------------------------------------------------------------------------
@@ -646,3 +647,41 @@ class TestVCFIntegration:
         assert scores.spliceai_max == pytest.approx(0.60)
         evidence = generate_pp3_bp4(scores)
         assert evidence == ["PP3_Strong"]
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# spliceai_delta_max — canonical reader for a raw in_silico dict (v2.7)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+class TestSpliceaiDeltaMax:
+    """The single canonical SpliceAI reader every consumer routes through."""
+
+    def test_derives_from_raw_delta_keys(self):
+        """No pre-computed key → derive max from the four raw spliceai_pred_ds_*."""
+        in_silico = {
+            "spliceai_pred_ds_ag": "0.10",
+            "spliceai_pred_ds_al": "0.85",
+            "spliceai_pred_ds_dg": "0.05",
+            "spliceai_pred_ds_dl": "0.03",
+        }
+        assert spliceai_delta_max(in_silico) == pytest.approx(0.85)
+
+    def test_prefers_precomputed_key(self):
+        """A populated spliceai_max wins over the raw keys."""
+        assert spliceai_delta_max({"spliceai_max": 0.42, "spliceai_pred_ds_ag": "0.99"}) == pytest.approx(0.42)
+
+    def test_none_when_absent(self):
+        assert spliceai_delta_max({}) is None
+        assert spliceai_delta_max(None) is None
+        assert spliceai_delta_max({"revel_score": "0.9"}) is None
+
+    def test_ignores_missing_sentinels(self):
+        """VEP missing sentinels ('.', '', 'NA') do not poison the max."""
+        in_silico = {
+            "spliceai_pred_ds_ag": ".",
+            "spliceai_pred_ds_al": "",
+            "spliceai_pred_ds_dg": "0.30",
+            "spliceai_pred_ds_dl": "NA",
+        }
+        assert spliceai_delta_max(in_silico) == pytest.approx(0.30)

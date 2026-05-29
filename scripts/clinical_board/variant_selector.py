@@ -28,6 +28,8 @@ from __future__ import annotations
 
 from typing import Optional
 
+from scripts.annotation.parse_annotation import canonical_consequence
+from scripts.classification.in_silico import spliceai_delta_max
 from scripts.enrichment.oncokb import is_cancer_gene
 from scripts.common.config import get
 from scripts.common.ddg2p_panel import is_admitted_neurodev_gene
@@ -146,37 +148,23 @@ _PROTEIN_IMPACTING_CONSEQUENCES = frozenset(
     }
 )
 
-# Inverse of scripts/annotation/parse_annotation.py::format_consequence. The real
-# pipeline stores the BIKO-formatted short label (e.g. "Missense") on the
-# variant dict, but the selector's gate is expressed in raw VEP SO terms. Both
-# forms must resolve to the same membership check or Tier III MAY-arm variants
-# silently disappear from the cancer board.
-_FORMATTED_TO_SO = {
-    "missense": "missense_variant",
-    "nonsense": "stop_gained",
-    "nonsense / stop gain": "stop_gained",
-    "frameshift": "frameshift_variant",
-    "splice donor": "splice_donor_variant",
-    "splice acceptor": "splice_acceptor_variant",
-    "in-frame deletion": "inframe_deletion",
-    "in-frame insertion": "inframe_insertion",
-    "synonymous": "synonymous_variant",
-    "start loss": "start_lost",
-    "stop loss": "stop_lost",
-    "intronic": "intron_variant",
-    "splice region": "splice_region_variant",
-}
+# Consequence canonicalization (raw VEP SO term *or* BIKO short label *or*
+# compound "X / Y" → primary SO term) is shared with the classification engine
+# and TMB via scripts/annotation/parse_annotation.py::canonical_consequence.
+# The selector previously carried its own copy that split only on "&" (never
+# " / ") and whose "splice region" key never matched the title-cased
+# "Splice Region Variant" that format_consequence emitted — so multi-consequence
+# and splice-region Tier III / MAY-arm variants silently vanished from the
+# board (v2.7 review BOAR-01 / CROS-01 / CROS-03).
 
 
 def _canonical_consequence(raw: str) -> str:
-    """Return canonical VEP SO term for either a raw term or a BIKO-formatted
-    label. Unknown terms pass through unchanged."""
-    if not raw:
-        return ""
-    key = raw.strip().lower()
-    if "&" in key:
-        key = key.split("&", 1)[0].strip()
-    return _FORMATTED_TO_SO.get(key, key)
+    """Return the primary canonical VEP SO term for a raw term or BIKO label.
+
+    Thin wrapper over :func:`canonical_consequence`; retained for the selector's
+    internal call sites.
+    """
+    return canonical_consequence(raw)
 
 
 # v2.2 B1: splice-region / synonymous variants are rescued (admitted) only when
@@ -259,13 +247,9 @@ def _passes_consequence_gate(v: dict) -> bool:
     if consequence in _PROTEIN_IMPACTING_CONSEQUENCES:
         return True
     if consequence in _SPLICE_RESCUE_CONSEQUENCES:
-        in_silico = v.get("in_silico") or {}
-        raw = in_silico.get("spliceai_max") if isinstance(in_silico, dict) else None
-        try:
-            if raw is not None and float(raw) >= _SPLICEAI_RESCUE_THRESHOLD:
-                return True
-        except (TypeError, ValueError):
-            return False
+        sa_max = spliceai_delta_max(v.get("in_silico"))
+        if sa_max is not None and sa_max >= _SPLICEAI_RESCUE_THRESHOLD:
+            return True
     return False
 
 
@@ -709,9 +693,5 @@ def _passes_intron_splice_rescue(v: dict) -> bool:
     consequence = _canonical_consequence(v.get("consequence") or "")
     if consequence != "intron_variant":
         return False
-    in_silico = v.get("in_silico") or {}
-    raw = in_silico.get("spliceai_max") if isinstance(in_silico, dict) else None
-    try:
-        return raw is not None and float(raw) >= _SPLICEAI_RESCUE_THRESHOLD
-    except (TypeError, ValueError):
-        return False
+    sa_max = spliceai_delta_max(v.get("in_silico"))
+    return sa_max is not None and sa_max >= _SPLICEAI_RESCUE_THRESHOLD

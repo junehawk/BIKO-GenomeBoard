@@ -247,6 +247,63 @@ def test_splice_region_rescued_at_exact_threshold():
     assert selected[0]["selection_reason"] == "Tier_III_hotspot"
 
 
+# ---------------------------------------------------------------------------
+# B1 — production-path regression (v2.7 CROS-01 / CROS-03)
+# ---------------------------------------------------------------------------
+#
+# The tests above inject ``in_silico={"spliceai_max": ...}`` and use raw VEP SO
+# terms. Production stores the BIKO short label (e.g. "Splice region") and only
+# the raw ``spliceai_pred_ds_*`` keys. These pin the bug that masked: the gate
+# must canonicalize the formatted label AND derive SpliceAI from the raw keys.
+
+
+def test_splice_region_rescued_from_biko_label_and_raw_keys():
+    """splice_region as the BIKO label 'Splice region' + raw SpliceAI deltas.
+
+    This is the exact shape parse_vcf emits. Before v2.7 the label never matched
+    the canonicalizer and the raw keys were never read, so the variant was
+    silently dropped from the board.
+    """
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "BRAF",
+            classification="VUS",
+            tier="Tier III",
+            hgvsp="p.Val600Val",
+            consequence="Splice region",  # == format_consequence('splice_region_variant')
+            in_silico={"spliceai_pred_ds_dg": "0.45"},  # no pre-computed spliceai_max
+        ),
+    ]
+    with _patch_clinical(hotspot_positions={("BRAF", 600)}):
+        selected, _ = select_board_variants(variants, mode="cancer")
+
+    assert len(selected) == 1
+    assert selected[0]["selection_reason"] == "Tier_III_hotspot"
+
+
+def test_compound_consequence_label_admitted():
+    """Compound BIKO label 'Missense / Splice region' resolves to missense and
+    passes the protein-impacting gate (it must not be silently excluded)."""
+    from scripts.clinical_board.variant_selector import select_board_variants
+
+    variants = [
+        _mk_snv(
+            "KRAS",
+            classification="VUS",
+            tier="Tier III",
+            hgvsp="p.Gly12Asp",
+            consequence="Missense / Splice region",
+        ),
+    ]
+    with _patch_clinical(hotspot_positions={("KRAS", 12)}):
+        selected, _ = select_board_variants(variants, mode="cancer")
+
+    assert len(selected) == 1
+    assert selected[0]["selection_reason"] == "Tier_III_hotspot"
+
+
 def test_cancer_may_arm_also_gated():
     """The MAY arm (VUS_hotspot, etc.) is gated by consequence too.
     A VUS at a hotspot position with intron_variant consequence must

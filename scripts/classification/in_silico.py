@@ -171,6 +171,32 @@ def _compute_spliceai_max(scores: InSilicoScores) -> Optional[float]:
     return max(vals) if vals else None
 
 
+def spliceai_delta_max(in_silico: Optional[Dict[str, Any]]) -> Optional[float]:
+    """Return the SpliceAI delta-max for a raw ``variant.in_silico`` dict.
+
+    This is the single canonical reader for SpliceAI signal anywhere in the
+    pipeline. It prefers a pre-computed ``in_silico['spliceai_max']`` (written
+    by :func:`scripts.intake.parse_vcf.parse_vcf`) and otherwise derives the
+    max from the four raw ``spliceai_pred_ds_*`` keys via
+    :func:`parse_in_silico_from_csq`. Returns ``None`` when no parseable
+    SpliceAI data is present.
+
+    Before v2.7 several consumers (BP7 guard, de-novo PS2/PM6 rescue, the
+    Clinical Board selector splice rescue) read ``in_silico['spliceai_max']``
+    directly — a key production never populated — making the rescue/guard logic
+    silent dead code on real data. Routing every reader through this helper
+    closes that gap.
+    """
+    if not isinstance(in_silico, dict):
+        return None
+    pre = in_silico.get("spliceai_max")
+    if pre is not None:
+        f = _safe_float(pre)
+        if f is not None:
+            return f
+    return parse_in_silico_from_csq(in_silico).spliceai_max
+
+
 # ---------------------------------------------------------------------------
 # PP3 / BP4 evidence generation
 # ---------------------------------------------------------------------------

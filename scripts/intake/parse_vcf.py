@@ -7,6 +7,7 @@ import os
 import re
 from typing import IO, List, Optional, Tuple
 
+from scripts.classification.in_silico import spliceai_delta_max
 from scripts.common.models import Variant
 from scripts.annotation.parse_annotation import (
     format_consequence,
@@ -427,6 +428,15 @@ def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
                         if _val:
                             _in_silico[_isf] = _val
                     if _in_silico:
+                        # Persist the canonical SpliceAI delta-max so every
+                        # downstream consumer (BP7 guard, de-novo PS2/PM6
+                        # rescue, Clinical Board splice rescue, report display)
+                        # reads one populated key instead of recomputing or —
+                        # worse — reading a key that was never written (v2.7
+                        # review INTA-01).
+                        _sa_max = spliceai_delta_max(_in_silico)
+                        if _sa_max is not None:
+                            _in_silico["spliceai_max"] = _sa_max
                         variant.in_silico = _in_silico
                     # Override gene from annotation if not in INFO
                     if not gene and annotation.get("gene"):
