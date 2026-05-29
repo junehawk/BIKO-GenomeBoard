@@ -31,3 +31,20 @@ def test_hla_b_phenotype():
     # HLA-B may or may not be in the data file; if it is, check phenotype
     if result is not None:
         assert result.phenotype == "HLA-B*5701 carrier — abacavir hypersensitivity risk"
+
+
+def test_korean_flag_unified_across_paths():
+    """The builtin PgxResult.korean_flag and the shared helper must agree
+    (v2.7 ENRI-06 — the PharmCAT path no longer uses a divergent formula)."""
+    from scripts.common.models import PgxResult, pgx_korean_flag
+
+    for korean, western in [(0.15, 0.02), (0.03, 0.03), (0.0, 0.05), (0.10, 0.0)]:
+        r = PgxResult(
+            gene="X",
+            star_allele="",
+            phenotype="",
+            cpic_level="",
+            korean_prevalence=korean,
+            western_prevalence=western,
+        )
+        assert r.korean_flag == pgx_korean_flag(korean, western)

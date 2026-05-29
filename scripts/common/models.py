@@ -107,6 +107,22 @@ class FrequencyData:
         return None
 
 
+def pgx_korean_flag(korean_prevalence: float, western_prevalence: float) -> bool:
+    """Single definition of the Korean-vs-Western PGx prevalence flag.
+
+    True when the Korean star-allele prevalence is materially enriched over
+    Western — at least 2x the Western frequency — or, when no Western frequency
+    is available, simply present in the Korean cohort. Both the builtin
+    ``PgxResult.korean_flag`` path and the PharmCAT conversion in
+    ``korean_pgx._convert_pharmcat_to_pgx_hits`` delegate here so the flag can
+    never diverge between runs (v2.7 review ENRI-06 — the PharmCAT path
+    previously used an incompatible relative-difference formula).
+    """
+    if western_prevalence and western_prevalence > 0:
+        return (korean_prevalence / western_prevalence) >= 2.0
+    return bool(korean_prevalence and korean_prevalence > 0)
+
+
 @dataclass
 class PgxResult:
     gene: str
@@ -120,9 +136,7 @@ class PgxResult:
 
     @property
     def korean_flag(self) -> bool:
-        if self.western_prevalence > 0:
-            return (self.korean_prevalence / self.western_prevalence) >= 2.0
-        return self.korean_prevalence > 0
+        return pgx_korean_flag(self.korean_prevalence, self.western_prevalence)
 
 
 @dataclass

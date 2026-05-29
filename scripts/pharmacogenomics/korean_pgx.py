@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from scripts.common.config import get
-from scripts.common.models import PgxResult, Variant
+from scripts.common.models import PgxResult, Variant, pgx_korean_flag
 from scripts.common.types import PgxHit, PgxResultsDict
 
 logger = logging.getLogger(__name__)
@@ -170,8 +170,10 @@ def _convert_pharmcat_to_pgx_hits(pharmcat_result: Any) -> List[PgxHit]:
             if not clinical_impact:
                 clinical_impact = gene_drugs[0].get("classification", "")
 
-        # Korean flag: set if this gene has notable Korean-specific prevalence
-        korean_flag = korean_prev > 0 and abs(korean_prev - western_prev) / max(western_prev, 0.01) > 0.5
+        # Korean flag: single shared definition (ratio >= 2x), identical to the
+        # builtin PgxResult.korean_flag path so the flag cannot diverge between
+        # the PharmCAT and builtin sources (v2.7 review ENRI-06).
+        korean_flag = pgx_korean_flag(korean_prev, western_prev)
 
         hits.append(
             {
@@ -198,6 +200,7 @@ def get_pgx_results(
     variants: List[Variant],
     germline_vcf: Optional[str] = None,
     config: Optional[Dict[str, Any]] = None,
+    sample_id: Optional[str] = None,
 ) -> PgxResultsDict:
     """Unified PGx entry point.
 
@@ -217,7 +220,7 @@ def get_pgx_results(
             from scripts.pharmacogenomics.pharmcat_runner import is_pharmcat_available, run_pharmcat
 
             if is_pharmcat_available(config):
-                pharmcat_result = run_pharmcat(germline_vcf, config=config)
+                pharmcat_result = run_pharmcat(germline_vcf, config=config, sample_id=sample_id)
                 if pharmcat_result is not None:
                     hits = _convert_pharmcat_to_pgx_hits(pharmcat_result)
                     return {

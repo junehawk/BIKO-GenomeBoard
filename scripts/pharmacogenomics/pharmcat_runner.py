@@ -177,7 +177,13 @@ def _pre_filter_pgx_positions(germline_vcf: str, jar_path: str, output_dir: str)
                     chrom = parts[0]
                     pos = int(parts[1])
                     targets.append((chrom, pos))
-    except Exception:
+    except Exception as exc:
+        logger.warning(
+            "PGx pre-filter: failed to parse positions file %s (%s); PharmCAT "
+            "would run over the FULL germline VCF and may time out",
+            positions_file,
+            exc,
+        )
         return None
 
     if not targets:
@@ -199,7 +205,12 @@ def _pre_filter_pgx_positions(germline_vcf: str, jar_path: str, output_dir: str)
                 except ValueError:
                     continue
         tbx.close()
-    except Exception:
+    except Exception as exc:
+        logger.warning(
+            "PGx pre-filter: tabix extraction failed (%s); PharmCAT would run "
+            "over the FULL germline VCF and may time out",
+            exc,
+        )
         return None
 
     return filtered_path
@@ -214,11 +225,18 @@ def run_pharmcat(
     germline_vcf: str,
     output_dir: str | None = None,
     config: dict | None = None,
+    sample_id: str | None = None,
 ) -> Optional[PharmCATResult]:
     """Run PharmCAT on *germline_vcf* and return parsed results.
 
     Returns ``None`` when PharmCAT is not installed or execution fails,
     so that the caller can fall back to the builtin PGx engine.
+
+    ``sample_id`` (e.g. the PED-resolved proband) disambiguates multi-sample
+    output: PharmCAT writes one ``<stem>.<sample_id>.report.json`` per sample,
+    so the sample id is matched as a dot-delimited segment rather than a loose
+    substring (the stem appears in every name). When omitted and multiple
+    reports exist, the first is used and a WARNING is logged (v2.7 PGX-06).
     """
     java = _find_java(config)
     jar = _find_jar(config)
@@ -253,7 +271,12 @@ def run_pharmcat(
                 input_vcf = pre_filtered_vcf
                 logger.info("Pre-filtered germline to PGx positions: %s", pre_filtered_vcf)
         except Exception as pf_err:
-            logger.debug("PGx pre-filter failed (%s), using full VCF", pf_err)
+            logger.warning(
+                "PGx pre-filter raised (%s); running PharmCAT over the FULL "
+                "germline VCF — this may exceed the timeout and silently "
+                "degrade to the builtin PGx table",
+                pf_err,
+            )
 
         # ── 1. Run PharmCAT core ──────────────────────────────────────────
         cmd = [
@@ -294,12 +317,30 @@ def run_pharmcat(
 
         report_path = report_jsons[0]
         if len(report_jsons) > 1:
-            vcf_stem = Path(germline_vcf).stem.replace(".vcf", "").replace(".gz", "").replace(".bgz", "")
-            for rj in report_jsons:
-                # PharmCAT names reports as <vcf_stem>.<sample_id>.report.json
-                if vcf_stem.lower() in Path(rj).name.lower():
-                    report_path = rj
-                    break
+            selected = None
+            if sample_id:
+                # Match the sample id as a dot-delimited segment of
+                # <stem>.<sample_id>.report.json — NOT a loose substring (the
+                # VCF stem appears in every report name, so a substring match
+                # always hit the first report regardless of sample).
+                for rj in report_jsons:
+                    if sample_id in Path(rj).name.split("."):
+                        selected = rj
+                        break
+                if selected is None:
+                    logger.warning(
+                        "PharmCAT multi-sample: no report matched proband sample_id=%r; falling back to %s",
+                        sample_id,
+                        Path(report_jsons[0]).name,
+                    )
+            else:
+                logger.warning(
+                    "PharmCAT produced %d sample reports but no proband sample_id was "
+                    "supplied; defaulting to %s — pass sample_id to disambiguate",
+                    len(report_jsons),
+                    Path(report_jsons[0]).name,
+                )
+            report_path = selected or report_jsons[0]
             logger.info(
                 "Multi-sample VCF: %d reports found, selected %s",
                 len(report_jsons),
