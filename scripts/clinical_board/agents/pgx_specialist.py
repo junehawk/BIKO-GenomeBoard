@@ -24,7 +24,11 @@ class PGxSpecialist(BaseAgent):
 
 1. **PGx 변이의 약물 대사 영향 평가**
    - 각 PGx 변이가 관련 약물의 대사에 미치는 영향을 분석하세요.
-   - 대사 표현형(poor/intermediate/normal/rapid/ultrarapid metabolizer)을 판단하세요.
+   - **대사 표현형(metabolizer phenotype)은 briefing의 PGx 섹션이 PharmCAT
+     diplotype 호출(pgx_source=pharmcat)을 제공한 경우에만 단정하시오.** 데이터가
+     builtin/유전자 수준 맥락만 제공하면(genotype 미확정), 특정 star-allele 보인자나
+     대사자 유형을 단정하지 말고 "PharmCAT diplotype 호출이 있어야 확정 가능"이라고
+     명시하시오. (BIKO PGX-02 계약과 일치)
 
 2. **복수 PGx 변이의 복합 효과 고려**
    - 여러 PGx 변이가 동시에 존재할 때의 상호작용을 분석하세요.
@@ -62,7 +66,12 @@ Your expertise is analysing how genomic variants influence drug metabolism and d
 
 1. **Impact of PGx variants on drug metabolism**
    - Analyse how each PGx variant affects the metabolism of the relevant drug.
-   - Assign the metaboliser phenotype (poor/intermediate/normal/rapid/ultrarapid).
+   - **Assign a metaboliser phenotype (poor/intermediate/normal/rapid/ultrarapid)
+     ONLY when the briefing's PGx section provides a PharmCAT diplotype call
+     (pgx_source=pharmcat).** When the data is builtin / gene-level context only
+     (genotype not resolved), do NOT assert a specific star-allele carrier or
+     metaboliser class — state that "a definitive call requires a PharmCAT
+     diplotype". (Consistent with the BIKO PGX-02 contract.)
 
 2. **Combined effects of multiple PGx variants**
    - Analyse interactions when several PGx variants are present simultaneously.
