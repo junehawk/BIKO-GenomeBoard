@@ -166,3 +166,43 @@ def test_probe_counts_tumor_fabrication():
     assert r["tumor_fabrication_count"] >= 1
     assert r["gene_fabrication_count"] == 0  # TP53/BRCA2 are in the case
     assert r["fabrication_count"] == r["gene_fabrication_count"] + r["tumor_fabrication_count"]
+
+
+# ── v2.8 (A): grounding flags rendered in the report ──────────────────────────
+
+
+def test_report_renders_grounding_flags_banner_cancer():
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    op = CancerBoardOpinion(
+        therapeutic_headline="Stage III NSCLC — TP53/BRCA2",
+        grounding_flags=["⚠ Grounding: gene KRAS not in case variant set"],
+    )
+    out = render_board_opinion_html(op, "en")
+    assert "Grounding Warnings" in out
+    assert "KRAS not in case variant set" in out
+
+
+def test_report_renders_grounding_flags_banner_rare():
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    op = BoardOpinion(primary_diagnosis="X", grounding_flags=["⚠ Grounding: PTPN11 not in case"])
+    out = render_board_opinion_html(op, "en")
+    assert "Grounding Warnings" in out
+    assert "PTPN11" in out
+
+
+def test_report_no_banner_without_flags():
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    out = render_board_opinion_html(CancerBoardOpinion(therapeutic_headline="X", grounding_flags=[]), "en")
+    assert "Grounding Warnings" not in out
+
+
+def test_grounding_banner_escapes_html():
+    from scripts.clinical_board.render import render_board_opinion_html
+
+    op = CancerBoardOpinion(grounding_flags=["<script>alert(1)</script>"])
+    out = render_board_opinion_html(op, "en")
+    assert "<script>alert(1)</script>" not in out
+    assert "&lt;script&gt;" in out

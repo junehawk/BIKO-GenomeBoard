@@ -1,5 +1,7 @@
 """Render Clinical Board opinion as HTML for report integration."""
 
+import html
+
 from scripts.clinical_board.models import BoardOpinion, CancerBoardOpinion
 
 
@@ -31,6 +33,28 @@ def _render_header_and_disclaimer(language: str) -> list[str]:
     </div>
     """,
     ]
+
+
+def _render_grounding_flags_banner(opinion, language: str = "en") -> str:
+    """Red banner listing the grounding scrubber's flags (v2.8).
+
+    Surfaces the annotate-only ``grounding_flags`` (off-briefing genes, ungrounded
+    tumour type/stage) to the reviewer in the rendered report — without this the
+    scrubber populates the data but the reader never sees the warnings. Flag text
+    is HTML-escaped.
+    """
+    flags = getattr(opinion, "grounding_flags", None) or []
+    if not flags:
+        return ""
+    title = "근거 검증 경고 (Grounding)" if language == "ko" else "Grounding Warnings (verify against source)"
+    items = "".join(f'<li style="margin-bottom:3px;">{html.escape(str(f))}</li>' for f in flags)
+    return (
+        '<div style="background:#FEF2F2;border:1px solid #FCA5A5;border-radius:6px;'
+        'padding:8px 14px;margin-bottom:16px;font-size:10px;color:#991B1B;line-height:1.5;">'
+        f'<strong style="font-size:10px;">&#9888; {html.escape(title)}</strong>'
+        f'<ul style="margin:6px 0 0 0;padding-left:16px;">{items}</ul>'
+        "</div>"
+    )
 
 
 def _render_selection_metadata_caption(selection_metadata) -> list[str]:
@@ -158,6 +182,8 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
     </div>
     """)
 
+    html_parts.append(_render_grounding_flags_banner(opinion, language))
+
     # Primary Diagnosis card
     confidence_color = (
         "#059669" if opinion.confidence == "high" else "#D97706" if opinion.confidence == "moderate" else "#DC2626"
@@ -266,6 +292,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
     """Render CancerBoardOpinion as a treatment-focused HTML section."""
     html_parts: list[str] = []
     html_parts.extend(_render_header_and_disclaimer(language))
+    html_parts.append(_render_grounding_flags_banner(opinion, language))
 
     confidence_color = (
         "#059669" if opinion.confidence == "high" else "#D97706" if opinion.confidence == "moderate" else "#DC2626"
