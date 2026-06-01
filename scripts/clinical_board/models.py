@@ -45,6 +45,10 @@ class BoardOpinion:
     # Populated by runner.py from select_board_variants() — lets render.py
     # show the audit footer without re-running the selector.
     selection_metadata: Optional[dict] = None
+    # v2.8 grounding scrubber (annotate-only): non-fatal notes about factual
+    # entities the LLM named that are not grounded in the case briefing (e.g. a
+    # gene not in the case variant set). Surfaced to the reviewer, never trusted.
+    grounding_flags: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -70,3 +74,7 @@ class CancerBoardOpinion:
     disclaimer: str = BOARD_DISCLAIMER
     raw_response: str = ""
     selection_metadata: Optional[dict] = None
+    # v2.8 grounding scrubber (annotate-only): non-fatal notes about factual
+    # entities the LLM named that are not grounded in the case briefing (e.g. a
+    # gene not in the case variant set). Surfaced to the reviewer, never trusted.
+    grounding_flags: List[str] = field(default_factory=list)

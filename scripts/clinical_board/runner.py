@@ -18,6 +18,7 @@ from scripts.clinical_board.models import (
     BoardOpinion,
     CancerBoardOpinion,
 )
+from scripts.clinical_board.grounding_scrubber import annotate_grounding
 from scripts.clinical_board.narrative_scrubber import scrub_opinion
 from scripts.clinical_board.ollama_client import OllamaClient
 from scripts.clinical_board.template_renderer_chair import render_from_curated
@@ -419,6 +420,21 @@ def run_clinical_board(
         # Rare-disease mode has no curated-treatment backstop; apply the
         # empty/degenerate-Chair guard instead (v2.7 review BOAR-07).
         _mark_incomplete_if_empty(board_opinion)
+
+    # Step 3b: Grounding scrubber (v2.8, annotate-only) — flag known gene symbols
+    # named in the final narrative that are not in the case variant set, so the
+    # reviewer sees ungrounded mentions (e.g. an LLM-fabricated KRAS driver).
+    # Never strips/rewrites; deterministic enforcement layered on the prompt
+    # grounding clause (which empirically is necessary but not sufficient).
+    try:
+        gstats = annotate_grounding(board_opinion, report_data)
+        if gstats.get("offbriefing_genes"):
+            logger.info(
+                "[Clinical Board] Grounding scrubber flagged off-briefing gene(s): %s",
+                ", ".join(gstats["offbriefing_genes"]),
+            )
+    except Exception as ground_err:  # noqa: BLE001 — annotation must never break the board
+        logger.warning("[Clinical Board] grounding scrubber failed: %s", ground_err)
 
     # Step 4: Save decisions to Knowledge Base
     if get("knowledge_base.enabled", False):

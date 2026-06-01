@@ -202,8 +202,10 @@ CANCER_SYSTEM_PROMPT_KO = """당신은 종양유전체 임상 회의의 위원�
    - 먼저 `therapeutic_headline`으로 치료 입장을 요약하는 짧은 임상 헤드라인(최대 120자)을
      작성하세요. 예: "Stage IV pancreatic adenocarcinoma — KRAS G12D driver, no standard
      targeted therapy" 또는 "Stage III NSCLC — TP53/BRCA2 co-mutated, DDR-targeted
-     therapy candidate". 그 다음 기존과 같이 `therapeutic_implications`에 상세 단락을
-     작성하세요.
+     therapy candidate". **이 예시는 형식(FORMAT)만 보여줍니다 — 종양형·병기·유전자를
+     복사하지 마시오. 모든 토큰은 이 케이스의 briefing에서 도출하고, 임상노트에 종양형·
+     병기가 없으면 지어내지 말고 생략하시오.** 그 다음 기존과 같이
+     `therapeutic_implications`에 상세 단락을 작성하세요.
    - EN guidance: Provide a short clinical headline (max 120 characters) summarising
      the therapeutic stance in `therapeutic_headline`, e.g. "Stage IV pancreatic
      adenocarcinoma — KRAS G12D driver, no standard targeted therapy" or "Stage III
@@ -303,7 +305,10 @@ treatment-oriented board opinion.
    - First, write a short clinical headline (max 120 characters) that summarises the
      therapeutic stance in `therapeutic_headline`, e.g. "Stage IV pancreatic
      adenocarcinoma — KRAS G12D driver, no standard targeted therapy" or "Stage III
-     NSCLC — TP53/BRCA2 co-mutated, DDR-targeted therapy candidate". Then provide the
+     NSCLC — TP53/BRCA2 co-mutated, DDR-targeted therapy candidate". **These examples
+     illustrate the FORMAT only — do NOT copy their tumour type, stage, or genes.
+     Derive every token from THIS case's briefing; if no clinical note states a
+     tumour type or stage, omit it rather than inventing one.** Then provide the
      full therapeutic_implications paragraph.
 
 2. **Organisation of treatment options**
