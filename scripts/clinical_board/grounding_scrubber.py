@@ -272,18 +272,54 @@ def find_offbriefing_genes(texts: Iterable[str], briefing_genes: Iterable[str]) 
     return sorted((mentioned & known) - briefing - _NON_GENE_TOKENS)
 
 
-def annotate_grounding(opinion: Any, report_data: dict) -> dict:
-    """Append a grounding note for known genes named in ``opinion`` but absent
-    from the case variant set. Mutates ``opinion.grounding_flags`` in place.
+# Tumour type / histology / stage terms. The Chair empirically invents a tumour
+# type ("Stage III NSCLC") on cases that carry NO clinical note stating one — it
+# infers it from the genes. When the briefing has no clinical note, any such term
+# in the narrative is ungrounded and gets flagged (v2.8 Phase 4).
+_TUMOR_TYPE_RE = re.compile(
+    r"\bstage\s+(?:iv|iii|ii|i|0|[0-4])\b"
+    r"|\b(?:NSCLC|SCLC|PDAC|HCC|CRC|TNBC|AML|CML|CLL|ALL|DLBCL|GBM)\b"
+    r"|\b[a-z]*(?:adenocarcinoma|carcinoma|sarcoma|melanoma|lymphoma|leukaemia|leukemia|blastoma|glioma|mesothelioma|myeloma)\b",
+    re.IGNORECASE,
+)
 
-    Returns a stats dict ``{"offbriefing_genes": [...]}`` for caller logging.
-    Annotate-only — never strips or rewrites the narrative (v2.8).
+
+def find_offbriefing_tumor_terms(texts: Iterable[str], has_clinical_note: bool) -> List[str]:
+    """Return tumour-type / histology / stage terms in ``texts`` that are NOT
+    grounded by a clinical note. Empty when a clinical note is present (the note
+    is the grounding source for the tumour type)."""
+    if has_clinical_note:
+        return []
+    found: List[str] = []
+    seen: Set[str] = set()
+    for text in texts:
+        for m in _TUMOR_TYPE_RE.finditer(str(text or "")):
+            term = m.group(0).strip()
+            key = term.lower()
+            if key not in seen:
+                seen.add(key)
+                found.append(term)
+    return found
+
+
+def annotate_grounding(opinion: Any, report_data: dict) -> dict:
+    """Append grounding notes for entities named in ``opinion`` but not grounded
+    in the case briefing — (a) known gene symbols absent from the case variant
+    set, and (b) tumour type / histology / stage when the briefing carries no
+    clinical note stating one. Mutates ``opinion.grounding_flags`` in place.
+
+    Returns ``{"offbriefing_genes": [...], "offbriefing_tumor_terms": [...]}`` for
+    caller logging. Annotate-only — never strips or rewrites the narrative (v2.8).
     """
     if not hasattr(opinion, "grounding_flags"):
-        return {"offbriefing_genes": []}
+        return {"offbriefing_genes": [], "offbriefing_tumor_terms": []}
 
     briefing = _briefing_genes(report_data)
-    offbriefing: List[str] = find_offbriefing_genes(_iter_text(opinion), briefing)
+    texts = list(_iter_text(opinion))
+    offbriefing: List[str] = find_offbriefing_genes(texts, briefing)
+    has_note = bool((report_data.get("clinical_note") or "").strip())
+    tumor_terms: List[str] = find_offbriefing_tumor_terms(texts, has_note)
+
     if offbriefing:
         opinion.grounding_flags.append(
             "⚠ Grounding: gene symbol(s) named in the board narrative but NOT in the "
@@ -294,7 +330,16 @@ def annotate_grounding(opinion: Any, report_data: dict) -> dict:
             ", ".join(offbriefing),
             ", ".join(sorted(briefing)) or "(none)",
         )
-    return {"offbriefing_genes": offbriefing}
+    if tumor_terms:
+        opinion.grounding_flags.append(
+            "⚠ Grounding: tumour type / stage named with no clinical note stating it — "
+            "the briefing carries no tumour-type source, so verify or remove: " + ", ".join(tumor_terms)
+        )
+        logger.warning(
+            "[grounding_scrubber] ungrounded tumour-type/stage term(s) (no clinical note): %s",
+            ", ".join(tumor_terms),
+        )
+    return {"offbriefing_genes": offbriefing, "offbriefing_tumor_terms": tumor_terms}
 
 
-__all__ = ["annotate_grounding", "find_offbriefing_genes"]
+__all__ = ["annotate_grounding", "find_offbriefing_genes", "find_offbriefing_tumor_terms"]

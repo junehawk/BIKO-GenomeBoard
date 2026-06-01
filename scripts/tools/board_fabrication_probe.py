@@ -26,7 +26,10 @@ from typing import Iterable, Set
 # by putting the repo root on sys.path before importing the package.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from scripts.clinical_board.grounding_scrubber import find_offbriefing_genes  # noqa: E402
+from scripts.clinical_board.grounding_scrubber import (  # noqa: E402
+    find_offbriefing_genes,
+    find_offbriefing_tumor_terms,
+)
 
 _TEXT_KEYS = (
     "therapeutic_headline",
@@ -74,16 +77,27 @@ def _briefing_genes(report: dict) -> Set[str]:
 
 
 def probe(report: dict) -> dict:
-    """Return a fabrication metric for one report_data dict."""
+    """Return a fabrication metric for one report_data dict.
+
+    ``fabrication_count`` is the total of off-briefing gene mentions plus
+    ungrounded tumour-type/stage terms (the latter only when no clinical note
+    grounds the tumour type).
+    """
     cb = report.get("clinical_board") or {}
     briefing = _briefing_genes(report)
-    off = find_offbriefing_genes(_board_texts(cb), briefing)
+    texts = list(_board_texts(cb))
+    off = find_offbriefing_genes(texts, briefing)
+    has_note = bool((report.get("clinical_note") or "").strip())
+    tumor = find_offbriefing_tumor_terms(texts, has_note)
     return {
         "sample_id": report.get("sample_id"),
         "mode": report.get("mode"),
         "case_genes": sorted(briefing),
         "offbriefing_genes": off,
-        "fabrication_count": len(off),
+        "offbriefing_tumor_terms": tumor,
+        "gene_fabrication_count": len(off),
+        "tumor_fabrication_count": len(tumor),
+        "fabrication_count": len(off) + len(tumor),
         "headline": cb.get("therapeutic_headline") or cb.get("primary_diagnosis") or "",
         "grounding_flags": cb.get("grounding_flags") or [],
         "consensus": cb.get("agent_consensus"),
@@ -107,7 +121,10 @@ def main(argv: list) -> int:
         print(f"  sample={r['sample_id']} mode={r['mode']} consensus={r['consensus']} confidence={r['confidence']}")
         print(f"  case genes: {', '.join(r['case_genes']) or '(none)'}")
         print(f"  headline: {r['headline'][:120]}")
-        print(f"  FABRICATION COUNT (off-briefing genes): {r['fabrication_count']}  {r['offbriefing_genes']}")
+        print(
+            f"  FABRICATION COUNT: {r['fabrication_count']}  "
+            f"(genes={r['offbriefing_genes']}, tumour={r['offbriefing_tumor_terms']})"
+        )
         if r["grounding_flags"]:
             print(f"  grounding_flags: {r['grounding_flags']}")
     return 0

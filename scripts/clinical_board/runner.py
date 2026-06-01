@@ -433,6 +433,11 @@ def run_clinical_board(
                 "[Clinical Board] Grounding scrubber flagged off-briefing gene(s): %s",
                 ", ".join(gstats["offbriefing_genes"]),
             )
+        if gstats.get("offbriefing_tumor_terms"):
+            logger.info(
+                "[Clinical Board] Grounding scrubber flagged ungrounded tumour-type/stage term(s): %s",
+                ", ".join(gstats["offbriefing_tumor_terms"]),
+            )
     except Exception as ground_err:  # noqa: BLE001 — annotation must never break the board
         logger.warning("[Clinical Board] grounding scrubber failed: %s", ground_err)
 

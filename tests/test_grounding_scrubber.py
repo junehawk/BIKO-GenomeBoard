@@ -37,9 +37,12 @@ def test_does_not_flag_briefing_genes():
 
 
 def test_ignores_clinical_abbreviations():
-    """TMB / HRD / MSI / NSCLC are not genes and must not be flagged."""
+    """TMB / HRD / MSI are neither genes nor tumour types and must not be flagged.
+
+    (NSCLC is a tumour type — covered by the tumour-type tests below, not here.)
+    """
     op = CancerBoardOpinion(
-        therapeutic_headline="NSCLC, TMB-high, MSI-stable, HRD-positive",
+        therapeutic_headline="TMB-high, MSI-stable, HRD-positive",
         immunotherapy_eligibility="TMB-high → pembrolizumab candidate.",
     )
     stats = annotate_grounding(op, _report("TP53"))
@@ -77,7 +80,7 @@ def test_annotate_grounding_never_raises_without_grounding_flags_attr():
         therapeutic_headline = "KRAS driver"
 
     stats = annotate_grounding(_Bare(), _report("TP53"))
-    assert stats == {"offbriefing_genes": []}
+    assert stats == {"offbriefing_genes": [], "offbriefing_tumor_terms": []}
 
 
 # ── Phase 3.2: fabrication probe (quantitative metric) ────────────────────────
@@ -112,3 +115,54 @@ def test_fabrication_probe_zero_when_grounded():
         "clinical_board": {"therapeutic_headline": "TP53/BRCA2 co-inactivation, HRD candidate"},
     }
     assert probe(report)["fabrication_count"] == 0
+
+
+# ── Phase 4: tumour-type / stage fabrication (the v2.8 residual) ──────────────
+
+
+def test_flags_tumor_type_when_no_clinical_note():
+    """'Stage III NSCLC' with no clinical note → flagged (ungrounded tumour type)."""
+    op = CancerBoardOpinion(therapeutic_headline="Stage III NSCLC — TP53/BRCA2 drivers, low TMB")
+    stats = annotate_grounding(op, _report("TP53", "BRCA2"))  # no clinical_note key
+    assert stats["offbriefing_tumor_terms"]  # non-empty
+    joined = " ".join(stats["offbriefing_tumor_terms"]).lower()
+    assert "nsclc" in joined and "stage" in joined
+    assert any("tumour type" in f.lower() for f in op.grounding_flags)
+
+
+def test_no_tumor_flag_when_clinical_note_present():
+    """A clinical note grounds the tumour type → no flag."""
+    op = CancerBoardOpinion(therapeutic_headline="Stage III NSCLC — TP53/BRCA2 drivers")
+    report = {"variants": [{"gene": "TP53"}], "clinical_note": "Stage III NSCLC, prior platinum."}
+    stats = annotate_grounding(op, report)
+    assert stats["offbriefing_tumor_terms"] == []
+
+
+def test_tumor_term_detector_matches_histology_and_stage():
+    from scripts.clinical_board.grounding_scrubber import find_offbriefing_tumor_terms
+
+    terms = find_offbriefing_tumor_terms(
+        ["pancreatic adenocarcinoma, Stage IV", "glioblastoma", "no tumour here"],
+        has_clinical_note=False,
+    )
+    low = " ".join(terms).lower()
+    assert "adenocarcinoma" in low
+    assert "stage iv" in low
+    assert "glioblastoma" in low or "glioma" in low
+    # When a note is present, nothing is flagged.
+    assert find_offbriefing_tumor_terms(["Stage IV adenocarcinoma"], has_clinical_note=True) == []
+
+
+def test_probe_counts_tumor_fabrication():
+    from scripts.tools.board_fabrication_probe import probe
+
+    report = {
+        "sample_id": "T",
+        "mode": "cancer",
+        "variants": [{"gene": "TP53"}, {"gene": "BRCA2"}],
+        "clinical_board": {"therapeutic_headline": "Stage III NSCLC — TP53/BRCA2 drivers"},
+    }
+    r = probe(report)
+    assert r["tumor_fabrication_count"] >= 1
+    assert r["gene_fabrication_count"] == 0  # TP53/BRCA2 are in the case
+    assert r["fabrication_count"] == r["gene_fabrication_count"] + r["tumor_fabrication_count"]
