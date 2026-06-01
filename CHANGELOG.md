@@ -11,6 +11,39 @@ is intended for independent review by a researcher or clinician.
 
 ## [Unreleased]
 
+### Changed — v2.8 (Clinical Board agents: review + deliberation + grounding)
+
+A clinical-advisor review of the Board agent prompts (expertise fidelity,
+inter-agent overlap, scientific grounding) drove a 6-commit improvement on the
+`v2.8-board-agents` branch (not yet merged):
+
+- **Scientific grounding clause** injected into every domain agent's prompt
+  (KO+EN, one source of truth) — previously only the Literature/Clinical Evidence
+  agents had an anti-fabrication fence. Plus a **grounding scrubber**
+  (`grounding_scrubber.py`, annotate-only): after synthesis it flags known gene
+  symbols named in the board narrative that are NOT in the case variant set into
+  `BoardOpinion.grounding_flags`, mirroring the curate-then-narrate + scrubber
+  pattern already used for drugs. Empirically necessary — the prompt clause alone
+  did not stop the Chair fabricating an off-case "KRAS G12D driver".
+- **Two-round deliberation** (`clinical_board.deliberation_rounds`, default 2):
+  each agent revises after reading peers' Round-1 opinions (defer on overlap,
+  retract refuted claims, recalibrate confidence), then the Chair synthesises the
+  revised set; Round-1 kept on failure so signal is never lost. ~2x agent calls
+  (~17 min vs ~4 min on the demo cancer board).
+- **Prompt fixes**: rare-disease Chair roster corrected 4→3 (PGx removed in
+  v2.5.5); PGx reconciled with PGX-02 (phenotype only with a PharmCAT diplotype);
+  agent lane boundaries sharpened (Therapeutic Target / Clinical Evidence /
+  Variant Pathologist / Literature Analyst); Chair evidence-weighting (AMP tier /
+  ACMG class) + defined confidence; Chair gene-guard + headline anti-priming.
+- **Fabrication probe** (`scripts/tools/board_fabrication_probe.py`): an
+  Ollama-free metric — off-briefing gene count per board report — for repeatable
+  before/after and deliberation A/B comparison.
+
+Empirical (full-v2.8 cancer board): gene-level fabrication 1 → 0, variant details
+accurate (TP53 p.Arg175Leu, BRCA2 p.Arg2136Cys vs an earlier run's fabricated
+R175H/frameshift). Residual: the Chair still invents a tumour type/stage when no
+clinical note states one (not gene-level — a noted follow-up). 1312 tests.
+
 ### Fixed — v2.7 (comprehensive review pass)
 
 A multi-dimensional adversarial code review (10 reviewer dimensions →
