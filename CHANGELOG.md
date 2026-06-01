@@ -41,8 +41,9 @@ inter-agent overlap, scientific grounding) drove a 6-commit improvement on the
 
 Empirical (full-v2.8 cancer board): gene-level fabrication 1 → 0, variant details
 accurate (TP53 p.Arg175Leu, BRCA2 p.Arg2136Cys vs an earlier run's fabricated
-R175H/frameshift). Residual: the Chair still invents a tumour type/stage when no
-clinical note states one (not gene-level — a noted follow-up). 1312 tests.
+R175H/frameshift). The Chair still infers a tumour type/stage ("Stage III NSCLC")
+when no clinical note states one; the scrubber + probe now DETECT and flag that
+(annotate-only — surfaced to the reviewer, not stripped). 1316 tests.
 
 ### Fixed — v2.7 (comprehensive review pass)
 
