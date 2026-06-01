@@ -44,26 +44,31 @@ def _agent(cls, language: str):
     return a
 
 
+def _norm(s: str) -> str:
+    """Collapse all whitespace so substring checks ignore prompt line-wrapping."""
+    return " ".join(s.split())
+
+
 # ── Grounding clause reaches every agent's built prompt ───────────────────────
 
 
 @pytest.mark.parametrize("cls", _AGENT_CLASSES)
 def test_grounding_clause_in_built_prompt_en(cls):
-    prompt = _agent(cls, "en")._build_prompt("CASE BRIEFING")
+    prompt = _norm(_agent(cls, "en")._build_prompt("CASE BRIEFING"))
     assert "Scientific Grounding" in prompt
     assert "not determinable from provided data" in prompt
 
 
 @pytest.mark.parametrize("cls", _AGENT_CLASSES)
 def test_grounding_clause_in_built_prompt_ko(cls):
-    prompt = _agent(cls, "ko")._build_prompt("케이스 정보")
+    prompt = _norm(_agent(cls, "ko")._build_prompt("케이스 정보"))
     assert "과학적 근거" in prompt
     assert "not determinable from provided data" in prompt
 
 
 def test_grounding_clause_forbids_fabrication_categories():
     for clause in (GROUNDING_CLAUSE_EN, GROUNDING_CLAUSE_KO):
-        low = clause.lower()
+        low = _norm(clause).lower()
         for kw in ("pmid", "pathway", "driver", "allele frequenc", "metabolizer"):
             assert kw in low or "빈도" in clause
 
