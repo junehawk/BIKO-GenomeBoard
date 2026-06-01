@@ -25,11 +25,14 @@ inter-agent overlap, scientific grounding) drove a 6-commit improvement on the
   `BoardOpinion.grounding_flags`, mirroring the curate-then-narrate + scrubber
   pattern already used for drugs. Empirically necessary — the prompt clause alone
   did not stop the Chair fabricating an off-case "KRAS G12D driver".
-- **Two-round deliberation** (`clinical_board.deliberation_rounds`, default 2):
-  each agent revises after reading peers' Round-1 opinions (defer on overlap,
-  retract refuted claims, recalibrate confidence), then the Chair synthesises the
-  revised set; Round-1 kept on failure so signal is never lost. ~2x agent calls
-  (~17 min vs ~4 min on the demo cancer board).
+- **Two-round deliberation** (`clinical_board.deliberation_rounds`): each agent
+  revises after reading peers' Round-1 opinions (defer on overlap, retract refuted
+  claims, recalibrate confidence), then the Chair synthesises the revised set;
+  Round-1 kept on failure so signal is never lost. Fully built + tested but
+  **DEFAULTS OFF (1)** — it ~doubles agent calls (~17 min vs ~4 min) and its
+  marginal benefit over single-round + the grounding scrubber is not yet
+  quantified; set to 2 to enable, promote the default once a delib 1-vs-2 A/B
+  justifies the cost.
 - **Prompt fixes**: rare-disease Chair roster corrected 4→3 (PGx removed in
   v2.5.5); PGx reconciled with PGX-02 (phenotype only with a PharmCAT diplotype);
   agent lane boundaries sharpened (Therapeutic Target / Clinical Evidence /

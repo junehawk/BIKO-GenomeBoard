@@ -311,8 +311,9 @@ def run_clinical_board(
     # design lacked, where previously only the Chair saw cross-agent context. The
     # grounding contract still holds; on any failure the Round-1 opinion is kept,
     # so the round can never lose signal versus one round. Gated by
-    # clinical_board.deliberation_rounds (default 2; 1 = single-round). ~2x agent calls.
-    rounds = int(get("clinical_board.deliberation_rounds", 2) or 1)
+    # clinical_board.deliberation_rounds (default 1 = single-round; set 2 to
+    # enable peer cross-review — ~2x agent calls, not yet A/B-justified).
+    rounds = int(get("clinical_board.deliberation_rounds", 1) or 1)
     if rounds >= 2 and len(opinions) > 1:
         logger.info("[Clinical Board] Deliberation round — %d agents revise after peer review", len(agents))
         revised: list[AgentOpinion] = []

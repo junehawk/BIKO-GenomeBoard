@@ -120,11 +120,15 @@ clinical_board:
   include_in_report: true
   temperature: 0.1
   clinical_note_max_chars: 1500
-  # v2.8 deliberation: 2 = each agent revises after reading peers' Round-1
-  # opinions, then the Chair synthesises the revised set; 1 = single-round
-  # (legacy). Round 2 ~doubles agent LLM calls — keep at 2 for quality, drop to
-  # 1 for speed. The runner calls BaseAgent.revise() per agent when >= 2.
-  deliberation_rounds: 2
+  # v2.8 deliberation: 1 = single-round (each agent's Round-1 opinion goes
+  # straight to the Chair); 2 = each agent first revises after reading peers'
+  # Round-1 opinions, then the Chair synthesises the revised set. The 2-round
+  # feature is fully built + tested, but DEFAULTS OFF (1) because it ~doubles
+  # agent LLM calls (~17 min vs ~4 min on the demo cancer board) and its
+  # marginal benefit over single-round + the grounding scrubber is not yet
+  # quantified. Set to 2 to enable; promote the default to 2 once a delib 1-vs-2
+  # A/B (board_fabrication_probe) justifies the cost.
+  deliberation_rounds: 1
 
   # Variant selector — see scripts/clinical_board/variant_selector.py and
   # _workspace/variant-selector/00_clinical_review.md for the clinical rationale.
