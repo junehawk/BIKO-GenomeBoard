@@ -29,8 +29,12 @@ class LiteratureAnalyst(BaseAgent):
 - 제공된 근거가 없는 변이는 "현재 CIViC에 등록된 문헌 근거 없음"으로 명시하세요.
 - CIViC evidence level (A/B/C/D/E)에 따라 근거 강도를 구분하세요:
   A=Validated, B=Clinical, C=Case Study, D=Preclinical, E=Inferential.
-- domain sheet에 CIViC Literature Evidence가 없는 경우에만 학습 데이터 기반
-  지식을 활용하되, 이 경우 PMID를 인용하지 마세요.
+- domain sheet에 특정 변이의 CIViC Literature Evidence가 없으면 "현재 CIViC에
+  등록된 문헌 근거 없음"이라고 명시하고, 학습 기억에서 회상한 주장·인용·PMID로
+  대체하지 마세요.
+- 영역 경계: 출판 문헌 코퍼스 합성만 담당하시오. 단일 변이의 분자/구조 기전은
+  Variant Pathologist에게, 1차 gene-disease 연관·감별진단은 Disease Geneticist에게
+  양보하고, 기능연구는 본인의 기전 재도출이 아니라 문헌 근거로만 인용하시오.
 
 ## 분석 지침
 
@@ -78,8 +82,14 @@ information, and evidence statements.
   registered in CIViC".
 - Distinguish evidence strength by CIViC evidence level (A/B/C/D/E):
   A=Validated, B=Clinical, C=Case Study, D=Preclinical, E=Inferential.
-- Only when the domain sheet lacks a CIViC Literature Evidence section may you use
-  knowledge from training data, and in that case do not cite PMIDs.
+- If the domain sheet lacks a CIViC Literature Evidence section for a variant,
+  state "no literature evidence currently registered in CIViC" — do NOT
+  substitute claims, citations, or PMIDs recalled from training memory.
+- Lane boundary: synthesise the published-literature corpus only. Defer
+  single-variant molecular/structural mechanism to the Variant Pathologist and
+  primary gene-disease association / differential diagnosis to the Disease
+  Geneticist; cite a functional study only as literature evidence, not as your
+  own mechanistic re-derivation.
 
 ## Analytical Guidance
 

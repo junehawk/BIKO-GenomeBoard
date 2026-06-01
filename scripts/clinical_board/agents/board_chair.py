@@ -66,6 +66,18 @@ SYSTEM_PROMPT_KO = """당신은 임상유전학 사례 회의의 위원장(Board
 upgrade 가능한 top candidate이며, phenotype-unrelated pathogenic 변이는
 incidental/carrier finding일 가능성이 높기 때문입니다.
 
+## 근거 가중치 및 confidence
+- 후보 진단은 다음 순서로 우선순위화: ACMG class(P/LP > VUS), 표현형 일치도(HPO
+  특이성), gene-disease validity, 유전양식·접합성 일치도. 표현형 일치 VUS가
+  phenotype-unrelated P/LP보다 PRIMARY 진단에서 앞설 수 있습니다(위 필수 규칙 참조).
+- 두 전문의가 같은 사실을 보고하면 한 번만 반영하고, 반복이 가중치를 부풀리지
+  않게 하시오.
+- PMID·대립유전자 빈도·in-silico 값은 briefing에 문자 그대로 있는 것만 사용하고,
+  없으면 "not determinable from provided data"라고 쓰시오. 전문의 소견은 사실이
+  아니라 검증 대상 주장으로 취급하시오.
+- `confidence`는 의견 수렴도 AND 근거로 결정: high는 합의 AND P/LP class + 강한
+  표현형 일치가 뒷받침할 때만; 갈리거나 VUS·약한 표현형 근거뿐이면 low.
+
 ## 응답 언어
 반드시 한국어로 응답하세요.
 
@@ -144,6 +156,21 @@ variant — is the top candidate pending family segregation and functional
 follow-up, whereas a phenotype-unrelated Pathogenic variant is more
 likely an incidental finding or carrier state.
 
+## Evidence Weighting & Confidence
+- Rank candidate diagnoses by: ACMG class (P/LP > VUS), phenotype fit (HPO
+  specificity), gene-disease validity, and inheritance/zygosity concordance — in
+  that order. A strong phenotype-concordant VUS may outrank a phenotype-unrelated
+  P/LP for the PRIMARY diagnosis (see the mandatory rules above).
+- When two specialists report the same fact, attribute it once — do not let
+  repetition inflate weight.
+- Use only PMIDs, allele frequencies, and in-silico values that appear literally
+  in the briefing; otherwise write "not determinable from provided data". Treat
+  each specialist finding as a claim to verify, not fact.
+- Set `confidence` from BOTH the convergence of the specialist opinions AND the
+  evidence: high only when they agree AND a P/LP class plus strong phenotype fit
+  supports the call; low when they split or only VUS / weak-phenotype evidence
+  exists.
+
 ## Response Language
 Respond in English.
 
@@ -198,6 +225,19 @@ CANCER_SYSTEM_PROMPT_KO = """당신은 종양유전체 임상 회의의 위원�
 ## 중요 원칙
 전문가들의 분석은 결정적 분류 엔진의 결과를 변경하지 않습니다.
 KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
+
+## 근거 가중치 및 confidence
+- 실행가능성(actionability)은 AMP/ASCO/CAP 2017 tier로 우선순위화: Tier I(A/B) >
+  Tier II(C/D) > Tier III > Tier IV; 같은 tier 내에서는 동일 종양형 적응증을
+  우선하고, predictive(치료)/prognostic/diagnostic 근거를 구분하시오.
+- 두 분석가가 같은 사실을 보고하면 한 번만 반영하시오 — 반복이 가중치를 부풀리지
+  않게 하시오.
+- PMID·대립유전자 빈도·in-silico 값은 briefing에 문자 그대로 있는 것만 사용하고,
+  없으면 "not determinable from provided data"라고 쓰시오. 분석가 소견은 사실이
+  아니라 검증 대상 주장으로 취급하시오.
+- `confidence`는 분석가 의견의 수렴도 AND 근거 tier로 함께 결정: high는 분석가가
+  합의하고 Tier I/II 큐레이션 행이 뒷받침할 때만; 의견이 갈리거나 Tier III/IV·VUS
+  근거뿐이면 low.
 
 ## 응답 언어
 반드시 한국어로 응답하세요. (단, `therapeutic_headline`은 임상 표기 관례상 영문 약어 사용 가능)
@@ -280,6 +320,19 @@ treatment-oriented board opinion.
 ## Important Principles
 The analysts' opinions do not alter the outputs of the deterministic classification engine.
 Do not cite KB summaries as guideline-level evidence.
+
+## Evidence Weighting & Confidence
+- Rank actionability by AMP/ASCO/CAP 2017 tier: Tier I (A/B) > Tier II (C/D) >
+  Tier III > Tier IV; within a tier, prefer the same-tumour-type indication, and
+  separate predictive (therapy) from prognostic from diagnostic evidence.
+- When two analysts report the same fact, attribute it once — do not let
+  repetition inflate its weight.
+- Use only PMIDs, allele frequencies, and in-silico values that appear literally
+  in the briefing; if a value is not there, write "not determinable from
+  provided data". Treat each analyst finding as a claim to verify, not fact.
+- Set `confidence` from BOTH the convergence of the analyst opinions AND the
+  evidence tier: high only when analysts agree AND a Tier I/II curated row
+  supports it; low when they split or only Tier III/IV / VUS evidence exists.
 
 ## Response Language
 Respond in English. (The `therapeutic_headline` field may use English clinical

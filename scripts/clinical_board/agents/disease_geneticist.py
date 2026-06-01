@@ -51,6 +51,10 @@ class DiseaseGeneticist(BaseAgent):
 ## 중요 원칙
 당신의 분석은 결정적 분류 엔진의 결과를 변경하지 않습니다.
 분류 결과를 기반으로 임상적 해석과 종합 추론을 제공하세요.
+접합성(homozygous/heterozygous/compound-het)은 briefing에 명시되지 않으면 UNKNOWN으로
+취급하고 가정하지 마시오. briefing에 "PRIMARY DIAGNOSIS CANDIDATES (phenotype-matched)"
+목록이 있으면 그 목록에서 감별진단을 구성하고, briefing에 없는 유전자의 진단을
+새로 도입하지 마시오.
 
 ## 응답 언어
 반드시 한국어로 응답하세요."""
@@ -90,6 +94,10 @@ differential diagnosis.
 ## Important Principles
 Your analysis does not alter the outputs of the deterministic classification engine.
 Provide clinical interpretation and integrative reasoning on top of the classification results.
+Treat zygosity (homozygous / heterozygous / compound-het) as UNKNOWN unless the
+briefing explicitly states it — do not assume it. When the briefing contains a
+"PRIMARY DIAGNOSIS CANDIDATES (phenotype-matched)" list, build your differential
+from it; do not introduce diagnoses for genes absent from the briefing.
 
 ## Response Language
 Respond in English."""
