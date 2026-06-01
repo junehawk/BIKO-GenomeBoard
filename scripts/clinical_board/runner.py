@@ -303,6 +303,38 @@ def run_clinical_board(
                 )
             )
 
+    # Step 2b: Deliberation round (v2.8) — peer cross-review before synthesis.
+    # Each agent re-reads all peers' Round-1 opinions and revises its own (defer
+    # where a peer owns the domain, retract refuted claims, recalibrate confidence,
+    # flag contradictions). This adds the agent-level cross-review the single-round
+    # design lacked, where previously only the Chair saw cross-agent context. The
+    # grounding contract still holds; on any failure the Round-1 opinion is kept,
+    # so the round can never lose signal versus one round. Gated by
+    # clinical_board.deliberation_rounds (default 2; 1 = single-round). ~2x agent calls.
+    rounds = int(get("clinical_board.deliberation_rounds", 2) or 1)
+    if rounds >= 2 and len(opinions) > 1:
+        logger.info("[Clinical Board] Deliberation round — %d agents revise after peer review", len(agents))
+        revised: list[AgentOpinion] = []
+        for i, agent in enumerate(agents):
+            peers = [op for j, op in enumerate(opinions) if j != i]
+            try:
+                domain_sheet = build_domain_sheet(agent.domain, mode, board_variants, report_data)
+                rev = agent.revise(
+                    briefing,
+                    opinions[i],
+                    peers,
+                    domain_sheet=domain_sheet,
+                    prior_knowledge=prior_knowledge,
+                )
+                revised.append(rev)
+                logger.info(
+                    f"  [Board · R2] {agent.agent_name}: {rev.confidence} confidence, {len(rev.findings)} findings"
+                )
+            except Exception as e:
+                logger.warning(f"  [Board · R2] {agent.agent_name} revision failed: {e}; keeping Round-1")
+                revised.append(opinions[i])
+        opinions = revised
+
     # Step 3: Board Chair synthesis
     logger.info("[Clinical Board] Board Chair synthesizing opinions...")
     chair = _load_chair(client, chair_model, language)

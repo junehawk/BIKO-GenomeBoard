@@ -163,3 +163,118 @@ def test_revision_prompt_contains_peer_block_and_grounding():
     assert "peer says X" in prompt
     assert "DEFER" in prompt
     assert "Scientific Grounding" in prompt  # grounding contract carried into R2
+
+
+# ── Phase 0.3: runner ACTUALLY invokes revise() (the wiring that was lost) ────
+
+
+def _fake_agent(name, domain):
+    class _FA:
+        def __init__(self):
+            self.agent_name = name
+            self.domain = domain
+            self.analyze_calls = 0
+            self.revise_calls = 0
+
+        def analyze(self, *a, **k):
+            self.analyze_calls += 1
+            return AgentOpinion(
+                agent_name=self.agent_name,
+                domain=self.domain,
+                findings=[{"finding": "f", "evidence": "e", "confidence": "moderate"}],
+                confidence="moderate",
+            )
+
+        def revise(self, case_briefing, own_opinion, peer_opinions, **k):
+            self.revise_calls += 1
+            return own_opinion
+
+    return _FA()
+
+
+def _run_board(monkeypatch, rounds):
+    from unittest.mock import MagicMock
+
+    import scripts.clinical_board.runner as runner_mod
+    from scripts.clinical_board.models import CancerBoardOpinion
+
+    fa1 = _fake_agent("Tumor Genomics Specialist", "tumor_genomics")
+    fa2 = _fake_agent("Clinical Evidence Analyst", "clinical_evidence")
+    agents = [fa1, fa2]
+
+    fake_client = MagicMock()
+    fake_client.is_available.return_value = True
+    fake_client.has_model.return_value = True
+
+    fake_chair = MagicMock()
+    fake_chair.synthesize.return_value = CancerBoardOpinion(
+        therapeutic_implications="ok", agent_consensus="majority", confidence="moderate"
+    )
+
+    real_get = runner_mod.get
+
+    def fake_get(key, default=None):
+        if key == "clinical_board.deliberation_rounds":
+            return rounds
+        return real_get(key, default)
+
+    monkeypatch.setattr(runner_mod, "OllamaClient", lambda *a, **kw: fake_client, raising=False)
+    monkeypatch.setattr(runner_mod, "_load_agents", lambda *a, **kw: agents, raising=False)
+    monkeypatch.setattr(runner_mod, "_load_chair", lambda *a, **kw: fake_chair, raising=False)
+    monkeypatch.setattr(runner_mod, "curate_treatments", lambda variants, **kw: {}, raising=False)
+    monkeypatch.setattr(runner_mod, "get", fake_get, raising=False)
+
+    report_data = {
+        "sample_id": "DELIB-TEST",
+        "variants": [
+            {
+                "gene": "TP53",
+                "variant": "17:7675088:C:A",
+                "chrom": "chr17",
+                "pos": 7675088,
+                "ref": "C",
+                "alt": "A",
+                "classification": "Likely Pathogenic",
+                "tier": "Tier I",
+                "consequence": "Missense",
+                "cancer_gene_type": "TSG",
+                "oncokb_level": "",
+                "variant_type": "SNV",
+            },
+            {
+                "gene": "BRCA2",
+                "variant": "13:32356550:C:T",
+                "chrom": "chr13",
+                "pos": 32356550,
+                "ref": "C",
+                "alt": "T",
+                "classification": "VUS",
+                "tier": "Tier III",
+                "consequence": "Missense",
+                "cancer_gene_type": "TSG",
+                "oncokb_level": "",
+                "variant_type": "SNV",
+            },
+        ],
+        "summary": {"total": 2},
+    }
+    runner_mod.run_clinical_board(report_data, mode="cancer")
+    return fa1, fa2
+
+
+def test_runner_invokes_revise_when_deliberation_enabled(monkeypatch):
+    """deliberation_rounds=2 → the runner must call each agent's revise() once.
+
+    This is the wiring that was lost in v2.8 (revise() existed but the runner
+    never called it, so the feature was dead code). Guards against re-orphaning.
+    """
+    fa1, fa2 = _run_board(monkeypatch, rounds=2)
+    assert (fa1.analyze_calls, fa2.analyze_calls) == (1, 1)
+    assert (fa1.revise_calls, fa2.revise_calls) == (1, 1)
+
+
+def test_runner_skips_revise_when_single_round(monkeypatch):
+    """deliberation_rounds=1 → single-round flow, revise() not called."""
+    fa1, fa2 = _run_board(monkeypatch, rounds=1)
+    assert (fa1.analyze_calls, fa2.analyze_calls) == (1, 1)
+    assert (fa1.revise_calls, fa2.revise_calls) == (0, 0)

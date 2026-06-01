@@ -232,6 +232,10 @@ KB 요약을 가이드라인 수준 근거로 인용하지 마시오.
   우선하고, predictive(치료)/prognostic/diagnostic 근거를 구분하시오.
 - 두 분석가가 같은 사실을 보고하면 한 번만 반영하시오 — 반복이 가중치를 부풀리지
   않게 하시오.
+- briefing 변이표에 있는 유전자·변이만 호명하시오. briefing에 없는 유전자·변이·driver를
+  절대 새로 도입하지 마시오 — 예: 해당 유전자가 없는 케이스에 "KRAS G12D"·"BRAF V600E"
+  driver를 헤드라인에 쓰거나, 임상노트에 없는 종양형·병기를 지어내지 마시오.
+  therapeutic_headline과 모든 finding은 briefing 변이로 추적 가능해야 합니다.
 - PMID·대립유전자 빈도·in-silico 값은 briefing에 문자 그대로 있는 것만 사용하고,
   없으면 "not determinable from provided data"라고 쓰시오. 분석가 소견은 사실이
   아니라 검증 대상 주장으로 취급하시오.
@@ -327,6 +331,11 @@ Do not cite KB summaries as guideline-level evidence.
   separate predictive (therapy) from prognostic from diagnostic evidence.
 - When two analysts report the same fact, attribute it once — do not let
   repetition inflate its weight.
+- Name only genes and variants that appear in the briefing's variant table. NEVER
+  introduce a gene, variant, or driver that is not in the briefing — e.g. do not
+  headline a "KRAS G12D" or "BRAF V600E" driver on a case where that gene does not
+  appear, and do not invent a tumour type or stage that no clinical note states.
+  The therapeutic_headline and every finding must be traceable to a briefing variant.
 - Use only PMIDs, allele frequencies, and in-silico values that appear literally
   in the briefing; if a value is not there, write "not determinable from
   provided data". Treat each analyst finding as a claim to verify, not fact.
