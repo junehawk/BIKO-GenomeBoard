@@ -256,6 +256,22 @@ def _iter_text(opinion: Any) -> Iterable[str]:
                         yield item[k]
 
 
+def find_offbriefing_genes(texts: Iterable[str], briefing_genes: Iterable[str]) -> List[str]:
+    """Return known gene symbols appearing in ``texts`` but not in the case.
+
+    The shared detection primitive used by both :func:`annotate_grounding`
+    (opinion objects) and the fabrication probe (serialised report JSON). A
+    token flags only if it is BOTH a known gene and absent from the briefing.
+    """
+    known = _known_genes()
+    briefing = {str(g).upper() for g in (briefing_genes or [])}
+    mentioned: Set[str] = set()
+    for text in texts:
+        if text:
+            mentioned |= set(_GENE_TOKEN_RE.findall(str(text)))
+    return sorted((mentioned & known) - briefing - _NON_GENE_TOKENS)
+
+
 def annotate_grounding(opinion: Any, report_data: dict) -> dict:
     """Append a grounding note for known genes named in ``opinion`` but absent
     from the case variant set. Mutates ``opinion.grounding_flags`` in place.
@@ -267,13 +283,7 @@ def annotate_grounding(opinion: Any, report_data: dict) -> dict:
         return {"offbriefing_genes": []}
 
     briefing = _briefing_genes(report_data)
-    known = _known_genes()
-
-    mentioned: Set[str] = set()
-    for text in _iter_text(opinion):
-        mentioned |= set(_GENE_TOKEN_RE.findall(text))
-
-    offbriefing: List[str] = sorted((mentioned & known) - briefing - _NON_GENE_TOKENS)
+    offbriefing: List[str] = find_offbriefing_genes(_iter_text(opinion), briefing)
     if offbriefing:
         opinion.grounding_flags.append(
             "⚠ Grounding: gene symbol(s) named in the board narrative but NOT in the "
@@ -287,4 +297,4 @@ def annotate_grounding(opinion: Any, report_data: dict) -> dict:
     return {"offbriefing_genes": offbriefing}
 
 
-__all__ = ["annotate_grounding"]
+__all__ = ["annotate_grounding", "find_offbriefing_genes"]

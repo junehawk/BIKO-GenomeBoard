@@ -78,3 +78,37 @@ def test_annotate_grounding_never_raises_without_grounding_flags_attr():
 
     stats = annotate_grounding(_Bare(), _report("TP53"))
     assert stats == {"offbriefing_genes": []}
+
+
+# ── Phase 3.2: fabrication probe (quantitative metric) ────────────────────────
+
+
+def test_fabrication_probe_counts_offbriefing_genes():
+    from scripts.tools.board_fabrication_probe import probe
+
+    report = {
+        "sample_id": "PROBE-TEST",
+        "mode": "cancer",
+        "variants": [{"gene": "TP53"}, {"gene": "BRCA2"}],
+        "clinical_board": {
+            "therapeutic_headline": "KRAS G12D driver; TP53 LOF, BRCA2 frameshift",
+            "agent_consensus": "majority",
+            "confidence": "moderate",
+        },
+    }
+    r = probe(report)
+    assert r["fabrication_count"] == 1
+    assert r["offbriefing_genes"] == ["KRAS"]  # TP53/BRCA2 are in the case
+    assert set(r["case_genes"]) == {"TP53", "BRCA2"}
+
+
+def test_fabrication_probe_zero_when_grounded():
+    from scripts.tools.board_fabrication_probe import probe
+
+    report = {
+        "sample_id": "PROBE-CLEAN",
+        "mode": "cancer",
+        "variants": [{"gene": "TP53"}, {"gene": "BRCA2"}],
+        "clinical_board": {"therapeutic_headline": "TP53/BRCA2 co-inactivation, HRD candidate"},
+    }
+    assert probe(report)["fabrication_count"] == 0
