@@ -254,6 +254,21 @@ def _iter_text(opinion: Any) -> Iterable[str]:
                 for k in keys:
                     if isinstance(item.get(k), str) and item[k]:
                         yield item[k]
+    # Domain-agent opinions are rendered verbatim (render._render_agent_opinions_section),
+    # so an off-briefing gene a domain agent fabricates in its finding/recommendation/
+    # concern must be scanned too — not just the Chair synthesis (BOARD-03 / T5-04).
+    for agent_op in getattr(opinion, "agent_opinions", None) or []:
+        for finding in getattr(agent_op, "findings", None) or []:
+            if isinstance(finding, dict):
+                for k in ("finding", "evidence"):
+                    if isinstance(finding.get(k), str) and finding[k]:
+                        yield finding[k]
+            elif isinstance(finding, str) and finding:
+                yield finding
+        for f in ("recommendations", "concerns"):
+            for item in getattr(agent_op, f, None) or []:
+                if isinstance(item, str) and item:
+                    yield item
 
 
 def find_offbriefing_genes(texts: Iterable[str], briefing_genes: Iterable[str]) -> List[str]:
