@@ -88,22 +88,22 @@ def _format_board_summary(board_opinion) -> str:
 def run_pipeline(
     vcf_path: str,
     output_path: str = "output/report.html",
-    sample_id: str = None,
-    json_output: str = None,
+    sample_id: str | None = None,
+    json_output: str | None = None,
     skip_api: bool = False,
-    mode: str = None,
-    hpo_ids: list = None,
+    mode: str | None = None,
+    hpo_ids: list | None = None,
     hide_vus: bool = True,
-    sv_path: str = None,
-    panel_size_mb: float = None,
-    bed_path: str = None,
-    intervar_path: str = None,
+    sv_path: str | None = None,
+    panel_size_mb: float | None = None,
+    bed_path: str | None = None,
+    intervar_path: str | None = None,
     clinical_board: bool = False,
-    board_lang: str = None,
-    clinical_note: str = None,
-    germline_vcf: str = None,
-    ped_path: str = None,
-) -> dict:
+    board_lang: str | None = None,
+    clinical_note: str | None = None,
+    germline_vcf: str | None = None,
+    ped_path: str | None = None,
+) -> dict | None:
     """Run the full BIKO GenomeBoard analysis pipeline.
 
     Thin CLI-facing wrapper over ``canonical.build_sample_report``. Handles
@@ -116,8 +116,8 @@ def run_pipeline(
     mode = mode or get("report.default_mode", "cancer")
     start_time = time.time()
 
-    output_path = Path(output_path)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path = Path(output_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
 
     if sample_id is None:
         # v2.5.4 — previously used .stem.upper(); the canonical helper now
@@ -173,14 +173,14 @@ def run_pipeline(
 
     # ── Generate report ───────────────────────────────────────────────────────
     _progress("[6/6] Generating report...")
-    output_str = str(output_path)
+    output_str = str(out_path)
     if output_str.endswith(".pdf"):
         actual_path = generate_pdf(report_data, output_str, mode=mode)
         final_path = Path(actual_path)
     else:
         html = generate_report_html(report_data, mode=mode)
-        output_path.write_text(html, encoding="utf-8")
-        final_path = output_path
+        out_path.write_text(html, encoding="utf-8")
+        final_path = out_path
 
     size_kb = final_path.stat().st_size // 1024
     suffix = final_path.suffix.upper().lstrip(".")
