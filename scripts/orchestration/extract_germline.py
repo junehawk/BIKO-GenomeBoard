@@ -18,10 +18,51 @@ import re
 from pathlib import Path
 from typing import List, Optional, Set
 
-from scripts.annotation.parse_annotation import format_consequence
+from scripts.annotation.parse_annotation import format_consequence, parse_csq_header, parse_csq_value
+from scripts.classification.in_silico import spliceai_delta_max
 from scripts.common.models import Variant
 
 logger = logging.getLogger(__name__)
+
+# In-silico CSQ field names lifted into Variant.in_silico (mirrors parse_vcf), so the
+# germline ACMG path can fire PP3/BP4/SpliceAI/BP7 on inherited variants (T2-03).
+_IN_SILICO_CSQ_FIELDS = (
+    "revel_score",
+    "cadd_phred",
+    "am_class",
+    "am_pathogenicity",
+    "spliceai_pred_ds_ag",
+    "spliceai_pred_ds_al",
+    "spliceai_pred_ds_dg",
+    "spliceai_pred_ds_dl",
+    "domains",
+)
+
+
+def _build_in_silico_from_annotation(annotation: dict) -> dict:
+    """Build a Variant.in_silico dict from a parse_csq_value annotation, including the
+    canonical spliceai_max, matching the primary parse_vcf path."""
+    in_silico: dict = {}
+    for field in _IN_SILICO_CSQ_FIELDS:
+        val = annotation.get(field)
+        if val:
+            in_silico[field] = val
+    if in_silico:
+        sa_max = spliceai_delta_max(in_silico)
+        if sa_max is not None:
+            in_silico["spliceai_max"] = sa_max
+    return in_silico
+
+
+def _csq_fields_from_header(header_lines) -> Optional[List[str]]:
+    """Find the ##INFO=<ID=CSQ ...> line in a VCF header and return its field names."""
+    for h in header_lines or []:
+        if h.startswith("##INFO=<ID=CSQ"):
+            fields = parse_csq_header(h)
+            if fields:
+                return fields
+    return None
+
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 _DEFAULT_TARGET_BED = str(_PROJECT_ROOT / "data" / "germline_targets" / "combined_targets.bed.gz")
@@ -37,8 +78,14 @@ _CSQ_HGVSC_IDX: Optional[int] = None
 _CSQ_HGVSP_IDX: Optional[int] = None
 
 
-def _parse_vcf_line(line: str, fallback_gene: str = "") -> Optional[Variant]:
+def _parse_vcf_line(line: str, fallback_gene: str = "", csq_fields: Optional[List[str]] = None) -> Optional[Variant]:
     """Parse a single VCF data line into a :class:`Variant`.
+
+    When ``csq_fields`` (the VCF's CSQ header field names) is supplied, the CSQ is
+    parsed by field name via ``parse_csq_value`` — the same path as the primary
+    ``parse_vcf`` — which scopes to the called allele and lifts in-silico scores into
+    ``Variant.in_silico`` so the germline ACMG path can fire PP3/BP4/SpliceAI/BP7
+    (T2-03 / INTK-04). Without it, the legacy hardcoded-index parse is used.
 
     Returns None if the line cannot be parsed (header, malformed, etc.).
     """
@@ -64,6 +111,7 @@ def _parse_vcf_line(line: str, fallback_gene: str = "") -> Optional[Variant]:
     consequence = None
     hgvsc = None
     hgvsp = None
+    in_silico: dict = {}
 
     # Try to extract gene from INFO field
     info = parts[7] if len(parts) > 7 else ""
@@ -71,17 +119,27 @@ def _parse_vcf_line(line: str, fallback_gene: str = "") -> Optional[Variant]:
     # VEP CSQ
     csq_match = re.search(r"CSQ=([^;\t]+)", info)
     if csq_match:
-        csq_val = csq_match.group(1).split(",")[0]  # first transcript
-        csq_fields = csq_val.split("|")
-        # Standard VEP CSQ field order (may vary, but common defaults)
-        if len(csq_fields) > 3:
-            gene = csq_fields[3] if csq_fields[3] else gene
-        if len(csq_fields) > 1:
-            consequence = csq_fields[1] if csq_fields[1] else consequence
-        if len(csq_fields) > 10:
-            hgvsc = csq_fields[10] if csq_fields[10] else hgvsc
-        if len(csq_fields) > 11:
-            hgvsp = csq_fields[11] if csq_fields[11] else hgvsp
+        if csq_fields:
+            # Header-driven parse (same path as parse_vcf): maps fields by name,
+            # scopes to the called allele, and lifts in-silico scores.
+            annotation = parse_csq_value(csq_match.group(1), csq_fields, fallback_gene or None, alt=alt)
+            if annotation:
+                gene = annotation.get("gene") or gene
+                consequence = annotation.get("consequence") or consequence
+                hgvsc = annotation.get("hgvsc") or hgvsc
+                hgvsp = annotation.get("hgvsp") or hgvsp
+                in_silico = _build_in_silico_from_annotation(annotation)
+        else:
+            # Legacy hardcoded-index fallback (no CSQ header available).
+            csq_parts = csq_match.group(1).split(",")[0].split("|")
+            if len(csq_parts) > 3:
+                gene = csq_parts[3] if csq_parts[3] else gene
+            if len(csq_parts) > 1:
+                consequence = csq_parts[1] if csq_parts[1] else consequence
+            if len(csq_parts) > 10:
+                hgvsc = csq_parts[10] if csq_parts[10] else hgvsc
+            if len(csq_parts) > 11:
+                hgvsp = csq_parts[11] if csq_parts[11] else hgvsp
 
     # SnpEff ANN fallback
     if not gene:
@@ -120,6 +178,7 @@ def _parse_vcf_line(line: str, fallback_gene: str = "") -> Optional[Variant]:
         consequence=format_consequence(consequence) if consequence else None,
         hgvsc=hgvsc,
         hgvsp=hgvsp,
+        in_silico=in_silico or None,
         source="germline_inherited",
     )
 
@@ -333,6 +392,7 @@ def _extract_via_tabix(
 
     try:
         contigs = set(tbx.contigs)
+        csq_header_fields = _csq_fields_from_header(list(tbx.header))  # for in-silico (T2-03)
         for chrom, start, end, gene in regions:
             # Try both chr-prefixed and bare chromosome names
             query_chrom = None
@@ -348,7 +408,7 @@ def _extract_via_tabix(
 
             try:
                 for line in tbx.fetch(query_chrom, start, end):
-                    v = _parse_vcf_line(line, fallback_gene=gene)
+                    v = _parse_vcf_line(line, fallback_gene=gene, csq_fields=csq_header_fields)
                     if v is None:
                         continue
                     if v.variant_id in primary_ids or v.variant_id in seen_ids:
@@ -413,8 +473,11 @@ def _extract_via_linear_scan(
 
     try:
         with opener(germline_vcf, mode) as fh:
+            csq_header_fields: Optional[List[str]] = None
             for line in fh:
                 if line.startswith("#"):
+                    if csq_header_fields is None and line.startswith("##INFO=<ID=CSQ"):
+                        csq_header_fields = parse_csq_header(line) or None  # for in-silico (T2-03)
                     continue
                 parts = line.split("\t", 3)
                 if len(parts) < 3:
@@ -429,7 +492,7 @@ def _extract_via_linear_scan(
                 if target_gene is None:
                     continue
 
-                v = _parse_vcf_line(line, fallback_gene=target_gene)
+                v = _parse_vcf_line(line, fallback_gene=target_gene, csq_fields=csq_header_fields)
                 if v is None:
                     continue
                 if v.variant_id in primary_ids or v.variant_id in seen_ids:
