@@ -639,8 +639,16 @@ def build_sample_report(
         except Exception as e:
             logger.warning("TMB calculation failed: %s", e)
             report_data["tmb"] = None
+        # Alteration classes BIKO does not detect — surfaced so a reviewer never reads
+        # their absence as a negative result ("absent != negative"); see
+        # _workspace/v2.9-review/CLINICAL_VALIDITY.md (T2-01).
+        report_data["analyses_not_performed"] = [
+            "Microsatellite instability (MSI) / mismatch-repair status",
+            "Gene fusions / rearrangements (e.g. ALK, ROS1, NTRK, RET)",
+        ]
     else:
         report_data["tmb"] = None
+        report_data["analyses_not_performed"] = []
 
     # ── Clinical Board (optional LLM diagnostic synthesis) ────────────────
     if clinical_note:
