@@ -87,7 +87,10 @@ def classify_variants(
     # (legacy build) or is absent — the InterVar upstream PM5 path still
     # works in that case.
     try:
-        from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
+        from scripts.storage.query_local_clinvar import (
+            get_clinvar_pathogenic_changes,
+            get_clinvar_pathogenic_positions,
+        )
 
         _has_clinvar_pm5 = True
     except ImportError:
@@ -96,8 +99,12 @@ def classify_variants(
     if _has_clinvar_pm5:
         _genes = {v.gene for v in variants if getattr(v, "gene", None)}
         clinvar_pos_by_gene: dict = {g: get_clinvar_pathogenic_positions(g) for g in _genes}
+        # T1-07: per-residue pathogenic AA changes enable the refined PM5 gate
+        # (different-AA-only). Falls back to position-only when unavailable.
+        clinvar_changes_by_gene: dict = {g: get_clinvar_pathogenic_changes(g) for g in _genes}
     else:
         clinvar_pos_by_gene = {}
+        clinvar_changes_by_gene = {}
 
     classification_results = {}
     for variant in variants:
@@ -129,10 +136,12 @@ def classify_variants(
         if _has_evidence_collector:
             gene_info = get_gene_info(variant.gene) if variant.gene else None
             clinvar_pos = clinvar_pos_by_gene.get(getattr(variant, "gene", None)) or set()
+            clinvar_changes = clinvar_changes_by_gene.get(getattr(variant, "gene", None)) or {}
             extra_codes = collect_additional_evidence(
                 variant,
                 gene_info=gene_info,
                 clinvar_pathogenic_positions=clinvar_pos,
+                clinvar_pathogenic_changes=clinvar_changes,
             )
             for code in extra_codes:
                 evidences.append(AcmgEvidence(code=code, source="evidence_collector", description=""))

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set
 
 from scripts.common.config import get
-from scripts.common.hgvs_utils import extract_protein_position
+from scripts.common.hgvs_utils import extract_protein_position, normalize_hgvsp_for_civic
 from scripts.common.models import Variant
 
 logger = logging.getLogger(__name__)
@@ -18,6 +18,9 @@ _conn = None
 # decoded protein-position set per gene avoids re-querying SQLite for every
 # variant. Cleared by reset_cache_for_tests() so unit tests can swap DBs.
 _PATHOGENIC_POS_CACHE: Dict[str, Set[int]] = {}
+# Per-residue pathogenic amino-acid changes (normalised, e.g. {175: {"R175H"}}) per gene,
+# for the refined PM5 different-AA gate (T1-07). Same lifecycle as the position cache.
+_PATHOGENIC_CHANGES_CACHE: Dict[str, Dict[int, Set[str]]] = {}
 # Tri-state availability probe: None = not yet checked, True/False = result.
 # Mirrors the lazy-probe pattern used elsewhere so the caller never sees an
 # ImportError / FileNotFoundError when the DB is absent.
@@ -242,8 +245,54 @@ def get_clinvar_pathogenic_positions(gene: str) -> Set[int]:
     return positions
 
 
+def get_clinvar_pathogenic_changes(gene: str) -> Dict[int, Set[str]]:
+    """Return a map of protein position → set of *normalised* pathogenic amino-acid
+    changes (e.g. ``{175: {"R175H", "R175C"}}``) for ``gene`` from ClinVar P/LP entries.
+
+    Powers the refined PM5 gate in ``evidence_collector``: PM5 should fire only for a
+    *different* change at a residue that already carries a pathogenic missense — an
+    identical change is PS1, not PM5 (T1-07). Returns an empty dict when the DB is
+    unavailable, the gene has no parseable pathogenic missense, or the hgvsp column is
+    absent (legacy build). Memoised per gene at module scope.
+    """
+    if not gene:
+        return {}
+    cached = _PATHOGENIC_CHANGES_CACHE.get(gene)
+    if cached is not None:
+        return cached
+
+    conn = _get_connection()
+    if conn is None or not _probe_hgvsp_availability(conn):
+        _PATHOGENIC_CHANGES_CACHE[gene] = {}
+        return _PATHOGENIC_CHANGES_CACHE[gene]
+
+    changes: Dict[int, Set[str]] = {}
+    try:
+        cursor = conn.execute(
+            """
+            SELECT hgvsp FROM variants
+            WHERE gene = ?
+              AND clinical_significance LIKE '%athogenic%'
+              AND clinical_significance NOT LIKE '%conflict%'
+              AND hgvsp IS NOT NULL
+            """,
+            (gene,),
+        )
+        for row in cursor:
+            hgvsp = row["hgvsp"] if isinstance(row, sqlite3.Row) else row[0]
+            pos = extract_protein_position(hgvsp)
+            change = normalize_hgvsp_for_civic(hgvsp)
+            if pos is not None and change is not None:
+                changes.setdefault(pos, set()).add(change)
+    except sqlite3.Error as e:
+        logger.warning(f"ClinVar HGVSp change lookup failed for {gene}: {e}")
+
+    _PATHOGENIC_CHANGES_CACHE[gene] = changes
+    return changes
+
+
 def reset_cache_for_tests() -> None:
-    """Clear the per-gene PM5 cache and the hgvsp-column probe.
+    """Clear the per-gene PM5 caches and the hgvsp-column probe.
 
     Test helper — production callers should never need this. Tests that
     swap the underlying DB file mid-run rely on it to force the next
@@ -251,6 +300,7 @@ def reset_cache_for_tests() -> None:
     """
     global _HGVSP_AVAILABLE
     _PATHOGENIC_POS_CACHE.clear()
+    _PATHOGENIC_CHANGES_CACHE.clear()
     _HGVSP_AVAILABLE = None
 
 
@@ -261,4 +311,5 @@ def close():
         _conn.close()
         _conn = None
     _PATHOGENIC_POS_CACHE.clear()
+    _PATHOGENIC_CHANGES_CACHE.clear()
     _HGVSP_AVAILABLE = None

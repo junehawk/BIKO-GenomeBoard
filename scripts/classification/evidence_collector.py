@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from scripts.annotation.parse_annotation import canonical_consequence
 from scripts.classification.in_silico import spliceai_delta_max
-from scripts.common.hgvs_utils import extract_protein_position
+from scripts.common.hgvs_utils import extract_protein_position, normalize_hgvsp_for_civic
 from scripts.common.models import Variant
 
 logger = logging.getLogger(__name__)
@@ -306,6 +306,7 @@ def collect_additional_evidence(
     variant: Variant,
     gene_info: Optional[Dict] = None,
     clinvar_pathogenic_positions: Optional[Set[int]] = None,
+    clinvar_pathogenic_changes: Optional[Dict[int, Set[str]]] = None,
 ) -> List[str]:
     """Collect ACMG evidence codes from variant annotations.
 
@@ -357,17 +358,27 @@ def collect_additional_evidence(
         codes.append("PM4")
 
     # ── PM5 — Novel missense at position with known pathogenic variant ───
-    if _is_missense(consequence) and clinvar_pathogenic_positions and variant.hgvsp:
+    # PM5 requires a *different* amino-acid change at a residue where another
+    # missense is established Pathogenic. When the per-residue pathogenic change
+    # set is supplied (clinvar_pathogenic_changes: pos -> {normalised changes}),
+    # we fire PM5 only if the residue matches AND the variant's own change is NOT
+    # one of the known pathogenic changes — an identical change is PS1, not PM5,
+    # and is deliberately not self-asserted here (T1-07). If only the position set
+    # is supplied (legacy callers / no AA data) we fall back to the position-only
+    # trigger.
+    if _is_missense(consequence) and variant.hgvsp:
         protein_pos = _extract_protein_position(variant.hgvsp)
-        if protein_pos is not None and protein_pos in clinvar_pathogenic_positions:
-            # PM5 requires a *different* amino acid change at the same position.
-            # Since we only have the position set (not the exact changes), the
-            # caller is responsible for ensuring this position has a pathogenic
-            # variant with a different AA change.  The position match alone is
-            # the trigger here — the variant itself being novel is implied
-            # because it would not have reached this code path if it already
-            # matched ClinVar exactly (that would be PS1 instead).
-            codes.append("PM5")
+        if protein_pos is not None:
+            if clinvar_pathogenic_changes:
+                known_changes = clinvar_pathogenic_changes.get(protein_pos)
+                if known_changes:
+                    variant_change = normalize_hgvsp_for_civic(variant.hgvsp)
+                    # Fire only for a parseable, genuinely different change. An
+                    # unparseable change (can't confirm it differs) does not fire.
+                    if variant_change is not None and variant_change not in known_changes:
+                        codes.append("PM5")
+            elif clinvar_pathogenic_positions and protein_pos in clinvar_pathogenic_positions:
+                codes.append("PM5")
 
     # ── PP2 — Missense in gene with low benign missense rate ─────────────
     if _is_missense(consequence) and missense_z is not None:

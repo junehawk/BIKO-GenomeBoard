@@ -159,6 +159,23 @@ def test_pm5_position_not_in_clinvar():
     assert "PM5" not in codes
 
 
+def test_pm5_suppressed_when_same_aa_change_as_pathogenic():
+    """An identical amino-acid change to an established pathogenic variant is PS1, NOT PM5
+    (PM5 requires a *different* change at the residue). With the per-residue change set,
+    PM5 must not fire when the change matches (T1-07)."""
+    v = _make_variant(consequence="missense_variant", gene="TP53", hgvsp="p.Arg248Trp")
+    codes = collect_additional_evidence(v, clinvar_pathogenic_changes={248: {"R248W"}})
+    assert "PM5" not in codes
+
+
+def test_pm5_fires_when_different_aa_change_with_changes_dict():
+    """A different amino-acid change at a residue carrying an established pathogenic
+    variant → PM5 (T1-07)."""
+    v = _make_variant(consequence="missense_variant", gene="TP53", hgvsp="p.Arg248Leu")
+    codes = collect_additional_evidence(v, clinvar_pathogenic_changes={248: {"R248W"}})
+    assert "PM5" in codes
+
+
 # ── PP2 ──────────────────────────────────────────────────────────────────────
 
 
