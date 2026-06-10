@@ -32,6 +32,7 @@ from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant
 from scripts.common.models import FrequencyData
 from scripts.enrichment.hpo_matcher import resolve_hpo_terms
+from scripts.enrichment.query_omim import query_omim
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.orchestration.classify import (
     build_summary,
@@ -208,9 +209,22 @@ def _extract_germline_if_applicable(
         return []
 
 
+def _gene_inheritance(gene: str | None, cache: dict) -> str | None:
+    """OMIM inheritance mode for a gene (memoised), used to gate BS2 (T2-07)."""
+    if not gene:
+        return None
+    if gene in cache:
+        return cache[gene]
+    omim = query_omim(gene)
+    inh = omim.get("inheritance") if isinstance(omim, dict) else None
+    cache[gene] = inh
+    return inh
+
+
 def _build_freq_results(variants: list, db_results: dict) -> dict:
     """Run frequency comparison for every variant."""
     freq_results: dict[str, Any] = {}
+    inh_cache: dict = {}
     for variant in variants:
         db = db_results[variant.variant_id]
         freq_data = FrequencyData(
@@ -219,7 +233,10 @@ def _build_freq_results(variants: list, db_results: dict) -> dict:
             gnomad_all=db["gnomad"].get("gnomad_all"),
             kova_homozygote=db.get("kova_homozygote"),
         )
-        freq_results[variant.variant_id] = compare_frequencies(freq_data)
+        # BS2 (homozygous-in-healthy-controls for recessive genes) needs the gene's
+        # inheritance mode, which compare_frequencies itself does not have (T2-07).
+        inheritance = _gene_inheritance(getattr(variant, "gene", None), inh_cache)
+        freq_results[variant.variant_id] = compare_frequencies(freq_data, inheritance=inheritance)
     return freq_results
 
 
