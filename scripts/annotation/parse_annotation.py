@@ -132,8 +132,15 @@ def parse_csq_value(
     return _pick_best_transcript(entries, gene)
 
 
-def parse_ann_value(ann_string: str, fields: List[str], gene: Optional[str] = None) -> Optional[Dict[str, str]]:
-    """Parse a SnpEff ANN INFO value into annotation dict."""
+def parse_ann_value(
+    ann_string: str, fields: List[str], gene: Optional[str] = None, alt: Optional[str] = None
+) -> Optional[Dict[str, str]]:
+    """Parse a SnpEff ANN INFO value into annotation dict.
+
+    When ``alt`` is the single called ALT allele, ANN entries are scoped to it so a
+    multi-allelic locus is never annotated with another allele's (higher-impact)
+    consequence — mirrors ``parse_csq_value`` (INTK-05).
+    """
     entries = []
     for entry_str in ann_string.split(","):
         values = entry_str.split("|")
@@ -142,6 +149,7 @@ def parse_ann_value(ann_string: str, fields: List[str], gene: Optional[str] = No
             if i < len(fields):
                 entry[fields[i].lower()] = val.strip()
         mapped = {
+            "allele": entry.get("allele", ""),
             "gene": entry.get("gene_name", ""),
             "consequence": entry.get("annotation", ""),
             "impact": entry.get("annotation_impact", ""),
@@ -152,6 +160,12 @@ def parse_ann_value(ann_string: str, fields: List[str], gene: Optional[str] = No
             "polyphen": "",
         }
         entries.append(mapped)
+
+    if alt:
+        called = {a.strip() for a in str(alt).split(",") if a.strip()}
+        matched = [e for e in entries if e.get("allele", "") in called]
+        if matched:
+            entries = matched
 
     return _pick_best_transcript(entries, gene)
 

@@ -385,70 +385,77 @@ def parse_vcf(vcf_path: str, ped_path: Optional[str] = None) -> List[Variant]:
                         if trio_label:
                             inheritance_label = trio_label
 
-                # Parse annotations from INFO field
-                annotation = None
-                if len(fields) > 7:
-                    info = fields[7]
-                    for item in info.split(";"):
-                        if item.startswith("CSQ=") and csq_fields:
-                            annotation = parse_csq_value(item[4:], csq_fields, gene, alt=alt)
-                            break
-                        elif item.startswith("ANN=") and ann_fields:
-                            annotation = parse_ann_value(item[4:], ann_fields, gene)
-                            break
+                # Decompose multi-allelic sites into one Variant per ALT allele, each with
+                # its CSQ/ANN annotation scoped to that specific allele. A multi-allelic
+                # line ("G  A,T") previously produced a single Variant with alt="A,T" that
+                # failed ClinVar/gnomAD key lookups and inherited the highest-impact
+                # allele's consequence regardless of which allele it described
+                # (INTK-01 / INTK-02 / INTK-05). Single-allelic lines are unchanged.
+                for single_alt in [a for a in alt.split(",") if a] or [alt]:
+                    # Parse annotations from INFO field, scoped to this allele
+                    annotation = None
+                    if len(fields) > 7:
+                        info = fields[7]
+                        for item in info.split(";"):
+                            if item.startswith("CSQ=") and csq_fields:
+                                annotation = parse_csq_value(item[4:], csq_fields, gene, alt=single_alt)
+                                break
+                            elif item.startswith("ANN=") and ann_fields:
+                                annotation = parse_ann_value(item[4:], ann_fields, gene, alt=single_alt)
+                                break
 
-                variant = Variant(chrom=chrom, pos=pos, ref=ref, alt=alt, gene=gene, rsid=rsid)
-                if inheritance_label is not None:
-                    variant.inheritance = inheritance_label
-                if confirmed_denovo:
-                    variant.confirmed_denovo = True
-                if annotation:
-                    variant.hgvsc = annotation.get("hgvsc") or None
-                    variant.hgvsp = annotation.get("hgvsp") or None
-                    raw_consequence = annotation.get("consequence", "")
-                    variant.consequence = format_consequence(raw_consequence) or None
-                    variant.transcript = annotation.get("transcript") or None
-                    variant.impact = annotation.get("impact") or None
-                    variant.sift = annotation.get("sift") or None
-                    variant.polyphen = annotation.get("polyphen") or None
-                    # In silico prediction scores (from VEP dbNSFP plugin).
-                    # Annotated as a plain dict (mixed str + computed float
-                    # spliceai_max values) so the spliceai_max write below is
-                    # type-clean.
-                    _in_silico: dict = {}
-                    for _isf in (
-                        "revel_score",
-                        "cadd_phred",
-                        "am_class",
-                        "am_pathogenicity",
-                        "spliceai_pred_ds_ag",
-                        "spliceai_pred_ds_al",
-                        "spliceai_pred_ds_dg",
-                        "spliceai_pred_ds_dl",
-                        "domains",
-                    ):
-                        _val = annotation.get(_isf)
-                        if _val:
-                            _in_silico[_isf] = _val
-                    if _in_silico:
-                        # Persist the canonical SpliceAI delta-max so every
-                        # downstream consumer (BP7 guard, de-novo PS2/PM6
-                        # rescue, Clinical Board splice rescue, report display)
-                        # reads one populated key instead of recomputing or —
-                        # worse — reading a key that was never written (v2.7
-                        # review INTA-01).
-                        _sa_max = spliceai_delta_max(_in_silico)
-                        if _sa_max is not None:
-                            _in_silico["spliceai_max"] = _sa_max
-                        variant.in_silico = _in_silico
-                    # Override gene from annotation if not in INFO
-                    if not gene and annotation.get("gene"):
-                        variant.gene = annotation["gene"]
-                    # Fill rsID from CSQ Existing_variation if VCF ID column was "."
-                    if not variant.rsid and annotation.get("rsid"):
-                        variant.rsid = annotation["rsid"]
+                    variant = Variant(chrom=chrom, pos=pos, ref=ref, alt=single_alt, gene=gene, rsid=rsid)
+                    if inheritance_label is not None:
+                        variant.inheritance = inheritance_label
+                    if confirmed_denovo:
+                        variant.confirmed_denovo = True
+                    if annotation:
+                        variant.hgvsc = annotation.get("hgvsc") or None
+                        variant.hgvsp = annotation.get("hgvsp") or None
+                        raw_consequence = annotation.get("consequence", "")
+                        variant.consequence = format_consequence(raw_consequence) or None
+                        variant.transcript = annotation.get("transcript") or None
+                        variant.impact = annotation.get("impact") or None
+                        variant.sift = annotation.get("sift") or None
+                        variant.polyphen = annotation.get("polyphen") or None
+                        # In silico prediction scores (from VEP dbNSFP plugin).
+                        # Annotated as a plain dict (mixed str + computed float
+                        # spliceai_max values) so the spliceai_max write below is
+                        # type-clean.
+                        _in_silico: dict = {}
+                        for _isf in (
+                            "revel_score",
+                            "cadd_phred",
+                            "am_class",
+                            "am_pathogenicity",
+                            "spliceai_pred_ds_ag",
+                            "spliceai_pred_ds_al",
+                            "spliceai_pred_ds_dg",
+                            "spliceai_pred_ds_dl",
+                            "domains",
+                        ):
+                            _val = annotation.get(_isf)
+                            if _val:
+                                _in_silico[_isf] = _val
+                        if _in_silico:
+                            # Persist the canonical SpliceAI delta-max so every
+                            # downstream consumer (BP7 guard, de-novo PS2/PM6
+                            # rescue, Clinical Board splice rescue, report display)
+                            # reads one populated key instead of recomputing or —
+                            # worse — reading a key that was never written (v2.7
+                            # review INTA-01).
+                            _sa_max = spliceai_delta_max(_in_silico)
+                            if _sa_max is not None:
+                                _in_silico["spliceai_max"] = _sa_max
+                            variant.in_silico = _in_silico
+                        # Override gene from annotation if not in INFO
+                        if not gene and annotation.get("gene"):
+                            variant.gene = annotation["gene"]
+                        # Fill rsID from CSQ Existing_variation if VCF ID column was "."
+                        if not variant.rsid and annotation.get("rsid"):
+                            variant.rsid = annotation["rsid"]
 
-                variants.append(variant)
+                    variants.append(variant)
             except (ValueError, IndexError) as e:
                 logger.warning(f"Skipping malformed VCF line: {line.strip()!r} — {e}")
 
