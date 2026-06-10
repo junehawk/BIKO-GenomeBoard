@@ -114,6 +114,35 @@ def _mark_incomplete_if_empty(board_opinion: Any) -> Any:
     return board_opinion
 
 
+def _mark_cancer_incomplete_if_empty(board_opinion: Any) -> Any:
+    """Mark an empty/degenerate cancer ``CancerBoardOpinion`` as low-confidence.
+
+    Cancer mode normally backstops an empty Chair with the curated-treatment
+    fallback (``template_renderer_chair``). But when the curator is ALSO empty and
+    the Chair returns an empty or truncated response, no backstop fires and the
+    default ``confidence="moderate"`` misrepresents a non-result as a moderate-
+    confidence empty finding. Downgrade to low confidence with an explicit
+    ``synthesis-incomplete`` marker — the cancer analogue of the rare-disease
+    BOAR-07 guard (T4-03 / BOARD-04). Returns the same (mutated) opinion.
+    """
+    treatments = getattr(board_opinion, "treatment_options", None) or []
+    implications = (getattr(board_opinion, "therapeutic_implications", "") or "").strip()
+    actionable = getattr(board_opinion, "actionable_findings", None) or []
+    if not treatments and not implications and not actionable:
+        logger.warning(
+            "[Clinical Board] Cancer Chair returned an empty/degenerate opinion with no "
+            "curated backstop — marking confidence=low (synthesis incomplete)."
+        )
+        board_opinion.confidence = "low"
+        board_opinion.agent_consensus = "synthesis-incomplete"
+        board_opinion.therapeutic_implications = (
+            "Synthesis incomplete — the Clinical Board returned no treatment options "
+            "or therapeutic narrative (empty or failed LLM response, and no curated "
+            "evidence available). Review the agent opinions directly."
+        )
+    return board_opinion
+
+
 def run_clinical_board(
     report_data: Dict[str, Any],
     mode: str,
@@ -417,6 +446,11 @@ def run_clinical_board(
                 # Chair produced no useful narrative either — full fallback.
                 fallback.selection_metadata = selection_metadata
                 board_opinion = fallback
+
+        # If neither the curator nor the Chair produced anything (no backstop
+        # fired), the opinion would otherwise render at the default moderate
+        # confidence — mark it incomplete instead (T4-03 / BOARD-04).
+        _mark_cancer_incomplete_if_empty(board_opinion)
     else:
         # Rare-disease mode has no curated-treatment backstop; apply the
         # empty/degenerate-Chair guard instead (v2.7 review BOAR-07).

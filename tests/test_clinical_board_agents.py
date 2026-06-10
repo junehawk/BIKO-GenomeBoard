@@ -746,3 +746,32 @@ def test_mark_incomplete_if_empty_leaves_populated_opinion():
     assert op.confidence == "high"
     assert op.primary_diagnosis == "Li-Fraumeni syndrome"
     assert op.agent_consensus != "synthesis-incomplete"
+
+
+def test_mark_cancer_incomplete_if_empty_downgrades_empty_opinion():
+    """A cancer Chair opinion with no treatment options AND no therapeutic narrative (and
+    no curated backstop) → confidence=low + synthesis-incomplete, not a misleading
+    moderate-confidence empty result (T4-03 / BOARD-04)."""
+    from scripts.clinical_board.models import CancerBoardOpinion
+    from scripts.clinical_board.runner import _mark_cancer_incomplete_if_empty
+
+    op = CancerBoardOpinion()  # defaults: empty, confidence="moderate"
+    assert op.confidence == "moderate"  # the misleading default we guard against
+    _mark_cancer_incomplete_if_empty(op)
+    assert op.confidence == "low"
+    assert op.agent_consensus == "synthesis-incomplete"
+    assert "Synthesis incomplete" in op.therapeutic_implications
+
+
+def test_mark_cancer_incomplete_if_empty_leaves_populated_opinion():
+    """A cancer opinion with a real therapeutic narrative is untouched."""
+    from scripts.clinical_board.models import CancerBoardOpinion
+    from scripts.clinical_board.runner import _mark_cancer_incomplete_if_empty
+
+    op = CancerBoardOpinion(
+        therapeutic_implications="EGFR L858R confers sensitivity to osimertinib first-line.",
+        confidence="high",
+    )
+    _mark_cancer_incomplete_if_empty(op)
+    assert op.confidence == "high"
+    assert op.agent_consensus != "synthesis-incomplete"

@@ -621,3 +621,70 @@ class TestPharmCATResultDataclass:
         assert r.diplotypes["CYP2C19"] == "*1/*2"
         assert r.version == "2.13.0"
         assert len(r.drug_recommendations) == 1
+
+
+# ---------------------------------------------------------------------------
+# PGX-02 / T4-02 — pre-filter contig resolution + empty-output honesty guard
+# ---------------------------------------------------------------------------
+
+
+class _FakeTbx:
+    def __init__(self, contigs, records_by_contig):
+        self.header = ["##fileformat=VCFv4.2", "#CHROM\tPOS\tID\tREF\tALT"]
+        self.contigs = list(contigs)
+        self._recs = dict(records_by_contig)
+
+    def fetch(self, chrom, start, end):
+        return list(self._recs.get(chrom, []))
+
+    def close(self):
+        pass
+
+
+def _pgx_prefilter_env(tmp_path):
+    """Set up a jar dir with a gzipped positions file (one chr-prefixed target) and an
+    indexed germline VCF sentinel; returns (germline_vcf, jar_path, out_dir)."""
+    import gzip
+
+    jar_dir = tmp_path / "tools"
+    jar_dir.mkdir()
+    jar_path = jar_dir / "pharmcat.jar"
+    jar_path.write_text("")
+    with gzip.open(jar_dir / "pharmcat_positions.vcf.gz", "wt", encoding="utf-8") as fh:
+        fh.write("##fileformat=VCFv4.2\n")
+        fh.write("chr1\t100\t.\tA\tG\n")
+    germline = tmp_path / "germline.vcf.gz"
+    germline.write_text("")
+    (tmp_path / "germline.vcf.gz.tbi").write_text("")  # index sentinel
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    return str(germline), str(jar_path), str(out_dir)
+
+
+def test_prefilter_resolves_contig_naming_mismatch(tmp_path):
+    """A chr-prefixed positions file against a no-chr germline VCF must resolve the
+    contig (chr1 -> 1) and emit records, not an empty VCF (PGX-02 / T4-02)."""
+    from unittest import mock
+
+    germline, jar, out_dir = _pgx_prefilter_env(tmp_path)
+    fake = _FakeTbx(contigs=["1"], records_by_contig={"1": ["1\t100\t.\tA\tG\tPASS"]})
+    with mock.patch("pysam.TabixFile", return_value=fake):
+        from scripts.pharmacogenomics.pharmcat_runner import _pre_filter_pgx_positions
+
+        result = _pre_filter_pgx_positions(germline, jar, out_dir)
+    assert result is not None
+    assert "1\t100" in open(result).read()
+
+
+def test_prefilter_returns_none_on_zero_matches(tmp_path):
+    """If no positions match (unresolved contig mismatch), the pre-filter returns None so
+    the runner falls back to builtin rather than labelling an empty run 'pharmcat' (PGX-02)."""
+    from unittest import mock
+
+    germline, jar, out_dir = _pgx_prefilter_env(tmp_path)
+    fake = _FakeTbx(contigs=["chrX"], records_by_contig={})  # neither chr1 nor 1 present
+    with mock.patch("pysam.TabixFile", return_value=fake):
+        from scripts.pharmacogenomics.pharmcat_runner import _pre_filter_pgx_positions
+
+        result = _pre_filter_pgx_positions(germline, jar, out_dir)
+    assert result is None

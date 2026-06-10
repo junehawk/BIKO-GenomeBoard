@@ -685,3 +685,26 @@ class TestSpliceaiDeltaMax:
             "spliceai_pred_ds_dl": "NA",
         }
         assert spliceai_delta_max(in_silico) == pytest.approx(0.30)
+
+
+def test_get_configured_thresholds_merges_config_override(monkeypatch):
+    """in_silico PP3/BP4 thresholds are configurable: an operator override from
+    config (in_silico.thresholds) merges onto the Pejaver/Tavtigian defaults (T5-02)."""
+    import scripts.classification.in_silico as ins
+
+    monkeypatch.setattr(
+        ins,
+        "get",
+        lambda key, default=None: {"revel_pp3_supporting": 0.3} if key == "in_silico.thresholds" else default,
+        raising=False,
+    )
+    t = ins.get_configured_thresholds()
+    assert t["revel_pp3_supporting"] == 0.3  # operator override applied
+    assert t["revel_pp3_moderate"] == 0.773  # untouched default preserved
+
+
+def test_get_configured_thresholds_defaults_when_unset(monkeypatch):
+    import scripts.classification.in_silico as ins
+
+    monkeypatch.setattr(ins, "get", lambda key, default=None: default, raising=False)
+    assert ins.get_configured_thresholds() == ins.DEFAULT_THRESHOLDS
