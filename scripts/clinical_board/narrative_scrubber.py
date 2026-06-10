@@ -199,6 +199,9 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
             cur_sig = _row_attr(curated_row, "significance")
             if cur_sig:
                 row["significance"] = cur_sig
+            cur_match = _row_attr(curated_row, "match_level")
+            if cur_match:
+                row["match_level"] = cur_match  # curator-owned: variant vs gene-level (T1-09)
             kept.append(row)
             continue
 

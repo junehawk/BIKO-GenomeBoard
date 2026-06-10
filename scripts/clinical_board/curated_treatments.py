@@ -78,6 +78,10 @@ class CuratedTreatment:
     pmids: List[str] = field(default_factory=list)
     disease_context: str = ""
     significance: str = "sensitivity"  # sensitivity | resistance | adverse
+    # "variant" = variant-specific evidence (OncoKB byProteinChange or CIViC variant
+    # match); "gene" = gene-level CIViC fallback (no variant match) — surfaced so an
+    # off-target gene-level row is distinguishable from variant-specific therapy (T1-09).
+    match_level: str = "variant"
     therapy_ids: str = ""
     raw_row: Dict[str, Any] = field(default_factory=dict)
 
@@ -161,6 +165,7 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
         )
         cols = cols_common + (", therapy_ids" if has_therapy_ids else "")
         rows: List[sqlite3.Row] = []
+        match_level = "none"
         if variant_name:
             rows = list(
                 conn.execute(
@@ -169,6 +174,8 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
                     (gene, variant_name),
                 )
             )
+            if rows:
+                match_level = "variant"
         if not rows:
             rows = list(
                 conn.execute(
@@ -177,6 +184,10 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
                     (gene,),
                 )
             )
+            if rows:
+                # No variant-specific match — these are gene-level predictive rows with
+                # no disease/variant filter, so the disease_context may be off-target (T1-09).
+                match_level = "gene"
         conn.close()
     except sqlite3.Error as e:
         logger.debug("[curated_treatments] CIViC query error for %s: %s", gene, e)
@@ -195,6 +206,7 @@ def _query_civic_for_variant(gene: str, hgvsp: str, *, offline_mode: bool = Fals
                 "disease": r["disease"] or "",
                 "significance": (r["significance"] or "sensitivity").lower(),
                 "therapy_ids": therapy_ids or "",
+                "match_level": match_level,
                 "raw_row": dict(r),
             }
         )
@@ -255,6 +267,7 @@ def _merge(
                     pmids=pmids,
                     disease_context=civ.get("disease") or ok.get("disease") or "",
                     significance=ok.get("significance") or civ.get("significance") or "sensitivity",
+                    match_level="variant",  # OncoKB byProteinChange is variant-specific
                     therapy_ids=",".join(sorted(ok_therapy_ids | _therapy_id_set(civ.get("therapy_ids", "")))),
                     raw_row={"oncokb": ok.get("raw_row", {}), "civic": civ.get("raw_row", {})},
                 )
@@ -271,6 +284,7 @@ def _merge(
                     pmids=list(ok.get("pmids", [])),
                     disease_context=ok.get("disease", ""),
                     significance=ok.get("significance") or "sensitivity",
+                    match_level="variant",  # OncoKB byProteinChange is variant-specific
                     therapy_ids=",".join(sorted(ok_therapy_ids)),
                     raw_row=ok.get("raw_row", {}),
                 )
@@ -302,6 +316,7 @@ def _merge(
                 pmids=list(civ.get("pmids", [])),
                 disease_context=civ.get("disease", ""),
                 significance=civ.get("significance") or "sensitivity",
+                match_level=civ.get("match_level", "variant"),  # gene-level fallback → "gene" (T1-09)
                 therapy_ids=civ.get("therapy_ids", "") or "",
                 raw_row=civ.get("raw_row", {}),
             )
