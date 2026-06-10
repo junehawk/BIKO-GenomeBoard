@@ -1,6 +1,12 @@
 # BIKO GenomeBoard Improvement Roadmap
 
-**기준일: 2026-04-09** | **현재 상태: v1.0 — 463 tests, main branch**
+> ⚠️ **SUPERSEDED (2026-06-10).** 이 문서는 v1.0(463 tests) 기준이라 노후화됨.
+> 현재 유효한 개선 계획은 **`_workspace/v2.9-review/IMPROVEMENT_PLAN.md`**(v2.8/1321
+> tests 기준, 13-에이전트 감사 근거)와 임상 판정 **`_workspace/v2.9-review/CLINICAL_VALIDITY.md`**.
+> 아래 §완료된기능/§단기·중기·장기는 다수가 이미 출시됨(OMIM/KOVA/InterVar/in-silico/
+> trio/config검증/orchestrate 리팩토링) — 신규 계획 수립 시 v2.9 문서를 우선 Read할 것.
+
+**기준일: 2026-04-09** | **현재 상태: v1.0 — 463 tests, main branch** *(stale; 위 배너 참조)*
 
 ## 목차
 
