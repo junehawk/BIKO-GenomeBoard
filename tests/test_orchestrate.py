@@ -241,3 +241,15 @@ def test_run_pgx_forwards_proband_sample_id(monkeypatch):
 
     _run_pgx([], germline_vcf="/tmp/germline.vcf", db_results={}, sample_id="PROBAND_01")
     assert captured["sample_id"] == "PROBAND_01"
+
+
+def test_linkify_pmids_escapes_surrounding_markup():
+    """CIViC / gene_knowledge prose passed to _linkify_pmids is rendered via {{ ...|safe }};
+    markup in the source text must be escaped so only the linkifier's own anchors are raw HTML
+    (XSEC-02)."""
+    from scripts.orchestration.canonical import _linkify_pmids
+
+    out = _linkify_pmids("see <script>alert(1)</script> in PMID:12345 done")
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+    assert 'href="https://pubmed.ncbi.nlm.nih.gov/12345/"' in out

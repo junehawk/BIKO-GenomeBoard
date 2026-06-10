@@ -19,6 +19,7 @@ Design contract:
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 from dataclasses import asdict, is_dataclass
@@ -82,9 +83,18 @@ def _adjust_finding_summary(summary: str, classification: str) -> str:
 
 
 def _linkify_pmids(text: str) -> str:
-    """Convert PMID references in text to PubMed links."""
+    """Convert PMID references in text to PubMed links.
+
+    The result is rendered into the report via ``{{ ...|safe }}`` (autoescape off),
+    so the source CIViC / gene_knowledge prose is HTML-escaped FIRST — only the
+    PubMed anchors this function emits should reach the page as live markup
+    (XSEC-02). PMID:NNN tokens survive escaping unchanged, so linkification still
+    matches.
+    """
     if not text:
         return text
+
+    text = html.escape(text)
 
     def _replace_pmid(match: re.Match) -> str:
         pmid = match.group(1)
@@ -532,7 +542,7 @@ def build_sample_report(
 
     summary = build_summary(variant_records)
     tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = split_variants_for_display(
-        variant_records, hide_vus
+        variant_records, hide_vus, mode
     )
 
     report_data: dict[str, Any] = {
