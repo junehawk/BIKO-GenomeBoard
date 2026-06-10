@@ -339,3 +339,29 @@ def test_scrub_redacts_banned_drug_in_kept_row_resistance_notes():
     kept_row = op.treatment_options[0]
     assert "futibatinib" not in kept_row["resistance_notes"].lower()
     assert "REDACTED-DRUG" in kept_row["resistance_notes"]
+
+
+def test_scrub_backfills_evidence_level_and_significance_from_curator():
+    """evidence_level and significance are curator-owned, not LLM-owned (T1-10). A curated
+    level-D / resistance row must not survive as the LLM's level-A 'sensitivity' claim."""
+    from scripts.clinical_board.narrative_scrubber import scrub_opinion
+
+    cur = _stub_curated("Sotorasib", "12:25:C:T", "cid-sot")
+    cur.evidence_level = "D"
+    cur.significance = "resistance"
+    curated = {"12:25:C:T": [cur]}
+    rows = [
+        {
+            "drug": "Sotorasib",
+            "curated_id": "cid-sot",
+            "variant_key": "12:25:C:T",
+            "evidence_level": "A",  # LLM-inflated
+            "significance": "sensitivity",  # LLM-flipped
+            "resistance_notes": "",
+        },
+    ]
+    op = _opinion_with_rows(rows)
+    scrub_opinion(op, curated)
+    assert len(op.treatment_options) == 1
+    assert op.treatment_options[0]["evidence_level"] == "D"
+    assert op.treatment_options[0]["significance"] == "resistance"

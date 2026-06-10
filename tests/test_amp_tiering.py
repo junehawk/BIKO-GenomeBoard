@@ -262,3 +262,31 @@ def test_amp_tier_labels():
     assert "Strong Clinical Significance" in r1.tier_label
     r4 = amp_assign_tier("Benign", "FAKEGENE")
     assert "Benign" in r4.tier_label
+
+
+def test_strategy_b_civic_variant_level_a_not_demoted_below_b_for_vus():
+    """A VUS with variant-level CIViC Level A predictive evidence must NOT tier below
+    the same variant with Level B — AMP/ASCO/CAP 2017 actionability is independent of
+    ACMG germline pathogenicity. Pre-fix the is_pathogenic gate dropped VUS+A to Tier III
+    while VUS+B reached Tier II (an evidence-hierarchy inversion)."""
+    from scripts.somatic.amp_tiering import amp_assign_tier
+
+    def _civic(level):
+        return {
+            "match_level": "variant",
+            "evidence": [
+                {
+                    "evidence_level": level,
+                    "evidence_type": "Predictive",
+                    "significance": "Sensitivity/Response",
+                    "disease": "Melanoma",
+                    "gene": "BRAF",
+                    "variant": "G99R",
+                }
+            ],
+        }
+
+    tier_a = amp_assign_tier("VUS", "BRAF", hgvsp="p.Gly99Arg", civic_evidence=_civic("A")).tier
+    tier_b = amp_assign_tier("VUS", "BRAF", hgvsp="p.Gly99Arg", civic_evidence=_civic("B")).tier
+    assert tier_a <= tier_b
+    assert tier_a == 2

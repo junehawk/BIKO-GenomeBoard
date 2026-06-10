@@ -19,6 +19,7 @@ Design contract:
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 from dataclasses import asdict, is_dataclass
@@ -82,9 +83,18 @@ def _adjust_finding_summary(summary: str, classification: str) -> str:
 
 
 def _linkify_pmids(text: str) -> str:
-    """Convert PMID references in text to PubMed links."""
+    """Convert PMID references in text to PubMed links.
+
+    The result is rendered into the report via ``{{ ...|safe }}`` (autoescape off),
+    so the source CIViC / gene_knowledge prose is HTML-escaped FIRST — only the
+    PubMed anchors this function emits should reach the page as live markup
+    (XSEC-02). PMID:NNN tokens survive escaping unchanged, so linkification still
+    matches.
+    """
     if not text:
         return text
+
+    text = html.escape(text)
 
     def _replace_pmid(match: re.Match) -> str:
         pmid = match.group(1)
@@ -213,11 +223,16 @@ def _build_freq_results(variants: list, db_results: dict) -> dict:
     return freq_results
 
 
-def _run_pgx(variants: list, germline_vcf: str | None, db_results: dict) -> dict:
-    """Run pharmacogenomics (PharmCAT if germline provided, builtin fallback)."""
+def _run_pgx(variants: list, germline_vcf: str | None, db_results: dict, sample_id: str | None = None) -> dict:
+    """Run pharmacogenomics (PharmCAT if germline provided, builtin fallback).
+
+    ``sample_id`` is forwarded to PharmCAT so a multi-sample germline VCF
+    (trio / quartet) selects the proband's report rather than defaulting to the
+    alphabetically-first sample report (PGX-01).
+    """
     from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
-    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf)
+    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf, sample_id=sample_id)
     pgx_source = pgx_data["pgx_source"]
 
     # Backward-compat: collect PgxResult objects from db_results when builtin
@@ -507,7 +522,7 @@ def build_sample_report(
     freq_results = _build_freq_results(variants, db_results)
 
     # ── PGx ───────────────────────────────────────────────────────────────
-    pgx_bundle = _run_pgx(variants, germline_vcf, db_results)
+    pgx_bundle = _run_pgx(variants, germline_vcf, db_results, sample_id=sample_id)
     # Phase 2 (L7): enrich PGx rows here, not in render.
     _enrich_pgx_with_gene_knowledge(pgx_bundle["pgx_results_list"])
 
@@ -527,7 +542,7 @@ def build_sample_report(
 
     summary = build_summary(variant_records)
     tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = split_variants_for_display(
-        variant_records, hide_vus
+        variant_records, hide_vus, mode
     )
 
     report_data: dict[str, Any] = {

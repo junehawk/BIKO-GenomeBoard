@@ -396,6 +396,7 @@ def sv_to_dict(sv: StructuralVariant) -> Dict[str, Any]:
 def split_variants_for_display(
     variant_records: List[VariantRecord],
     hide_vus: bool,
+    mode: str = "cancer",
 ) -> Tuple[
     List[VariantRecord],
     List[VariantRecord],
@@ -434,8 +435,23 @@ def split_variants_for_display(
         "likely benign": 5,
         "benign": 6,
     }
-    detailed_variants.sort(
-        key=lambda v: (_tier_sort.get(v.get("tier", 4), 4), _cls_sort.get(v.get("classification", "VUS").lower(), 4))
-    )
+    if mode == "rare-disease":
+        # Rare-disease reports are organised by ACMG classification, not AMP tier
+        # (tier is a borrowed cancer concept on this path), so a Pathogenic disease
+        # variant must precede a Drug-Response / Risk-Factor PGx finding even though
+        # the latter is assigned AMP Tier I. Sort classification-first.
+        detailed_variants.sort(
+            key=lambda v: (
+                _cls_sort.get(v.get("classification", "VUS").lower(), 4),
+                _tier_sort.get(v.get("tier", 4), 4),
+            )
+        )
+    else:
+        detailed_variants.sort(
+            key=lambda v: (
+                _tier_sort.get(v.get("tier", 4), 4),
+                _cls_sort.get(v.get("classification", "VUS").lower(), 4),
+            )
+        )
 
     return tier1_variants, tier2_variants, tier3_variants, tier4_count, detailed_variants, omitted_variants

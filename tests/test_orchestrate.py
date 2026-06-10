@@ -216,3 +216,40 @@ def test_pipeline_works_with_empty_gene_knowledge(tmp_path):
     for v in result["variants"]:
         assert "classification" in v
         assert "tier" in v
+
+
+def test_run_pgx_forwards_proband_sample_id(monkeypatch):
+    """_run_pgx must forward the resolved proband sample_id to get_pgx_results, so
+    PharmCAT's multi-sample report selection can pick the proband instead of silently
+    defaulting to the alphabetically-first sample report (PGX-01)."""
+    import scripts.pharmacogenomics.korean_pgx as kpgx
+    from scripts.orchestration.canonical import _run_pgx
+
+    captured = {}
+
+    def fake_get_pgx_results(variants, germline_vcf=None, sample_id=None, config=None):
+        captured["sample_id"] = sample_id
+        return {
+            "pgx_source": "pharmcat",
+            "pgx_hits": [],
+            "germline_provided": True,
+            "pharmcat_version": "3.2.0",
+            "warnings": [],
+        }
+
+    monkeypatch.setattr(kpgx, "get_pgx_results", fake_get_pgx_results)
+
+    _run_pgx([], germline_vcf="/tmp/germline.vcf", db_results={}, sample_id="PROBAND_01")
+    assert captured["sample_id"] == "PROBAND_01"
+
+
+def test_linkify_pmids_escapes_surrounding_markup():
+    """CIViC / gene_knowledge prose passed to _linkify_pmids is rendered via {{ ...|safe }};
+    markup in the source text must be escaped so only the linkifier's own anchors are raw HTML
+    (XSEC-02)."""
+    from scripts.orchestration.canonical import _linkify_pmids
+
+    out = _linkify_pmids("see <script>alert(1)</script> in PMID:12345 done")
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+    assert 'href="https://pubmed.ncbi.nlm.nih.gov/12345/"' in out

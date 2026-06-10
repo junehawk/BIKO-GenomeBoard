@@ -62,6 +62,23 @@ def test_override_not_provided_skipped():
     assert result == "VUS"
 
 
+def test_override_preserves_drug_response_engine_class():
+    """A PGx variant the engine bucketed as 'Drug Response' must NOT be flipped to an
+    ACMG disease class by a Pathogenic ClinVar entry for its drug-response role."""
+    result = apply_clinvar_override("Drug Response", "Pathogenic", "reviewed by expert panel")
+    assert result == "Drug Response"
+    result_multi = apply_clinvar_override(
+        "Drug Response", "Pathogenic", "criteria provided, multiple submitters, no conflicts"
+    )
+    assert result_multi == "Drug Response"
+
+
+def test_override_preserves_risk_factor_engine_class():
+    """An APOE variant bucketed as 'Risk Factor' must not be overridden to Pathogenic."""
+    result = apply_clinvar_override("Risk Factor", "Pathogenic", "reviewed by expert panel")
+    assert result == "Risk Factor"
+
+
 def test_override_empty_clinvar_no_change():
     """Empty ClinVar significance — no override."""
     result = apply_clinvar_override("Pathogenic", "", "reviewed by expert panel")

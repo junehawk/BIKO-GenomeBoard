@@ -95,6 +95,7 @@ def query_local_clinvar(variant: Variant) -> Dict:
 
     # Strategy 1: Search by rsID
     row = None
+    relaxed = False
     if variant.rsid:
         cursor = conn.execute("SELECT * FROM variants WHERE rsid = ? LIMIT 1", (variant.rsid,))
         row = cursor.fetchone()
@@ -107,12 +108,16 @@ def query_local_clinvar(variant: Variant) -> Dict:
         )
         row = cursor.fetchone()
 
-    # Strategy 3: Search by chrom + pos (relaxed)
+    # Strategy 3: Search by chrom + pos (relaxed). A hit here is a DIFFERENT allele
+    # at the same coordinate (exact ref/alt already missed), so its verdict must not
+    # be attributed to this variant — flagged relaxed below.
     if not row:
         cursor = conn.execute(
             "SELECT * FROM variants WHERE chrom = ? AND pos = ? LIMIT 1", (variant.chrom, variant.pos)
         )
         row = cursor.fetchone()
+        if row:
+            relaxed = True
 
     if not row:
         return {
@@ -128,6 +133,25 @@ def query_local_clinvar(variant: Variant) -> Dict:
 
     significance = row["clinical_significance"] or "Unknown"
     review_status = row["review_status"] or ""
+
+    if relaxed:
+        # Coordinate-only match to a different allele. Report it as "Not Found" for
+        # classification (so apply_clinvar_override / conflict reconciliation skip it),
+        # and surface the neighbouring entry only as informational relaxed_* fields.
+        return {
+            "agent": "clinical_geneticist",
+            "variant": variant.variant_id,
+            "gene": variant.gene or row["gene"],
+            "clinvar_significance": "Not Found",
+            "clinvar_id": None,
+            "review_status": None,
+            "acmg_codes": [],
+            "relaxed_match": True,
+            "relaxed_significance": significance,
+            "relaxed_review_status": review_status,
+            "api_available": True,
+        }
+
     acmg_codes = _derive_acmg_codes(significance, review_status)
 
     return {
@@ -139,6 +163,7 @@ def query_local_clinvar(variant: Variant) -> Dict:
         "review_status": review_status,
         "acmg_codes": acmg_codes,
         "phenotypes": row["phenotype_list"] or "",
+        "relaxed_match": False,
         "api_available": True,
     }
 

@@ -109,9 +109,14 @@ def amp_assign_tier(
         # CIViC variant-specific Level A + Pathogenic/LP → Tier I
         if match_level == "variant" and best_level == "A" and is_pathogenic:
             return _make_result(1, "civic-variant-A", match_level, evidence_items)
-        # CIViC variant-specific Level B → Tier II
-        if match_level == "variant" and best_level == "B":
-            return _make_result(2, "civic-variant-B", match_level, evidence_items)
+        # CIViC variant-specific Level A or B → Tier II. Level A is the strongest
+        # predictive evidence and must NEVER tier below Level B: AMP/ASCO/CAP 2017
+        # actionability is independent of ACMG germline pathogenicity, so a non-benign
+        # VUS with variant-level Level A still elevates here rather than falling through
+        # to the OncoKB gene-level / hotspot path (which previously dropped VUS+A to
+        # Tier III while VUS+B reached Tier II — an evidence-hierarchy inversion).
+        if match_level == "variant" and best_level in ("A", "B"):
+            return _make_result(2, f"civic-variant-{best_level}", match_level, evidence_items)
 
     # === Strategy B: CIViC variant-specific Level C-D + Pathogenic/LP → Tier II ===
     if strategy == "B":

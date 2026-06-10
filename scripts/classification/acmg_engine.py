@@ -384,6 +384,15 @@ def apply_clinvar_override(engine_classification: str, clinvar_significance: str
 
     Returns the final classification (may be same as engine_classification).
     """
+    # The engine's PGx ("Drug Response") and "Risk Factor" buckets are deliberate
+    # gene-based decisions (classify_variant routes PGX_GENES / RISK_FACTOR_GENES
+    # there before any ACMG scoring). A ClinVar disease-pathogenicity entry tied to
+    # the variant's pharmacogenomic / risk-factor role must NOT flip it out of that
+    # bucket into an ACMG disease class — that would re-introduce the very exclusion
+    # the engine just made. Keep the engine's call.
+    if engine_classification in ("Drug Response", "Risk Factor"):
+        return engine_classification
+
     if not clinvar_significance or not review_status:
         return engine_classification
 
