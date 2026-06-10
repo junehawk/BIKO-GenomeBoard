@@ -425,6 +425,7 @@ def sv_to_dict(sv: StructuralVariant) -> Dict[str, Any]:
         "sample_id": sv.sample_id,
         "acmg_class": sv.acmg_class,
         "acmg_label": sv.acmg_label,
+        "acmg_scored": sv.acmg_scored,
         "ranking_score": sv.ranking_score,
         "cytoband": sv.cytoband,
         "gene_name": sv.gene_name,

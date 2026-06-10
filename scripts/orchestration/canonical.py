@@ -602,17 +602,22 @@ def build_sample_report(
         except Exception as e:
             logger.warning("AnnotSV parse failed: %s", e)
 
-    sv_class45 = [sv for sv in sv_variants if sv.acmg_class in (4, 5)]
-    sv_class3_all = [sv for sv in sv_variants if sv.acmg_class == 3]
+    sv_class45 = [sv for sv in sv_variants if sv.acmg_scored and sv.acmg_class in (4, 5)]
+    sv_class3_all = [sv for sv in sv_variants if sv.acmg_scored and sv.acmg_class == 3]
     sv_class3_display = [sv for sv in sv_class3_all if sv.is_dosage_sensitive(mode)]
     sv_class3_hidden = len(sv_class3_all) - len(sv_class3_display)
-    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_class in (1, 2))
+    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_scored and sv.acmg_class in (1, 2))
+    # SVs AnnotSV could not score (BND/complex/annotation gap) — surfaced for manual
+    # review instead of being silently bucketed as Class-3 VUS (T2-06).
+    sv_unscored = [sv for sv in sv_variants if not sv.acmg_scored]
 
     report_data["sv_variants"] = [sv_to_dict(sv) for sv in sv_variants]
     report_data["sv_class45"] = [sv_to_dict(sv) for sv in sv_class45]
     report_data["sv_class3_display"] = [sv_to_dict(sv) for sv in sv_class3_display]
     report_data["sv_class3_hidden"] = sv_class3_hidden
     report_data["sv_benign_count"] = sv_benign_count
+    report_data["sv_unscored"] = [sv_to_dict(sv) for sv in sv_unscored]
+    report_data["sv_unscored_count"] = len(sv_unscored)
 
     # ── TMB (cancer mode only) ────────────────────────────────────────────
     if mode == "cancer":

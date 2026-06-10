@@ -86,6 +86,20 @@ def parse_annotsv(tsv_path: str) -> List[StructuralVariant]:
                     }
                 )
 
+            # Distinguish "AnnotSV scored this SV" from "AnnotSV could not score it"
+            # (blank / NA / out-of-range ACMG_class — BND, complex, annotation gap).
+            # Unscored SVs keep the display default 3 but are flagged so they reach the
+            # reviewer as 'unscored — manual review' rather than silently as a VUS (T2-06).
+            raw_acmg = (row.get("ACMG_class") or "").strip()
+            try:
+                acmg_class = int(raw_acmg)
+                acmg_scored = 1 <= acmg_class <= 5
+                if not acmg_scored:
+                    acmg_class = 3
+            except (ValueError, TypeError):
+                acmg_class = 3
+                acmg_scored = False
+
             sv = StructuralVariant(
                 annotsv_id=annotsv_id,
                 chrom=row.get("SV_chrom", ""),
@@ -94,7 +108,8 @@ def parse_annotsv(tsv_path: str) -> List[StructuralVariant]:
                 length=_safe_int(row.get("SV_length")),
                 sv_type=row.get("SV_type", ""),
                 sample_id=row.get("Samples_ID", ""),
-                acmg_class=_safe_int(row.get("ACMG_class"), 3),
+                acmg_class=acmg_class,
+                acmg_scored=acmg_scored,
                 ranking_score=_safe_float(row.get("AnnotSV_ranking"), 0.0) or 0.0,
                 cytoband=row.get("CytoBand", ""),
                 gene_name=row.get("Gene_name", ""),
