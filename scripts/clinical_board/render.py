@@ -5,6 +5,18 @@ import html
 from scripts.clinical_board.models import BoardOpinion, CancerBoardOpinion
 
 
+def _e(value) -> str:
+    """HTML-escape an LLM/curated free-text value before interpolation.
+
+    The whole board fragment is emitted into the report via Jinja
+    ``{{ clinical_board_html|safe }}``, which bypasses the env autoescape — so
+    every dynamic (model- or DB-derived) value MUST be escaped here at the
+    interpolation boundary, or markup in an LLM emission becomes live HTML.
+    Static markup written by this module stays unescaped.
+    """
+    return html.escape("" if value is None else str(value))
+
+
 def _disclaimer_text(language: str) -> str:
     if language == "ko":
         return "본 소견은 Google MedGemma 모델 기반 로컬 다전문가 시스템에 의해 생성되었습니다. 최종 임상 판단은 반드시 담당 임상의가 수행해야 합니다. 변이 분류(ACMG/AMP)는 결정적 분류 엔진에 의해 수행되었으며, 본 소견은 해당 분류를 변경하지 않습니다. MedGemma는 임상 등급(clinical-grade)이 아니며, 본 출력은 진단 목적이 아닌 연구 보조 자료로만 사용되어야 합니다."
@@ -117,20 +129,20 @@ def _render_agent_opinions_section(agent_opinions, language: str = "en") -> list
             findings_items = ""
             for f in agent_op.findings[:3]:
                 ft = f.get("finding", f) if isinstance(f, dict) else str(f)
-                findings_items += f'<li style="margin-bottom:2px;">{ft}</li>'
+                findings_items += f'<li style="margin-bottom:2px;">{_e(ft)}</li>'
             findings_block = f'<ul style="margin:0 0 4px;padding-left:16px;line-height:1.6;">{findings_items}</ul>'
         else:
             findings_block = _no_findings_placeholder_html(language)
 
         refs_html = ""
         if agent_op.references:
-            refs_html = f'<div style="font-size:9px;color:#94A3B8;margin-top:4px;">Refs: {", ".join(agent_op.references[:3])}</div>'
+            refs_html = f'<div style="font-size:9px;color:#94A3B8;margin-top:4px;">Refs: {_e(", ".join(agent_op.references[:3]))}</div>'
 
         parts.append(f"""
         <details style="margin-bottom:4px;border:1px solid #E2E8F0;border-radius:4px;">
           <summary style="padding:6px 10px;background:#FAFBFD;cursor:pointer;font-size:11px;font-weight:600;color:#1E293B;list-style:none;">
-            <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> {agent_op.agent_name}
-            <span style="float:right;color:{c_color};font-size:9px;font-weight:600;">{agent_op.confidence.upper()} &middot; {len(agent_op.findings)} findings</span>
+            <span class="board-arrow" style="color:#0D9488;margin-right:4px;">&#9654;</span> {_e(agent_op.agent_name)}
+            <span style="float:right;color:{c_color};font-size:9px;font-weight:600;">{_e(agent_op.confidence.upper())} &middot; {len(agent_op.findings)} findings</span>
           </summary>
           <div style="padding:8px 10px;font-size:10px;color:#475569;">
             {findings_block}
@@ -191,11 +203,11 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
     html_parts.append(f"""
     <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:16px;margin-bottom:16px;">
       <div style="font-size:9px;font-weight:700;color:#115E59;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Primary Diagnosis</div>
-      <div style="font-size:15px;font-weight:700;color:#1E1B4B;margin-bottom:4px;">{opinion.primary_diagnosis or "Not determined"}</div>
-      <div style="font-size:11px;color:#0F766E;line-height:1.5;">{opinion.primary_diagnosis_evidence or ""}</div>
+      <div style="font-size:15px;font-weight:700;color:#1E1B4B;margin-bottom:4px;">{_e(opinion.primary_diagnosis) or "Not determined"}</div>
+      <div style="font-size:11px;color:#0F766E;line-height:1.5;">{_e(opinion.primary_diagnosis_evidence)}</div>
       <div style="margin-top:8px;">
-        <span style="display:inline-block;background:{confidence_color};color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: {opinion.confidence.upper()}</span>
-        <span style="display:inline-block;background:#0D9488;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: {opinion.agent_consensus}</span>
+        <span style="display:inline-block;background:{confidence_color};color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: {_e(opinion.confidence.upper())}</span>
+        <span style="display:inline-block;background:#0D9488;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: {_e(opinion.agent_consensus)}</span>
       </div>
     </div>
     """)
@@ -211,7 +223,7 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
     if opinion.key_findings:
         html_parts.append('<ul style="margin:0;padding-left:16px;font-size:10.5px;color:#334155;line-height:1.7;">')
         for f in opinion.key_findings[:6]:
-            html_parts.append(f"<li>{f}</li>")
+            html_parts.append(f"<li>{_e(f)}</li>")
         html_parts.append("</ul>")
     else:
         html_parts.append('<p style="font-size:10.5px;color:#94A3B8;">No key findings.</p>')
@@ -231,7 +243,7 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
             likelihood = dx.get("likelihood", "unknown")
             lk_color = "#059669" if likelihood == "high" else "#D97706" if likelihood == "moderate" else "#9CA3AF"
             html_parts.append(
-                f'<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">{dx.get("diagnosis", "")}</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:{lk_color};font-weight:600;font-size:9px;">{likelihood}</td></tr>'
+                f'<tr><td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-size:10px;">{_e(dx.get("diagnosis", ""))}</td><td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:{lk_color};font-weight:600;font-size:9px;">{_e(likelihood)}</td></tr>'
             )
         html_parts.append("</tbody></table>")
     else:
@@ -247,7 +259,7 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
         )
         html_parts.append('<ol style="margin:0;padding-left:18px;font-size:10.5px;color:#334155;line-height:1.7;">')
         for r in opinion.recommendations[:5]:
-            html_parts.append(f"<li>{r}</li>")
+            html_parts.append(f"<li>{_e(r)}</li>")
         html_parts.append("</ol></div>")
 
     # Follow-up + Dissenting (compact row)
@@ -262,7 +274,7 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
             )
             html_parts.append('<ul style="margin:0;padding-left:16px;font-size:10px;color:#64748B;line-height:1.6;">')
             for f in opinion.follow_up[:4]:
-                html_parts.append(f"<li>{f}</li>")
+                html_parts.append(f"<li>{_e(f)}</li>")
             html_parts.append("</ul></div>")
         if has_dissent:
             html_parts.append(
@@ -273,7 +285,7 @@ def _render_rare_disease_opinion(opinion: BoardOpinion, language: str = "en") ->
             )
             html_parts.append('<ul style="margin:0;padding-left:16px;font-size:10px;color:#9A3412;line-height:1.6;">')
             for d in opinion.dissenting_opinions[:3]:
-                html_parts.append(f"<li>{d}</li>")
+                html_parts.append(f"<li>{_e(d)}</li>")
             html_parts.append("</ul></div>")
         html_parts.append("</div>")
 
@@ -309,23 +321,23 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
         headline_html = (
             '<div style="font-size:14px;font-weight:700;color:#1E1B4B;'
             'margin-bottom:6px;line-height:1.35;">'
-            f"{opinion.therapeutic_headline}</div>"
+            f"{_e(opinion.therapeutic_headline)}</div>"
         )
     body_text = opinion.therapeutic_implications or "Not determined"
     body_html = (
         '<div style="font-size:12.5px;font-weight:400;color:#334155;'
         'line-height:1.5;margin-bottom:6px;">'
-        f"{body_text}</div>"
+        f"{_e(body_text)}</div>"
     )
     html_parts.append(f"""
     <div style="background:#F0FDFA;border:1px solid #99F6E4;border-radius:8px;padding:16px;margin-bottom:16px;">
       <div style="font-size:9px;font-weight:700;color:#115E59;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px;">Therapeutic Implications</div>
       {headline_html}
       {body_html}
-      <div style="font-size:11px;color:#0F766E;line-height:1.5;">{opinion.therapeutic_evidence or ""}</div>
+      <div style="font-size:11px;color:#0F766E;line-height:1.5;">{_e(opinion.therapeutic_evidence)}</div>
       <div style="margin-top:8px;">
-        <span style="display:inline-block;background:{confidence_color};color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: {opinion.confidence.upper()}</span>
-        <span style="display:inline-block;background:#0D9488;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: {opinion.agent_consensus}</span>
+        <span style="display:inline-block;background:{confidence_color};color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;">Confidence: {_e(opinion.confidence.upper())}</span>
+        <span style="display:inline-block;background:#0D9488;color:#fff;border-radius:3px;padding:1px 8px;font-size:9px;font-weight:600;margin-left:4px;">Consensus: {_e(opinion.agent_consensus)}</span>
       </div>
     </div>
     """)
@@ -351,9 +363,9 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
             lv_color = "#059669" if level in ("A", "1") else "#D97706" if level in ("B", "2") else "#9CA3AF"
             html_parts.append(
                 f"<tr>"
-                f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-weight:600;">{drug}</td>'
-                f'<td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:{lv_color};font-weight:600;font-size:9px;">{level}</td>'
-                f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;color:#64748B;word-break:break-word;">{resistance}</td>'
+                f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-weight:600;">{_e(drug)}</td>'
+                f'<td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:{lv_color};font-weight:600;font-size:9px;">{_e(level)}</td>'
+                f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;color:#64748B;word-break:break-word;">{_e(resistance)}</td>'
                 f"</tr>"
             )
         html_parts.append("</tbody></table>")
@@ -369,7 +381,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
         html_parts.append(
             f'<div style="margin-bottom:12px;">'
             f'<span style="display:inline-block;background:{ie_color};color:#fff;border-radius:4px;padding:3px 10px;font-size:10px;font-weight:700;">'
-            f"Immunotherapy: {ie}</span></div>"
+            f"Immunotherapy: {_e(ie)}</span></div>"
         )
 
     # Actionable Findings + Clinical Actions (two-column)
@@ -384,7 +396,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
             )
             html_parts.append('<ul style="margin:0;padding-left:16px;font-size:10.5px;color:#334155;line-height:1.7;">')
             for f in opinion.actionable_findings[:6]:
-                html_parts.append(f"<li>{f}</li>")
+                html_parts.append(f"<li>{_e(f)}</li>")
             html_parts.append("</ul></div>")
         if has_actions:
             html_parts.append('<div style="flex:1;">')
@@ -393,7 +405,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
             )
             html_parts.append('<ol style="margin:0;padding-left:18px;font-size:10.5px;color:#334155;line-height:1.7;">')
             for a in opinion.clinical_actions[:6]:
-                html_parts.append(f"<li>{a}</li>")
+                html_parts.append(f"<li>{_e(a)}</li>")
             html_parts.append("</ol></div>")
         html_parts.append("</div>")
 
@@ -409,7 +421,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
             )
             html_parts.append('<ul style="margin:0;padding-left:16px;font-size:10px;color:#64748B;line-height:1.6;">')
             for m in opinion.monitoring_plan[:4]:
-                html_parts.append(f"<li>{m}</li>")
+                html_parts.append(f"<li>{_e(m)}</li>")
             html_parts.append("</ul></div>")
         if has_dissent:
             html_parts.append(
@@ -420,7 +432,7 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
             )
             html_parts.append('<ul style="margin:0;padding-left:16px;font-size:10px;color:#9A3412;line-height:1.6;">')
             for d in opinion.dissenting_opinions[:3]:
-                html_parts.append(f"<li>{d}</li>")
+                html_parts.append(f"<li>{_e(d)}</li>")
             html_parts.append("</ul></div>")
         html_parts.append("</div>")
 
