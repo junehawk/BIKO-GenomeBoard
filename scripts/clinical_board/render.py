@@ -361,9 +361,16 @@ def _render_cancer_opinion(opinion: CancerBoardOpinion, language: str = "en") ->
             level = opt.get("evidence_level", "")
             resistance = opt.get("resistance_notes", "")
             lv_color = "#059669" if level in ("A", "1") else "#D97706" if level in ("B", "2") else "#9CA3AF"
+            # Gene-level curated evidence is not variant-specific (the disease_context may
+            # be off-target) — flag it so the reviewer does not read it as variant-matched (T1-09).
+            gene_level_badge = (
+                ' <span style="font-size:8px;color:#B45309;font-weight:600;">(gene-level)</span>'
+                if opt.get("match_level") == "gene"
+                else ""
+            )
             html_parts.append(
                 f"<tr>"
-                f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-weight:600;">{_e(drug)}</td>'
+                f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;font-weight:600;">{_e(drug)}{gene_level_badge}</td>'
                 f'<td style="padding:4px 6px;border-bottom:1px solid #F1F5F9;text-align:center;color:{lv_color};font-weight:600;font-size:9px;">{_e(level)}</td>'
                 f'<td style="padding:4px 8px;border-bottom:1px solid #F1F5F9;color:#64748B;word-break:break-word;">{_e(resistance)}</td>'
                 f"</tr>"

@@ -449,3 +449,44 @@ def test_rare_disease_mode_skips_curator_in_runner(monkeypatch):
     if mode == "cancer":
         fake_curator([])
     assert called == []
+
+
+def test_merge_tags_gene_level_civic_match_level():
+    """A gene-level CIViC fallback row (no variant-specific match) is tagged match_level
+    'gene' so a downstream consumer can tell it apart from variant-specific evidence (T1-09)."""
+    from scripts.clinical_board.curated_treatments import _merge
+
+    civic_rows = [
+        {
+            "drug": "Pembrolizumab",
+            "level": "B",
+            "disease": "NSCLC",
+            "significance": "sensitivity",
+            "pmids": [],
+            "therapy_ids": "",
+            "match_level": "gene",
+            "raw_row": {},
+        }
+    ]
+    result = _merge("7:55:T:G", [], civic_rows)
+    assert len(result) == 1
+    assert result[0].match_level == "gene"
+
+
+def test_merge_oncokb_row_is_variant_level():
+    """OncoKB evidence is variant-specific (byProteinChange) → match_level 'variant' (T1-09)."""
+    from scripts.clinical_board.curated_treatments import _merge
+
+    oncokb_rows = [
+        {
+            "drug": "Osimertinib",
+            "level": "1",
+            "disease": "NSCLC",
+            "significance": "sensitivity",
+            "pmids": [],
+            "therapy_ids": "",
+            "raw_row": {},
+        }
+    ]
+    result = _merge("7:55:T:G", oncokb_rows, [])
+    assert result[0].match_level == "variant"
