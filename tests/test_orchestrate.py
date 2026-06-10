@@ -274,3 +274,16 @@ def test_pgx_warnings_surfaced_in_report_data(mocker, tmp_path):
 
     result = run_pipeline(vcf_path=DEMO_VCF, output_path=str(tmp_path / "r.html"))
     assert any("PharmCAT not available" in w for w in result.get("pgx_warnings", []))
+
+
+def test_cancer_report_flags_msi_and_fusion_not_performed(mocker, tmp_path):
+    """A cancer report must state that MSI and fusion analysis were not performed, so a
+    reviewer does not read their absence as a negative result (T2-01, absent != negative)."""
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=None)
+    from scripts.orchestrate import run_pipeline
+
+    result = run_pipeline(vcf_path=DEMO_VCF, output_path=str(tmp_path / "r.html"), mode="cancer")
+    notes = " ".join(result.get("analyses_not_performed", []))
+    assert "MSI" in notes
+    assert "usion" in notes  # fusion / Fusion
