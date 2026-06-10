@@ -22,7 +22,9 @@ from scripts.common.config import get
 
 logger = logging.getLogger(__name__)
 
-_NAMESPACE = "oncokb"
+# Versioned cache namespace — bump the suffix to invalidate ALL cached OncoKB
+# responses when OncoKB content (or this client's parsing) changes (DB-03).
+_NAMESPACE = "oncokb:v1"
 
 
 class OncoKBUnavailable(Exception):
@@ -148,9 +150,10 @@ def annotate_protein_change(
     if status is not None and status >= 500:
         raise OncoKBUnavailable(f"OncoKB HTTP {status} for {gene} {alteration}")
     if status is not None and status >= 400:
-        # 4xx other than 429 — treat as "no hit" rather than crash the run
-        logger.warning("[oncokb_client] HTTP %s for %s %s — treating as empty", status, gene, alteration)
-        set_cached_ns(_NAMESPACE, cache_key, [])
+        # 4xx other than 429 — treat as "no hit" rather than crash the run, but do NOT
+        # cache it: a transient/malformed-request 4xx must not poison the curated path for
+        # the full TTL the way a genuine 200-empty (confirmed no hit) does (DB-03).
+        logger.warning("[oncokb_client] HTTP %s for %s %s — treating as empty (not cached)", status, gene, alteration)
         return []
 
     try:
