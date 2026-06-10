@@ -167,21 +167,27 @@ class StructuralVariant:
     b_loss_af_max: Optional[float] = None
     # OMIM
     omim_morbid: bool = False
+    # Whether AnnotSV actually assigned an ACMG class. False when the ACMG_class
+    # column was blank/NA (BND, complex, or an annotation gap): acmg_class stays at
+    # the display default 3 but the SV is "unscored — manual review", NOT a VUS (T2-06).
+    acmg_scored: bool = True
 
     @property
     def is_pathogenic(self) -> bool:
-        return self.acmg_class in (4, 5)
+        return self.acmg_scored and self.acmg_class in (4, 5)
 
     @property
     def is_vus(self) -> bool:
-        return self.acmg_class == 3
+        return self.acmg_scored and self.acmg_class == 3
 
     @property
     def is_benign(self) -> bool:
-        return self.acmg_class in (1, 2)
+        return self.acmg_scored and self.acmg_class in (1, 2)
 
     @property
     def acmg_label(self) -> str:
+        if not self.acmg_scored:
+            return "Unscored — manual review"
         labels = {5: "Pathogenic", 4: "Likely Pathogenic", 3: "VUS", 2: "Likely Benign", 1: "Benign"}
         return labels.get(self.acmg_class, "Unknown")
 
@@ -211,7 +217,7 @@ class StructuralVariant:
 
     def is_dosage_sensitive(self, mode: str = "cancer") -> bool:
         """Check if this Class 3 VUS is dosage-sensitive enough to display."""
-        if self.acmg_class != 3:
+        if not self.acmg_scored or self.acmg_class != 3:
             return False
         hi_thresh = 1 if mode == "rare-disease" else 2
         pli_thresh = 0.8 if mode == "rare-disease" else 0.9

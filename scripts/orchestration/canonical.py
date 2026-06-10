@@ -32,6 +32,7 @@ from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant
 from scripts.common.models import FrequencyData
 from scripts.enrichment.hpo_matcher import resolve_hpo_terms
+from scripts.enrichment.query_omim import query_omim
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.orchestration.classify import (
     build_summary,
@@ -208,9 +209,22 @@ def _extract_germline_if_applicable(
         return []
 
 
+def _gene_inheritance(gene: str | None, cache: dict) -> str | None:
+    """OMIM inheritance mode for a gene (memoised), used to gate BS2 (T2-07)."""
+    if not gene:
+        return None
+    if gene in cache:
+        return cache[gene]
+    omim = query_omim(gene)
+    inh = omim.get("inheritance") if isinstance(omim, dict) else None
+    cache[gene] = inh
+    return inh
+
+
 def _build_freq_results(variants: list, db_results: dict) -> dict:
     """Run frequency comparison for every variant."""
     freq_results: dict[str, Any] = {}
+    inh_cache: dict = {}
     for variant in variants:
         db = db_results[variant.variant_id]
         freq_data = FrequencyData(
@@ -219,7 +233,10 @@ def _build_freq_results(variants: list, db_results: dict) -> dict:
             gnomad_all=db["gnomad"].get("gnomad_all"),
             kova_homozygote=db.get("kova_homozygote"),
         )
-        freq_results[variant.variant_id] = compare_frequencies(freq_data)
+        # BS2 (homozygous-in-healthy-controls for recessive genes) needs the gene's
+        # inheritance mode, which compare_frequencies itself does not have (T2-07).
+        inheritance = _gene_inheritance(getattr(variant, "gene", None), inh_cache)
+        freq_results[variant.variant_id] = compare_frequencies(freq_data, inheritance=inheritance)
     return freq_results
 
 
@@ -585,17 +602,22 @@ def build_sample_report(
         except Exception as e:
             logger.warning("AnnotSV parse failed: %s", e)
 
-    sv_class45 = [sv for sv in sv_variants if sv.acmg_class in (4, 5)]
-    sv_class3_all = [sv for sv in sv_variants if sv.acmg_class == 3]
+    sv_class45 = [sv for sv in sv_variants if sv.acmg_scored and sv.acmg_class in (4, 5)]
+    sv_class3_all = [sv for sv in sv_variants if sv.acmg_scored and sv.acmg_class == 3]
     sv_class3_display = [sv for sv in sv_class3_all if sv.is_dosage_sensitive(mode)]
     sv_class3_hidden = len(sv_class3_all) - len(sv_class3_display)
-    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_class in (1, 2))
+    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_scored and sv.acmg_class in (1, 2))
+    # SVs AnnotSV could not score (BND/complex/annotation gap) — surfaced for manual
+    # review instead of being silently bucketed as Class-3 VUS (T2-06).
+    sv_unscored = [sv for sv in sv_variants if not sv.acmg_scored]
 
     report_data["sv_variants"] = [sv_to_dict(sv) for sv in sv_variants]
     report_data["sv_class45"] = [sv_to_dict(sv) for sv in sv_class45]
     report_data["sv_class3_display"] = [sv_to_dict(sv) for sv in sv_class3_display]
     report_data["sv_class3_hidden"] = sv_class3_hidden
     report_data["sv_benign_count"] = sv_benign_count
+    report_data["sv_unscored"] = [sv_to_dict(sv) for sv in sv_unscored]
+    report_data["sv_unscored_count"] = len(sv_unscored)
 
     # ── TMB (cancer mode only) ────────────────────────────────────────────
     if mode == "cancer":

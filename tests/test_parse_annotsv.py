@@ -67,3 +67,31 @@ def test_parse_benign_has_af():
     svs = parse_annotsv("data/sample_sv/cancer_somatic_annotsv.tsv")
     benign = next(sv for sv in svs if sv.acmg_class == 1)
     assert benign.b_loss_af_max is not None or benign.b_gain_af_max is not None
+
+
+def test_parse_annotsv_na_class_is_unscored(tmp_path):
+    """An AnnotSV row with ACMG_class=NA is flagged unscored (acmg_scored False) and keeps
+    the display default 3, instead of being silently treated as a Class-3 VUS (T2-06)."""
+    from scripts.intake.parse_annotsv import parse_annotsv
+
+    header = "AnnotSV_ID\tSV_chrom\tSV_start\tSV_end\tSV_length\tSV_type\tSamples_ID\tAnnotation_mode\tACMG_class\n"
+    row = "BND1\tchr2\t100\t200\t100\tBND\tS1\tfull\tNA\n"
+    p = tmp_path / "sv.tsv"
+    p.write_text(header + row)
+    svs = parse_annotsv(str(p))
+    assert len(svs) == 1
+    assert svs[0].acmg_scored is False
+    assert svs[0].acmg_class == 3
+
+
+def test_parse_annotsv_valid_class_is_scored(tmp_path):
+    from scripts.intake.parse_annotsv import parse_annotsv
+
+    header = "AnnotSV_ID\tSV_chrom\tSV_start\tSV_end\tSV_length\tSV_type\tSamples_ID\tAnnotation_mode\tACMG_class\n"
+    row = "DEL1\tchr1\t100\t5000\t4900\tDEL\tS1\tfull\t5\n"
+    p = tmp_path / "sv.tsv"
+    p.write_text(header + row)
+    svs = parse_annotsv(str(p))
+    assert len(svs) == 1
+    assert svs[0].acmg_scored is True
+    assert svs[0].acmg_class == 5

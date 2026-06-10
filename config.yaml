@@ -32,6 +32,7 @@ thresholds:
   ba1: 0.05      # Stand-alone benign (>5%)
   bs1: 0.01      # Strong benign (>=1%)
   pm2: 0.001     # PM2_Supporting (<=0.1%)
+  bs2_homozygote_count: 2   # min homozygous KOVA controls to call BS2 (recessive genes)
 
 api:
   clinvar_esearch: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi"
