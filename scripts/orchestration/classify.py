@@ -42,6 +42,32 @@ def _resolve_ps1_pm5_exclusivity(evidences: List[AcmgEvidence]) -> List[AcmgEvid
     return evidences
 
 
+# ClinGen gene-validity classifications that count as an "established" gene-disease
+# link for the PS2/PM6 de-novo gate (T1-08). Limited / Disputed / Refuted / No Known
+# Disease Relationship are NOT established.
+_ESTABLISHED_VALIDITY = {"definitive", "strong", "moderate"}
+
+
+def _gene_has_disease_association(gene: Optional[str], cache: Dict[str, bool]) -> bool:
+    """True when ``gene`` has an established gene-disease association (ClinGen validity
+    Definitive/Strong/Moderate, or an OMIM disease phenotype). Memoised in ``cache``
+    for the current batch. Used to gate PS2/PM6 (T1-08)."""
+    if not gene:
+        return False
+    if gene in cache:
+        return cache[gene]
+    result = False
+    validity = get_gene_validity(gene)
+    if validity and validity.strip().lower() in _ESTABLISHED_VALIDITY:
+        result = True
+    else:
+        omim = query_omim(gene)
+        if isinstance(omim, dict) and omim.get("phenotypes"):
+            result = True
+    cache[gene] = result
+    return result
+
+
 def classify_variants(
     variants: List[Variant],
     db_results: Dict[str, Dict[str, Any]],
@@ -54,11 +80,17 @@ def classify_variants(
     """
     # Lazy imports for optional modules
     try:
-        from scripts.classification.in_silico import generate_pp3_bp4, parse_in_silico_from_csq
+        from scripts.classification.in_silico import (
+            generate_pp3_bp4,
+            get_configured_thresholds,
+            parse_in_silico_from_csq,
+        )
 
         _has_in_silico = True
+        _in_silico_thresholds = get_configured_thresholds()  # config-tunable PP3/BP4 (T5-02)
     except ImportError:
         _has_in_silico = False
+        _in_silico_thresholds = None
     try:
         from scripts.classification.evidence_collector import (
             collect_additional_evidence,
@@ -87,7 +119,10 @@ def classify_variants(
     # (legacy build) or is absent — the InterVar upstream PM5 path still
     # works in that case.
     try:
-        from scripts.storage.query_local_clinvar import get_clinvar_pathogenic_positions
+        from scripts.storage.query_local_clinvar import (
+            get_clinvar_pathogenic_changes,
+            get_clinvar_pathogenic_positions,
+        )
 
         _has_clinvar_pm5 = True
     except ImportError:
@@ -96,10 +131,15 @@ def classify_variants(
     if _has_clinvar_pm5:
         _genes = {v.gene for v in variants if getattr(v, "gene", None)}
         clinvar_pos_by_gene: dict = {g: get_clinvar_pathogenic_positions(g) for g in _genes}
+        # T1-07: per-residue pathogenic AA changes enable the refined PM5 gate
+        # (different-AA-only). Falls back to position-only when unavailable.
+        clinvar_changes_by_gene: dict = {g: get_clinvar_pathogenic_changes(g) for g in _genes}
     else:
         clinvar_pos_by_gene = {}
+        clinvar_changes_by_gene = {}
 
     classification_results = {}
+    _denovo_assoc_cache: Dict[str, bool] = {}  # per-batch memo for the PS2/PM6 gene gate (T1-08)
     for variant in variants:
         db = db_results[variant.variant_id]
         freq = freq_results[variant.variant_id]
@@ -112,7 +152,9 @@ def classify_variants(
 
         # In silico PP3/BP4 evidence
         if _has_in_silico and variant.in_silico:
-            pp3_bp4_codes = generate_pp3_bp4(parse_in_silico_from_csq(variant.in_silico))
+            pp3_bp4_codes = generate_pp3_bp4(
+                parse_in_silico_from_csq(variant.in_silico), thresholds=_in_silico_thresholds
+            )
             for code in pp3_bp4_codes:
                 evidences.append(AcmgEvidence(code=code, source="in_silico", description=""))
 
@@ -129,10 +171,12 @@ def classify_variants(
         if _has_evidence_collector:
             gene_info = get_gene_info(variant.gene) if variant.gene else None
             clinvar_pos = clinvar_pos_by_gene.get(getattr(variant, "gene", None)) or set()
+            clinvar_changes = clinvar_changes_by_gene.get(getattr(variant, "gene", None)) or {}
             extra_codes = collect_additional_evidence(
                 variant,
                 gene_info=gene_info,
                 clinvar_pathogenic_positions=clinvar_pos,
+                clinvar_pathogenic_changes=clinvar_changes,
             )
             for code in extra_codes:
                 evidences.append(AcmgEvidence(code=code, source="evidence_collector", description=""))
@@ -140,7 +184,14 @@ def classify_variants(
             # v1 de novo support — PS2/PM6 from trio INFO flags.
             # Kept as a separate call per spec Q4 so PS2/PM6 can never leak
             # into the ClinVar-conflict override path in acmg_engine.
-            denovo_codes = collect_denovo_evidence(variant)
+            # T1-08: PS2/PM6 require an established gene-disease link — compute it
+            # only for de-novo-flagged variants (rare) to avoid per-variant lookups.
+            _denovo_flag = getattr(variant, "inheritance", None) in (
+                "de_novo",
+                "confirmed_de_novo",
+            ) or bool(getattr(variant, "confirmed_denovo", False))
+            _gene_assoc = _gene_has_disease_association(variant.gene, _denovo_assoc_cache) if _denovo_flag else True
+            denovo_codes = collect_denovo_evidence(variant, gene_has_disease_association=_gene_assoc)
             for code in denovo_codes:
                 evidences.append(AcmgEvidence(code=code, source="denovo", description=""))
 
@@ -374,6 +425,7 @@ def sv_to_dict(sv: StructuralVariant) -> Dict[str, Any]:
         "sample_id": sv.sample_id,
         "acmg_class": sv.acmg_class,
         "acmg_label": sv.acmg_label,
+        "acmg_scored": sv.acmg_scored,
         "ranking_score": sv.ranking_score,
         "cytoband": sv.cytoband,
         "gene_name": sv.gene_name,
@@ -396,6 +448,7 @@ def sv_to_dict(sv: StructuralVariant) -> Dict[str, Any]:
 def split_variants_for_display(
     variant_records: List[VariantRecord],
     hide_vus: bool,
+    mode: str = "cancer",
 ) -> Tuple[
     List[VariantRecord],
     List[VariantRecord],
@@ -434,8 +487,23 @@ def split_variants_for_display(
         "likely benign": 5,
         "benign": 6,
     }
-    detailed_variants.sort(
-        key=lambda v: (_tier_sort.get(v.get("tier", 4), 4), _cls_sort.get(v.get("classification", "VUS").lower(), 4))
-    )
+    if mode == "rare-disease":
+        # Rare-disease reports are organised by ACMG classification, not AMP tier
+        # (tier is a borrowed cancer concept on this path), so a Pathogenic disease
+        # variant must precede a Drug-Response / Risk-Factor PGx finding even though
+        # the latter is assigned AMP Tier I. Sort classification-first.
+        detailed_variants.sort(
+            key=lambda v: (
+                _cls_sort.get(v.get("classification", "VUS").lower(), 4),
+                _tier_sort.get(v.get("tier", 4), 4),
+            )
+        )
+    else:
+        detailed_variants.sort(
+            key=lambda v: (
+                _tier_sort.get(v.get("tier", 4), 4),
+                _cls_sort.get(v.get("classification", "VUS").lower(), 4),
+            )
+        )
 
     return tier1_variants, tier2_variants, tier3_variants, tier4_count, detailed_variants, omitted_variants

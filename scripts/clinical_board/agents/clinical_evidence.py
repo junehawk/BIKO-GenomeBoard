@@ -54,7 +54,7 @@ Domain 데이터의 "CIViC Literature Evidence" 섹션에는 CIViC 데이터베�
      이는 요약본이며 NCCN/ESMO 등 최신 가이드라인의 직접 인용이 아님을 인지하세요.
 
 4. **임상시험 마커 식별**
-   - 변이가 알려진 임상시험 적격 마커인지 평가하세요 (예: BRAF V600E, MSI-H).
+   - 변이가 알려진 임상시험 적격 마커인지 평가하세요 (예: BRAF V600E).
 
 ## 핵심 질문
 "이 변이에 대한 curated evidence 중 가장 강력한 근거는 무엇이며, 어떤 임상시험이
@@ -110,8 +110,7 @@ statements.
      it as a summary and not as a direct citation of the current NCCN/ESMO text.
 
 4. **Clinical-trial marker identification**
-   - Assess whether the variant is a known trial-eligibility marker (e.g., BRAF V600E,
-     MSI-H).
+   - Assess whether the variant is a known trial-eligibility marker (e.g., BRAF V600E).
 
 ## Key Question
 "What is the strongest piece of curated evidence for this variant, and which clinical

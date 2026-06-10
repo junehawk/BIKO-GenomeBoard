@@ -191,17 +191,33 @@ def _pre_filter_pgx_positions(germline_vcf: str, jar_path: str, output_dir: str)
 
     # Extract matching records from germline VCF
     filtered_path = os.path.join(output_dir, "pgx_filtered.vcf")
+    written = 0
     try:
         tbx = pysam.TabixFile(germline_vcf)
         header_lines = list(tbx.header)
+        # The shipped positions file is chr-prefixed GRCh38; a GRCh37/no-chr germline
+        # VCF uses bare contigs ('1', '2', ...). Resolve each target contig against the
+        # VCF's actual contigs (adding/stripping 'chr') so a naming mismatch does not
+        # silently yield an empty filtered VCF (PGX-02).
+        available = set(tbx.contigs)
+
+        def _resolve_contig(chrom: str) -> Optional[str]:
+            if chrom in available:
+                return chrom
+            alt = chrom[3:] if chrom.startswith("chr") else f"chr{chrom}"
+            return alt if alt in available else None
 
         with open(filtered_path, "w", encoding="utf-8") as out:
             for h in header_lines:
                 out.write(h + "\n")
             for chrom, pos in targets:
+                resolved = _resolve_contig(chrom)
+                if resolved is None:
+                    continue
                 try:
-                    for record in tbx.fetch(chrom, pos - 1, pos):
+                    for record in tbx.fetch(resolved, pos - 1, pos):
                         out.write(record + "\n")
+                        written += 1
                 except ValueError:
                     continue
         tbx.close()
@@ -210,6 +226,18 @@ def _pre_filter_pgx_positions(germline_vcf: str, jar_path: str, output_dir: str)
             "PGx pre-filter: tabix extraction failed (%s); PharmCAT would run "
             "over the FULL germline VCF and may time out",
             exc,
+        )
+        return None
+
+    # Honesty guard: if no records matched (e.g. an unresolved contig-naming mismatch),
+    # do NOT hand PharmCAT an empty VCF and label the run 'pharmcat' — fall back to
+    # builtin so the report's pgx_source reflects what actually happened (PGX-02).
+    if written == 0:
+        logger.warning(
+            "PGx pre-filter: 0 of %d PharmCAT positions matched the germline VCF "
+            "(likely a contig-naming/assembly mismatch); falling back to builtin PGx "
+            "instead of running PharmCAT on an empty VCF",
+            len(targets),
         )
         return None
 

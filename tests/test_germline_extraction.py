@@ -331,8 +331,9 @@ class TestExtractGermline:
         from scripts.orchestration.extract_germline import _parse_vcf_line
 
         line = "chr17\t7577120\trs28934578\tG\tA\t100\tPASS\tGENEINFO=TP53"
-        v = _parse_vcf_line(line)
-        assert v is not None
+        vs = _parse_vcf_line(line)
+        assert len(vs) == 1
+        v = vs[0]
         assert v.chrom == "chr17"
         assert v.pos == 7577120
         assert v.ref == "G"
@@ -345,8 +346,8 @@ class TestExtractGermline:
         """Header lines return None."""
         from scripts.orchestration.extract_germline import _parse_vcf_line
 
-        assert _parse_vcf_line("#CHROM\tPOS\tID\tREF\tALT") is None
-        assert _parse_vcf_line("##fileformat=VCFv4.2") is None
+        assert _parse_vcf_line("#CHROM\tPOS\tID\tREF\tALT") == []
+        assert _parse_vcf_line("##fileformat=VCFv4.2") == []
 
 
 # ---------------------------------------------------------------------------
@@ -635,8 +636,9 @@ def test_parse_vcf_line_formats_consequence_label():
     from scripts.orchestration.extract_germline import _parse_vcf_line
 
     line = "chr17\t7675088\trs1\tC\tA\t.\tPASS\tCSQ=A|missense_variant|MODERATE|TP53|ENSG0|Transcript|ENST0|protein_coding|4/11||c.524G>T|p.Arg175Leu"
-    v = _parse_vcf_line(line)
-    assert v is not None
+    vs = _parse_vcf_line(line)
+    assert len(vs) == 1
+    v = vs[0]
     assert v.gene == "TP53"
     assert v.consequence == "Missense"
 
@@ -646,6 +648,65 @@ def test_parse_vcf_line_consequence_none_when_absent():
     from scripts.orchestration.extract_germline import _parse_vcf_line
 
     line = "chr1\t12345\t.\tA\tT\t.\tPASS\tGENEINFO=FOO:1"
-    v = _parse_vcf_line(line)
-    assert v is not None
+    vs = _parse_vcf_line(line)
+    assert len(vs) == 1
+    v = vs[0]
     assert v.consequence is None
+
+
+# ---------------------------------------------------------------------------
+# T2-03 / ORCH-02 — inherited germline variants get in_silico from the CSQ
+# ---------------------------------------------------------------------------
+
+_GERMLINE_CSQ_HEADER = (
+    '##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. '
+    "Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp|"
+    "cDNA_position|CDS_position|Protein_position|Amino_acids|Codons|CANONICAL|MANE_SELECT|SIFT|PolyPhen|"
+    'REVEL_score|SpliceAI_pred_DS_AG">'
+)
+
+
+def test_germline_parse_populates_in_silico_from_csq():
+    """An inherited germline variant whose CSQ carries REVEL/SpliceAI must get
+    variant.in_silico populated, so PP3/BP4/SpliceAI can fire on the germline path
+    (T2-03 / ORCH-02). Pre-fix in_silico was never set."""
+    from scripts.annotation.parse_annotation import parse_csq_header
+    from scripts.orchestration.extract_germline import _parse_vcf_line
+
+    csq_fields = parse_csq_header(_GERMLINE_CSQ_HEADER)
+    csq = (
+        "T|missense_variant|MODERATE|BRCA1|ENSG00000012048|Transcript|ENST00000357654|protein_coding|"
+        "10/23||ENST00000357654.9:c.524G>T|ENSP00000350283.3:p.Arg175Leu|605|524|175|R/L|cGg|YES|"
+        "NM_007294.4|deleterious(0.01)|probably_damaging(0.99)|0.85|0.30"
+    )
+    line = f"chr17\t43000000\t.\tG\tT\t.\tPASS\tCSQ={csq}"
+    vs = _parse_vcf_line(line, fallback_gene="BRCA1", csq_fields=csq_fields)
+    assert len(vs) == 1
+    v = vs[0]
+    assert v.in_silico is not None
+    assert v.in_silico.get("revel_score") == "0.85"
+    # spliceai_max is computed from the DS_* fields so downstream BP7/SpliceAI rescue read it.
+    assert "spliceai_max" in v.in_silico
+
+
+def test_germline_parse_without_csq_header_still_works():
+    """Backward compat: with no csq_fields (legacy callers) the hardcoded-index path
+    still parses gene/consequence and simply leaves in_silico empty."""
+    from scripts.orchestration.extract_germline import _parse_vcf_line
+
+    line = "chr17\t43000000\t.\tG\tT\t.\tPASS\tCSQ=T|missense_variant|MODERATE|BRCA1"
+    vs = _parse_vcf_line(line, fallback_gene="BRCA1")
+    assert len(vs) == 1
+    v = vs[0]
+    assert v.gene == "BRCA1"
+
+
+def test_germline_parse_decomposes_multiallelic():
+    """A multi-allelic germline line (G -> A,T) yields one inherited Variant per ALT,
+    not just the first ALT (INTK-03)."""
+    from scripts.orchestration.extract_germline import _parse_vcf_line
+
+    line = "chr17\t43000000\t.\tG\tA,T\t.\tPASS\tGENEINFO=BRCA1"
+    vs = _parse_vcf_line(line, fallback_gene="BRCA1")
+    assert sorted(v.alt for v in vs) == ["A", "T"]
+    assert all(v.gene == "BRCA1" for v in vs)

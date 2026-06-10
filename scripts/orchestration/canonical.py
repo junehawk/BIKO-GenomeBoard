@@ -19,6 +19,7 @@ Design contract:
 
 from __future__ import annotations
 
+import html
 import logging
 import re
 from dataclasses import asdict, is_dataclass
@@ -31,6 +32,7 @@ from scripts.common.gene_knowledge import get_gene_info
 from scripts.common.hgvs_utils import hgvsp_to_civic_variant as _hgvsp_to_civic_variant
 from scripts.common.models import FrequencyData
 from scripts.enrichment.hpo_matcher import resolve_hpo_terms
+from scripts.enrichment.query_omim import query_omim
 from scripts.intake.parse_vcf import parse_vcf
 from scripts.orchestration.classify import (
     build_summary,
@@ -82,9 +84,18 @@ def _adjust_finding_summary(summary: str, classification: str) -> str:
 
 
 def _linkify_pmids(text: str) -> str:
-    """Convert PMID references in text to PubMed links."""
+    """Convert PMID references in text to PubMed links.
+
+    The result is rendered into the report via ``{{ ...|safe }}`` (autoescape off),
+    so the source CIViC / gene_knowledge prose is HTML-escaped FIRST — only the
+    PubMed anchors this function emits should reach the page as live markup
+    (XSEC-02). PMID:NNN tokens survive escaping unchanged, so linkification still
+    matches.
+    """
     if not text:
         return text
+
+    text = html.escape(text)
 
     def _replace_pmid(match: re.Match) -> str:
         pmid = match.group(1)
@@ -198,9 +209,22 @@ def _extract_germline_if_applicable(
         return []
 
 
+def _gene_inheritance(gene: str | None, cache: dict) -> str | None:
+    """OMIM inheritance mode for a gene (memoised), used to gate BS2 (T2-07)."""
+    if not gene:
+        return None
+    if gene in cache:
+        return cache[gene]
+    omim = query_omim(gene)
+    inh = omim.get("inheritance") if isinstance(omim, dict) else None
+    cache[gene] = inh
+    return inh
+
+
 def _build_freq_results(variants: list, db_results: dict) -> dict:
     """Run frequency comparison for every variant."""
     freq_results: dict[str, Any] = {}
+    inh_cache: dict = {}
     for variant in variants:
         db = db_results[variant.variant_id]
         freq_data = FrequencyData(
@@ -209,15 +233,23 @@ def _build_freq_results(variants: list, db_results: dict) -> dict:
             gnomad_all=db["gnomad"].get("gnomad_all"),
             kova_homozygote=db.get("kova_homozygote"),
         )
-        freq_results[variant.variant_id] = compare_frequencies(freq_data)
+        # BS2 (homozygous-in-healthy-controls for recessive genes) needs the gene's
+        # inheritance mode, which compare_frequencies itself does not have (T2-07).
+        inheritance = _gene_inheritance(getattr(variant, "gene", None), inh_cache)
+        freq_results[variant.variant_id] = compare_frequencies(freq_data, inheritance=inheritance)
     return freq_results
 
 
-def _run_pgx(variants: list, germline_vcf: str | None, db_results: dict) -> dict:
-    """Run pharmacogenomics (PharmCAT if germline provided, builtin fallback)."""
+def _run_pgx(variants: list, germline_vcf: str | None, db_results: dict, sample_id: str | None = None) -> dict:
+    """Run pharmacogenomics (PharmCAT if germline provided, builtin fallback).
+
+    ``sample_id`` is forwarded to PharmCAT so a multi-sample germline VCF
+    (trio / quartet) selects the proband's report rather than defaulting to the
+    alphabetically-first sample report (PGX-01).
+    """
     from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
-    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf)
+    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf, sample_id=sample_id)
     pgx_source = pgx_data["pgx_source"]
 
     # Backward-compat: collect PgxResult objects from db_results when builtin
@@ -507,7 +539,7 @@ def build_sample_report(
     freq_results = _build_freq_results(variants, db_results)
 
     # ── PGx ───────────────────────────────────────────────────────────────
-    pgx_bundle = _run_pgx(variants, germline_vcf, db_results)
+    pgx_bundle = _run_pgx(variants, germline_vcf, db_results, sample_id=sample_id)
     # Phase 2 (L7): enrich PGx rows here, not in render.
     _enrich_pgx_with_gene_knowledge(pgx_bundle["pgx_results_list"])
 
@@ -527,7 +559,7 @@ def build_sample_report(
 
     summary = build_summary(variant_records)
     tier1, tier2, tier3, tier4_count, detailed_variants, omitted_variants = split_variants_for_display(
-        variant_records, hide_vus
+        variant_records, hide_vus, mode
     )
 
     report_data: dict[str, Any] = {
@@ -545,6 +577,10 @@ def build_sample_report(
         "pgx_source": pgx_bundle["pgx_source"],
         "germline_provided": pgx_bundle["germline_provided"],
         "pharmcat_version": pgx_bundle["pharmcat_version"],
+        # Why PGx degraded to builtin (missing Java/JAR, PharmCAT crash, no germline,
+        # empty filtered VCF, ...) — surfaced so the reviewer can audit the PGx block
+        # instead of the reason being computed and dropped (T4-04 / ORCH-03).
+        "pgx_warnings": pgx_bundle.get("warnings", []),
         "summary": summary,
         "db_versions": get_all_db_versions(skip_api=skip_api),
         "pipeline": {
@@ -566,17 +602,22 @@ def build_sample_report(
         except Exception as e:
             logger.warning("AnnotSV parse failed: %s", e)
 
-    sv_class45 = [sv for sv in sv_variants if sv.acmg_class in (4, 5)]
-    sv_class3_all = [sv for sv in sv_variants if sv.acmg_class == 3]
+    sv_class45 = [sv for sv in sv_variants if sv.acmg_scored and sv.acmg_class in (4, 5)]
+    sv_class3_all = [sv for sv in sv_variants if sv.acmg_scored and sv.acmg_class == 3]
     sv_class3_display = [sv for sv in sv_class3_all if sv.is_dosage_sensitive(mode)]
     sv_class3_hidden = len(sv_class3_all) - len(sv_class3_display)
-    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_class in (1, 2))
+    sv_benign_count = sum(1 for sv in sv_variants if sv.acmg_scored and sv.acmg_class in (1, 2))
+    # SVs AnnotSV could not score (BND/complex/annotation gap) — surfaced for manual
+    # review instead of being silently bucketed as Class-3 VUS (T2-06).
+    sv_unscored = [sv for sv in sv_variants if not sv.acmg_scored]
 
     report_data["sv_variants"] = [sv_to_dict(sv) for sv in sv_variants]
     report_data["sv_class45"] = [sv_to_dict(sv) for sv in sv_class45]
     report_data["sv_class3_display"] = [sv_to_dict(sv) for sv in sv_class3_display]
     report_data["sv_class3_hidden"] = sv_class3_hidden
     report_data["sv_benign_count"] = sv_benign_count
+    report_data["sv_unscored"] = [sv_to_dict(sv) for sv in sv_unscored]
+    report_data["sv_unscored_count"] = len(sv_unscored)
 
     # ── TMB (cancer mode only) ────────────────────────────────────────────
     if mode == "cancer":
@@ -598,8 +639,16 @@ def build_sample_report(
         except Exception as e:
             logger.warning("TMB calculation failed: %s", e)
             report_data["tmb"] = None
+        # Alteration classes BIKO does not detect — surfaced so a reviewer never reads
+        # their absence as a negative result ("absent != negative"); see
+        # _workspace/v2.9-review/CLINICAL_VALIDITY.md (T2-01).
+        report_data["analyses_not_performed"] = [
+            "Microsatellite instability (MSI) / mismatch-repair status",
+            "Gene fusions / rearrangements (e.g. ALK, ROS1, NTRK, RET)",
+        ]
     else:
         report_data["tmb"] = None
+        report_data["analyses_not_performed"] = []
 
     # ── Clinical Board (optional LLM diagnostic synthesis) ────────────────
     if clinical_note:

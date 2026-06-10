@@ -67,3 +67,67 @@ def test_parse_benign_has_af():
     svs = parse_annotsv("data/sample_sv/cancer_somatic_annotsv.tsv")
     benign = next(sv for sv in svs if sv.acmg_class == 1)
     assert benign.b_loss_af_max is not None or benign.b_gain_af_max is not None
+
+
+def test_parse_annotsv_na_class_is_unscored(tmp_path):
+    """An AnnotSV row with ACMG_class=NA is flagged unscored (acmg_scored False) and keeps
+    the display default 3, instead of being silently treated as a Class-3 VUS (T2-06)."""
+    from scripts.intake.parse_annotsv import parse_annotsv
+
+    header = "AnnotSV_ID\tSV_chrom\tSV_start\tSV_end\tSV_length\tSV_type\tSamples_ID\tAnnotation_mode\tACMG_class\n"
+    row = "BND1\tchr2\t100\t200\t100\tBND\tS1\tfull\tNA\n"
+    p = tmp_path / "sv.tsv"
+    p.write_text(header + row)
+    svs = parse_annotsv(str(p))
+    assert len(svs) == 1
+    assert svs[0].acmg_scored is False
+    assert svs[0].acmg_class == 3
+
+
+def test_parse_annotsv_valid_class_is_scored(tmp_path):
+    from scripts.intake.parse_annotsv import parse_annotsv
+
+    header = "AnnotSV_ID\tSV_chrom\tSV_start\tSV_end\tSV_length\tSV_type\tSamples_ID\tAnnotation_mode\tACMG_class\n"
+    row = "DEL1\tchr1\t100\t5000\t4900\tDEL\tS1\tfull\t5\n"
+    p = tmp_path / "sv.tsv"
+    p.write_text(header + row)
+    svs = parse_annotsv(str(p))
+    assert len(svs) == 1
+    assert svs[0].acmg_scored is True
+    assert svs[0].acmg_class == 5
+
+
+def test_parse_annotsv_ranking_score_v3_column(tmp_path):
+    """AnnotSV v3.x renamed AnnotSV_ranking -> AnnotSV_ranking_score; the parser must read
+    either so the ranking score is not silently lost as 0.0 (T4-06)."""
+    from scripts.intake.parse_annotsv import parse_annotsv
+
+    header = (
+        "AnnotSV_ID\tSV_chrom\tSV_start\tSV_end\tSV_length\tSV_type\tSamples_ID\t"
+        "Annotation_mode\tACMG_class\tAnnotSV_ranking_score\n"
+    )
+    row = "DEL1\tchr1\t100\t5000\t4900\tDEL\tS1\tfull\t5\t0.87\n"
+    p = tmp_path / "sv.tsv"
+    p.write_text(header + row)
+    svs = parse_annotsv(str(p))
+    assert len(svs) == 1
+    assert svs[0].ranking_score == 0.87
+
+
+def test_parse_annotsv_warns_on_missing_required_columns(tmp_path, caplog):
+    """A header missing required AnnotSV columns (wrong/renamed file) must log a warning
+    rather than silently parsing nothing (T4-06)."""
+    import logging
+
+    from scripts.intake.parse_annotsv import parse_annotsv
+
+    header = "Foo\tBar\tBaz\n"
+    row = "a\tb\tc\n"
+    p = tmp_path / "bad.tsv"
+    p.write_text(header + row)
+    with caplog.at_level(logging.WARNING):
+        parse_annotsv(str(p))
+    assert any(
+        "AnnotSV" in r.message and ("column" in r.message.lower() or "header" in r.message.lower())
+        for r in caplog.records
+    )

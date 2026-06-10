@@ -116,3 +116,25 @@ def test_parse_vcf_missing_file_returns_empty():
     """parse_vcf must not raise on missing files — it logs and returns []."""
     variants = parse_vcf("/nonexistent/path/to/nothing.vcf.gz")
     assert variants == []
+
+
+def test_parse_vcf_decomposes_multiallelic_with_allele_scoped_csq(tmp_path):
+    """A multi-allelic line (G -> A,T) must yield one Variant per ALT allele, each with
+    its OWN allele-scoped consequence — not a single Variant carrying the highest-impact
+    consequence across both alleles (INTK-01 / INTK-02)."""
+    vcf = tmp_path / "ma.vcf"
+    vcf.write_text(
+        "##fileformat=VCFv4.2\n"
+        '##INFO=<ID=CSQ,Number=.,Type=String,Description="Consequence annotations from Ensembl VEP. '
+        'Format: Allele|Consequence|IMPACT|SYMBOL|Gene|Feature_type|Feature|BIOTYPE|EXON|INTRON|HGVSc|HGVSp">\n'
+        "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n"
+        "chr1\t100\t.\tG\tA,T\t.\tPASS\t"
+        "CSQ=A|missense_variant|MODERATE|GENE1|ENSG|Transcript|ENST1|protein_coding|1/2||c.1G>A|p.Ala1Thr,"
+        "T|synonymous_variant|LOW|GENE1|ENSG|Transcript|ENST1|protein_coding|1/2||c.1G>T|p.Ala1Ala\n"
+    )
+    variants = parse_vcf(str(vcf))
+    assert len(variants) == 2
+    by_alt = {v.alt: v for v in variants}
+    assert set(by_alt) == {"A", "T"}
+    assert "issense" in (by_alt["A"].consequence or "")
+    assert "ynonymous" in (by_alt["T"].consequence or "")

@@ -117,3 +117,98 @@ def test_structural_variant_not_dosage_sensitive():
     )
     sv.gene_details = [{"gene": "GENE1", "hi": 0, "ts": 0, "pli": 0.05}]
     assert not sv.is_dosage_sensitive(mode="cancer")
+
+
+def _class3_sv(sv_type: str, gene_details: list) -> "object":
+    """Build a Class-3 SV with the given split-row gene_details for dosage tests."""
+    from scripts.common.models import StructuralVariant
+
+    sv = StructuralVariant(
+        annotsv_id="test",
+        chrom="chr1",
+        start=1,
+        end=100,
+        length=100,
+        sv_type=sv_type,
+        sample_id="S1",
+        acmg_class=3,
+        ranking_score=0.1,
+        cytoband="1p36",
+        gene_name="GENE1",
+        gene_count=1,
+    )
+    sv.gene_details = gene_details
+    return sv
+
+
+def test_dosage_sensitive_ignores_clingen_sentinel_codes():
+    """ClinGen HI/TS codes 30 (AR gene) and 40 (dosage sensitivity unlikely) are
+    NOT real dosage-evidence scores — they must not pass the hi/ts >= threshold gate."""
+    # DEL with HI=40 ("dosage sensitivity unlikely") — ClinGen says NOT haploinsufficient.
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 40, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # DEL with HI=30 ("gene associated with autosomal-recessive phenotype") — not HI.
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 30, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # DUP with TS=40 — not triplosensitive.
+    assert not _class3_sv("DUP", [{"gene": "G", "hi": 0, "ts": 40, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # Same sentinels must also be rejected in the more permissive rare-disease mode (thresh=1).
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 40, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(
+        mode="rare-disease"
+    )
+
+
+def test_dosage_sensitive_accepts_emerging_evidence_code():
+    """Real ClinGen evidence scores in range (cancer >=2, rare-disease >=1) still flag DS."""
+    # HI=2 ("emerging evidence") DEL — supporting at the cancer threshold.
+    assert _class3_sv("DEL", [{"gene": "G", "hi": 2, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # HI=1 ("little evidence") DEL — below cancer thresh (2) but at rare-disease thresh (1).
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 1, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    assert _class3_sv("DEL", [{"gene": "G", "hi": 1, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="rare-disease")
+
+
+def test_unscored_sv_is_not_vus_or_pathogenic():
+    """An SV AnnotSV could not score (blank/NA ACMG_class) must be 'unscored — manual
+    review', NOT silently bucketed as a Class-3 VUS (T2-06)."""
+    from scripts.common.models import StructuralVariant
+
+    sv = StructuralVariant(
+        annotsv_id="bnd1",
+        chrom="chr2",
+        start=1,
+        end=2,
+        length=0,
+        sv_type="BND",
+        sample_id="S1",
+        acmg_class=3,  # display default
+        ranking_score=0.0,
+        cytoband="2p",
+        gene_name="X",
+        gene_count=1,
+        acmg_scored=False,
+    )
+    assert sv.is_vus is False
+    assert sv.is_pathogenic is False
+    assert sv.is_benign is False
+    assert "nscored" in sv.acmg_label
+    assert sv.is_dosage_sensitive(mode="cancer") is False
+
+
+def test_scored_sv_class3_is_still_vus():
+    """A genuinely scored Class-3 SV remains a VUS (acmg_scored defaults True)."""
+    from scripts.common.models import StructuralVariant
+
+    sv = StructuralVariant(
+        annotsv_id="d1",
+        chrom="chr1",
+        start=1,
+        end=100,
+        length=100,
+        sv_type="DEL",
+        sample_id="S1",
+        acmg_class=3,
+        ranking_score=0.2,
+        cytoband="1p",
+        gene_name="X",
+        gene_count=1,
+    )
+    assert sv.is_vus is True
+    assert sv.acmg_scored is True

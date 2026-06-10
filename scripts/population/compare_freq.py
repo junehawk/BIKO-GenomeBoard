@@ -5,7 +5,7 @@ enrichment ratio is defined as ``kova / gnomad_eas`` to compare Korean
 allele frequencies against the broader East Asian reference.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from scripts.common.config import get
 from scripts.common.models import FrequencyData
@@ -13,10 +13,18 @@ from scripts.common.models import FrequencyData
 BA1_THRESHOLD = get("thresholds.ba1", 0.05)
 BS1_THRESHOLD = get("thresholds.bs1", 0.01)
 PM2_THRESHOLD = get("thresholds.pm2", 0.001)  # for PM2_Supporting
+# BS2: minimum homozygous observations in the healthy KOVA cohort to call a variant
+# benign for a recessive condition (ACMG BS2). Configurable; conservative default 2.
+BS2_HOMOZYGOTE_COUNT = get("thresholds.bs2_homozygote_count", 2)
 
 
-def compare_frequencies(freq: FrequencyData) -> Dict:
-    """Compare a variant's 3-tier frequency record and derive ACMG/korean flags."""
+def compare_frequencies(freq: FrequencyData, inheritance: Optional[str] = None) -> Dict:
+    """Compare a variant's 3-tier frequency record and derive ACMG/korean flags.
+
+    ``inheritance`` (the gene's OMIM mode, e.g. "AR" / "AD/AR") gates BS2: a variant
+    observed homozygous in healthy KOVA controls for a recessive condition is benign
+    (ACMG BS2). Omitted → BS2 never fires (T2-07).
+    """
     acmg_codes: List[str] = []
     flags: List[str] = []
 
@@ -24,9 +32,14 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     max_freq = max(f for f in all_freqs if f is not None) if any(f is not None for f in all_freqs) else None
 
     if max_freq is None:
+        # Absent from every queried frequency DB (gnomAD ALL/EAS + KOVA) → ACMG PM2
+        # ("absent from controls"), emitted at Supporting strength per ClinGen SVI 2020.
+        # NB: assumes the lookups ran and genuinely found nothing. If a frequency DB is
+        # unavailable the availability cache logs a WARNING upstream; a degraded run can
+        # therefore over-apply PM2_Supporting — surfaced provenance, not a silent error.
         return {
-            "acmg_codes": [],
-            "korean_flag": "No frequency data available",
+            "acmg_codes": ["PM2_Supporting"],
+            "korean_flag": "Absent from population databases",
             "frequencies": freq,
         }
 
@@ -62,6 +75,18 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
             flags.append("Korean frequency much lower than East Asian")
     elif kova_af is not None and freq.gnomad_eas is None and freq.gnomad_all is None:
         flags.append("Korean-specific variant (KOVA only)")
+
+    # BS2 — observed homozygous in healthy KOVA controls for a recessive condition.
+    # Only for AR/recessive genes (a homozygous benign observation does not inform a
+    # dominant disorder), and only above the configured homozygote count (T2-07).
+    if (
+        inheritance
+        and "AR" in inheritance.upper()
+        and freq.kova_homozygote is not None
+        and freq.kova_homozygote >= BS2_HOMOZYGOTE_COUNT
+    ):
+        acmg_codes.append("BS2")
+        flags.append(f"Homozygous in {freq.kova_homozygote} healthy KOVA control(s) — BS2 (recessive)")
 
     return {
         "acmg_codes": acmg_codes,

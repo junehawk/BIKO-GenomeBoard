@@ -20,6 +20,7 @@ coverage.xml
 data/db/*.sqlite3
 data/db/*.sqlite3-shm
 data/db/*.sqlite3-wal
+data/db/*.bak
 !data/db/clinvar_test.sqlite3
 !data/db/gnomad_test.sqlite3
 data/db/gnomad_vcf/
@@ -45,6 +46,9 @@ data/tools/
 # Generated output
 output/
 input/
+
+# PharmCAT run logs (written to repo root by pharmcat_runner; can contain sample paths)
+pharmcat*.log
 
 # Paperclip (legacy, removed)
 paperclip.log

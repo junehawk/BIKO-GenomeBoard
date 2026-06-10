@@ -20,11 +20,14 @@ def test_very_common_ba1():
     assert "BA1" in result["acmg_codes"]
 
 
-def test_no_data():
+def test_absent_from_all_dbs_fires_pm2_supporting():
+    """Absent from every queried frequency DB (gnomAD ALL/EAS + KOVA) is the canonical
+    ACMG PM2 case ('absent from controls'), emitted at Supporting strength per ClinGen
+    SVI 2020 — not 'no data / no code' (T1-03)."""
     freq = FrequencyData(kova=None, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
-    assert result["acmg_codes"] == []
-    assert "No frequency data available" in result["korean_flag"]
+    assert "PM2_Supporting" in result["acmg_codes"]
+    assert "Absent" in result["korean_flag"]
 
 
 def test_korean_specific_variant():
@@ -80,3 +83,33 @@ def test_kova_homozygote_preserved():
     freq = FrequencyData(kova=0.02, gnomad_eas=0.01, gnomad_all=0.01, kova_homozygote=3)
     result = compare_frequencies(freq)
     assert result["frequencies"].kova_homozygote == 3
+
+
+# T2-07 / ACMG2015 — BS2 from KOVA homozygotes for recessive genes
+def test_bs2_fires_for_recessive_gene_with_kova_homozygotes():
+    """A variant observed homozygous in healthy KOVA controls for an AR condition earns
+    BS2 (Strong Benign) — the homozygote data was plumbed but never used (T2-07)."""
+    freq = FrequencyData(kova=0.002, gnomad_eas=None, gnomad_all=None, kova_homozygote=3)
+    result = compare_frequencies(freq, inheritance="AR")
+    assert "BS2" in result["acmg_codes"]
+
+
+def test_bs2_not_fired_for_dominant_gene():
+    """BS2 (recessive homozygote logic) must not fire for an AD gene."""
+    freq = FrequencyData(kova=0.002, gnomad_eas=None, gnomad_all=None, kova_homozygote=3)
+    result = compare_frequencies(freq, inheritance="AD")
+    assert "BS2" not in result["acmg_codes"]
+
+
+def test_bs2_not_fired_below_homozygote_threshold():
+    """A single homozygous observation is below the default BS2 count threshold."""
+    freq = FrequencyData(kova=0.002, gnomad_eas=None, gnomad_all=None, kova_homozygote=1)
+    result = compare_frequencies(freq, inheritance="AR")
+    assert "BS2" not in result["acmg_codes"]
+
+
+def test_compare_frequencies_inheritance_defaults_to_no_bs2():
+    """Backward compat: called without inheritance, BS2 never fires."""
+    freq = FrequencyData(kova=0.002, gnomad_eas=None, gnomad_all=None, kova_homozygote=5)
+    result = compare_frequencies(freq)
+    assert "BS2" not in result["acmg_codes"]

@@ -151,6 +151,19 @@ def test_collect_denovo_evidence_returns_empty_without_flag():
     assert collect_denovo_evidence(v) == []
 
 
+def test_collect_denovo_evidence_suppressed_without_gene_disease_association():
+    """PS2/PM6 (ACMG 2015) require an established gene-disease link. A confirmed de novo
+    protein-impacting variant in a gene with no disease association fires neither (T1-08)."""
+    v = _denovo_variant(confirmed_denovo=True, inheritance="confirmed_de_novo")
+    assert collect_denovo_evidence(v, gene_has_disease_association=False) == []
+
+
+def test_collect_denovo_evidence_fires_with_gene_disease_association():
+    """With an established gene-disease link, a confirmed de novo → PS2_Moderate (T1-08)."""
+    v = _denovo_variant(confirmed_denovo=True, inheritance="confirmed_de_novo")
+    assert collect_denovo_evidence(v, gene_has_disease_association=True) == ["PS2_Moderate"]
+
+
 def test_collect_denovo_evidence_frameshift_confirmed():
     v = _denovo_variant(consequence="Frameshift", confirmed_denovo=True, inheritance="confirmed_de_novo")
     assert collect_denovo_evidence(v) == ["PS2_Moderate"]

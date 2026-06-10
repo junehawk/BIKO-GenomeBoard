@@ -55,7 +55,8 @@ def test_strategy_b_civic_variant_level_b():
 
 
 def test_strategy_b_civic_gene_level_does_not_elevate_to_tier1():
-    """CIViC gene-level (not variant) Level A → does NOT elevate to Tier I."""
+    """CIViC gene-level (not variant) Level A → does NOT elevate via CIViC; a bare
+    Pathogenic in a cancer gene now lands Tier II (gene-level OncoKB is not Tier I — T1-04)."""
     from scripts.somatic.amp_tiering import amp_assign_tier
 
     civic = {
@@ -75,19 +76,21 @@ def test_strategy_b_civic_gene_level_does_not_elevate_to_tier1():
             }
         ],
     }
-    # BRAF is OncoKB Level 1, so still Tier I via OncoKB, but NOT via CIViC
+    # BRAF gene-level CIViC does not elevate, and gene-level OncoKB no longer reaches
+    # Tier I — bare Pathogenic in a cancer gene → Tier II via OncoKB (not civic).
     result = amp_assign_tier("Pathogenic", "BRAF", hgvsp="p.Lys601Glu", civic_evidence=civic)
-    assert result.tier == 1
+    assert result.tier == 2
     assert result.evidence_source.startswith("oncokb")  # not civic
 
 
-def test_strategy_b_no_civic_oncokb_level1_pathogenic():
-    """No CIViC + OncoKB Level 1 + Pathogenic → Tier I via OncoKB."""
+def test_strategy_b_no_civic_oncokb_genelevel_pathogenic_is_tier2():
+    """No CIViC + Pathogenic in a cancer gene → Tier II via gene-level OncoKB.
+    The gene-priority 'level' bucket must not inflate to Tier I (T1-04)."""
     from scripts.somatic.amp_tiering import amp_assign_tier
 
     civic = {"match_level": "none", "evidence": []}
     result = amp_assign_tier("Pathogenic", "TP53", civic_evidence=civic)
-    assert result.tier == 1
+    assert result.tier == 2
     assert "oncokb" in result.evidence_source
 
 
@@ -258,7 +261,54 @@ def test_amp_tier_labels():
     """AMP 2017 라벨 확인."""
     from scripts.somatic.amp_tiering import amp_assign_tier
 
-    r1 = amp_assign_tier("Pathogenic", "TP53")
+    # Tier I requires variant-level evidence (CIViC variant Level A + Pathogenic) after
+    # T1-04 — a bare Pathogenic gene-level call is Tier II, not Tier I.
+    civic_a = {
+        "match_level": "variant",
+        "evidence": [{"evidence_level": "A", "evidence_type": "Predictive", "significance": "Sensitivity/Response"}],
+    }
+    r1 = amp_assign_tier("Pathogenic", "BRAF", hgvsp="p.Val600Glu", civic_evidence=civic_a)
     assert "Strong Clinical Significance" in r1.tier_label
     r4 = amp_assign_tier("Benign", "FAKEGENE")
     assert "Benign" in r4.tier_label
+
+
+def test_strategy_b_civic_variant_level_a_not_demoted_below_b_for_vus():
+    """A VUS with variant-level CIViC Level A predictive evidence must NOT tier below
+    the same variant with Level B — AMP/ASCO/CAP 2017 actionability is independent of
+    ACMG germline pathogenicity. Pre-fix the is_pathogenic gate dropped VUS+A to Tier III
+    while VUS+B reached Tier II (an evidence-hierarchy inversion)."""
+    from scripts.somatic.amp_tiering import amp_assign_tier
+
+    def _civic(level):
+        return {
+            "match_level": "variant",
+            "evidence": [
+                {
+                    "evidence_level": level,
+                    "evidence_type": "Predictive",
+                    "significance": "Sensitivity/Response",
+                    "disease": "Melanoma",
+                    "gene": "BRAF",
+                    "variant": "G99R",
+                }
+            ],
+        }
+
+    tier_a = amp_assign_tier("VUS", "BRAF", hgvsp="p.Gly99Arg", civic_evidence=_civic("A")).tier
+    tier_b = amp_assign_tier("VUS", "BRAF", hgvsp="p.Gly99Arg", civic_evidence=_civic("B")).tier
+    assert tier_a <= tier_b
+    assert tier_a == 2
+
+
+def test_gene_level_oncokb_does_not_inflate_pathogenic_to_tier1():
+    """OncoKB's stored 'level' is a gene-priority bucket (TP53=1), NOT variant-specific
+    FDA actionability. AMP/ASCO/CAP 2017 Tier I requires variant-level therapeutic
+    evidence, so a bare Pathogenic in a level-1 gene must land Tier II, not Tier I (T1-04).
+    Variant-level CIViC Level A still reaches Tier I (tested elsewhere)."""
+    from scripts.somatic.amp_tiering import amp_assign_tier
+
+    civic = {"match_level": "none", "evidence": []}
+    tp53 = amp_assign_tier("Pathogenic", "TP53", civic_evidence=civic)
+    assert tp53.tier == 2
+    assert "oncokb" in tp53.evidence_source

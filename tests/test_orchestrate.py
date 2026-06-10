@@ -216,3 +216,74 @@ def test_pipeline_works_with_empty_gene_knowledge(tmp_path):
     for v in result["variants"]:
         assert "classification" in v
         assert "tier" in v
+
+
+def test_run_pgx_forwards_proband_sample_id(monkeypatch):
+    """_run_pgx must forward the resolved proband sample_id to get_pgx_results, so
+    PharmCAT's multi-sample report selection can pick the proband instead of silently
+    defaulting to the alphabetically-first sample report (PGX-01)."""
+    import scripts.pharmacogenomics.korean_pgx as kpgx
+    from scripts.orchestration.canonical import _run_pgx
+
+    captured = {}
+
+    def fake_get_pgx_results(variants, germline_vcf=None, sample_id=None, config=None):
+        captured["sample_id"] = sample_id
+        return {
+            "pgx_source": "pharmcat",
+            "pgx_hits": [],
+            "germline_provided": True,
+            "pharmcat_version": "3.2.0",
+            "warnings": [],
+        }
+
+    monkeypatch.setattr(kpgx, "get_pgx_results", fake_get_pgx_results)
+
+    _run_pgx([], germline_vcf="/tmp/germline.vcf", db_results={}, sample_id="PROBAND_01")
+    assert captured["sample_id"] == "PROBAND_01"
+
+
+def test_linkify_pmids_escapes_surrounding_markup():
+    """CIViC / gene_knowledge prose passed to _linkify_pmids is rendered via {{ ...|safe }};
+    markup in the source text must be escaped so only the linkifier's own anchors are raw HTML
+    (XSEC-02)."""
+    from scripts.orchestration.canonical import _linkify_pmids
+
+    out = _linkify_pmids("see <script>alert(1)</script> in PMID:12345 done")
+    assert "<script>" not in out
+    assert "&lt;script&gt;" in out
+    assert 'href="https://pubmed.ncbi.nlm.nih.gov/12345/"' in out
+
+
+def test_pgx_warnings_surfaced_in_report_data(mocker, tmp_path):
+    """PGx fallback warnings (why PGx degraded to the builtin table) must reach report_data
+    so the reviewer can see them, instead of being computed and silently dropped (T4-04/ORCH-03)."""
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=None)
+    mocker.patch(
+        "scripts.pharmacogenomics.korean_pgx.get_pgx_results",
+        return_value={
+            "pgx_source": "builtin",
+            "pgx_hits": [],
+            "germline_provided": False,
+            "pharmcat_version": "",
+            "warnings": ["PharmCAT not available (Java 17+ or JAR missing); falling back to builtin PGx"],
+        },
+    )
+    from scripts.orchestrate import run_pipeline
+
+    result = run_pipeline(vcf_path=DEMO_VCF, output_path=str(tmp_path / "r.html"))
+    assert any("PharmCAT not available" in w for w in result.get("pgx_warnings", []))
+
+
+def test_cancer_report_flags_msi_and_fusion_not_performed(mocker, tmp_path):
+    """A cancer report must state that MSI and fusion analysis were not performed, so a
+    reviewer does not read their absence as a negative result (T2-01, absent != negative)."""
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=None)
+    from scripts.orchestrate import run_pipeline
+
+    result = run_pipeline(vcf_path=DEMO_VCF, output_path=str(tmp_path / "r.html"), mode="cancer")
+    notes = " ".join(result.get("analyses_not_performed", []))
+    assert "MSI" in notes
+    assert "usion" in notes  # fusion / Fusion

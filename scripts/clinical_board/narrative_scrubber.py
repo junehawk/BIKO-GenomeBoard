@@ -178,7 +178,7 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
         llm_vk = str(row.get("variant_key", "") or "").strip()
 
         if cid in lookup and drug.lower() in allowed_drugs:
-            true_vk, _ = lookup[cid]
+            true_vk, curated_row = lookup[cid]
             if llm_vk and llm_vk != true_vk:
                 logger.info(
                     "[narrative_scrubber] backfilled variant_key for curated_id=%r: "
@@ -188,6 +188,20 @@ def scrub_opinion(opinion: Any, curated_by_variant: Dict[str, list]) -> Dict[str
                     true_vk,
                 )
             row["variant_key"] = true_vk
+            # evidence_level and significance are curator-owned, not LLM-owned: the
+            # curate-then-narrate contract makes the curator authoritative for every
+            # structured field, not just variant_key. Without this backfill an LLM could
+            # render a curated level-D / resistance row as a green level-A 'sensitivity'
+            # recommendation (render.py colours level A/1 green) — see v2.9 T1-10.
+            cur_level = _row_attr(curated_row, "evidence_level")
+            if cur_level:
+                row["evidence_level"] = cur_level
+            cur_sig = _row_attr(curated_row, "significance")
+            if cur_sig:
+                row["significance"] = cur_sig
+            cur_match = _row_attr(curated_row, "match_level")
+            if cur_match:
+                row["match_level"] = cur_match  # curator-owned: variant vs gene-level (T1-09)
             kept.append(row)
             continue
 

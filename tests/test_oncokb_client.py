@@ -17,12 +17,13 @@ import pytest
 def clear_ns_cache():
     """Wipe the oncokb cache namespace between tests so stubs don't leak."""
     from scripts.common import cache
+    from scripts.enrichment.oncokb_client import _NAMESPACE
 
     conn = cache._get_connection()
-    conn.execute("DELETE FROM cache WHERE namespace = ?", ("oncokb",))
+    conn.execute("DELETE FROM cache WHERE namespace = ?", (_NAMESPACE,))
     conn.commit()
     yield
-    conn.execute("DELETE FROM cache WHERE namespace = ?", ("oncokb",))
+    conn.execute("DELETE FROM cache WHERE namespace = ?", (_NAMESPACE,))
     conn.commit()
 
 
@@ -125,9 +126,10 @@ def test_5xx_raises_oncokb_unavailable(monkeypatch):
 def test_walltime_happy_path_cached_is_under_1s(monkeypatch):
     """Cached lookup must be near-instant (well under 1 s)."""
     from scripts.enrichment import oncokb_client
+    from scripts.enrichment.oncokb_client import _NAMESPACE
     from scripts.common import cache
 
-    cache.set_cached_ns("oncokb", "KRAS::G12D", [{"drug": "Sotorasib", "pmids": ["32955176"], "level": "LEVEL_1"}])
+    cache.set_cached_ns(_NAMESPACE, "KRAS::G12D", [{"drug": "Sotorasib", "pmids": ["32955176"], "level": "LEVEL_1"}])
 
     def fail(*a, **kw):
         raise AssertionError("should hit cache")
@@ -138,3 +140,27 @@ def test_walltime_happy_path_cached_is_under_1s(monkeypatch):
         oncokb_client.annotate_protein_change("KRAS", "G12D", offline_mode=False)
     elapsed = time.monotonic() - t0
     assert elapsed < 1.0, f"cached hot-path too slow: {elapsed:.2f}s"
+
+
+def test_http_4xx_empty_is_not_cached(monkeypatch):
+    """A transient 4xx (treated as empty) must NOT be cached, so it cannot poison the
+    curated-treatment path for the full TTL — once the endpoint recovers, a later call
+    re-queries and gets the real hit (DB-03)."""
+    from scripts.enrichment import oncokb_client
+
+    err = MagicMock()
+    err.status_code = 404
+    monkeypatch.setattr(oncokb_client.requests, "get", lambda *a, **kw: err)
+    assert oncokb_client.annotate_protein_change("KRAS", "G12D", offline_mode=False) == []
+
+    payload = {
+        "treatments": [
+            {"drugs": [{"drugName": "Sotorasib"}], "level": "LEVEL_1", "pmids": ["32955176"], "indication": "CRC"}
+        ]
+    }
+    ok = MagicMock()
+    ok.status_code = 200
+    ok.json.return_value = payload
+    monkeypatch.setattr(oncokb_client.requests, "get", lambda *a, **kw: ok)
+    result = oncokb_client.annotate_protein_change("KRAS", "G12D", offline_mode=False)
+    assert result != []  # 404 was not cached → recovered endpoint re-queried

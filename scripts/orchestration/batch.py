@@ -165,6 +165,7 @@ def discover_samples(batch_path: str) -> list:
         return samples
     elif path.suffix == ".csv":
         samples = []
+        seen_ids: dict[str, int] = {}
         with open(path) as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -172,11 +173,27 @@ def discover_samples(batch_path: str) -> list:
                     logger.warning("Manifest row missing sample_id or vcf_path, skipping: %r", row)
                     continue
                 bs = _row_to_batch_sample(row)
+                # Disambiguate duplicate sample_ids so two rows don't both write to
+                # <sample_id>_report.html (the second would silently overwrite the
+                # first), matching the directory-mode guard (ORCH-07).
+                sid = bs.sample_id
+                if sid in seen_ids:
+                    seen_ids[sid] += 1
+                    disambiguated = f"{sid}_{seen_ids[sid]}"
+                    logger.warning(
+                        "Batch manifest: sample_id %r collides; using %r so it does not "
+                        "overwrite the earlier sample's report.",
+                        sid,
+                        disambiguated,
+                    )
+                    sid = disambiguated
+                else:
+                    seen_ids[sid] = 1
                 # Preserve the legacy dict-shape list but include the
                 # extra fields so downstream consumers can feature-detect.
                 samples.append(
                     {
-                        "sample_id": bs.sample_id,
+                        "sample_id": sid,
                         "vcf_path": bs.vcf_path,
                         "germline_vcf": bs.germline_vcf,
                         "ped_path": bs.ped_path,

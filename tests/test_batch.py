@@ -259,3 +259,27 @@ def test_discover_samples_disambiguates_colliding_ids(tmp_path):
     assert len(set(ids)) == 2, f"sample_ids collided: {ids}"
     assert "sample" in ids
     assert any(i.startswith("sample_") for i in ids)
+
+
+def test_discover_samples_csv_disambiguates_duplicate_sample_id(tmp_path):
+    """Two manifest rows with the same sample_id must not both write to
+    <sample_id>_report.html (the second would overwrite the first) — the CSV manifest
+    path now disambiguates like directory mode (ORCH-07)."""
+    import csv as _csv
+
+    from scripts.orchestrate import _discover_samples
+
+    manifest = tmp_path / "m.csv"
+    rows = [
+        {"sample_id": "DUP", "vcf_path": str(BATCH_DIR / "sample_001.vcf")},
+        {"sample_id": "DUP", "vcf_path": str(BATCH_DIR / "sample_002.vcf")},
+    ]
+    with open(manifest, "w", newline="") as f:
+        writer = _csv.DictWriter(f, fieldnames=["sample_id", "vcf_path"])
+        writer.writeheader()
+        writer.writerows(rows)
+    samples = _discover_samples(str(manifest))
+    ids = [s["sample_id"] for s in samples]
+    assert len(samples) == 2
+    assert len(set(ids)) == 2  # disambiguated, not both "DUP"
+    assert ids[0] == "DUP"
