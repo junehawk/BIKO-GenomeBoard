@@ -127,6 +127,73 @@ def test_query_not_found(test_db_path, monkeypatch):
 
     assert result["clinvar_significance"] == "Not Found"
     assert result["acmg_codes"] == []
+
+
+def _build_single_row_clinvar_db(db_path: str, *, chrom, pos, ref, alt, sig, review, gene="G"):
+    """Build a 1-row ClinVar test DB (schema mirrors build_test_clinvar_db)."""
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """CREATE TABLE variants (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chrom TEXT, pos INTEGER, ref TEXT, alt TEXT, rsid TEXT, gene TEXT,
+            clinical_significance TEXT, review_status TEXT, phenotype_list TEXT,
+            variation_id TEXT, allele_id TEXT, origin TEXT, assembly TEXT,
+            last_evaluated TEXT, number_submitters INTEGER
+        )"""
+    )
+    conn.execute(
+        "INSERT INTO variants (chrom,pos,ref,alt,rsid,gene,clinical_significance,review_status,variation_id) "
+        "VALUES (?,?,?,?,?,?,?,?,?)",
+        (chrom, pos, ref, alt, None, gene, sig, review, "12345"),
+    )
+    conn.commit()
+    conn.close()
+
+
+def test_relaxed_position_match_does_not_attribute_foreign_allele_significance(tmp_path):
+    """A Strategy-3 pos-only hit is a DIFFERENT allele at the same coordinate; its verdict
+    must NOT be reported as this variant's classification-driving significance, so it can
+    never feed apply_clinvar_override / conflict reconciliation."""
+    import scripts.storage.query_local_clinvar as qmod
+    from scripts.common.config import reset
+
+    reset()
+    db_path = str(tmp_path / "cv.sqlite3")
+    _build_single_row_clinvar_db(
+        db_path, chrom="chr7", pos=140753336, ref="A", alt="T", sig="Pathogenic", review="reviewed by expert panel"
+    )
+    qmod._conn = sqlite3.connect(db_path)
+    qmod._conn.row_factory = sqlite3.Row
+
+    # Query a DIFFERENT allele (A>C) at the same position — exact ref/alt misses, pos-only hits.
+    variant = Variant(chrom="chr7", pos=140753336, ref="A", alt="C", gene="BRAF", rsid=None)
+    result = qmod.query_local_clinvar(variant)
+
+    assert result["clinvar_significance"] == "Not Found"
+    assert result["acmg_codes"] == []
+    assert result["relaxed_match"] is True
+    assert result["relaxed_significance"] == "Pathogenic"
+
+
+def test_exact_match_is_not_flagged_relaxed(tmp_path):
+    """An exact ref/alt match (Strategy 2) is a true hit — relaxed_match must be falsy and
+    the significance is attributed normally."""
+    import scripts.storage.query_local_clinvar as qmod
+    from scripts.common.config import reset
+
+    reset()
+    db_path = str(tmp_path / "cv.sqlite3")
+    _build_single_row_clinvar_db(
+        db_path, chrom="chr7", pos=140753336, ref="A", alt="T", sig="Pathogenic", review="reviewed by expert panel"
+    )
+    qmod._conn = sqlite3.connect(db_path)
+    qmod._conn.row_factory = sqlite3.Row
+
+    variant = Variant(chrom="chr7", pos=140753336, ref="A", alt="T", gene="BRAF", rsid=None)
+    result = qmod.query_local_clinvar(variant)
+
+    assert result["clinvar_significance"] == "Pathogenic"
+    assert not result.get("relaxed_match")
     assert result["api_available"] is True  # DB is available, just no hit
 
 
