@@ -80,11 +80,17 @@ def classify_variants(
     """
     # Lazy imports for optional modules
     try:
-        from scripts.classification.in_silico import generate_pp3_bp4, parse_in_silico_from_csq
+        from scripts.classification.in_silico import (
+            generate_pp3_bp4,
+            get_configured_thresholds,
+            parse_in_silico_from_csq,
+        )
 
         _has_in_silico = True
+        _in_silico_thresholds = get_configured_thresholds()  # config-tunable PP3/BP4 (T5-02)
     except ImportError:
         _has_in_silico = False
+        _in_silico_thresholds = None
     try:
         from scripts.classification.evidence_collector import (
             collect_additional_evidence,
@@ -146,7 +152,9 @@ def classify_variants(
 
         # In silico PP3/BP4 evidence
         if _has_in_silico and variant.in_silico:
-            pp3_bp4_codes = generate_pp3_bp4(parse_in_silico_from_csq(variant.in_silico))
+            pp3_bp4_codes = generate_pp3_bp4(
+                parse_in_silico_from_csq(variant.in_silico), thresholds=_in_silico_thresholds
+            )
             for code in pp3_bp4_codes:
                 evidences.append(AcmgEvidence(code=code, source="in_silico", description=""))
 

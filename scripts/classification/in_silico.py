@@ -27,6 +27,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from scripts.common.config import get
+
 # ---------------------------------------------------------------------------
 # Default ClinGen SVI 2022 thresholds (Pejaver et al. 2022, PMID 36413997)
 # ---------------------------------------------------------------------------
@@ -47,6 +49,19 @@ DEFAULT_THRESHOLDS: Dict[str, Any] = {
     # Fallback: CADD + AlphaMissense (when REVEL unavailable)
     "cadd_pathogenic": 25.0,
 }
+
+
+def get_configured_thresholds() -> Dict[str, Any]:
+    """Return PP3/BP4 thresholds with any ``in_silico.thresholds`` config override
+    merged onto the Pejaver/Tavtigian defaults (T5-02).
+
+    The shipped config values equal ``DEFAULT_THRESHOLDS`` so behaviour is unchanged
+    out of the box; an on-prem operator can retune REVEL/SpliceAI/CADD calibration by
+    editing ``config.yaml``. A partial override merges (missing keys keep their default).
+    """
+    override = get("in_silico.thresholds", None) or {}
+    return {**DEFAULT_THRESHOLDS, **override}
+
 
 # CSQ field name mappings — the left side is the lowercased CSQ field name,
 # the right side is the InSilicoScores attribute it maps to.

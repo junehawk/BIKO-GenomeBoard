@@ -88,15 +88,22 @@ somatic:
     - inframe_insertion
 
 in_silico:
-  pp3:
-    revel_moderate: 0.644
-    revel_strong: 0.932
-    spliceai_moderate: 0.2
-    spliceai_strong: 0.5
-  bp4:
-    revel_moderate: 0.183
-    revel_strong: 0.016
-    spliceai_benign: 0.1
+  # PP3/BP4 thresholds — keys mirror scripts/classification/in_silico.py
+  # DEFAULT_THRESHOLDS (ClinGen SVI 2022 / Pejaver 2022 REVEL 4-tier /
+  # Tavtigian 2023 SpliceAI). The values below ARE the shipped defaults, so
+  # behaviour is unchanged out of the box; override any key to retune the
+  # in-silico calibration on-prem (a partial override merges onto the defaults).
+  thresholds:
+    revel_pp3_supporting: 0.644
+    revel_pp3_moderate: 0.773
+    revel_pp3_strong: 0.932
+    revel_bp4_supporting: 0.290
+    revel_bp4_moderate: 0.183
+    revel_bp4_strong: 0.016
+    spliceai_pp3_strong: 0.5
+    spliceai_pp3_moderate: 0.2
+    spliceai_bp4: 0.1
+    cadd_pathogenic: 25.0
 
 cache:
   enabled: true
