@@ -278,3 +278,14 @@ def test_runner_skips_revise_when_single_round(monkeypatch):
     fa1, fa2 = _run_board(monkeypatch, rounds=1)
     assert (fa1.analyze_calls, fa2.analyze_calls) == (1, 1)
     assert (fa1.revise_calls, fa2.revise_calls) == (0, 0)
+
+
+@pytest.mark.parametrize("lang", ["en", "ko"])
+def test_cancer_chair_prompt_does_not_invite_msi(lang):
+    """BIKO never computes MSI, so the cancer Chair prompt must not invite MSI reasoning
+    (the LLM would otherwise fabricate an MSI status); TMB (which IS computed) stays (T2-01)."""
+    from scripts.clinical_board.agents.board_chair import get_system_prompt
+
+    prompt = get_system_prompt("cancer", lang)
+    assert "MSI" not in prompt
+    assert "TMB" in prompt

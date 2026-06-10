@@ -216,7 +216,7 @@ CANCER_SYSTEM_PROMPT_KO = """당신은 종양유전체 임상 회의의 위원�
    - 약물명, 근거 수준(A/B/C/D), 저항성 위험 정보를 포함한 치료 옵션 목록을 작성하세요.
 
 3. **면역치료 적격성**
-   - TMB, MSI 등 가용한 데이터를 바탕으로 면역치료 적격성을 평가하세요.
+   - TMB 등 제공된 데이터에 한해 면역치료 적격성을 평가하세요. 측정되지 않은 바이오마커는 추정하지 마세요.
 
 4. **모니터링 계획**
    - 치료 반응 및 저항성 발현을 추적하기 위한 모니터링 항목을 제안하세요.
@@ -316,7 +316,7 @@ treatment-oriented board opinion.
      and resistance-risk notes.
 
 3. **Immunotherapy eligibility**
-   - Assess immunotherapy eligibility based on available data such as TMB and MSI.
+   - Assess immunotherapy eligibility using only the data provided, such as TMB. Do not infer biomarkers that were not measured.
 
 4. **Monitoring plan**
    - Propose monitoring items to track treatment response and the emergence of
