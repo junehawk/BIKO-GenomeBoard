@@ -20,11 +20,14 @@ def test_very_common_ba1():
     assert "BA1" in result["acmg_codes"]
 
 
-def test_no_data():
+def test_absent_from_all_dbs_fires_pm2_supporting():
+    """Absent from every queried frequency DB (gnomAD ALL/EAS + KOVA) is the canonical
+    ACMG PM2 case ('absent from controls'), emitted at Supporting strength per ClinGen
+    SVI 2020 — not 'no data / no code' (T1-03)."""
     freq = FrequencyData(kova=None, gnomad_eas=None, gnomad_all=None)
     result = compare_frequencies(freq)
-    assert result["acmg_codes"] == []
-    assert "No frequency data available" in result["korean_flag"]
+    assert "PM2_Supporting" in result["acmg_codes"]
+    assert "Absent" in result["korean_flag"]
 
 
 def test_korean_specific_variant():

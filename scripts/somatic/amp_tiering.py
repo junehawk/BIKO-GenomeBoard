@@ -125,11 +125,13 @@ def amp_assign_tier(
 
     # === OncoKB gene-level (Strategies A fallback, B, C) ===
 
-    # Pathogenic/LP on high-level gene → Tier I
-    if is_pathogenic and gene_info and oncokb_level in ("1", "2"):
-        return _make_result(1, f"oncokb-gene-L{oncokb_level}", match_level, evidence_items)
-
-    # Pathogenic/LP on any cancer gene → Tier II
+    # Pathogenic/LP in a cancer gene via GENE-level OncoKB evidence only → Tier II
+    # ("Potential clinical significance"). The stored OncoKB 'level' is a static
+    # GENE-priority bucket (TP53=1, APC=2), NOT variant-specific FDA actionability,
+    # so it must NOT inflate to Tier I: AMP/ASCO/CAP 2017 Tier I requires variant-level
+    # therapeutic evidence (CIViC variant Level A, handled above; or a future
+    # variant-level OncoKB oncogenicity hit). A bare Pathogenic TP53 is Tier II, not I
+    # (T1-04 / AMP-02).
     if is_pathogenic and gene_info:
         return _make_result(2, f"oncokb-gene-L{oncokb_level}", match_level, evidence_items)
 

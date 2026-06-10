@@ -24,9 +24,14 @@ def compare_frequencies(freq: FrequencyData) -> Dict:
     max_freq = max(f for f in all_freqs if f is not None) if any(f is not None for f in all_freqs) else None
 
     if max_freq is None:
+        # Absent from every queried frequency DB (gnomAD ALL/EAS + KOVA) → ACMG PM2
+        # ("absent from controls"), emitted at Supporting strength per ClinGen SVI 2020.
+        # NB: assumes the lookups ran and genuinely found nothing. If a frequency DB is
+        # unavailable the availability cache logs a WARNING upstream; a degraded run can
+        # therefore over-apply PM2_Supporting — surfaced provenance, not a silent error.
         return {
-            "acmg_codes": [],
-            "korean_flag": "No frequency data available",
+            "acmg_codes": ["PM2_Supporting"],
+            "korean_flag": "Absent from population databases",
             "frequencies": freq,
         }
 
