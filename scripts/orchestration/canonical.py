@@ -213,11 +213,16 @@ def _build_freq_results(variants: list, db_results: dict) -> dict:
     return freq_results
 
 
-def _run_pgx(variants: list, germline_vcf: str | None, db_results: dict) -> dict:
-    """Run pharmacogenomics (PharmCAT if germline provided, builtin fallback)."""
+def _run_pgx(variants: list, germline_vcf: str | None, db_results: dict, sample_id: str | None = None) -> dict:
+    """Run pharmacogenomics (PharmCAT if germline provided, builtin fallback).
+
+    ``sample_id`` is forwarded to PharmCAT so a multi-sample germline VCF
+    (trio / quartet) selects the proband's report rather than defaulting to the
+    alphabetically-first sample report (PGX-01).
+    """
     from scripts.pharmacogenomics.korean_pgx import get_pgx_results
 
-    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf)
+    pgx_data = get_pgx_results(variants, germline_vcf=germline_vcf, sample_id=sample_id)
     pgx_source = pgx_data["pgx_source"]
 
     # Backward-compat: collect PgxResult objects from db_results when builtin
@@ -507,7 +512,7 @@ def build_sample_report(
     freq_results = _build_freq_results(variants, db_results)
 
     # ── PGx ───────────────────────────────────────────────────────────────
-    pgx_bundle = _run_pgx(variants, germline_vcf, db_results)
+    pgx_bundle = _run_pgx(variants, germline_vcf, db_results, sample_id=sample_id)
     # Phase 2 (L7): enrich PGx rows here, not in render.
     _enrich_pgx_with_gene_knowledge(pgx_bundle["pgx_results_list"])
 
