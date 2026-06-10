@@ -42,6 +42,32 @@ def _resolve_ps1_pm5_exclusivity(evidences: List[AcmgEvidence]) -> List[AcmgEvid
     return evidences
 
 
+# ClinGen gene-validity classifications that count as an "established" gene-disease
+# link for the PS2/PM6 de-novo gate (T1-08). Limited / Disputed / Refuted / No Known
+# Disease Relationship are NOT established.
+_ESTABLISHED_VALIDITY = {"definitive", "strong", "moderate"}
+
+
+def _gene_has_disease_association(gene: Optional[str], cache: Dict[str, bool]) -> bool:
+    """True when ``gene`` has an established gene-disease association (ClinGen validity
+    Definitive/Strong/Moderate, or an OMIM disease phenotype). Memoised in ``cache``
+    for the current batch. Used to gate PS2/PM6 (T1-08)."""
+    if not gene:
+        return False
+    if gene in cache:
+        return cache[gene]
+    result = False
+    validity = get_gene_validity(gene)
+    if validity and validity.strip().lower() in _ESTABLISHED_VALIDITY:
+        result = True
+    else:
+        omim = query_omim(gene)
+        if isinstance(omim, dict) and omim.get("phenotypes"):
+            result = True
+    cache[gene] = result
+    return result
+
+
 def classify_variants(
     variants: List[Variant],
     db_results: Dict[str, Dict[str, Any]],
@@ -107,6 +133,7 @@ def classify_variants(
         clinvar_changes_by_gene = {}
 
     classification_results = {}
+    _denovo_assoc_cache: Dict[str, bool] = {}  # per-batch memo for the PS2/PM6 gene gate (T1-08)
     for variant in variants:
         db = db_results[variant.variant_id]
         freq = freq_results[variant.variant_id]
@@ -149,7 +176,14 @@ def classify_variants(
             # v1 de novo support — PS2/PM6 from trio INFO flags.
             # Kept as a separate call per spec Q4 so PS2/PM6 can never leak
             # into the ClinVar-conflict override path in acmg_engine.
-            denovo_codes = collect_denovo_evidence(variant)
+            # T1-08: PS2/PM6 require an established gene-disease link — compute it
+            # only for de-novo-flagged variants (rare) to avoid per-variant lookups.
+            _denovo_flag = getattr(variant, "inheritance", None) in (
+                "de_novo",
+                "confirmed_de_novo",
+            ) or bool(getattr(variant, "confirmed_denovo", False))
+            _gene_assoc = _gene_has_disease_association(variant.gene, _denovo_assoc_cache) if _denovo_flag else True
+            denovo_codes = collect_denovo_evidence(variant, gene_has_disease_association=_gene_assoc)
             for code in denovo_codes:
                 evidences.append(AcmgEvidence(code=code, source="denovo", description=""))
 

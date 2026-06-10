@@ -434,7 +434,7 @@ def _denovo_spliceai_rescue(variant: Variant) -> bool:
     return val is not None and val >= _DENOVO_SPLICEAI_RESCUE_THRESHOLD
 
 
-def collect_denovo_evidence(variant: Variant) -> List[str]:
+def collect_denovo_evidence(variant: Variant, gene_has_disease_association: bool = True) -> List[str]:
     """Collect PS2 / PM6 ACMG codes from trio-aware ``Variant`` flags.
 
     Rules (spec Q1):
@@ -444,6 +444,12 @@ def collect_denovo_evidence(variant: Variant) -> List[str]:
     - ``variant.inheritance in {"de_novo", "confirmed_de_novo"}`` (but not
       confirmed) → ``["PM6"]``.
     - No de novo flag → ``[]``.
+
+    ``gene_has_disease_association`` gates PS2/PM6 on an established gene-disease
+    link: ACMG 2015 PS2/PM6 contemplate a de novo occurrence of a *disease-causing*
+    variant, so a de novo event in a gene with no established disease association is
+    not PS2/PM6 evidence and returns ``[]`` (T1-08). Defaults True so position/legacy
+    callers are unchanged; classify_variants passes the real per-gene value.
 
     Consequence gate (spec Q4 collision point 2) is mirrored here: only fires
     when the variant's consequence is protein-impacting or the variant is
@@ -466,6 +472,11 @@ def collect_denovo_evidence(variant: Variant) -> List[str]:
         passes_gate = _denovo_spliceai_rescue(variant)
 
     if not passes_gate:
+        return []
+
+    # ACMG 2015 PS2/PM6 require an established gene-disease association — a de novo
+    # event in a gene with no known disease link is not pathogenic-supporting (T1-08).
+    if not gene_has_disease_association:
         return []
 
     if confirmed:
