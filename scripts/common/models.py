@@ -219,9 +219,15 @@ class StructuralVariant:
             hi = gd.get("hi") or 0
             ts = gd.get("ts") or 0
             pli = gd.get("pli") or 0.0
-            if self.sv_type == "DEL" and hi >= hi_thresh:
+            # ClinGen HI/TS use 0-3 as graded evidence scores; the codes 30
+            # ("gene associated with an autosomal-recessive phenotype") and 40
+            # ("dosage sensitivity unlikely") are sentinels, NOT high scores.
+            # Bounding the upper end at 3 keeps 30/40 from passing the gate —
+            # without it a ClinGen-curated dosage-INSENSITIVE gene (code 40)
+            # would be flagged dosage-sensitive (the exact opposite of the call).
+            if self.sv_type == "DEL" and hi_thresh <= hi <= 3:
                 return True
-            if self.sv_type == "DUP" and ts >= hi_thresh:
+            if self.sv_type == "DUP" and hi_thresh <= ts <= 3:
                 return True
             if pli >= pli_thresh:
                 return True

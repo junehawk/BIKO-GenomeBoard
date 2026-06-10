@@ -117,3 +117,49 @@ def test_structural_variant_not_dosage_sensitive():
     )
     sv.gene_details = [{"gene": "GENE1", "hi": 0, "ts": 0, "pli": 0.05}]
     assert not sv.is_dosage_sensitive(mode="cancer")
+
+
+def _class3_sv(sv_type: str, gene_details: list) -> "object":
+    """Build a Class-3 SV with the given split-row gene_details for dosage tests."""
+    from scripts.common.models import StructuralVariant
+
+    sv = StructuralVariant(
+        annotsv_id="test",
+        chrom="chr1",
+        start=1,
+        end=100,
+        length=100,
+        sv_type=sv_type,
+        sample_id="S1",
+        acmg_class=3,
+        ranking_score=0.1,
+        cytoband="1p36",
+        gene_name="GENE1",
+        gene_count=1,
+    )
+    sv.gene_details = gene_details
+    return sv
+
+
+def test_dosage_sensitive_ignores_clingen_sentinel_codes():
+    """ClinGen HI/TS codes 30 (AR gene) and 40 (dosage sensitivity unlikely) are
+    NOT real dosage-evidence scores — they must not pass the hi/ts >= threshold gate."""
+    # DEL with HI=40 ("dosage sensitivity unlikely") — ClinGen says NOT haploinsufficient.
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 40, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # DEL with HI=30 ("gene associated with autosomal-recessive phenotype") — not HI.
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 30, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # DUP with TS=40 — not triplosensitive.
+    assert not _class3_sv("DUP", [{"gene": "G", "hi": 0, "ts": 40, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # Same sentinels must also be rejected in the more permissive rare-disease mode (thresh=1).
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 40, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(
+        mode="rare-disease"
+    )
+
+
+def test_dosage_sensitive_accepts_emerging_evidence_code():
+    """Real ClinGen evidence scores in range (cancer >=2, rare-disease >=1) still flag DS."""
+    # HI=2 ("emerging evidence") DEL — supporting at the cancer threshold.
+    assert _class3_sv("DEL", [{"gene": "G", "hi": 2, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    # HI=1 ("little evidence") DEL — below cancer thresh (2) but at rare-disease thresh (1).
+    assert not _class3_sv("DEL", [{"gene": "G", "hi": 1, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="cancer")
+    assert _class3_sv("DEL", [{"gene": "G", "hi": 1, "ts": 0, "pli": 0.0}]).is_dosage_sensitive(mode="rare-disease")
