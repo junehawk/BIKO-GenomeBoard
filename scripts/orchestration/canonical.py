@@ -560,6 +560,10 @@ def build_sample_report(
         "pgx_source": pgx_bundle["pgx_source"],
         "germline_provided": pgx_bundle["germline_provided"],
         "pharmcat_version": pgx_bundle["pharmcat_version"],
+        # Why PGx degraded to builtin (missing Java/JAR, PharmCAT crash, no germline,
+        # empty filtered VCF, ...) — surfaced so the reviewer can audit the PGx block
+        # instead of the reason being computed and dropped (T4-04 / ORCH-03).
+        "pgx_warnings": pgx_bundle.get("warnings", []),
         "summary": summary,
         "db_versions": get_all_db_versions(skip_api=skip_api),
         "pipeline": {
