@@ -253,3 +253,24 @@ def test_linkify_pmids_escapes_surrounding_markup():
     assert "<script>" not in out
     assert "&lt;script&gt;" in out
     assert 'href="https://pubmed.ncbi.nlm.nih.gov/12345/"' in out
+
+
+def test_pgx_warnings_surfaced_in_report_data(mocker, tmp_path):
+    """PGx fallback warnings (why PGx degraded to the builtin table) must reach report_data
+    so the reviewer can see them, instead of being computed and silently dropped (T4-04/ORCH-03)."""
+    mocker.patch("scripts.enrichment.query_clinvar._search_clinvar_variant", return_value=None)
+    mocker.patch("scripts.population.query_gnomad._graphql_query", return_value=None)
+    mocker.patch(
+        "scripts.pharmacogenomics.korean_pgx.get_pgx_results",
+        return_value={
+            "pgx_source": "builtin",
+            "pgx_hits": [],
+            "germline_provided": False,
+            "pharmcat_version": "",
+            "warnings": ["PharmCAT not available (Java 17+ or JAR missing); falling back to builtin PGx"],
+        },
+    )
+    from scripts.orchestrate import run_pipeline
+
+    result = run_pipeline(vcf_path=DEMO_VCF, output_path=str(tmp_path / "r.html"))
+    assert any("PharmCAT not available" in w for w in result.get("pgx_warnings", []))
