@@ -206,3 +206,26 @@ def test_grounding_banner_escapes_html():
     out = render_board_opinion_html(op, "en")
     assert "<script>alert(1)</script>" not in out
     assert "&lt;script&gt;" in out
+
+
+def test_flags_offbriefing_gene_in_agent_opinion():
+    """A domain agent that names an off-case gene in its finding must be flagged too —
+    agent opinions are rendered verbatim, so the grounding scrubber must scan them, not
+    just the Chair narrative (BOARD-03 / T5-04)."""
+    from scripts.clinical_board.models import AgentOpinion
+
+    op = CancerBoardOpinion(
+        therapeutic_headline="TP53-driven tumour",  # Chair narrative is clean
+        agent_opinions=[
+            AgentOpinion(
+                agent_name="Variant Pathologist",
+                domain="variant_pathology",
+                findings=[{"finding": "This resembles an EGFR-mutant context", "evidence": ""}],
+                concerns=["BRAF status unknown"],
+            )
+        ],
+    )
+    stats = annotate_grounding(op, _report("TP53"))
+    assert "EGFR" in stats["offbriefing_genes"]
+    assert "BRAF" in stats["offbriefing_genes"]
+    assert op.grounding_flags
