@@ -95,3 +95,20 @@ def test_sv_detail_page_in_cancer_html(tmp_path):
     # At least one class 4-5 SV gene appears in detail
     sv_genes = [sv["gene_name"] for sv in result["sv_class45"]]
     assert any(gene in html for gene in sv_genes)
+
+
+def test_cancer_sv_section_notes_somatic_context(tmp_path):
+    """In cancer mode the CNV section must clarify the alterations are somatic (tumour)
+    events, so an 'ACMG Class 5 — Pathogenic' label is not misread as a germline /
+    constitutional finding (T2-06)."""
+    from scripts.orchestrate import run_pipeline
+
+    run_pipeline(
+        vcf_path="data/sample_vcf/demo_variants_grch38_annotated.vcf",
+        output_path=str(tmp_path / "report.html"),
+        skip_api=True,
+        mode="cancer",
+        sv_path="data/sample_sv/cancer_somatic_annotsv.tsv",
+    )
+    html = (tmp_path / "report.html").read_text()
+    assert "somatic (tumour)" in html.lower()

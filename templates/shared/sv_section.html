@@ -6,6 +6,13 @@
   <span class="section-badge" style="background:#4C1D95;">Structural Variants / Copy Number Alterations</span>
   <div class="section-rule" style="border-color:#4C1D95;"></div>
 </div>
+{% if mode == 'cancer' %}
+<p style="font-size:8pt;color:#64748b;margin:2px 0 8px;font-style:italic;">
+  Copy-number alterations below are <strong>somatic (tumour)</strong> events. The
+  ACMG/ClinGen CNV class shown is a dosage-pathogenicity label and does not denote a
+  germline / constitutional finding.
+</p>
+{% endif %}
 
 {# Class 4-5: Pathogenic / Likely Pathogenic #}
 {% if sv_class45 %}
