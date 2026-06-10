@@ -78,22 +78,24 @@ _CSQ_HGVSC_IDX: Optional[int] = None
 _CSQ_HGVSP_IDX: Optional[int] = None
 
 
-def _parse_vcf_line(line: str, fallback_gene: str = "", csq_fields: Optional[List[str]] = None) -> Optional[Variant]:
-    """Parse a single VCF data line into a :class:`Variant`.
+def _parse_vcf_line(line: str, fallback_gene: str = "", csq_fields: Optional[List[str]] = None) -> List[Variant]:
+    """Parse a single VCF data line into a list of :class:`Variant` (one per ALT allele).
 
-    When ``csq_fields`` (the VCF's CSQ header field names) is supplied, the CSQ is
-    parsed by field name via ``parse_csq_value`` — the same path as the primary
-    ``parse_vcf`` — which scopes to the called allele and lifts in-silico scores into
-    ``Variant.in_silico`` so the germline ACMG path can fire PP3/BP4/SpliceAI/BP7
-    (T2-03 / INTK-04). Without it, the legacy hardcoded-index parse is used.
+    Multi-allelic germline lines are decomposed — each ALT becomes its own inherited
+    Variant with the CSQ scoped to that allele — instead of silently keeping only the
+    first ALT (INTK-03). When ``csq_fields`` (the VCF's CSQ header field names) is
+    supplied, the CSQ is parsed by field name via ``parse_csq_value`` (same path as the
+    primary ``parse_vcf``), lifting in-silico scores into ``Variant.in_silico`` so the
+    germline ACMG path can fire PP3/BP4/SpliceAI/BP7 (T2-03 / INTK-04). Without it the
+    legacy hardcoded-index parse is used.
 
-    Returns None if the line cannot be parsed (header, malformed, etc.).
+    Returns ``[]`` if the line cannot be parsed (header, malformed, etc.).
     """
     if line.startswith("#"):
-        return None
+        return []
     parts = line.rstrip("\n").split("\t")
     if len(parts) < 5:
-        return None
+        return []
 
     chrom = parts[0]
     if not chrom.startswith("chr"):
@@ -101,86 +103,86 @@ def _parse_vcf_line(line: str, fallback_gene: str = "", csq_fields: Optional[Lis
     try:
         pos = int(parts[1])
     except (ValueError, IndexError):
-        return None
+        return []
     rsid_raw = parts[2] if len(parts) > 2 else "."
     rsid = rsid_raw if rsid_raw != "." else None
     ref = parts[3]
-    alt = parts[4].split(",")[0]  # take first ALT allele
-
-    gene = None
-    consequence = None
-    hgvsc = None
-    hgvsp = None
-    in_silico: dict = {}
-
-    # Try to extract gene from INFO field
     info = parts[7] if len(parts) > 7 else ""
 
-    # VEP CSQ
-    csq_match = re.search(r"CSQ=([^;\t]+)", info)
-    if csq_match:
-        if csq_fields:
-            # Header-driven parse (same path as parse_vcf): maps fields by name,
-            # scopes to the called allele, and lifts in-silico scores.
-            annotation = parse_csq_value(csq_match.group(1), csq_fields, fallback_gene or None, alt=alt)
-            if annotation:
-                gene = annotation.get("gene") or gene
-                consequence = annotation.get("consequence") or consequence
-                hgvsc = annotation.get("hgvsc") or hgvsc
-                hgvsp = annotation.get("hgvsp") or hgvsp
-                in_silico = _build_in_silico_from_annotation(annotation)
-        else:
-            # Legacy hardcoded-index fallback (no CSQ header available).
-            csq_parts = csq_match.group(1).split(",")[0].split("|")
-            if len(csq_parts) > 3:
-                gene = csq_parts[3] if csq_parts[3] else gene
-            if len(csq_parts) > 1:
-                consequence = csq_parts[1] if csq_parts[1] else consequence
-            if len(csq_parts) > 10:
-                hgvsc = csq_parts[10] if csq_parts[10] else hgvsc
-            if len(csq_parts) > 11:
-                hgvsp = csq_parts[11] if csq_parts[11] else hgvsp
+    results: List[Variant] = []
+    for single_alt in [a for a in parts[4].split(",") if a] or [parts[4]]:
+        gene = None
+        consequence = None
+        hgvsc = None
+        hgvsp = None
+        in_silico: dict = {}
 
-    # SnpEff ANN fallback
-    if not gene:
-        ann_match = re.search(r"ANN=([^;\t]+)", info)
-        if ann_match:
-            ann_val = ann_match.group(1).split(",")[0]
-            ann_fields = ann_val.split("|")
-            if len(ann_fields) > 3:
-                gene = ann_fields[3] if ann_fields[3] else gene
-            if len(ann_fields) > 1:
-                consequence = ann_fields[1] if ann_fields[1] else consequence
+        # VEP CSQ — scoped to this allele
+        csq_match = re.search(r"CSQ=([^;\t]+)", info)
+        if csq_match:
+            if csq_fields:
+                annotation = parse_csq_value(csq_match.group(1), csq_fields, fallback_gene or None, alt=single_alt)
+                if annotation:
+                    gene = annotation.get("gene") or gene
+                    consequence = annotation.get("consequence") or consequence
+                    hgvsc = annotation.get("hgvsc") or hgvsc
+                    hgvsp = annotation.get("hgvsp") or hgvsp
+                    in_silico = _build_in_silico_from_annotation(annotation)
+            else:
+                # Legacy hardcoded-index fallback (no CSQ header available).
+                csq_parts = csq_match.group(1).split(",")[0].split("|")
+                if len(csq_parts) > 3:
+                    gene = csq_parts[3] if csq_parts[3] else gene
+                if len(csq_parts) > 1:
+                    consequence = csq_parts[1] if csq_parts[1] else consequence
+                if len(csq_parts) > 10:
+                    hgvsc = csq_parts[10] if csq_parts[10] else hgvsc
+                if len(csq_parts) > 11:
+                    hgvsp = csq_parts[11] if csq_parts[11] else hgvsp
 
-    # GENEINFO fallback (ClinVar-style VCF)
-    if not gene:
-        gi_match = re.search(r"GENEINFO=([^;:\t]+)", info)
-        if gi_match:
-            gene = gi_match.group(1)
+        # SnpEff ANN fallback
+        if not gene:
+            ann_match = re.search(r"ANN=([^;\t]+)", info)
+            if ann_match:
+                ann_val = ann_match.group(1).split(",")[0]
+                ann_fields = ann_val.split("|")
+                if len(ann_fields) > 3:
+                    gene = ann_fields[3] if ann_fields[3] else gene
+                if len(ann_fields) > 1:
+                    consequence = ann_fields[1] if ann_fields[1] else consequence
 
-    # Target BED fallback — when the germline VCF is unannotated (no CSQ /
-    # ANN / GENEINFO) the only source of gene identity is the target BED
-    # row that selected this position. Without this, inherited ClinVar
-    # P/LP variants render as "NONE | Pathogenic" in the report.
-    if not gene and fallback_gene:
-        gene = fallback_gene
+        # GENEINFO fallback (ClinVar-style VCF)
+        if not gene:
+            gi_match = re.search(r"GENEINFO=([^;:\t]+)", info)
+            if gi_match:
+                gene = gi_match.group(1)
 
-    return Variant(
-        chrom=chrom,
-        pos=pos,
-        ref=ref,
-        alt=alt,
-        gene=gene or None,
-        rsid=rsid,
-        # Store the BIKO short label (e.g. "Missense"), consistent with the
-        # primary parse_vcf path, so the report and any consequence-based gating
-        # see the same form on inherited variants (v2.7 review ORCH-03).
-        consequence=format_consequence(consequence) if consequence else None,
-        hgvsc=hgvsc,
-        hgvsp=hgvsp,
-        in_silico=in_silico or None,
-        source="germline_inherited",
-    )
+        # Target BED fallback — when the germline VCF is unannotated (no CSQ /
+        # ANN / GENEINFO) the only source of gene identity is the target BED
+        # row that selected this position. Without this, inherited ClinVar
+        # P/LP variants render as "NONE | Pathogenic" in the report.
+        if not gene and fallback_gene:
+            gene = fallback_gene
+
+        results.append(
+            Variant(
+                chrom=chrom,
+                pos=pos,
+                ref=ref,
+                alt=single_alt,
+                gene=gene or None,
+                rsid=rsid,
+                # Store the BIKO short label (e.g. "Missense"), consistent with the
+                # primary parse_vcf path, so the report and any consequence-based gating
+                # see the same form on inherited variants (v2.7 review ORCH-03).
+                consequence=format_consequence(consequence) if consequence else None,
+                hgvsc=hgvsc,
+                hgvsp=hgvsp,
+                in_silico=in_silico or None,
+                source="germline_inherited",
+            )
+        )
+    return results
 
 
 # ---------------------------------------------------------------------------
@@ -408,13 +410,11 @@ def _extract_via_tabix(
 
             try:
                 for line in tbx.fetch(query_chrom, start, end):
-                    v = _parse_vcf_line(line, fallback_gene=gene, csq_fields=csq_header_fields)
-                    if v is None:
-                        continue
-                    if v.variant_id in primary_ids or v.variant_id in seen_ids:
-                        continue
-                    seen_ids.add(v.variant_id)
-                    variants.append(v)
+                    for v in _parse_vcf_line(line, fallback_gene=gene, csq_fields=csq_header_fields):
+                        if v.variant_id in primary_ids or v.variant_id in seen_ids:
+                            continue
+                        seen_ids.add(v.variant_id)
+                        variants.append(v)
             except ValueError:
                 # Region not found in index
                 continue
@@ -492,13 +492,11 @@ def _extract_via_linear_scan(
                 if target_gene is None:
                     continue
 
-                v = _parse_vcf_line(line, fallback_gene=target_gene, csq_fields=csq_header_fields)
-                if v is None:
-                    continue
-                if v.variant_id in primary_ids or v.variant_id in seen_ids:
-                    continue
-                seen_ids.add(v.variant_id)
-                variants.append(v)
+                for v in _parse_vcf_line(line, fallback_gene=target_gene, csq_fields=csq_header_fields):
+                    if v.variant_id in primary_ids or v.variant_id in seen_ids:
+                        continue
+                    seen_ids.add(v.variant_id)
+                    variants.append(v)
     except Exception as exc:
         logger.warning("Linear scan of germline VCF failed: %s", exc)
 
