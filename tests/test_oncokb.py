@@ -124,18 +124,19 @@ def test_get_cancer_gene_info_cltc():
 
 
 def test_assign_tier_pathogenic_level1_gene():
-    """Pathogenic on KRAS (Level 1) → Tier 1."""
-    assert assign_tier("Pathogenic", "KRAS") == 1
+    """Pathogenic on KRAS (gene-level OncoKB only) → Tier 2 (not Tier 1 — T1-04).
+    The OncoKB 'level' is a gene-priority bucket, not variant-specific FDA actionability."""
+    assert assign_tier("Pathogenic", "KRAS") == 2
 
 
 def test_assign_tier_pathogenic_level2_gene():
-    """Pathogenic on ERBB4 (Level 2) → Tier 1."""
-    assert assign_tier("Pathogenic", "ERBB4") == 1
+    """Pathogenic on ERBB4 (gene-level OncoKB only) → Tier 2 (T1-04)."""
+    assert assign_tier("Pathogenic", "ERBB4") == 2
 
 
 def test_assign_tier_likely_pathogenic_level1():
-    """Likely Pathogenic on TP53 (Level 1) → Tier 1."""
-    assert assign_tier("Likely Pathogenic", "TP53") == 1
+    """Likely Pathogenic on TP53 (gene-level OncoKB only) → Tier 2 (T1-04)."""
+    assert assign_tier("Likely Pathogenic", "TP53") == 2
 
 
 def test_assign_tier_pathogenic_level3():
@@ -202,8 +203,9 @@ def test_assign_tier_benign_non_cancer():
 
 def test_assign_tier_case_insensitive():
     """Classification matching is case-insensitive."""
-    assert assign_tier("pathogenic", "KRAS") == 1
-    assert assign_tier("PATHOGENIC", "KRAS") == 1
+    # KRAS gene-level Pathogenic is Tier 2 after T1-04 (gene-level OncoKB is not Tier I).
+    assert assign_tier("pathogenic", "KRAS") == 2
+    assert assign_tier("PATHOGENIC", "KRAS") == 2
     assert assign_tier("drug response", "") == 1
 
 

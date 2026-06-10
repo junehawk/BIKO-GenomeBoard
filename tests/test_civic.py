@@ -380,8 +380,9 @@ def test_assign_tier_existing_behavior_unchanged():
     from scripts.enrichment.oncokb import assign_tier, reset_oncokb_cache
 
     reset_oncokb_cache()
-    # Pathogenic level-1 gene → Tier 1
-    assert assign_tier("Pathogenic", "KRAS") == 1
+    # Pathogenic in a cancer gene via gene-level OncoKB → Tier 2 (T1-04: gene-level
+    # 'level' is a gene-priority bucket, not variant-specific FDA actionability).
+    assert assign_tier("Pathogenic", "KRAS") == 2
     # Drug response → Tier 1
     assert assign_tier("Drug Response", "") == 1
     # Benign cancer gene → Tier 4
